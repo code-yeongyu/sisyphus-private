@@ -1269,3 +1269,48 @@ sisyphus/
 - 아키텍처 다이어그램은 프로젝트 이해에 큰 도움: 복잡한 설명보다 플로우 차트 하나가 명확함
 
 소요 시간: 약 5분
+
+[2025-10-09 20:17] - Task 19: 전체 통합 테스트 (Critical Bug Fix)
+
+### DISCOVERED ISSUES
+- **CRITICAL BUG**: Agent Protocol의 `stream()` 메서드 시그니처 오류
+  - Protocol에서 `async def stream() -> AsyncIterator`로 정의됨
+  - 이것은 타입 체커가 `Coroutine[AsyncIterator]`로 인식하여 `async for`에서 사용 불가
+  - ExecutionLoop에서 `await self.execute_agent.stream()`로 잘못 호출되어 런타임 에러 발생: "object async_generator can't be used in 'await' expression"
+- **해결책**: Protocol의 `stream()`을 `def stream() -> AsyncIterator`로 변경 (async def 제거)
+  - 실제 구현체들은 async generator function (`async def` + `yield`)으로 구현되어 있음
+  - Python에서 async generator function 호출 시 자동으로 `AsyncIterator` 반환
+  - `stream = agent.stream()` 후 `async for message in stream` 패턴 사용
+
+### IMPLEMENTATION DECISIONS
+- Protocol 시그니처를 `def stream()`로 변경하여 타입 체커가 올바르게 인식하도록 수정
+- ExecutionLoop와 MockAgent의 사용 방식 수정: `await` 제거
+- `.gitignore`에 logs/, sessions/, claude_session_*.log, agentloop.json 추가
+
+### PROBLEMS FOR NEXT TASKS
+- None (모든 통합 테스트 통과)
+
+### VERIFICATION RESULTS
+- **19.1 유닛 테스트**: 460/460 tests passed (asyncio + trio 백엔드)
+  - 명령어: `uv run pytest -xvs`
+  - 실행 시간: 1.01초
+  - 모든 모듈 테스트 통과: agents, core, ui, utils
+- **19.2 린트 및 타입 체크**:
+  - `uv run ruff check sisyphus/`: All checks passed!
+  - `uv run basedpyright sisyphus/`: 0 errors, 25 warnings (anyio.abc 관련 무해한 경고)
+- **19.3 CLI 모드 테스트**:
+  - `uv run sisyphus --help`: 모든 CLI 옵션 정상 표시 ✅
+  - `uv run sisyphus --agent claude --no-tui`: Claude Agent 초기화 및 실행 성공 ✅
+  - 세션 생성, 프롬프트 전송, 메시지 스트리밍 모두 정상 작동
+- **버그 수정 후 재검증**: 모든 460개 테스트 재실행 -> 100% 통과 ✅
+- **Git 커밋**: `fix: correct Agent Protocol stream() signature and usage` (a6cef66)
+
+### LEARNINGS
+- **Python Protocol과 async generator function의 타입 체킹 이슈**:
+  - Protocol에서 `async def stream() -> AsyncIterator`로 선언하면 타입 체커는 이를 "async 함수가 AsyncIterator를 반환"으로 해석하여 `Coroutine[AsyncIterator]`로 인식
+  - 실제 구현에서 async generator function (`async def` + `yield`)은 호출 시 자동으로 `AsyncIterator` 반환
+  - Protocol에서는 `def stream() -> AsyncIterator`로 선언하고, 구현체에서는 `async def stream()`으로 구현하는 것이 올바른 패턴
+- **통합 테스트의 중요성**: 유닛 테스트는 통과했지만, 실제 CLI 실행 시 런타임 에러 발견
+- **타입 체크와 런타임 동작의 차이**: basedpyright가 에러를 감지하지 못했지만 (Protocol이 런타임 체크 가능하므로), 실제 실행 시 문제 발생
+
+소요 시간: 약 15분 (버그 발견, 분석, 수정, 재검증 포함)

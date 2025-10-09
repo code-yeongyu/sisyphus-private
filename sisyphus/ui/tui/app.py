@@ -7,6 +7,7 @@ import anyio
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 from textual.app import App, ComposeResult
 from textual.events import Key
+from textual.message import Message
 
 from sisyphus.ui.tui.components.chat_log import ChatLog
 from sisyphus.ui.tui.components.status_panel import StatusPanel
@@ -14,6 +15,40 @@ from sisyphus.ui.tui.layouts.main import compose_main_layout
 
 if TYPE_CHECKING:
     from sisyphus.utils.types import AgentMessage
+
+
+class UpdateStatusMessage(Message):
+    """상태 업데이트 메시지."""
+
+    def __init__(self, status: str) -> None:
+        """Initialize UpdateStatusMessage.
+
+        Args:
+            status: 상태 메시지
+        """
+        super().__init__()
+        self.status = status
+
+
+class ShowAgentMessage(Message):
+    """에이전트 메시지 표시."""
+
+    def __init__(self, message: "AgentMessage", source: str) -> None:
+        """Initialize ShowAgentMessage.
+
+        Args:
+            message: 에이전트 메시지
+            source: 메시지 소스 ('execute' or 'verify')
+        """
+        super().__init__()
+        self.message = message
+        self.source = source
+
+
+class ShutdownRequestMessage(Message):
+    """종료 요청 메시지 (ExecutionLoop → TUI)."""
+
+    pass
 
 
 class TUI(App[None]):
@@ -51,6 +86,7 @@ class TUI(App[None]):
         self.ctrl_c_count = 0
         self.last_ctrl_c_time: datetime | None = None
         self.shutdown_event = anyio.Event()
+        self.ready_event = anyio.Event()
         self._send_stream: MemoryObjectSendStream[str] | None = None
         self._receive_stream: MemoryObjectReceiveStream[str] | None = None
         self._initialized = False
@@ -64,11 +100,12 @@ class TUI(App[None]):
         self.title = "Sisyphus - Multi-Agent Execution System"
         self.sub_title = "Execute & Verify"
 
-        # 메시지 큐 생성
         (
             self._send_stream,
             self._receive_stream,
         ) = anyio.create_memory_object_stream(max_buffer_size=100)
+
+        self.ready_event.set()
 
     async def on_key(self, event: Key) -> None:
         """Ctrl+C 2회 처리.
@@ -99,7 +136,6 @@ class TUI(App[None]):
         status = self.query_one(StatusPanel)
         status.update_status("🔄 종료 중...")
 
-        # 메시지 큐 정리
         if self._send_stream:
             await self._send_stream.aclose()
         if self._receive_stream:
@@ -108,33 +144,53 @@ class TUI(App[None]):
         self.shutdown_event.set()
         self.exit()
 
+    async def on_update_status_message(self, message: UpdateStatusMessage) -> None:
+        """상태 업데이트 핸들러."""
+        try:
+            status_panel = self.query_one(StatusPanel)
+            status_panel.update_status(message.status)
+        except Exception as e:
+            self.log.error(f"Failed to update status: {e}")
+
+    async def on_show_agent_message(self, message: ShowAgentMessage) -> None:
+        """에이전트 메시지 표시 핸들러."""
+        try:
+            chat_log = self.query_one(ChatLog)
+            match message.source:
+                case "execute":
+                    chat_log.write_execute_message(message.message.content)
+                case "verify":
+                    chat_log.write_verify_message(message.message.content)
+        except Exception as e:
+            self.log.error(f"Failed to show message: {e}")
+
+    async def on_shutdown_request_message(self, message: ShutdownRequestMessage) -> None:
+        """종료 요청 핸들러."""
+        await self._safe_shutdown()
+
     # UIProtocol 구현
     async def initialize(self) -> None:
         """UI 초기화."""
         self._initialized = True
 
     async def show_message(self, message: "AgentMessage", source: str) -> None:
-        """메시지 표시.
+        """메시지 표시 (Thread-Safe).
 
         Args:
             message: 표시할 에이전트 메시지
             source: 메시지 소스 ('execute' or 'verify')
         """
-        chat_log = self.query_one(ChatLog)
-        match source:
-            case "execute":
-                chat_log.write_execute_message(message.content)
-            case "verify":
-                chat_log.write_verify_message(message.content)
+        await self.ready_event.wait()
+        self.post_message(ShowAgentMessage(message, source))
 
     async def show_status(self, status: str) -> None:
-        """상태 표시.
+        """상태 표시 (Thread-Safe).
 
         Args:
             status: 표시할 상태 메시지
         """
-        status_panel = self.query_one(StatusPanel)
-        status_panel.update_status(status)
+        await self.ready_event.wait()
+        self.post_message(UpdateStatusMessage(status))
 
     async def get_input(self) -> str | None:
         """메시지 큐에서 입력 가져오기.

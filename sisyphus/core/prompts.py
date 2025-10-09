@@ -286,7 +286,12 @@ class PromptResolver:
     ) -> str:
         prompt_str = str(prompt) if not isinstance(prompt, str) else prompt
 
-        if Path(prompt_str).exists():
+        try:
+            is_file = Path(prompt_str).exists()
+        except OSError:
+            is_file = False
+
+        if is_file:
             resolved_text = Path(prompt_str).read_text(encoding="utf-8")
 
         elif prompt_str.startswith("/") and "/" not in prompt_str[1:]:

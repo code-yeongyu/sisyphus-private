@@ -468,3 +468,70 @@ All tasks execution STARTED: Thu Oct  9 18:01:49 KST 2025
 
 소요 시간: 약 7분
 
+[2025-10-09 18:16] - Task 11: TaskValidator 구현
+
+### DISCOVERED ISSUES
+- 없음: 기존 코드에서 발견된 문제 없음
+
+### IMPLEMENTATION DECISIONS
+- **TaskValidator 클래스 구현** (sisyphus/core/tasks.py)
+  - agentloop_sdk.py (lines 236-272)의 검증 로직을 참고하여 개선
+  - 정규식 패턴: case insensitive, 공백 variations 지원
+  - content 파라미터 optional: None이면 파일에서 자동 읽기
+- **플래그 검증**:
+  - check_all_goals_accomplished(): `is_all_goals_accomplished\s*=\s*TRUE` (case insensitive)
+  - check_execution_started(): `is_execution_started\s*=\s*TRUE` (case insensitive)
+- **체크박스 검증**:
+  - check_all_checkboxes_completed(): unchecked 없고 checked 1개 이상
+  - extract_uncompleted_checkboxes(): `^\s*-\s*\[\s*\]\s*(.+)` 패턴으로 텍스트 추출
+  - count_total_checkboxes(), count_completed_checkboxes(): 진행률 추적용
+- **에러 처리**:
+  - read_content(): FileNotFoundError 시 빈 문자열 반환 (graceful degradation)
+  - 정규식 미매칭 시 False 또는 빈 리스트 반환
+- **포괄적인 테스트 작성** (33개 테스트)
+  - 플래그 검증: TRUE/FALSE/missing/case insensitive/whitespace variations
+  - 체크박스 검증: all done/some incomplete/empty/case insensitive/whitespace
+  - 미완료 추출: simple/nested/multiline/special chars/numbered tasks
+  - 카운트 기능: total/completed/mixed
+  - 통합 시나리오: 실제 todolist 샘플 사용
+  - 파일 읽기: content None 시 파일에서 자동 읽기
+  - Edge cases: 괄호 내 공백 variations
+
+### PROBLEMS FOR NEXT TASKS
+- 없음: task 12 (ExecutionLoop 구현)을 진행할 준비 완료
+- TaskValidator는 ExecutionLoop에서 작업 완료 여부를 판단하는 데 사용됨
+
+### VERIFICATION RESULTS
+- 테스트 실행 결과: 66개 테스트 모두 통과 (asyncio 33개 + trio 33개)
+  - test_read_content_*: 파일 읽기 성공/실패
+  - test_check_all_goals_accomplished_*: TRUE/FALSE/missing/case/whitespace
+  - test_check_execution_started_*: TRUE/FALSE/missing/case
+  - test_check_all_checkboxes_completed_*: all/some/empty/case/whitespace
+  - test_extract_uncompleted_checkboxes_*: simple/empty/whitespace/multiline/special/numbered
+  - test_count_*_checkboxes_*: total/completed with mixed/empty/case variations
+  - test_validator_with_actual_todolist_sample: 실제 시나리오 통합 테스트
+  - test_validator_reads_from_file_when_content_none: content None 처리
+  - test_validator_regex_whitespace_between_brackets: edge case 검증
+- Ruff 린트 체크: All checks passed!
+- Basedpyright 타입 체크: 0 errors, 0 warnings, 0 notes
+- Git 커밋 예정: `git add sisyphus/core/{tasks.py,tests/test_tasks.py} && git commit -m "feat: implement TaskValidator for todolist"`
+
+### LEARNINGS
+- **정규식 패턴 설계**:
+  - `\s*`로 공백 variations 허용 (들여쓰기, = 주변 공백)
+  - re.IGNORECASE로 case insensitive 검증
+  - re.MULTILINE로 각 라인 독립적 매칭
+- **체크박스 패턴 주의사항**:
+  - `^\s*-\s*\[\s*\]`: uncompleted (공백 허용)
+  - `^\s*-\s*\[x\]`: completed (x는 case insensitive)
+  - 괄호 내 공백도 허용 (`[ ]`, `[  ]`)
+- **원본 코드 개선점**:
+  - agentloop_sdk.py는 함수 기반, TaskValidator는 클래스 기반 (재사용성)
+  - content 파라미터 optional로 유연성 향상
+  - 카운트 메서드 추가로 진행률 추적 가능
+- **테스트 전략**:
+  - BDD 패턴 (# given, # when, # then) 일관성 유지
+  - 실제 ai-todolist.md 샘플로 통합 시나리오 검증
+  - Edge cases 철저히 커버 (공백, case, special chars)
+
+소요 시간: 약 5분

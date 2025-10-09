@@ -123,7 +123,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- [IN PROGRESS] 10. SessionStore 구현 (sisyphus/core/session.py)
+- [IN PROGRESS] 11. TaskValidator 구현 (sisyphus/core/tasks.py)
 
 # 작업 계획
 
@@ -829,20 +829,20 @@ sisyphus/
     - [x] 파일 락이 작동하는가?
     - [x] JSON 파일 형식이 올바른가?
 
-- [ ] 11. TaskValidator 구현 (sisyphus/core/tasks.py)
-  - [ ] 11.1 구현: sisyphus/core/tasks.py 작성
+- [x] 11. TaskValidator 구현 (sisyphus/core/tasks.py)
+  - [x] 11.1 구현: sisyphus/core/tasks.py 작성
     - ai-todolist.md 기반 검증
     - 플래그 및 체크박스 확인
-  - [ ] 11.2 테스트 작성: sisyphus/core/tests/test_tasks.py
-  - [ ] 11.3 테스트 실행: `pytest -xvs sisyphus/core/tests/test_tasks.py`
-  - [ ] 11.4 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/core/tasks.py`
-    - [ ] `basedpyright sisyphus/core/tasks.py`
-  - [ ] 11.5 커밋: `git add sisyphus/core/{tasks.py,tests/test_tasks.py} && git commit -m "feat: implement TaskValidator for todolist"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] 플래그와 체크박스 검증이 작동하는가?
-    - [ ] 미완료 항목 추출이 정확한가?
-    - [ ] 정규식이 올바른가?
+  - [x] 11.2 테스트 작성: sisyphus/core/tests/test_tasks.py
+  - [x] 11.3 테스트 실행: `pytest -xvs sisyphus/core/tests/test_tasks.py`
+  - [x] 11.4 린트 및 타입 체크
+    - [x] `ruff check sisyphus/core/tasks.py`
+    - [x] `basedpyright sisyphus/core/tasks.py`
+  - [x] 11.5 커밋: `git add sisyphus/core/{tasks.py,tests/test_tasks.py} && git commit -m "feat: implement TaskValidator for todolist"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] 플래그와 체크박스 검증이 작동하는가?
+    - [x] 미완료 항목 추출이 정확한가?
+    - [x] 정규식이 올바른가?
 
 - [ ] 12. ExecutionLoop 구현 (sisyphus/core/loop.py)
   - [ ] 12.1 구현: sisyphus/core/loop.py 작성

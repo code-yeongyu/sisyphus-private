@@ -123,11 +123,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 작업 시작 전입니다.
-  - 작업을 시작하면 위의 `is_execution_started`의 값을 TRUE로 바꾸세요.
-  - 사용자가 명시적으로 "작업을 시작하라"라고 말하기 전까지는 절대로 작업하지 않습니다.
-  - **plan reviewer에게 OKAY 사인을 받았더라도 절대 시작하지마십시오**
-  - 사용자가 명시적으로 "작업을 시작하라"라고 말하기 전까지는 절대로 작업하지 않습니다.
+- 3. 유틸리티 모듈 구현 (sisyphus/utils/)
 
 # 작업 계획
 
@@ -437,8 +433,8 @@ sisyphus/
 
 ## Phase 1: 기반 구조 및 타입 정의
 
-- [ ] 1. 프로젝트 의존성 추가 및 기본 구조 설정
-  - [ ] 1.1 pyproject.toml에 의존성 추가
+- [x] 1. 프로젝트 의존성 추가 및 기본 구조 설정
+  - [x] 1.1 pyproject.toml에 의존성 추가
     ```toml
     dependencies = [
         "anyio>=4.11.0",
@@ -454,22 +450,22 @@ sisyphus/
     ```
     - 현재: anyio, trio, uvloop만 존재
     - 변경: typer, textual, rich, httpx, claude-agent-sdk, aiofiles 추가
-  - [ ] 1.2 디렉토리 구조 생성
+  - [x] 1.2 디렉토리 구조 생성
     ```bash
     mkdir -p sisyphus/{agents,core,ui/{tui/components,tui/layouts,cli},utils}
     mkdir -p sisyphus/agents/tests sisyphus/core/tests sisyphus/ui/tests sisyphus/utils/tests
     mkdir -p prompts logs sessions
     touch sisyphus/{agents,core,ui,ui/tui,ui/tui/components,ui/tui/layouts,ui/cli,utils}/__init__.py
     ```
-  - [ ] 1.3 커밋: `git add pyproject.toml sisyphus/ prompts/ && git commit -m "feat: setup project structure and dependencies"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] pyproject.toml에 모든 필수 의존성이 추가되었는가?
-    - [ ] 디렉토리 구조가 설계대로 생성되었는가?
-    - [ ] 모든 패키지에 __init__.py가 존재하는가?
-    - [ ] 커밋이 정상적으로 되었는가?
+  - [x] 1.3 커밋: `git add pyproject.toml sisyphus/ prompts/ && git commit -m "feat: setup project structure and dependencies"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] pyproject.toml에 모든 필수 의존성이 추가되었는가?
+    - [x] 디렉토리 구조가 설계대로 생성되었는가?
+    - [x] 모든 패키지에 __init__.py가 존재하는가?
+    - [x] 커밋이 정상적으로 되었는가?
 
-- [ ] 2. 공통 타입 및 에러 정의 (sisyphus/utils/types.py, errors.py)
-  - [ ] 2.1 구현: sisyphus/utils/types.py 작성
+- [x] 2. 공통 타입 및 에러 정의 (sisyphus/utils/types.py, errors.py)
+  - [x] 2.1 구현: sisyphus/utils/types.py 작성
     ```python
     from dataclasses import dataclass, field
     from typing import Any, Optional
@@ -492,7 +488,7 @@ sisyphus/
         sdk_options: dict[str, Any]
         opencode_server_url: Optional[str] = None
     ```
-  - [ ] 2.2 구현: sisyphus/utils/errors.py 작성
+  - [x] 2.2 구현: sisyphus/utils/errors.py 작성
     ```python
     class SisyphusError(Exception):
         """Base exception"""
@@ -518,20 +514,20 @@ sisyphus/
         """Health check failed"""
         pass
     ```
-  - [ ] 2.3 테스트 작성: sisyphus/utils/tests/test_types.py
-  - [ ] 2.4 테스트 실행: `pytest -xvs sisyphus/utils/tests/test_types.py`
-  - [ ] 2.5 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/utils/types.py sisyphus/utils/errors.py`
-    - [ ] `basedpyright sisyphus/utils/types.py sisyphus/utils/errors.py`
-  - [ ] 2.6 커밋: `git add sisyphus/utils/{types.py,errors.py,tests/} && git commit -m "feat: add common types and error definitions"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] AgentMessage와 AgentConfig 타입이 모든 필드와 함께 정의되었는가?
-    - [ ] 커스텀 예외가 계층적으로 정의되었는가?
-    - [ ] 타입 체크와 린트가 통과하는가?
-    - [ ] 테스트가 작성되고 통과하는가?
+  - [x] 2.3 테스트 작성: sisyphus/utils/tests/test_types.py
+  - [x] 2.4 테스트 실행: `pytest -xvs sisyphus/utils/tests/test_types.py`
+  - [x] 2.5 린트 및 타입 체크
+    - [x] `ruff check sisyphus/utils/types.py sisyphus/utils/errors.py`
+    - [x] `basedpyright sisyphus/utils/types.py sisyphus/utils/errors.py`
+  - [x] 2.6 커밋: `git add sisyphus/utils/{types.py,errors.py,tests/} && git commit -m "feat: add common types and error definitions"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] AgentMessage와 AgentConfig 타입이 모든 필드와 함께 정의되었는가?
+    - [x] 커스텀 예외가 계층적으로 정의되었는가?
+    - [x] 타입 체크와 린트가 통과하는가?
+    - [x] 테스트가 작성되고 통과하는가?
 
-- [ ] 3. 유틸리티 모듈 구현 (sisyphus/utils/)
-  - [ ] 3.1 구현: sisyphus/utils/process.py 작성
+- [x] 3. 유틸리티 모듈 구현 (sisyphus/utils/)
+  - [x] 3.1 구현: sisyphus/utils/process.py 작성
     - anyio 서브프로세스 래퍼
     - 타임아웃 지원
     - SIGTERM → SIGKILL 처리
@@ -572,7 +568,7 @@ sisyphus/
             # 구현 필요
             pass
     ```
-  - [ ] 3.2 구현: sisyphus/utils/logging.py 작성
+  - [x] 3.2 구현: sisyphus/utils/logging.py 작성
     - 세션/에이전트별 로거 팩토리
     - 파일 핸들러 관리 (rotate, 권한)
     - 레벨별 핸들러 (파일: DEBUG, 콘솔: INFO)
@@ -594,18 +590,18 @@ sisyphus/
             # 구현 필요
             pass
     ```
-  - [ ] 3.3 테스트 작성: sisyphus/utils/tests/test_process.py, test_logging.py
-  - [ ] 3.4 테스트 실행: `pytest -xvs sisyphus/utils/tests/`
-  - [ ] 3.5 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/utils/{process.py,logging.py}`
-    - [ ] `basedpyright sisyphus/utils/{process.py,logging.py}`
-  - [ ] 3.6 커밋: `git add sisyphus/utils/{process.py,logging.py,tests/} && git commit -m "feat: add process and logging utilities"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] ProcessManager의 타임아웃 처리가 작동하는가?
-    - [ ] SIGTERM → SIGKILL 전환이 올바른가?
-    - [ ] JSONL 파서가 에러를 처리하는가?
-    - [ ] LoggerFactory가 세션별 로거를 생성하는가?
-    - [ ] 테스트가 모든 케이스를 커버하는가?
+  - [x] 3.3 테스트 작성: sisyphus/utils/tests/test_process.py, test_logging.py
+  - [x] 3.4 테스트 실행: `pytest -xvs sisyphus/utils/tests/`
+  - [x] 3.5 린트 및 타입 체크
+    - [x] `ruff check sisyphus/utils/{process.py,logging.py}`
+    - [x] `basedpyright sisyphus/utils/{process.py,logging.py}`
+  - [x] 3.6 커밋: `git add sisyphus/utils/{process.py,logging.py,tests/} && git commit -m "feat: add process and logging utilities"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] ProcessManager의 타임아웃 처리가 작동하는가?
+    - [x] SIGTERM → SIGKILL 전환이 올바른가?
+    - [x] JSONL 파서가 에러를 처리하는가?
+    - [x] LoggerFactory가 세션별 로거를 생성하는가?
+    - [x] 테스트가 모든 케이스를 커버하는가?
 
 ## Phase 2: Protocol 및 UI 기반 정의
 

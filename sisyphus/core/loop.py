@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from sisyphus.core.prompts import DEFAULT_EXECUTE_PROMPT, DEFAULT_VERIFY_PROMPT
+
 if TYPE_CHECKING:
     from sisyphus.agents.base import Agent
     from sisyphus.core.prompts import PromptResolver
@@ -51,7 +53,7 @@ class ExecutionLoop:
 
     async def run(
         self,
-        execute_prompt: str,
+        execute_prompt: str | None,
         execute_extra: str | None = None,
         verify_prompt: str | None = None,
         verify_extra: str | None = None,
@@ -59,9 +61,9 @@ class ExecutionLoop:
         """Run the execution loop.
 
         Args:
-            execute_prompt: Execute phase prompt
+            execute_prompt: Execute phase prompt (None = use DEFAULT_EXECUTE_PROMPT)
             execute_extra: Extra prompt for execute phase
-            verify_prompt: Optional verify phase prompt
+            verify_prompt: Verify phase prompt (None = use DEFAULT_VERIFY_PROMPT)
             verify_extra: Extra prompt for verify phase
 
         Notes:
@@ -71,16 +73,19 @@ class ExecutionLoop:
         """
         await self.ui.initialize()
 
+        actual_execute_prompt = execute_prompt if execute_prompt is not None else DEFAULT_EXECUTE_PROMPT
+
         iteration = 0
         while True:
             iteration += 1
 
             await self.ui.show_status(f"[Iteration {iteration}] Starting Execute phase...")
-            await self._execute_phase(execute_prompt, execute_extra)
+            await self._execute_phase(actual_execute_prompt, execute_extra)
 
-            if self.verify_agent and verify_prompt:
+            if self.verify_agent:
+                actual_verify_prompt = verify_prompt if verify_prompt is not None else DEFAULT_VERIFY_PROMPT
                 await self.ui.show_status(f"[Iteration {iteration}] Starting Verify phase...")
-                await self._verify_phase(verify_prompt, verify_extra)
+                await self._verify_phase(actual_verify_prompt, verify_extra)
 
             if self.task_validator is None:
                 await self.ui.show_status("Execution complete (no task validator)")

@@ -106,7 +106,7 @@ def create_agent(
 async def _main_cli(
     execute_agent: Agent,
     verify_agent: Agent | None,
-    execute_prompt_spec: str,
+    execute_prompt_spec: str | None,
     verify_prompt_spec: str | None,
     execute_extra: str | None,
     verify_extra: str | None,
@@ -118,8 +118,8 @@ async def _main_cli(
     Args:
         execute_agent: Execute 에이전트
         verify_agent: Verify 에이전트 (Optional)
-        execute_prompt_spec: Execute 프롬프트 spec
-        verify_prompt_spec: Verify 프롬프트 spec (Optional)
+        execute_prompt_spec: Execute 프롬프트 spec (None이면 built-in 사용)
+        verify_prompt_spec: Verify 프롬프트 spec (None이면 built-in 사용)
         execute_extra: Execute 추가 프롬프트
         verify_extra: Verify 추가 프롬프트
         ui: UI Protocol 구현
@@ -151,7 +151,7 @@ async def _main_cli(
 async def _main_tui(
     execute_agent: Agent,
     verify_agent: Agent | None,
-    execute_prompt_spec: str,
+    execute_prompt_spec: str | None,
     verify_prompt_spec: str | None,
     execute_extra: str | None,
     verify_extra: str | None,
@@ -163,8 +163,8 @@ async def _main_tui(
     Args:
         execute_agent: Execute 에이전트
         verify_agent: Verify 에이전트 (Optional)
-        execute_prompt_spec: Execute 프롬프트 spec
-        verify_prompt_spec: Verify 프롬프트 spec (Optional)
+        execute_prompt_spec: Execute 프롬프트 spec (None이면 built-in 사용)
+        verify_prompt_spec: Verify 프롬프트 spec (None이면 built-in 사용)
         execute_extra: Execute 추가 프롬프트
         verify_extra: Verify 추가 프롬프트
         ui: UI Protocol 구현
@@ -238,11 +238,11 @@ def run(
     agent: str | None = typer.Option(None, "--agent", "-a", help="Agent type (claude|droid|opencode)"),
     execute: str | None = typer.Option(None, "--execute", help="Execute agent (AGENT[:MODEL])"),
     verify: str | None = typer.Option(None, "--verify", help="Verify agent (AGENT[:MODEL])"),
-    execute_prompt: str = typer.Option(
-        "prompts/execute_command.md", "--execute-prompt", help="Execute prompt (path/slash/text)"
+    execute_prompt: str | None = typer.Option(
+        None, "--execute-prompt", help="Execute prompt (path/slash/text, default: built-in)"
     ),
     verify_prompt: str | None = typer.Option(
-        "prompts/architect_command.md", "--verify-prompt", help="Verify prompt (path/slash/text)"
+        None, "--verify-prompt", help="Verify prompt (path/slash/text, default: built-in)"
     ),
     execute_extra_prompt: str | None = typer.Option(None, "--execute-extra-prompt", help="Extra execute prompt"),
     verify_extra_prompt: str | None = typer.Option(None, "--verify-extra-prompt", help="Extra verify prompt"),

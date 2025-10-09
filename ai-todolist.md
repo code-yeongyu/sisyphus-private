@@ -958,7 +958,7 @@ sisyphus/
     - 프로젝트 설명, 설치, 사용 예시
     - 의존성 설치 방법 (uv 없을 시 대안)
     - CLI 옵션 설명
-  - [ ] 18.2 커밋: `git add README.md && git commit -m "docs: update README with usage guide"`
+  - [x] 18.2 커밋: `git add README.md && git commit -m "docs: update README with usage guide"`
   - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
     - [x] README가 명확하고 완전한가?
 
@@ -1183,7 +1183,7 @@ sisyphus/
 ### IMPLEMENTATION DECISIONS
 - **execute_command.md**: agentloop_sdk.py의 DEFAULT_PROMPT를 기반으로 작성
   - Executor 에이전트의 책임감 강조: 실제 검증 없이 체크박스 체크 금지
-  - 완료 요구사항 명확화: is_all_goals_accomplished = TRUE + 모든 체크박스 체크
+  - 완료 요구사항 명확화: is_all_goals_accomplished = FALSE + 모든 체크박스 체크
   - 검증 프로세스 상세 설명: 테스트 실행, 수동 테스트, 엣지 케이스 확인
   - 실패 시 재시도 절차 명시
 - **architect_command.md**: agentloop_sdk.py의 verification_prompt를 기반으로 작성

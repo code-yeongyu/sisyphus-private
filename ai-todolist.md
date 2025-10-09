@@ -921,7 +921,7 @@ sisyphus/
   - [x] 15.4 린트 및 타입 체크
     - [x] `ruff check sisyphus/cli.py`
     - [x] `basedpyright sisyphus/cli.py`
-  - [ ] 15.5 커밋: `git add sisyphus/cli.py && git commit -m "feat: implement Typer CLI with all options"`
+  - [x] 15.5 커밋: `git add sisyphus/cli.py && git commit -m "feat: implement Typer CLI with all options"`
   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
     - [ ] 모든 CLI 옵션이 작동하는가?
     - [ ] 에이전트 팩토리가 작동하는가?

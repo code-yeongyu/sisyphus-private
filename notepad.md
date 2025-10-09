@@ -1559,3 +1559,186 @@ message = await ui.get_input()  # receive_stream.receive()
 - 다음: Phase 6 (CLI 통합) - Task 15 (Typer CLI 구현)
 
 소요 시간: 약 1분
+
+[2025-10-09 19:26] - Task 15.1: Typer CLI 구현 시작
+
+## CLI 옵션 설계 (수동 테스트 예시 기반)
+
+### 서브커맨드
+- `sisyphus run` - 메인 실행 명령어
+
+### 에이전트 선택 (3가지 방식)
+1. `--agent AGENT` - 단일 에이전트 (execute + verify 모두 적용)
+   - 예: `--agent claude`
+2. `--execute AGENT[:MODEL]` - Execute 에이전트 지정
+   - 예: `--execute claude:sonnet`
+3. `--verify AGENT[:MODEL]` - Verify 에이전트 지정
+   - 예: `--verify droid:gpt-5`
+
+에이전트 타입: `claude`, `droid`, `opencode`
+
+### 프롬프트 (4가지 옵션)
+- `--execute-prompt PATH/SLASH/TEXT` - Execute 프롬프트
+- `--verify-prompt PATH/SLASH/TEXT` - Verify 프롬프트
+- `--execute-extra-prompt TEXT` - Execute 추가 프롬프트
+- `--verify-extra-prompt TEXT` - Verify 추가 프롬프트
+
+기본값:
+- execute: `prompts/execute_command.md`
+- verify: `prompts/architect_command.md`
+
+### 바이너리 (3가지 우선순위)
+1. `--execute-binary PATH` / `--verify-binary PATH` (최우선)
+2. `--binary PATH` (공통, 개별 override 없을 시)
+3. PATH 환경변수 자동 탐색 (기본값)
+
+### SDK 옵션 (JSON)
+- `--execute-sdk-options JSON` - Execute SDK 옵션
+- `--verify-sdk-options JSON` - Verify SDK 옵션
+예: `--execute-sdk-options '{"temperature": 0.7}'`
+
+### OpenCode
+- `--opencode-server-url URL` - 외부 서버 지정
+기본값: 자동 서버 시작 (localhost)
+
+### UI
+- `--no-tui` - TUI 비활성화, CLI 모드 사용
+기본값: TUI 모드
+
+### 로깅
+- `--log PATH` - 로그 파일 경로
+기본값: `logs/{agent}_{timestamp}_{tz}.log`
+
+## 구현 요구사항
+
+### 1. 에이전트 팩토리
+```python
+def create_agent(agent_spec: str, sdk_options: dict, binary: Path | None, opencode_url: str | None) -> Agent:
+    """
+    agent_spec: "claude" | "claude:sonnet" | "droid" | "droid:gpt-5" | "opencode"
+    파싱: agent_type, model = agent_spec.split(":") if ":" in agent_spec else (agent_spec, None)
+    """
+```
+
+### 2. 프롬프트 resolve
+```python
+# PromptResolver 사용
+prompt_resolver = PromptResolver()
+execute_prompt = prompt_resolver.resolve(execute_prompt_spec, execute_extra_prompt)
+verify_prompt = prompt_resolver.resolve(verify_prompt_spec, verify_extra_prompt)
+```
+
+### 3. JSON 파싱 (검증)
+```python
+try:
+    sdk_options = json.loads(sdk_options_str) if sdk_options_str else {}
+except json.JSONDecodeError as e:
+    raise typer.BadParameter(f"Invalid JSON: {e}")
+```
+
+### 4. URL 검증
+```python
+from urllib.parse import urlparse
+
+def validate_url(url: str) -> str:
+    parsed = urlparse(url)
+    if not parsed.scheme or not parsed.netloc:
+        raise typer.BadParameter(f"Invalid URL: {url}")
+    return url
+```
+
+### 5. 바이너리 우선순위
+```python
+def resolve_binary(common: Path | None, specific: Path | None) -> Path | None:
+    return specific if specific is not None else common
+```
+
+### 6. 비동기 _main 함수
+```python
+async def _main(
+    execute_agent: Agent,
+    verify_agent: Agent | None,
+    execute_prompt: str,
+    verify_prompt: str | None,
+    ui: UIProtocol,
+    session_store: SessionStore,
+) -> None:
+    loop = ExecutionLoop(
+        execute_agent=execute_agent,
+        verify_agent=verify_agent,
+        execute_prompt=execute_prompt,
+        verify_prompt=verify_prompt,
+        ui=ui,
+        session_store=session_store,
+    )
+    await loop.run()
+```
+
+## 예시 사용법
+```bash
+# 기본 (Claude, TUI)
+sisyphus run
+
+# Execute + Verify 분리
+sisyphus run --execute claude:sonnet --verify droid:gpt-5 --no-tui
+
+# 프롬프트 파일
+sisyphus run --execute-prompt prompts/execute_command.md
+
+# 바이너리 지정
+sisyphus run --agent droid --binary /usr/local/bin/droid
+
+# SDK 옵션
+sisyphus run --execute-sdk-options '{"temperature": 0.7}'
+
+# OpenCode 외부 서버
+sisyphus run --agent opencode --opencode-server-url http://localhost:8000
+```
+
+## 주의사항
+- `--agent`와 `--execute`/`--verify` 동시 사용 불가 (상호 배타적)
+- Verify 없이 Execute만 실행 가능
+- 모든 에이전트는 Factory 패턴으로 생성
+- 에러 메시지는 명확하게 (typer.BadParameter)
+
+## _main 함수 설계 수정 (ExecutionLoop 인터페이스 반영)
+
+```python
+async def _main(
+    execute_agent: Agent,
+    verify_agent: Agent | None,
+    execute_prompt_spec: str,
+    verify_prompt_spec: str | None,
+    execute_extra: str | None,
+    verify_extra: str | None,
+    ui: UIProtocol,
+    session_store: SessionStore,
+) -> None:
+    # PromptResolver 생성
+    prompt_resolver = PromptResolver()
+
+    # LoggerFactory 생성
+    logger_factory = LoggerFactory()
+
+    # TaskValidator 생성 (optional)
+    task_validator = TaskValidator() if Path("ai-todolist.md").exists() else None
+
+    # ExecutionLoop 생성
+    loop = ExecutionLoop(
+        execute_agent=execute_agent,
+        ui=ui,
+        session_store=session_store,
+        prompt_resolver=prompt_resolver,
+        logger_factory=logger_factory,
+        verify_agent=verify_agent,
+        task_validator=task_validator,
+    )
+
+    # 루프 실행 (ExecutionLoop 내부에서 prompt resolve)
+    await loop.run(
+        execute_prompt=execute_prompt_spec,
+        execute_extra=execute_extra,
+        verify_prompt=verify_prompt_spec,
+        verify_extra=verify_extra,
+    )
+```

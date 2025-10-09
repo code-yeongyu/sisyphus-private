@@ -80,3 +80,43 @@ Starting Phase 0.5.1: Define Custom Message classes in sisyphus/ui/tui/app.py
 
 소요 시간: 약 4분
 
+---
+
+[2025-10-10 00:14] - Phase 1: TUI Lifecycle Verification (검증 작업)
+
+### VERIFICATION NOTE
+Phase 1은 Phase 0.5 구현 시 이미 완료되었습니다.
+모든 요구사항이 충족됨:
+- ready_event가 __init__()에서 초기화됨 (line 89: `self.ready_event = anyio.Event()`)
+- ready_event.set()이 on_mount()에서 호출됨 (line 108: `self.ready_event.set()`)
+- UI 메서드에서 ready_event.wait() 사용 (line 183, 192)
+- 타입 체크 통과: basedpyright 0 errors, 0 warnings, 0 notes
+- 린트 체크 통과: ruff All checks passed!
+- Git commit c073560에 이미 포함됨
+
+### IMPLEMENTATION DECISIONS
+- 새로운 구현 없이 검증만 수행
+- Phase 0.5에서 이미 모든 작업 완료됨
+- 새로운 커밋 불필요 (Phase 1 요구사항이 이미 c073560 커밋에 포함됨)
+
+### PROBLEMS FOR NEXT TASKS
+- Phase 2 진행 시: 모든 Phase 1 요구사항이 이미 충족되어 있음
+- cli.py 수정 시 `from sisyphus.ui.tui.app import TUI, ShutdownRequestMessage` import 필요
+
+### VERIFICATION RESULTS
+- ✅ ready_event in __init__() at line 89
+- ✅ ready_event.set() in on_mount() at line 108
+- ✅ ready_event.wait() in show_message() at line 183
+- ✅ ready_event.wait() in show_status() at line 192
+- ✅ basedpyright: 0 errors, 0 warnings, 0 notes
+- ✅ ruff check: All checks passed!
+- ✅ Git commit c073560 verified
+- ✅ All Phase 1 checkboxes updated in ai-todolist.md
+
+### LEARNINGS
+- Phase 간 의존성 관리: Phase 0.5에서 Phase 1 요구사항을 미리 구현하여 중복 작업 방지
+- 검증 작업의 중요성: 이미 완료된 작업도 명시적으로 검증하여 확신 확보
+- 커밋 재사용: 동일한 변경사항이 여러 Phase에 걸쳐 있을 때 새로운 커밋 불필요
+
+소요 시간: 약 2분
+

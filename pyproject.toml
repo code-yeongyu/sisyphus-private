@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-sisyphus = "sisyphus.__main__:main"
+sisyphus = "sisyphus.cli:app"
 test = "pytest:main"
 
 [dependency-groups]

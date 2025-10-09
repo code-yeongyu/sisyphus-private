@@ -1,9 +1,4 @@
-from sisyphus.main import print_hello_world
-
-
-def main() -> None:
-    print_hello_world()
-
+from sisyphus.cli import app
 
 if __name__ == "__main__":
-    main()
+    app()

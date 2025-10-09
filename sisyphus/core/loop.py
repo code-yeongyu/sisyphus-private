@@ -133,7 +133,7 @@ class ExecutionLoop:
         await self.execute_agent.send(final_prompt)
         self.execute_logger.info("Prompt sent")
 
-        stream = await self.execute_agent.stream()
+        stream = self.execute_agent.stream()
         async for message in stream:
             await self.ui.show_message(message, source="execute")
             self.execute_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
@@ -172,7 +172,7 @@ class ExecutionLoop:
         await self.verify_agent.send(final_prompt)
         self.verify_logger.info("Prompt sent")
 
-        stream = await self.verify_agent.stream()
+        stream = self.verify_agent.stream()
         async for message in stream:
             await self.ui.show_message(message, source="verify")
             self.verify_logger.debug(f"Message: {message.role} - {message.content[:100]}...")

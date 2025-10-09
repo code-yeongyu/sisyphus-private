@@ -52,3 +52,7 @@ htmlcov/
 */**/.ck
 local-ignore
 */**/local-ignore
+logs/
+sessions/
+claude_session_*.log
+agentloop.json

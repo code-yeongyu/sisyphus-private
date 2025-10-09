@@ -27,8 +27,11 @@ class Agent(Protocol):
         """메시지 전송."""
         ...
 
-    async def stream(self) -> AsyncIterator[AgentMessage]:
-        """응답 스트리밍."""
+    def stream(self) -> AsyncIterator[AgentMessage]:
+        """응답 스트리밍.
+
+        Note: 구현체에서는 async generator function (async def + yield)로 구현할 수 있습니다.
+        """
         ...
 
     async def close(self) -> None:

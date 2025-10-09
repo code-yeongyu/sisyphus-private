@@ -42,7 +42,7 @@ class MockAgent:
     async def send(self, message: str) -> None:
         self.sent_messages.append(message)
 
-    async def stream(self) -> AsyncIterator[AgentMessage]:
+    def stream(self) -> AsyncIterator[AgentMessage]:
         async def _generator() -> AsyncIterator[AgentMessage]:
             for msg in self.messages_to_return:
                 yield msg

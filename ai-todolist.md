@@ -38,17 +38,17 @@
 is_execution_started = TRUE
 
 # 모든 목표 달성 여부
-is_all_goals_accomplished = FALSE
+is_all_goals_accomplished = TRUE
 
 # 병렬 실행 여부
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 2. cli.py에서 TUI/CLI 모드별 _main 함수 분리 (Phase 2 - THE CORE FIX)
-  - _main_cli() 구현 (기존 로직)
-  - _main_tui() 구현 (Task group + ui.run_async() + coordination)
-  - run() 함수 수정 (backend="asyncio" for TUI)
-  - 기존 _main() 제거
+- 3. TUI 모드 실제 실행 테스트 (Phase 3 - INTEGRATION TESTING)
+  - terminalcp로 TUI 모드 테스트
+  - CLI 모드 테스트
+  - 전체 테스트 스위트 실행
+  - playground 환경에서 실제 sisyphus 실행 검증
 
 # 작업 계획
 
@@ -565,8 +565,8 @@ a6cef66 fix: correct Agent Protocol stream() signature and usage
 
 ## Phase 3: 통합 테스트 및 검증
 
-- [ ] 3. TUI 모드 실제 실행 테스트
-  - [ ] 3.1 수동 테스트: `uv run sisyphus` (TUI 모드)
+- [x] 3. TUI 모드 실제 실행 테스트
+  - [x] 3.1 수동 테스트: `uv run sisyphus` (TUI 모드)
     ```bash
     uv run sisyphus
     ```
@@ -576,65 +576,65 @@ a6cef66 fix: correct Agent Protocol stream() signature and usage
       2. ExecutionLoop이 정상 실행되는가?
       3. 메시지가 화면에 표시되는가?
       4. Ctrl+C 2회로 종료 가능한가?
-  - [ ] 3.2 수동 테스트: `uv run sisyphus --no-tui` (CLI 모드)
+  - [x] 3.2 수동 테스트: `uv run sisyphus --no-tui` (CLI 모드)
     ```bash
     uv run sisyphus --no-tui
     ```
     - 예상: CLI 모드가 기존처럼 정상 작동
     - 확인: CLI 출력이 정상인가?
-  - [ ] 3.3 전체 테스트 실행: `pytest -xvs`
+  - [x] 3.3 전체 테스트 실행: `pytest -xvs`
     - 모든 기존 테스트가 통과해야 함
     - 새로운 회귀가 없는지 확인
-  - [ ] 3.4 린트 및 타입 체크 (전체)
-    - [ ] `ruff check sisyphus/`
-    - [ ] `basedpyright sisyphus/`
-  - [ ] 3.5 커밋: `git add . && git commit -m "test: verify TUI and CLI modes work correctly"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] `uv run sisyphus` 실행 시 TUI가 정상 표시되는가?
-    - [ ] "No screens on stack" 에러가 발생하지 않는가?
-    - [ ] ExecutionLoop이 정상 실행되는가?
-    - [ ] `uv run sisyphus --no-tui` 실행 시 CLI 모드가 정상 작동하는가?
-    - [ ] 모든 유닛 테스트가 통과하는가?
-    - [ ] 린트와 타입 체크에 에러가 없는가?
+  - [x] 3.4 린트 및 타입 체크 (전체)
+    - [x] `ruff check sisyphus/`
+    - [x] `basedpyright sisyphus/`
+  - [x] 3.5 커밋: `git add . && git commit -m "test: verify TUI and CLI modes work correctly"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] `uv run sisyphus` 실행 시 TUI가 정상 표시되는가?
+    - [x] "No screens on stack" 에러가 발생하지 않는가?
+    - [x] ExecutionLoop이 정상 실행되는가?
+    - [x] `uv run sisyphus --no-tui` 실행 시 CLI 모드가 정상 작동하는가?
+    - [x] 모든 유닛 테스트가 통과하는가?
+    - [x] 린트와 타입 체크에 에러가 없는가?
 
 # 최종 작업 검증 체크리스트
 
-- [ ] 1. 기능 검증
-  - [ ] TUI 모드에서 "No screens on stack" 에러가 해결되었는가?
-  - [ ] TUI 화면이 정상적으로 표시되는가?
-  - [ ] ExecutionLoop이 TUI와 함께 정상 실행되는가?
-  - [ ] CLI 모드가 기존처럼 정상 작동하는가?
-  - [ ] Ctrl+C로 TUI 종료가 가능한가?
+- [x] 1. 기능 검증
+  - [x] TUI 모드에서 "No screens on stack" 에러가 해결되었는가?
+  - [x] TUI 화면이 정상적으로 표시되는가?
+  - [x] ExecutionLoop이 TUI와 함께 정상 실행되는가?
+  - [x] CLI 모드가 기존처럼 정상 작동하는가?
+  - [x] Ctrl+C로 TUI 종료가 가능한가?
 
-- [ ] 2. 코드 품질 검증
-  - [ ] 모든 타입 힌팅이 올바른가?
-  - [ ] **CLI Backend**: CLI 모드는 `backend` 파라미터가 없는가? (trio 지원)
-  - [ ] **TUI Backend**: TUI 모드만 `backend="asyncio"` 명시되었는가?
-  - [ ] Task group 패턴이 올바르게 구현되었는가?
-  - [ ] `ready_event` 동기화가 올바른가?
-  - [ ] 린트와 타입 체크에 에러가 없는가?
+- [x] 2. 코드 품질 검증
+  - [x] 모든 타입 힌팅이 올바른가?
+  - [x] **CLI Backend**: CLI 모드는 `backend` 파라미터가 없는가? (trio 지원)
+  - [x] **TUI Backend**: TUI 모드만 `backend="asyncio"` 명시되었는가?
+  - [x] Task group 패턴이 올바르게 구현되었는가?
+  - [x] `ready_event` 동기화가 올바른가?
+  - [x] 린트와 타입 체크에 에러가 없는가?
 
-- [ ] 3. 테스트 검증
-  - [ ] 모든 유닛 테스트가 통과하는가?
-  - [ ] TUI 모드 수동 테스트가 성공하는가?
-  - [ ] CLI 모드 수동 테스트가 성공하는가?
+- [x] 3. 테스트 검증
+  - [x] 모든 유닛 테스트가 통과하는가?
+  - [x] TUI 모드 수동 테스트가 성공하는가?
+  - [x] CLI 모드 수동 테스트가 성공하는가?
 
-- [ ] 4. 아키텍처 검증
-  - [ ] Textual App 라이프사이클이 올바르게 관리되는가?
-  - [ ] anyio와 Textual의 통합이 올바른가?
-  - [ ] **Thread-Safe UI 업데이트**: `post_message()` 패턴이 올바르게 구현되었는가?
-  - [ ] **Custom Message**: UpdateStatusMessage, ShowAgentMessage, ShutdownRequestMessage가 정의되었는가?
-  - [ ] **Message 핸들러**: 각 메시지에 대한 핸들러가 예외 처리와 함께 구현되었는가?
-  - [ ] **Shutdown Coordination**: ExecutionLoop ↔ TUI 양방향 종료가 올바르게 작동하는가?
-  - [ ] **Error Propagation**: 한 task의 예외가 다른 task를 취소하는가?
-  - [ ] **Timeout**: ready_event.wait()에 타임아웃이 적용되었는가?
-  - [ ] **Graceful Degradation**: 타임아웃 발생 시 적절히 처리되는가?
+- [x] 4. 아키텍처 검증
+  - [x] Textual App 라이프사이클이 올바르게 관리되는가?
+  - [x] anyio와 Textual의 통합이 올바른가?
+  - [x] **Thread-Safe UI 업데이트**: `post_message()` 패턴이 올바르게 구현되었는가?
+  - [x] **Custom Message**: UpdateStatusMessage, ShowAgentMessage, ShutdownRequestMessage가 정의되었는가?
+  - [x] **Message 핸들러**: 각 메시지에 대한 핸들러가 예외 처리와 함께 구현되었는가?
+  - [x] **Shutdown Coordination**: ExecutionLoop ↔ TUI 양방향 종료가 올바르게 작동하는가?
+  - [x] **Error Propagation**: 한 task의 예외가 다른 task를 취소하는가?
+  - [x] **Timeout**: ready_event.wait()에 타임아웃이 적용되었는가?
+  - [x] **Graceful Degradation**: 타임아웃 발생 시 적절히 처리되는가?
 
-- [ ] 5. 기존 기능 보존
-  - [ ] CLI 모드 동작이 변경되지 않았는가?
-  - [ ] 세션 관리가 여전히 작동하는가?
-  - [ ] 프롬프트 처리가 정상인가?
-  - [ ] 로깅이 정상적으로 작동하는가?
+- [x] 5. 기존 기능 보존
+  - [x] CLI 모드 동작이 변경되지 않았는가?
+  - [x] 세션 관리가 여전히 작동하는가?
+  - [x] 프롬프트 처리가 정상인가?
+  - [x] 로깅이 정상적으로 작동하는가?
 
-- [ ] 6. 실제 작업 검증
-  - [ ] 직접 terminalcp 로, ./local-ignore/playground 밑에 ai-todolist.md 계획서를 작성하고서 sisyphus 를 "직접" 호출하여 실제로 작업이 완료되는것을 확인했는가?
+- [x] 6. 실제 작업 검증
+  - [x] 직접 terminalcp 로, ./local-ignore/playground 밑에 ai-todolist.md 계획서를 작성하고서 sisyphus 를 "직접" 호출하여 실제로 작업이 완료되는것을 확인했는가?

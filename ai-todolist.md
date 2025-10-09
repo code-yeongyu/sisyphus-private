@@ -123,7 +123,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- Task 15.1: Typer CLI 구현 (sisyphus/cli.py)
+- Task 15.4: Lint 및 타입 체크 - 모든 옵션, 에이전트 팩토리, 프롬프트 resolve, 비동기 실행
 
 # 작업 계획
 
@@ -906,7 +906,7 @@ sisyphus/
 ## Phase 6: CLI 통합
 
 - [ ] 15. Typer CLI 구현 (sisyphus/cli.py)
-  - [ ] 15.1 구현: sisyphus/cli.py 작성
+  - [x] 15.1 구현: sisyphus/cli.py 작성
     - 모든 CLI 옵션 구현
     - 에이전트 팩토리
     - 프롬프트 resolve
@@ -918,9 +918,9 @@ sisyphus/
     - 각 옵션별 단위 테스트
     - JSON 파싱 실패 테스트
   - [ ] 15.3 테스트 실행: `pytest -xvs`
-  - [ ] 15.4 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/cli.py`
-    - [ ] `basedpyright sisyphus/cli.py`
+  - [x] 15.4 린트 및 타입 체크
+    - [x] `ruff check sisyphus/cli.py`
+    - [x] `basedpyright sisyphus/cli.py`
   - [ ] 15.5 커밋: `git add sisyphus/cli.py && git commit -m "feat: implement Typer CLI with all options"`
   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
     - [ ] 모든 CLI 옵션이 작동하는가?

@@ -334,3 +334,83 @@ All tasks execution STARTED: Thu Oct  9 17:00:45 KST 2025
 
 소요 시간: 약 3분
 
+
+[2025-10-09 17:53] - 8. OpenCodeAgent 구현
+
+### DISCOVERED ISSUES
+- 없음: 기존 코드에서 발견된 문제 없음
+
+### IMPLEMENTATION DECISIONS
+- OpenCodeAgent 클래스 구현 (sisyphus/agents/opencode.py)
+  - Agent Protocol 준수: supports_interactive = True (OpenCode는 인터랙티브 지원)
+  - DroidAgent와 유사한 패턴 재사용 (imports 상단 배치, TYPE_CHECKING 가드, 바이너리 탐색)
+  - ProcessManager + httpx 조합 사용 (서브프로세스 + HTTP 클라이언트)
+- 바이너리 자동 탐색 로직 (_find_binary)
+  - Priority 1: Constructor binary parameter (exists() 체크)
+  - Priority 2: PATH search (shutil.which)
+  - Priority 3: Environment variable OPENCODE_BINARY
+  - 모두 실패하면 AgentNotFoundError
+- 서버 자동 시작 로직
+  - _find_available_port(): anyio.create_tcp_listener로 사용 가능한 포트 찾기
+  - _start_server(): `opencode serve --host 127.0.0.1 --port {port}` 실행
+  - ProcessManager.run_with_timeout()로 10초 타임아웃
+  - _health_check(): GET /app 엔드포인트, 최대 5회 재시도, 2초 간격
+- 외부 서버 지원
+  - server_url이 제공되면 서버 시작 스킵
+  - 외부 서버에 대해서도 헬스체크 수행
+- 세션 관리 (start_session)
+  - POST /session {"appId": session_id or "default"}
+  - 서버가 ses_xxx 형식 ID 반환
+  - None 체크 후 반환 (타입 안전성)
+- 메시지 전송 (send)
+  - POST /app {"session": session_id, "message": message}
+- SSE 스트리밍 (stream)
+  - GET /event?session={session_id}, Accept: text/event-stream
+  - httpx.AsyncClient.stream()으로 context manager 사용
+  - aiter_lines()로 라인별 파싱
+  - "data: " 접두사 라인만 처리, JSON 파싱
+  - match-case 패턴으로 이벤트 타입별 AgentMessage 생성
+  - JSON 파싱 에러 시 스킵 (크래시 방지)
+- 프로세스 정리 (close)
+  - httpx.AsyncClient.aclose()
+  - ProcessManager.terminate_gracefully()로 5초 타임아웃
+- 포괄적인 테스트 작성 (24개 테스트)
+  - Protocol 검증, supports_interactive, 바이너리 탐색, 서버 자동 시작, 헬스체크 재시도
+  - 외부 서버 URL, 세션 생성, 메시지 전송, SSE 파싱 (다양한 이벤트 타입)
+  - SSE 에러 처리 (잘못된 라인, 잘못된 JSON, 빈 데이터 필드)
+  - BDD 패턴 (# given, # when, # then)
+  - Mock을 사용한 단위 테스트 (httpx.AsyncClient, anyio.abc.Process)
+
+### PROBLEMS FOR NEXT TASKS
+- 없음: task 9 (PromptResolver 구현)를 진행할 준비 완료
+
+### VERIFICATION RESULTS
+- 테스트 실행 결과: 48개 테스트 모두 통과 (asyncio 24개 + trio 24개)
+  - test_opencode_supports_interactive: supports_interactive = True 확인
+  - test_opencode_protocol_compliance: Agent Protocol 만족 확인
+  - test_binary_discovery_*: 바이너리 탐색 로직 검증 (PATH, constructor, env, not found)
+  - test_find_available_port: 포트 찾기 로직 확인
+  - test_server_auto_start: 서버 시작 및 명령 검증
+  - test_server_start_failure: ServerStartError 처리 확인
+  - test_health_check_*: 헬스체크 성공/재시도/실패 확인
+  - test_external_server_url: 외부 서버 사용 시 자동 시작 스킵 확인
+  - test_session_creation_*: 세션 생성 및 기본값 확인
+  - test_send_message: POST /app 호출 확인
+  - test_sse_streaming_*: 다양한 SSE 이벤트 파싱 (message.chunk, tool, error, skip invalid, malformed JSON, empty data)
+  - test_close_*: 리소스 정리 확인 (프로세스 있음/없음)
+- Ruff 린트 체크: All checks passed!
+- Basedpyright 타입 체크: 0 errors, 2 warnings (anyio.abc 관련 무해한 경고)
+- Git 커밋 성공: commit 2c2d9bf "feat: implement OpenCodeAgent with server auto-start"
+
+### LEARNINGS
+- httpx.AsyncClient.stream()은 async context manager로 사용해야 함
+- SSE 스트리밍 테스트 시 Mock 설정이 복잡함:
+  - async def mock_aiter_lines()를 정의하여 AsyncIterator[str] 반환
+  - mock_stream_ctx.__aenter__과 __aexit__을 AsyncMock으로 설정
+  - mock_client.stream.return_value에 mock_stream_ctx 할당
+- anyio.create_tcp_listener로 사용 가능한 포트를 동적으로 찾을 수 있음 (port=0)
+- OpenCode SSE format: "data: {JSON}" 형태, event 필드로 타입 구분 (message.chunk, tool.start, error 등)
+- match-case는 if-elif-else보다 가독성이 좋음 (Python 3.10+)
+- 타입 안전성: session_id가 None일 수 있으므로 명시적 체크 후 반환
+
+소요 시간: 약 12분

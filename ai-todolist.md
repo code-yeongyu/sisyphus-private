@@ -123,9 +123,10 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- Task 16: 엔트리 포인트 수정 (sisyphus/__main__.py)
-  - Sub-task 16.1: sisyphus/__main__.py 수정 (이미 완료됨 - cli.app 호출)
-  - Sub-task 16.2: sisyphus/main.py 삭제 (진행 중)
+- Task 17: 기본 프롬프트 파일 작성
+  - Sub-task 17.1: prompts/execute_command.md 작성 (진행 중)
+  - Sub-task 17.2: prompts/architect_command.md 작성 (대기 중)
+  - Sub-task 17.3: Git commit (대기 중)
 
 # 작업 계획
 
@@ -943,15 +944,15 @@ sisyphus/
 
 ## Phase 7: 프롬프트 파일 및 문서 작성
 
-- [ ] 17. 기본 프롬프트 파일 작성
-  - [ ] 17.1 작성: prompts/execute_command.md
+- [x] 17. 기본 프롬프트 파일 작성
+  - [x] 17.1 작성: prompts/execute_command.md
     - agentloop_sdk.py의 DEFAULT_PROMPT 참고
-  - [ ] 17.2 작성: prompts/architect_command.md
+  - [x] 17.2 작성: prompts/architect_command.md
     - agentloop_sdk.py의 verification_prompt 참고
-  - [ ] 17.3 커밋: `git add prompts/ && git commit -m "feat: add default prompt files"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] 프롬프트가 명확하고 구체적인가?
-    - [ ] 검증 기준이 포함되어 있는가?
+  - [x] 17.3 커밋: `git add prompts/ && git commit -m "feat: add default prompt files"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] 프롬프트가 명확하고 구체적인가?
+    - [x] 검증 기준이 포함되어 있는가?
 
 - [ ] 18. README 및 문서 작성
   - [ ] 18.1 작성: README.md 업데이트
@@ -1004,6 +1005,9 @@ sisyphus/
     - [ ] 프롬프트 처리가 올바른가?
     - [ ] CLI 옵션 검증이 작동하는가?
     - [ ] 에러 메시지가 명확한가?
+    - [ ] terminalcp 로 claude agent 한테 시범 작업을 시켜보았을때 (테스트 계획서와 함께) 잘 작동하는가?
+    - [ ] terminalcp 로 opencode agent 한테 시범 작업을 시켜보았을때 (테스트 계획서와 함께) 잘 작동하는가?
+    - [ ] terminalcp 로 droid agent 한테 시범 작업을 시켜보았을때 (테스트 계획서와 함께) 잘 작동하는가?
 
 # 최종 작업 검증 체크리스트
 
@@ -1171,3 +1175,44 @@ sisyphus/
 - pyproject.toml 변경 후 uv가 자동으로 패키지를 재빌드함 (Uninstalled 1 package → Installed 1 package)
 
 소요 시간: 약 3분
+
+[2025-10-09 20:00] - Task 17: 기본 프롬프트 파일 작성
+
+### DISCOVERED ISSUES
+- None
+
+### IMPLEMENTATION DECISIONS
+- **execute_command.md**: agentloop_sdk.py의 DEFAULT_PROMPT를 기반으로 작성
+  - Executor 에이전트의 책임감 강조: 실제 검증 없이 체크박스 체크 금지
+  - 완료 요구사항 명확화: is_all_goals_accomplished = TRUE + 모든 체크박스 체크
+  - 검증 프로세스 상세 설명: 테스트 실행, 수동 테스트, 엣지 케이스 확인
+  - 실패 시 재시도 절차 명시
+- **architect_command.md**: agentloop_sdk.py의 verification_prompt를 기반으로 작성
+  - 4단계 검증 방법론: ULTRATHINK & PLANNING, COMPREHENSIVE TESTING, VERIFY EACH CHECKBOX, CODE QUALITY REVIEW
+  - 모든 도구 사용 강조: Python, TypeScript, Static Analysis, pytest, Playwright, terminalcp
+  - SKIPPED 항목 절대 불허: 어떤 이유로도 작업 건너뛰기 금지
+  - FULLY_DONE = TRUE 신호를 명확히 정의: 모든 검증 통과 시에만 사용
+- Markdown 형식으로 구조화하여 가독성 향상
+- 검증 기준을 구체적으로 나열하여 명확성 확보
+
+### PROBLEMS FOR NEXT TASKS
+- None
+
+### VERIFICATION RESULTS
+- **파일 생성**:
+  - prompts/execute_command.md: 109 lines (3.8K)
+  - prompts/architect_command.md: 141 lines (4.9K)
+- **내용 검증**:
+  - 프롬프트가 명확하고 구체적 ✅
+  - 검증 기준 포함 ✅
+  - 책임감과 경고 메시지 포함 ✅
+  - 실행 가능한 단계별 지침 제공 ✅
+- **Git 커밋**: `feat: add default prompt files` (2e85f6b)
+
+### LEARNINGS
+- agentloop_sdk.py의 프롬프트는 매우 구체적이고 공격적인 톤을 사용
+- Execute 프롬프트는 "검증자"의 역할을 강조 (executor를 신뢰하지 말고 직접 검증)
+- Architect 프롬프트는 "문제 발견자"의 역할을 강조 (완료 확인이 아닌 이슈 찾기가 목표)
+- SKIPPED 항목에 대한 강력한 제재가 두 프롬프트 모두에 포함됨
+
+소요 시간: 약 5분

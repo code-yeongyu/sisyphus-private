@@ -1785,3 +1785,43 @@ async def _main(
 - match-case는 Python 3.10+의 강력한 패턴 매칭 기능 (if-elif보다 명확)
 
 소요 시간: 약 15분
+
+[2025-10-09 20:00] - Task 17: 기본 프롬프트 파일 작성
+
+### DISCOVERED ISSUES
+- 없음: 기존 코드에서 발견된 문제 없음
+
+### IMPLEMENTATION DECISIONS
+- agentloop_sdk.py의 DEFAULT_PROMPT (lines 1707-1748)를 기반으로 execute_command.md 작성
+- agentloop_sdk.py의 verification_prompt (lines 936-988, 1360-1411)를 기반으로 architect_command.md 작성
+- Hook이 execute_command.md를 자동으로 개선: 더 명확하고 구조화된 형태로 변환
+- Hook이 architect_command.md도 자동으로 개선: 더 구체적이고 실행 가능한 지침으로 변환
+- 두 프롬프트 모두 명확성, 구체성, 검증 기준 포함 여부를 검증
+
+### PROBLEMS FOR NEXT TASKS
+- 없음: Task 18 (README 작성)을 진행할 준비 완료
+
+### VERIFICATION RESULTS
+- 파일 생성 확인:
+  - prompts/execute_command.md: 110 lines (Hook에 의해 개선됨)
+  - prompts/architect_command.md: 141 lines (Hook에 의해 개선됨)
+- 명확성 검증: ✅ 두 프롬프트 모두 역할과 책임이 명확히 정의됨
+- 구체성 검증: ✅ 단계별 지침과 구체적인 명령어 예시 포함
+- 검증 기준 검증: ✅ Success/Failure 기준과 체크리스트 명시
+- Git 커밋: [71fe3cb] "feat: add default prompt files" 성공
+- ai-todolist.md 업데이트: Task 17 및 모든 sub-task를 [x]로 체크
+
+### LEARNINGS
+- Hook 시스템의 강력함: 파일 작성 후 자동으로 프롬프트를 더 명확하고 구조화된 형태로 개선
+- execute_command.md Hook 개선 사항:
+  - 오케스트레이터 관점으로 재작성 (executor를 호출하는 역할)
+  - 검증 프로세스 강화 (executor 신뢰하지 말고 직접 검증)
+  - 체크박스 및 플래그 관리 지침 명확화
+- architect_command.md Hook 개선 사항:
+  - 더 공격적이고 비판적인 톤으로 변경
+  - FULLY_DONE = TRUE 신호 명확화
+  - 검증 방법론 체계화 (ULTRATHINK → 테스팅 → 피드백)
+- 프롬프트 파일의 중요성: 에이전트의 행동을 결정하는 핵심 지침서
+- agentloop_sdk.py의 프롬프트가 이미 잘 작성되어 있어 참고하기 좋았음
+
+소요 시간: 약 3분

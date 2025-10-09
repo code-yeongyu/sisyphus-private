@@ -370,8 +370,8 @@ a6cef66 fix: correct Agent Protocol stream() signature and usage
 
 ## Phase 2: cli.py 수정 - anyio backend 명시 및 TUI/CLI 분리
 
-- [ ] 2. cli.py에서 TUI/CLI 모드별 _main 함수 분리
-  - [ ] 2.1 구현: `_main_cli()` 함수 작성 (기존 `_main` 로직)
+- [x] 2. cli.py에서 TUI/CLI 모드별 _main 함수 분리
+  - [x] 2.1 구현: `_main_cli()` 함수 작성 (기존 `_main` 로직)
     ```python
     async def _main_cli(
         execute_agent: Agent,
@@ -407,7 +407,7 @@ a6cef66 fix: correct Agent Protocol stream() signature and usage
     ```
     - 현재: 단일 `_main()` 함수
     - 변경: `_main_cli()` 함수로 분리 (기존 로직 그대로)
-  - [ ] 2.2 구현: `_main_tui()` 함수 작성 (TUI + ExecutionLoop 병렬 실행 + Shutdown/Error 처리)
+  - [x] 2.2 구현: `_main_tui()` 함수 작성 (TUI + ExecutionLoop 병렬 실행 + Shutdown/Error 처리)
     ```python
     async def _main_tui(
         execute_agent: Agent,
@@ -495,7 +495,7 @@ a6cef66 fix: correct Agent Protocol stream() signature and usage
       * **Shutdown Coordination**: ExecutionLoop 완료 시 `ShutdownRequestMessage` 전송
       * **Bidirectional Shutdown**: `monitor_shutdown()` task가 `shutdown_event.wait()` 후 `tg.cancel_scope.cancel()` 호출
       * **Exception Handling**: `except*` (ExceptionGroup) 및 `except` (일반 예외) 모두 처리
-  - [ ] 2.3 구현: `run()` 함수에서 모드별 분기
+  - [x] 2.3 구현: `run()` 함수에서 모드별 분기
     ```python
     # run() 함수 내부 (line 194~)
     ui = create_ui("cli" if no_tui else "tui")
@@ -537,31 +537,31 @@ a6cef66 fix: correct Agent Protocol stream() signature and usage
       * `_main_cli` vs `_main_tui` 분기
       * **CLI 모드**: `backend` 미지정 (trio 지원)
       * **TUI 모드**: `backend="asyncio"` 명시 (Textual 제약)
-  - [ ] 2.4 구현: 기존 `_main()` 함수 제거
+  - [x] 2.4 구현: 기존 `_main()` 함수 제거
     - 현재: `async def _main(...)`
     - 변경: 삭제 (더 이상 사용 안 함)
-  - [ ] 2.5 테스트 작성: CLI 모드 테스트 (sisyphus/tests/test_cli.py)
+  - [x] 2.5 테스트 작성: CLI 모드 테스트 (sisyphus/tests/test_cli.py)
     - 기존 테스트가 여전히 통과하는지 확인
     - `_main_cli` 로직이 기존 `_main`과 동일한지 검증
-  - [ ] 2.6 테스트 실행: `pytest -xvs sisyphus/tests/test_cli.py`
-  - [ ] 2.7 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/cli.py`
-    - [ ] `basedpyright sisyphus/cli.py`
-  - [ ] 2.8 커밋: `git add sisyphus/cli.py sisyphus/tests/ && git commit -m "refactor: split _main into _main_cli and _main_tui for proper Textual integration"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] `_main_cli()` 함수가 기존 `_main()` 로직과 동일한가?
-    - [ ] `_main_tui()` 함수가 `anyio.create_task_group()`를 사용하는가?
-    - [ ] `ui.run_async()`가 task group에서 시작되는가?
-    - [ ] ExecutionLoop이 `ui.ready_event.wait()` 후 시작되는가?
-    - [ ] **Timeout**: `ready_event.wait()`에 10초 타임아웃이 적용되었는가?
-    - [ ] **Error Handling**: ExecutionLoop의 예외가 try-except로 처리되고 UI에 표시되는가?
-    - [ ] **Shutdown Coordination**: ExecutionLoop 완료 시 `ShutdownRequestMessage` 전송하는가?
-    - [ ] **Bidirectional Shutdown**: `monitor_shutdown()` task가 별도로 실행되어 `shutdown_event.wait()` 후 `tg.cancel_scope.cancel()` 호출하는가?
-    - [ ] **Exception Handling**: `except*` (ExceptionGroup)와 `except` (일반 예외) 모두 처리하는가?
-    - [ ] **CLI Backend**: CLI 모드는 `backend` 파라미터가 없는가? (trio 지원)
-    - [ ] **TUI Backend**: TUI 모드만 `backend="asyncio"`가 명시되었는가?
-    - [ ] 기존 테스트가 여전히 통과하는가?
-    - [ ] 타입 체크와 린트가 통과하는가?
+  - [x] 2.6 테스트 실행: `pytest -xvs sisyphus/tests/test_cli.py`
+  - [x] 2.7 린트 및 타입 체크
+    - [x] `ruff check sisyphus/cli.py`
+    - [x] `basedpyright sisyphus/cli.py`
+  - [x] 2.8 커밋: `git add sisyphus/cli.py sisyphus/tests/ && git commit -m "refactor: split _main into _main_cli and _main_tui for proper Textual integration"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] `_main_cli()` 함수가 기존 `_main()` 로직과 동일한가?
+    - [x] `_main_tui()` 함수가 `anyio.create_task_group()`를 사용하는가?
+    - [x] `ui.run_async()`가 task group에서 시작되는가?
+    - [x] ExecutionLoop이 `ui.ready_event.wait()` 후 시작되는가?
+    - [x] **Timeout**: `ready_event.wait()`에 10초 타임아웃이 적용되었는가?
+    - [x] **Error Handling**: ExecutionLoop의 예외가 try-except로 처리되고 UI에 표시되는가?
+    - [x] **Shutdown Coordination**: ExecutionLoop 완료 시 `ShutdownRequestMessage` 전송하는가?
+    - [x] **Bidirectional Shutdown**: `monitor_shutdown()` task가 별도로 실행되어 `shutdown_event.wait()` 후 `tg.cancel_scope.cancel()` 호출하는가?
+    - [x] **Exception Handling**: `except*` (ExceptionGroup) 만 처리 (except와 동시 사용 불가)
+    - [x] **CLI Backend**: CLI 모드는 `backend` 파라미터가 없는가? (trio 지원)
+    - [x] **TUI Backend**: TUI 모드만 `backend="asyncio"`가 명시되었는가?
+    - [x] 기존 테스트가 여전히 통과하는가?
+    - [x] 타입 체크와 린트가 통과하는가?
 
 ## Phase 3: 통합 테스트 및 검증
 

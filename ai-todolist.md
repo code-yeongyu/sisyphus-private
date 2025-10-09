@@ -123,7 +123,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 6. ClaudeAgent 구현 (sisyphus/agents/claude.py)
+- [IN_PROGRESS] 7. DroidAgent 구현 (sisyphus/agents/droid.py)
 
 # 작업 계획
 
@@ -720,28 +720,28 @@ sisyphus/
     - [x] 메시지 변환이 정확한가?
     - [x] 타입 체크와 린트가 통과하는가?
 
-- [ ] 7. DroidAgent 구현 (sisyphus/agents/droid.py)
-  - [ ] 7.1 구현: sisyphus/agents/droid.py 작성
+- [x] 7. DroidAgent 구현 (sisyphus/agents/droid.py)
+  - [x] 7.1 구현: sisyphus/agents/droid.py 작성
     - 참고: resources/droid-cli-integration.md, utils/process.py
     - 바이너리 자동 탐색 (PATH → --binary → 환경변수)
     - stream-json 모드, UUID 생성
     - autonomy 항상 "skip-permissions-unsafe"
     - ProcessManager 활용 (타임아웃, JSONL 파싱)
     - 에러 처리: 불량 JSONL, 프로세스 조기 종료, 타임아웃
-  - [ ] 7.2 테스트 작성: sisyphus/agents/tests/test_droid.py
+  - [x] 7.2 테스트 작성: sisyphus/agents/tests/test_droid.py
     - Mock 프로세스, JSONL 파싱 에러, 타임아웃 테스트
-  - [ ] 7.3 테스트 실행: `pytest -xvs sisyphus/agents/tests/test_droid.py`
-  - [ ] 7.4 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/agents/droid.py`
-    - [ ] `basedpyright sisyphus/agents/droid.py`
-  - [ ] 7.5 커밋: `git add sisyphus/agents/{droid.py,tests/test_droid.py} && git commit -m "feat: implement DroidAgent with stream-json mode"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] Agent Protocol을 만족하는가?
-    - [ ] 바이너리 자동 탐색이 작동하는가?
-    - [ ] UUID 생성 및 세션 재개가 구현되었는가?
-    - [ ] JSONL 파싱 에러가 처리되는가?
-    - [ ] 타임아웃이 작동하는가?
-    - [ ] autonomy가 항상 unsafe인가?
+  - [x] 7.3 테스트 실행: `pytest -xvs sisyphus/agents/tests/test_droid.py`
+  - [x] 7.4 린트 및 타입 체크
+    - [x] `ruff check sisyphus/agents/droid.py`
+    - [x] `basedpyright sisyphus/agents/droid.py`
+  - [x] 7.5 커밋: `git add sisyphus/agents/{droid.py,tests/test_droid.py} && git commit -m "feat: implement DroidAgent with stream-json mode"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] Agent Protocol을 만족하는가?
+    - [x] 바이너리 자동 탐색이 작동하는가?
+    - [x] UUID 생성 및 세션 재개가 구현되었는가?
+    - [x] JSONL 파싱 에러가 처리되는가?
+    - [x] 타임아웃이 작동하는가?
+    - [x] autonomy가 항상 unsafe인가?
 
 - [ ] 8. OpenCodeAgent 구현 (sisyphus/agents/opencode.py)
   - [ ] 8.1 구현: sisyphus/agents/opencode.py 작성

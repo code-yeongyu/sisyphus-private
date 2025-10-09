@@ -123,7 +123,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 5. UIProtocol 정의 및 팩토리 (sisyphus/ui/base.py)
+- 6. ClaudeAgent 구현 (sisyphus/agents/claude.py)
 
 # 작업 계획
 
@@ -700,25 +700,25 @@ sisyphus/
 
 ## Phase 3: Agent 구현
 
-- [ ] 6. ClaudeAgent 구현 (sisyphus/agents/claude.py)
-  - [ ] 6.1 구현: sisyphus/agents/claude.py 작성
+- [x] 6. ClaudeAgent 구현 (sisyphus/agents/claude.py)
+  - [x] 6.1 구현: sisyphus/agents/claude.py 작성
     - 참고 코드: local-ignore/agentloop_sdk.py의 ClaudeStreamClient
     - ClaudeAgent 클래스는 Agent Protocol을 만족해야 함
     - SDK 초기화, 세션 재개, 메시지 변환 구현
     - SessionResumeError 처리
-  - [ ] 6.2 테스트 작성: sisyphus/agents/tests/test_claude.py
+  - [x] 6.2 테스트 작성: sisyphus/agents/tests/test_claude.py
     - Mock을 사용한 초기화/세션 테스트
-  - [ ] 6.3 테스트 실행: `pytest -xvs sisyphus/agents/tests/test_claude.py`
-  - [ ] 6.4 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/agents/claude.py`
-    - [ ] `basedpyright sisyphus/agents/claude.py`
-  - [ ] 6.5 커밋: `git add sisyphus/agents/{claude.py,tests/test_claude.py} && git commit -m "feat: implement ClaudeAgent with SDK integration"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] Agent Protocol을 만족하는가? (isinstance 검증)
-    - [ ] SDK 옵션 오버라이드가 작동하는가?
-    - [ ] 세션 재개 로직이 구현되었는가?
-    - [ ] 메시지 변환이 정확한가?
-    - [ ] 타입 체크와 린트가 통과하는가?
+  - [x] 6.3 테스트 실행: `pytest -xvs sisyphus/agents/tests/test_claude.py`
+  - [x] 6.4 린트 및 타입 체크
+    - [x] `ruff check sisyphus/agents/claude.py`
+    - [x] `basedpyright sisyphus/agents/claude.py`
+  - [x] 6.5 커밋: `git add sisyphus/agents/{claude.py,tests/test_claude.py} && git commit -m "feat: implement ClaudeAgent with SDK integration"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] Agent Protocol을 만족하는가? (isinstance 검증)
+    - [x] SDK 옵션 오버라이드가 작동하는가?
+    - [x] 세션 재개 로직이 구현되었는가?
+    - [x] 메시지 변환이 정확한가?
+    - [x] 타입 체크와 린트가 통과하는가?
 
 - [ ] 7. DroidAgent 구현 (sisyphus/agents/droid.py)
   - [ ] 7.1 구현: sisyphus/agents/droid.py 작성

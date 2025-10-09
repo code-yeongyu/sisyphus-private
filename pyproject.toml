@@ -1,0 +1,79 @@
+[project]
+name = "sisyphus"
+version = "0.1.0"
+description = ""
+authors = [{ name = "YeonGyu-Kim", email = "code.yeon.gyu@gmail.com" }]
+requires-python = "~=3.12.0"
+readme = "README.md"
+dependencies = [
+    "anyio>=4.11.0",
+    "trio>=0.31.0",
+    "uvloop>=0.21.0",
+]
+
+[project.scripts]
+sisyphus = "sisyphus.__main__:main"
+test = "pytest:main"
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.31.6",
+    "pytest>=8.4.2",
+    "pytest-anyio>=0.0.0",
+    "ruff>=0.14.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+python_files = ["tests.py", "test_*.py", "*_tests.py", "*_test.py"]
+testpaths = ["tests"]
+addopts = """\
+    --disable-warnings \
+"""
+log_level = "ERROR"
+
+[tool.basedpyright]
+pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "standard"
+analyzeUnannotatedFunctions = true
+enableTypeIgnoreComments = true
+reportMissingImports = false
+reportMissingTypeStubs = false
+reportAttributeAccessIssue = "warning"
+reportGeneralTypeIssues = "error"
+reportIncompatibleMethodOverride = "warning"
+reportIncompatibleVariableOverride = "warning"
+reportAssignmentType = "error"
+reportMissingTypeArgument = "error"
+
+[tool.ruff]
+line-length = 119
+target-version = "py312"
+lint.select = [
+    "PLE",
+    "PLW",
+    "E",
+    "W",
+    "F",
+    "I",
+    "Q",
+    "UP",
+    "C4",
+    "PT",
+    "ANN001",
+    "ASYNC",
+]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+docstring-quotes = "double"
+multiline-quotes = "double"
+
+[tool.ruff.lint.flake8-pytest-style]
+mark-parentheses = true
+fixture-parentheses = true

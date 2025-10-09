@@ -155,3 +155,58 @@ All tasks execution STARTED: Thu Oct  9 16:02:47 KST 2025
 
 소요 시간: 약 2분
 
+
+[2025-10-09 17:02] - ORCHESTRATION STARTED
+All tasks execution STARTED: Thu Oct  9 17:00:45 KST 2025
+
+[2025-10-09 17:06] - 5. UIProtocol 정의 및 팩토리 (sisyphus/ui/base.py)
+
+### DISCOVERED ISSUES
+- 없음: 기존 코드에서 발견된 문제 없음 (base.py와 test_base.py가 이미 부분적으로 구현되어 있었음)
+
+### IMPLEMENTATION DECISIONS
+- UIProtocol 정의 (sisyphus/ui/base.py)
+  - @runtime_checkable 데코레이터 사용으로 런타임 타입 체킹 가능
+  - 5개의 async 메서드 정의: initialize, show_message, show_status, get_input, close
+  - TYPE_CHECKING 가드로 AgentMessage 임포트 (순환 참조 방지)
+  - show_message는 source 파라미터로 'execute'/'verify' 구분
+  - get_input은 TUI only (CLI는 None 반환)
+- create_ui 팩토리 함수 구현
+  - mode == "tui"이면 TUI 반환, 아니면 CLI 반환
+  - lazy import로 순환 참조 방지
+- 포괄적인 테스트 작성 (sisyphus/ui/tests/test_base.py)
+  - MockUI: Protocol의 모든 메서드를 완전히 구현 + 상태 추적 (messages, statuses, inputs, initialized, closed)
+  - IncompleteUI: 일부 메서드만 구현 (Protocol 미충족)
+  - Protocol 검증: isinstance()로 완전/불완전 구현 구분
+  - 각 메서드별 개별 동작 테스트 (9개 테스트)
+  - 여러 메시지/상태 순차 처리 테스트
+
+### PROBLEMS FOR NEXT TASKS
+- 없음: task 6 (ClaudeAgent 구현)를 진행할 준비 완료
+- TUI/CLI 클래스는 아직 미구현 (Phase 5에서 구현 예정)
+
+### VERIFICATION RESULTS
+- Protocol 정의 검증:
+  - @runtime_checkable 데코레이터 적용 확인
+  - 모든 메서드가 올바른 타입 힌트와 ellipsis 본문 사용
+  - TYPE_CHECKING 가드로 AgentMessage 타입 안전성 확보
+- 팩토리 함수 검증:
+  - create_ui 함수 시그니처 확인 (callable 테스트 통과)
+  - lazy import 구조 확인 (TUI/CLI는 Phase 5에서 구현 예정)
+- 테스트 실행 결과: 19개 테스트 모두 통과 (asyncio 9개 + trio 9개 + factory 1개)
+  - test_protocol_validation_complete: MockUI가 UIProtocol 만족
+  - test_protocol_validation_incomplete: IncompleteUI가 Protocol 미만족
+  - test_mock_ui_*: 각 메서드 동작 검증 (initialize, show_message, show_status, get_input, close)
+  - test_mock_ui_multiple_*: 여러 메시지/상태 순차 처리 검증
+- Ruff 린트 체크: All checks passed!
+- Basedpyright 타입 체크: 0 errors, 2 warnings (TUI/CLI 미구현으로 인한 예상된 경고)
+- Git 커밋 성공: commit 4e83d7f "feat: define UIProtocol and factory"
+
+### LEARNINGS
+- ruff는 TYPE_CHECKING 가드 내의 타입을 인식하고 자동으로 쿼터를 제거/추가함
+- Agent Protocol과 동일한 패턴을 재사용하여 일관성 있는 코드 구조 유지
+- Mock 클래스에 상태 추적 기능을 추가하면 테스트가 더 강력해짐 (messages, statuses 리스트로 검증)
+- 팩토리 함수는 lazy import를 사용하여 순환 참조 방지 (from ... import 를 함수 내부에 배치)
+
+소요 시간: 약 4분
+

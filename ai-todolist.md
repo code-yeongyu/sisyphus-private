@@ -114,7 +114,7 @@ Data Flow:
 현재 `agentloop_sdk.py`는 Claude Agent SDK만 지원하며, UI와 로직이 강하게 결합되어 있어 확장이 어려움. 새로운 에이전트(Droid, OpenCode)를 추가하고, execute와 verify를 별개 에이전트로 실행하며, 다양한 프롬프트 형식을 지원하는 유연한 시스템이 필요함. SOLID 원칙을 따르면서도 실용적인 설계를 통해 확장성과 유지보수성을 확보. Plan-reviewer 피드백을 반영하여 외부 통합 안정성과 에러 처리를 강화.
 
 # 작업 시작 여부
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 모든 목표 달성 여부
 is_all_goals_accomplished = FALSE
@@ -123,7 +123,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 4. Agent Protocol 정의 (sisyphus/agents/base.py)
+- 5. UIProtocol 정의 및 팩토리 (sisyphus/ui/base.py)
 
 # 작업 계획
 
@@ -650,8 +650,8 @@ sisyphus/
     - [x] 타입 힌팅이 정확한가?
     - [x] 테스트가 Protocol 검증을 포함하는가?
 
-- [ ] 5. UIProtocol 정의 및 팩토리 (sisyphus/ui/base.py)
-  - [ ] 5.1 구현: sisyphus/ui/base.py 작성
+- [x] 5. UIProtocol 정의 및 팩토리 (sisyphus/ui/base.py)
+  - [x] 5.1 구현: sisyphus/ui/base.py 작성
     ```python
     from typing import Protocol, Optional, runtime_checkable
     from sisyphus.utils.types import AgentMessage
@@ -689,14 +689,14 @@ sisyphus/
             from sisyphus.ui.cli import CLI
             return CLI()
     ```
-  - [ ] 5.2 테스트 작성: sisyphus/ui/tests/test_base.py
-  - [ ] 5.3 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/ui/base.py`
-    - [ ] `basedpyright sisyphus/ui/base.py`
-  - [ ] 5.4 커밋: `git add sisyphus/ui/{base.py,tests/} && git commit -m "feat: define UIProtocol and factory"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] Protocol이 올바르게 정의되었는가?
-    - [ ] 팩토리 함수가 작동하는가?
+  - [x] 5.2 테스트 작성: sisyphus/ui/tests/test_base.py
+  - [x] 5.3 린트 및 타입 체크
+    - [x] `ruff check sisyphus/ui/base.py`
+    - [x] `basedpyright sisyphus/ui/base.py`
+  - [x] 5.4 커밋: `git add sisyphus/ui/{base.py,tests/} && git commit -m "feat: define UIProtocol and factory"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] Protocol이 올바르게 정의되었는가?
+    - [x] 팩토리 함수가 작동하는가?
 
 ## Phase 3: Agent 구현
 

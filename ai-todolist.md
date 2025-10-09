@@ -44,9 +44,11 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 1. TUI 클래스에 준비 신호 추가 (sisyphus/ui/tui/app.py) - VERIFICATION ONLY
-  - Phase 0.5에서 이미 구현 완료된 내용 검증 중
-  - ready_event 존재 확인 및 체크박스 업데이트
+- 2. cli.py에서 TUI/CLI 모드별 _main 함수 분리 (Phase 2 - THE CORE FIX)
+  - _main_cli() 구현 (기존 로직)
+  - _main_tui() 구현 (Task group + ui.run_async() + coordination)
+  - run() 함수 수정 (backend="asyncio" for TUI)
+  - 기존 _main() 제거
 
 # 작업 계획
 

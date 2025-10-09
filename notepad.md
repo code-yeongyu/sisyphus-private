@@ -120,3 +120,110 @@ Phase 1은 Phase 0.5 구현 시 이미 완료되었습니다.
 
 소요 시간: 약 2분
 
+---
+
+[2025-10-10 00:20] - Phase 2: cli.py Refactoring (THE CORE FIX)
+
+### DISCOVERED ISSUES
+- 없음 - 기존 코드는 잘 작성되어 있었음
+- 단, `_main()` 함수가 TUI를 시작하지 않고 바로 ExecutionLoop을 실행하는 문제가 있었음
+
+### IMPLEMENTATION DECISIONS
+- **_main_cli() 생성**: 기존 `_main()` 로직을 그대로 복사하여 CLI 모드 전용 함수 생성
+  - 이유: CLI 모드는 기존 방식 유지 (간단하고 안정적)
+  - ExecutionLoop을 직접 실행하는 방식
+
+- **_main_tui() 생성**: TUI와 ExecutionLoop을 병렬 실행하는 새로운 함수
+  - `anyio.create_task_group()` 사용하여 3개 task 병렬 실행:
+    1. `ui.run_async()` - TUI 시작 (백그라운드)
+    2. `run_execution_loop()` - ExecutionLoop 실행 (TUI 준비 후)
+    3. `monitor_shutdown()` - Shutdown 이벤트 모니터링
+
+- **Timeout 구현**: `anyio.move_on_after(10.0)` 사용
+  - TUI 초기화가 10초 내에 완료되지 않으면 TimeoutError 발생
+  - 무한 대기 방지
+
+- **Error Handling**: ExecutionLoop의 모든 예외를 try-except로 캡처
+  - 에러를 UI에 표시: `await ui.show_status(f"[bold red]Error: {e}[/bold red]")`
+  - 종료 요청: `ui.post_message(ShutdownRequestMessage())`
+  - 예외 재발생: TaskGroup이 다른 task도 취소하도록
+
+- **Shutdown Coordination (양방향)**:
+  - ExecutionLoop → TUI: ExecutionLoop 완료 시 `ShutdownRequestMessage()` 전송
+  - TUI → ExecutionLoop: `monitor_shutdown()` task가 `shutdown_event.wait()` 후 `tg.cancel_scope.cancel()` 호출
+  - 어느 쪽에서든 종료 요청 가능
+
+- **Exception Handling**: `except*` 만 사용
+  - Python 3.11+에서 `except`와 `except*` 동시 사용 불가
+  - TaskGroup은 ExceptionGroup을 발생시키므로 `except*` 사용
+  - SystemExit, KeyboardInterrupt는 정상 종료로 처리 (pass)
+
+- **Backend 선택**:
+  - CLI 모드: `backend` 파라미터 없음 (anyio가 trio/asyncio 자동 선택, trio 지원)
+  - TUI 모드: `backend="asyncio"` 명시 (Textual은 asyncio만 지원, trio 미지원)
+
+- **Import 위치**: `from sisyphus.ui.tui.app import TUI, ShutdownRequestMessage`를 파일 상단으로 이동
+  - Nested import 제거 (PEP 8 준수)
+
+### PROBLEMS FOR NEXT TASKS
+- Phase 3에서 실제 `uv run sisyphus` 실행 테스트 필요
+- "No screens on stack" 에러가 해결되었는지 확인
+- TUI 초기화 timeout이 실제로 작동하는지 확인
+- Shutdown coordination이 양방향으로 잘 작동하는지 확인
+
+### VERIFICATION RESULTS
+- pytest sisyphus/tests/test_cli.py: **56 passed in 0.54s** ✅
+  - asyncio 백엔드: 28개 테스트 통과
+  - trio 백엔드: 28개 테스트 통과
+  - 기존 CLI 모드 동작 영향 없음 확인
+
+- ruff check sisyphus/cli.py: **All checks passed!** ✅
+
+- basedpyright sisyphus/cli.py: **0 errors, 1 warning, 0 notes** ✅
+  - Warning: anyio.abc.TaskGroup 타입 힌팅 (알려진 basedpyright 이슈, 무시 가능)
+
+### IMPLEMENTATION DETAILS
+
+**Lines 105-147: _main_cli() 함수**
+- 기존 `_main()` 로직과 100% 동일
+- PromptResolver, LoggerFactory, TaskValidator, ExecutionLoop 생성 및 실행
+
+**Lines 150-233: _main_tui() 함수**
+- Line 173: TUI 타입 체크 (isinstance 검증)
+- Lines 176-180: monitor_shutdown() 내부 함수 (shutdown_event 모니터링)
+- Lines 182-221: run_execution_loop() 내부 함수
+  - Line 186-190: ready_event.wait() with 10초 timeout
+  - Line 192-204: ExecutionLoop 생성
+  - Line 206-211: ExecutionLoop 실행
+  - Line 214: ShutdownRequestMessage 전송 (완료 시)
+  - Line 215-222: 예외 처리 (UI 표시 + 종료 요청 + 재발생)
+- Lines 224-233: Task group 생성 및 3개 task 시작
+  - Line 227: ui.run_async() 시작
+  - Line 229: run_execution_loop() 시작
+  - Line 231: monitor_shutdown() 시작
+  - Line 231-233: except* (SystemExit, KeyboardInterrupt) 처리
+
+**Lines 284-311: run() 함수 수정**
+- Line 285: if no_tui 분기
+- Lines 287-297: CLI 모드 - _main_cli 호출 (backend 미지정)
+- Lines 300-311: TUI 모드 - _main_tui 호출 (backend="asyncio")
+
+**Line 21: Import 추가**
+- `from sisyphus.ui.tui.app import TUI, ShutdownRequestMessage` 추가
+
+### TECHNICAL DISCOVERIES
+- **anyio.create_task_group()**: 모든 task가 완료될 때까지 대기, 한 task 예외 시 다른 task도 자동 취소
+- **except* 문법**: ExceptionGroup 처리 전용, 일반 except와 동시 사용 불가
+- **anyio.move_on_after()**: Context manager로 timeout 구현, `cancel_scope.cancelled_caught`로 타임아웃 여부 확인
+- **tg.cancel_scope.cancel()**: TaskGroup 내 모든 task 취소
+- **ui.post_message()**: Thread-safe, 어떤 task에서든 호출 가능
+
+### LEARNINGS
+- **TaskGroup orchestration 패턴**: 여러 async task를 안전하게 병렬 실행하는 패턴
+- **Bidirectional shutdown**: 양방향 종료 coordination이 중요 (ExecutionLoop ↔ TUI)
+- **Timeout 필요성**: UI 초기화 실패 시 무한 대기 방지
+- **Exception propagation**: 한 task 예외가 전체 시스템을 안전하게 종료시키도록 설계
+- **Backend 제약**: Textual은 asyncio만 지원, trio 미지원 (명시 필요)
+
+소요 시간: 약 3분
+

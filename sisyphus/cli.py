@@ -18,6 +18,7 @@ from sisyphus.core.prompts import PromptResolver
 from sisyphus.core.session import SessionStore
 from sisyphus.core.tasks import TaskValidator
 from sisyphus.ui.base import create_ui
+from sisyphus.ui.tui.app import TUI, ShutdownRequestMessage
 from sisyphus.utils.logging import LoggerFactory
 
 if TYPE_CHECKING:
@@ -102,7 +103,7 @@ def create_agent(
             raise typer.BadParameter(f"Unknown agent type: {agent_type}")
 
 
-async def _main(
+async def _main_cli(
     execute_agent: Agent,
     verify_agent: Agent | None,
     execute_prompt_spec: str,
@@ -112,7 +113,7 @@ async def _main(
     ui: UIProtocol,
     session_store: SessionStore,
 ) -> None:
-    """비동기 메인 함수.
+    """CLI 모드 메인 함수 (기존 로직).
 
     Args:
         execute_agent: Execute 에이전트
@@ -145,6 +146,91 @@ async def _main(
         verify_prompt=verify_prompt_spec,
         verify_extra=verify_extra,
     )
+
+
+async def _main_tui(
+    execute_agent: Agent,
+    verify_agent: Agent | None,
+    execute_prompt_spec: str,
+    verify_prompt_spec: str | None,
+    execute_extra: str | None,
+    verify_extra: str | None,
+    ui: UIProtocol,
+    session_store: SessionStore,
+) -> None:
+    """TUI 모드 메인 함수 (TUI와 ExecutionLoop 병렬 실행).
+
+    Args:
+        execute_agent: Execute 에이전트
+        verify_agent: Verify 에이전트 (Optional)
+        execute_prompt_spec: Execute 프롬프트 spec
+        verify_prompt_spec: Verify 프롬프트 spec (Optional)
+        execute_extra: Execute 추가 프롬프트
+        verify_extra: Verify 추가 프롬프트
+        ui: UI Protocol 구현
+        session_store: SessionStore 인스턴스
+    """
+    if not isinstance(ui, TUI):
+        raise TypeError("ui must be TUI instance for TUI mode")
+
+    async def monitor_shutdown(tg: anyio.abc.TaskGroup) -> None:
+        """Shutdown 이벤트 모니터링 (TUI → ExecutionLoop 종료)."""
+        await ui.shutdown_event.wait()
+        tg.cancel_scope.cancel()
+
+    async def run_execution_loop() -> None:
+        """ExecutionLoop 실행 (TUI 준비 완료 후)."""
+        try:
+            # TUI 준비 대기 (타임아웃 10초)
+            with anyio.move_on_after(10.0) as cancel_scope:
+                await ui.ready_event.wait()
+
+            if cancel_scope.cancelled_caught:
+                raise TimeoutError("TUI initialization timeout")
+
+            prompt_resolver = PromptResolver()
+            logger_factory = LoggerFactory()
+            task_validator = TaskValidator() if Path("ai-todolist.md").exists() else None
+
+            loop = ExecutionLoop(
+                execute_agent=execute_agent,
+                ui=ui,
+                session_store=session_store,
+                prompt_resolver=prompt_resolver,
+                logger_factory=logger_factory,
+                verify_agent=verify_agent,
+                task_validator=task_validator,
+            )
+
+            await loop.run(
+                execute_prompt=execute_prompt_spec,
+                execute_extra=execute_extra,
+                verify_prompt=verify_prompt_spec,
+                verify_extra=verify_extra,
+            )
+
+            # ExecutionLoop 완료 시 TUI에 종료 요청
+            ui.post_message(ShutdownRequestMessage())
+        except Exception as e:
+            # 에러를 UI에 표시하고 종료 요청
+            try:
+                await ui.show_status(f"[bold red]Error: {e}[/bold red]")
+            except Exception:
+                pass
+            ui.post_message(ShutdownRequestMessage())
+            raise  # TaskGroup이 다른 task도 취소하도록 재발생
+
+    try:
+        async with anyio.create_task_group() as tg:
+            # TUI 시작 (백그라운드)
+            tg.start_soon(ui.run_async)
+            # ExecutionLoop 시작 (TUI 준비 후)
+            tg.start_soon(run_execution_loop)
+            # Shutdown 모니터링 (별도 task)
+            tg.start_soon(monitor_shutdown, tg)
+    except* (SystemExit, KeyboardInterrupt):
+        # 정상 종료 (Ctrl+C 등) - ExceptionGroup 처리
+        pass
 
 
 @app.command(name="run")
@@ -196,17 +282,33 @@ def run(
     session_store = SessionStore()
 
     try:
-        anyio.run(
-            _main,
-            execute_agent,
-            verify_agent,
-            execute_prompt,
-            verify_prompt,
-            execute_extra_prompt,
-            verify_extra_prompt,
-            ui,
-            session_store,
-        )
+        if no_tui:
+            # CLI 모드 (trio/asyncio 자동 선택 - backend 미지정)
+            anyio.run(
+                _main_cli,
+                execute_agent,
+                verify_agent,
+                execute_prompt,
+                verify_prompt,
+                execute_extra_prompt,
+                verify_extra_prompt,
+                ui,
+                session_store,
+            )
+        else:
+            # TUI 모드 (Textual은 asyncio만 지원)
+            anyio.run(
+                _main_tui,
+                execute_agent,
+                verify_agent,
+                execute_prompt,
+                verify_prompt,
+                execute_extra_prompt,
+                verify_extra_prompt,
+                ui,
+                session_store,
+                backend="asyncio",
+            )
     except KeyboardInterrupt:
         typer.echo("\n[yellow]Interrupted by user[/yellow]")
         raise typer.Exit(130)

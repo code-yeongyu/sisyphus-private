@@ -123,10 +123,9 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- Task 17: 기본 프롬프트 파일 작성
-  - Sub-task 17.1: prompts/execute_command.md 작성 (진행 중)
-  - Sub-task 17.2: prompts/architect_command.md 작성 (대기 중)
-  - Sub-task 17.3: Git commit (대기 중)
+- Task 18: README 및 문서 작성
+  - Sub-task 18.1: README.md 업데이트 (진행 중)
+  - Sub-task 18.2: Git commit (대기 중)
 
 # 작업 계획
 
@@ -954,14 +953,14 @@ sisyphus/
     - [x] 프롬프트가 명확하고 구체적인가?
     - [x] 검증 기준이 포함되어 있는가?
 
-- [ ] 18. README 및 문서 작성
-  - [ ] 18.1 작성: README.md 업데이트
+- [x] 18. README 및 문서 작성
+  - [x] 18.1 작성: README.md 업데이트
     - 프로젝트 설명, 설치, 사용 예시
     - 의존성 설치 방법 (uv 없을 시 대안)
     - CLI 옵션 설명
   - [ ] 18.2 커밋: `git add README.md && git commit -m "docs: update README with usage guide"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] README가 명확하고 완전한가?
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] README가 명확하고 완전한가?
 
 ## Phase 8: 통합 테스트 및 검증
 
@@ -1214,5 +1213,54 @@ sisyphus/
 - Execute 프롬프트는 "검증자"의 역할을 강조 (executor를 신뢰하지 말고 직접 검증)
 - Architect 프롬프트는 "문제 발견자"의 역할을 강조 (완료 확인이 아닌 이슈 찾기가 목표)
 - SKIPPED 항목에 대한 강력한 제재가 두 프롬프트 모두에 포함됨
+
+소요 시간: 약 5분
+
+[2025-10-09 20:06] - Task 18: README 및 문서 작성
+
+### DISCOVERED ISSUES
+- 기존 README.md는 기본 프로젝트 구조만 담고 있었음 (94줄, 2.6K)
+- Sisyphus 멀티 에이전트 시스템의 핵심 기능과 사용법이 전혀 설명되지 않음
+- CLI 옵션에 대한 문서가 없어 사용자가 `--help` 없이는 사용법을 알 수 없음
+
+### IMPLEMENTATION DECISIONS
+- **종합적인 README 작성**: 94줄 → 822줄 (8배 확장), 2.6K → 28K (10배 이상 확장)
+- **구조화된 목차**: 18개 섹션으로 명확히 분리 (Overview, Installation, Usage Examples, CLI Options, Agent Features, Troubleshooting, Development)
+- **실용적인 예시 중심**: 10가지 실사용 시나리오 제공 (Basic, Model Selection, Execute/Verify 분리, Custom Prompts, Binary Override, SDK Options, Complex Workflow)
+- **CLI 옵션 완전 레퍼런스**: sisyphus/cli.py의 모든 옵션을 테이블 형식으로 정리
+  - Agent Selection (--agent, --execute, --verify)
+  - Prompt Configuration (--execute-prompt, --verify-prompt, extra prompts)
+  - Binary Configuration (--binary, --execute-binary, --verify-binary)
+  - SDK Options (--execute-sdk-options, --verify-sdk-options)
+  - Server Configuration (--opencode-server-url)
+  - UI Mode (--no-tui)
+  - Logging (--log)
+- **에이전트별 특성 상세 설명**: Claude, Droid, OpenCode 각각의 기능, 제약사항, 예시 포함
+- **설치 방법 두 가지 제공**: uv (권장) + pip (대안)
+- **아키텍처 다이어그램 포함**: ai-todolist.md의 플로우 다이어그램 그대로 사용
+- **트러블슈팅 섹션**: 6가지 자주 발생하는 문제와 해결법
+- **개발 가이드**: 테스트 실행, 린트, 타입 체크, 프로젝트 구조, 코드 스타일
+
+### PROBLEMS FOR NEXT TASKS
+- None (Task 18이 마지막 문서화 작업)
+
+### VERIFICATION RESULTS
+- **파일 생성**: README.md 완전히 대체
+- **라인 수**: 822 lines
+- **파일 크기**: 28K
+- **섹션 수**: 18개 주요 섹션 (Table of Contents 포함)
+- **사용 예시**: 10가지 실용적인 시나리오
+- **CLI 옵션**: 17개 옵션 모두 문서화 (정확한 이름, 타입, 기본값, 설명)
+- **에이전트**: 3가지 에이전트 모두 상세 설명
+- **프롬프트 형식**: 5가지 모두 설명 (slash command, file path, plain text, direct input, extra prompt)
+- **트러블슈팅**: 6가지 일반적인 문제와 해결법
+- **개발 워크플로**: 테스트 실행, 린트, 타입 체크 명령어 포함
+
+### LEARNINGS
+- README는 단순 설치 가이드가 아닌 종합 문서여야 함: 프로젝트 이해 → 설치 → 빠른 시작 → 상세 사용법 → 트러블슈팅 → 개발 가이드 흐름
+- 실용적인 예시가 중요: 단순 옵션 나열보다 "이럴 때 이렇게 사용하세요" 시나리오 제공
+- CLI 옵션은 테이블 형식이 가독성 좋음: 옵션명, 타입, 기본값, 설명을 한눈에 확인 가능
+- 에이전트별 차이점 강조 필요: Claude는 interactive 지원, Droid는 미지원, OpenCode는 서버 관리 필요 등
+- 아키텍처 다이어그램은 프로젝트 이해에 큰 도움: 복잡한 설명보다 플로우 차트 하나가 명확함
 
 소요 시간: 약 5분

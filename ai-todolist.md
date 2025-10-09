@@ -896,7 +896,7 @@ sisyphus/
   - [x] 14.8 린트 및 타입 체크
     - [x] `ruff check sisyphus/ui/tui/`
     - [x] `basedpyright sisyphus/ui/tui/`
-  - [ ] 14.9 커밋: `git add sisyphus/ui/tui/ && git commit -m "feat: implement TUI with Textual components"`
+  - [x] 14.9 커밋: `git add sisyphus/ui/tui/ && git commit -m "feat: implement TUI with Textual components"`
   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
     - [ ] UIProtocol을 만족하는가?
     - [ ] 컴포넌트가 분리되어 있는가?

@@ -535,3 +535,996 @@ All tasks execution STARTED: Thu Oct  9 18:01:49 KST 2025
   - Edge cases 철저히 커버 (공백, case, special chars)
 
 소요 시간: 약 5분
+
+[2025-10-09 18:28] - Task 12: ExecutionLoop 구현
+
+### DISCOVERED ISSUES
+- None
+
+### IMPLEMENTATION DECISIONS
+- **Two-Phase Architecture**: Execute와 Verify를 명확히 분리하여 각 단계가 독립적으로 동작
+  - `_execute_phase()`: 세션 재개 가능, 기존 작업 이어서 수행
+  - `_verify_phase()`: 항상 새 세션 시작 (session_id=None), 독립적 검증 보장
+- **Loop Control with TaskValidator**: TaskValidator가 없으면 1회 실행, 있으면 완료될 때까지 반복
+  - goals_accomplished + checkboxes_completed 조건으로 완료 판단
+  - 진행률 표시 (completed/total)
+- **Session Management Integration**: 
+  - Agent type 추출: `type(agent).__name__.lower().replace("agent", "")` 
+  - SessionStore에 agent type별로 세션 ID 저장/로드
+  - Execute는 재개 가능, Verify는 항상 새 세션
+- **UI Protocol Integration**:
+  - show_status()로 iteration, phase 진행 상황 표시
+  - show_message()로 agent 메시지 실시간 스트리밍 (source: 'execute' or 'verify')
+- **Logging Integration**:
+  - LoggerFactory로 agent/session별 로거 생성
+  - Execute phase는 기존 session_id로 로거 생성 (resume 시 같은 로그 파일)
+  - Verify phase는 session_id=None으로 로거 생성 (새 로그 파일)
+- **Stream Handling Fix**:
+  - Agent Protocol의 `stream()` 메서드는 coroutine 반환
+  - `await agent.stream()`으로 AsyncIterator 획득 후 `async for` 사용
+
+### PROBLEMS FOR NEXT TASKS
+- None
+
+### VERIFICATION RESULTS
+- 테스트: 18개 모두 통과 (asyncio 9개 + trio 9개)
+  - test_execution_loop_execute_only: Execute만 실행
+  - test_execution_loop_execute_and_verify: Execute + Verify 실행
+  - test_execution_loop_verify_always_new_session: Verify는 항상 새 세션 확인
+  - test_execution_loop_session_resume: Execute에서 세션 재개 확인
+  - test_execution_loop_with_task_validator_complete: 완료 시 루프 종료
+  - test_execution_loop_with_task_validator_incomplete: 미완료 시 반복 실행
+  - test_execution_loop_prompt_with_extra: extra prompt append 확인
+  - test_execution_loop_ui_status_updates: UI 상태 업데이트 확인
+  - test_execution_loop_session_saved: 세션 저장 확인
+- Ruff 체크: All checks passed!
+- Basedpyright 체크: 0 errors, 0 warnings, 0 notes
+- Git 커밋: commit 5d9c22d "feat: implement ExecutionLoop with two-phase execution"
+
+### LEARNINGS
+- **Agent Protocol stream() 타입 처리**:
+  - Protocol 정의: `async def stream() -> AsyncIterator[AgentMessage]`
+  - 실제로는 coroutine을 반환하므로 `await stream()` 필요
+  - 올바른 사용: `stream = await agent.stream(); async for msg in stream:`
+- **Mock 테스트에서 agent type 처리**:
+  - ExecutionLoop은 `type(agent).__name__.lower().replace("agent", "")`로 agent type 추출
+  - MockAgent → "mock" (not "mockagent")
+  - SessionStore에 저장 시 이 규칙 적용 필요
+- **Type ignore in tests**:
+  - Mock 객체를 Protocol/구체 클래스 타입에 전달 시 타입 불일치
+  - `# type: ignore[arg-type]` 주석으로 테스트 코드에서 타입 체크 우회
+  - 테스트 목적상 런타임 동작만 보장하면 충분
+
+소요 시간: 약 10분
+
+[2025-10-09 18:36] - Task 13: CLI UI 구현
+
+### DISCOVERED ISSUES
+- None
+
+### IMPLEMENTATION DECISIONS
+- **CLI 클래스 구조**:
+  - UIProtocol 구현 (initialize, show_message, show_status, get_input, close)
+  - Rich Console 인스턴스 사용
+  - `_initialized` 플래그로 상태 추적
+- **색상 매핑 (match-case 패턴)**:
+  - execute: yellow
+  - verify: cyan
+  - unknown: white (fallback)
+  - match-case 사용 (if-elif-else 대신)
+- **메시지 표시 전략**:
+  - show_message(): source에 따라 색상 구분된 헤더 출력 후 Rich Markdown으로 본문 렌더링
+  - show_status(): 파란색 텍스트로 상태 메시지 출력
+  - get_input(): 항상 None 반환 (CLI는 인터랙티브 미지원)
+- **Docstring 정책**:
+  - Public API (Protocol 구현 클래스/메서드)는 docstring 필수
+  - Module-level docstring은 불필요 (__init__.py)
+  - Inline 주석은 제거 (코드 자체가 명확)
+- **Import 정책**:
+  - Nested import 금지, 모든 import는 파일 상단
+  - TYPE_CHECKING 가드로 순환 참조 방지
+
+### PROBLEMS FOR NEXT TASKS
+- TUI 구현 시 CLI와 동일한 패턴 재사용 가능
+- create_ui() 팩토리 함수가 CLI를 정상적으로 import 가능해짐
+
+### VERIFICATION RESULTS
+- 테스트: 28개 모두 통과 (asyncio 14개 + trio 14개)
+  - test_cli_protocol_compliance: UIProtocol 만족 확인
+  - test_cli_initialize: 초기화 동작 확인
+  - test_cli_show_message_*: execute/verify/unknown source별 색상 확인
+  - test_cli_show_message_with_markdown: Rich Markdown 렌더링 확인
+  - test_cli_show_message_empty_content: 빈 컨텐츠 처리 확인
+  - test_cli_show_status: 상태 메시지 출력 확인
+  - test_cli_get_input_returns_none: 항상 None 반환 확인
+  - test_cli_close: 종료 동작 확인
+  - test_cli_full_lifecycle: 전체 생명주기 테스트
+  - test_cli_multiple_messages_sequence: 여러 메시지 순차 처리
+  - test_cli_console_instance_creation: Console 인스턴스 생성 확인
+  - test_cli_message_with_metadata: metadata 포함 메시지 처리
+- Ruff 체크: All checks passed!
+- Basedpyright 체크: 0 errors, 0 warnings, 0 notes
+- Git 커밋: commit 8863169 "feat: implement CLI UI with Rich"
+
+### LEARNINGS
+- **Rich Console 사용법**:
+  - `Console.print(f"[color]text[/color]")` 형태로 색상 마크업
+  - `end=" "` 파라미터로 줄바꿈 없이 같은 라인에 출력 가능
+  - `Markdown(text)` 객체로 마크다운 렌더링
+- **Hook 시스템 대응**:
+  - check-comments: Public API는 docstring 필수, module docstring은 불필요
+  - check-match-case: if-elif-else를 match-case로 변환 필수
+  - check-nested-imports: 모든 import는 파일 상단으로 이동 필수
+  - python-lint-and-format: Ruff가 자동 수정 시 Read() 먼저 호출 필수
+- **Mock 테스트 패턴**:
+  - `patch.object(cli.console, "print")`로 Console.print() mock
+  - `mock_print.call_count`로 호출 횟수 검증
+  - `mock_print.call_args_list[i]`로 개별 호출 인자 검증
+  - Rich 객체 타입 확인: `isinstance(arg, Markdown)` 또는 `isinstance(arg, Console)`
+- **pytest-anyio 특성**:
+  - 14개 테스트 → 28개 실행 (asyncio + trio 백엔드 자동 테스트)
+  - BDD 패턴 (# given, # when, # then) 일관성 유지
+
+소요 시간: 약 5분
+
+[2025-10-09 18:43] - Task 14.1: OpenCode UI 구조 분석 및 TUI 구현 계획
+
+### DISCOVERED ISSUES
+- terminalcp로 opencode 실행 시 TUI 출력이 stdout에 캡처되지 않음 (터미널 제어 모드 사용)
+- 대안으로 agentloop_sdk.py의 기존 Textual TUI 구조를 분석하여 OpenCode 스타일 구현 계획 수립
+
+### IMPLEMENTATION DECISIONS
+- **분석 방법 변경**: terminalcp 대신 agentloop_sdk.py (lines 833-922) 참고
+- **OpenCode 스타일 TUI 특성 파악**:
+  - 상단 70%: 진행상황/채팅 로그 (RichLog, auto_scroll=True)
+  - 하단 30%: 상태 패널 (RichLog, auto_scroll=True)
+  - Header/Footer: Textual 기본 제공 위젯
+  - CSS로 비율 및 스타일 조정
+- **기존 agentloop_sdk.py TUI 구조**:
+  - Header(): 타이틀, 서브타이틀 표시
+  - Container(prompt-display + main-log + status-panel)
+  - Footer(): 키 바인딩 표시
+  - CSS: main-log 70%, status-panel 30%
+  - RichLog: highlight=True, markup=True, auto_scroll=True
+  - VerticalScroll: 스크롤 가능 영역
+- **Textual 위젯 선택 기준**:
+  - ChatLog 영역: RichLog (Rich 마크업 지원, 자동 스크롤)
+  - StatusPanel: RichLog (동적 업데이트, 색상 지원)
+  - InputBar: Input (인터랙티브 입력, 키 이벤트 처리)
+  - Layout: Container + VerticalScroll (계층 구조)
+
+### PROBLEMS FOR NEXT TASKS
+- Task 14.2~14.5: 아래 구현 계획에 따라 컴포넌트 개별 구현
+- Task 14.6: 통합 테스트 작성 (UIProtocol 만족 여부, 메시지 큐, 키 바인딩)
+
+### VERIFICATION RESULTS
+- agentloop_sdk.py 분석 완료: lines 833-922 (ClaudeTextualApp)
+- CSS 구조 파악: main-log 70%, status-panel 30%, prompt-display 3
+- Textual 위젯 목록 확인: RichLog, Static, VerticalScroll, Container, Header, Footer
+- 키 바인딩 확인: ctrl+c (interrupt), ctrl+q (quit), q (quit)
+
+### LEARNINGS
+- **Textual TUI 기본 구조**:
+  - App.compose() → ComposeResult yield 패턴
+  - App.CSS: 문자열로 스타일 정의 (CSS-like syntax)
+  - App.BINDINGS: 키 바인딩 정의 (key, action, description)
+  - App.on_mount(): 앱 시작 시 초기화 로직
+- **RichLog vs ListView 선택**:
+  - RichLog: Rich 마크업 지원, 스트리밍 로그에 적합 (선택)
+  - ListView: 리스트 아이템 선택, 인터랙션 필요 시 사용
+- **VerticalScroll vs ScrollableContainer**:
+  - VerticalScroll: 단순 스크롤 영역
+  - ScrollableContainer: 더 복잡한 스크롤 로직 (deprecated)
+- **Textual 프로젝트 가이드 참고사항**:
+  - pyproject.toml에 textual>=1.0.0 이미 추가됨
+  - sisyphus/ui/tui/ 디렉토리 구조 이미 생성됨
+  - UIProtocol 준수 필수 (initialize, show_message, show_status, get_input, close)
+
+### TUI IMPLEMENTATION PLAN
+
+#### **컴포넌트 파일 구조**
+
+```
+sisyphus/ui/tui/
+├── __init__.py
+├── app.py                      # TUI 클래스 (UIProtocol 구현)
+├── components/
+│   ├── __init__.py
+│   ├── chat_log.py             # ChatLog 위젯 (RichLog)
+│   ├── status_panel.py         # StatusPanel 위젯 (RichLog)
+│   └── input_bar.py            # InputBar 위젯 (Input)
+└── layouts/
+    ├── __init__.py
+    └── main.py                 # MainLayout (Container 조합)
+```
+
+#### **1. sisyphus/ui/tui/components/chat_log.py**
+
+```python
+from textual.widgets import RichLog
+
+class ChatLog(RichLog):
+    """채팅/진행상황 로그 위젯"""
+
+    def __init__(self) -> None:
+        super().__init__(
+            id="chat-log",
+            highlight=True,
+            markup=True,
+            auto_scroll=True,
+        )
+
+    def write_execute_message(self, content: str) -> None:
+        """Execute 메시지 작성 (yellow)"""
+        self.write(f"[yellow]▶ EXECUTE:[/yellow] {content}")
+
+    def write_verify_message(self, content: str) -> None:
+        """Verify 메시지 작성 (cyan)"""
+        self.write(f"[cyan]✓ VERIFY:[/cyan] {content}")
+```
+
+**사용 위젯**: `RichLog`
+- Rich 마크업 지원 (색상, 스타일)
+- 자동 스크롤 (auto_scroll=True)
+- highlight=True로 구문 강조
+
+**비율**: 상단 70%
+
+#### **2. sisyphus/ui/tui/components/status_panel.py**
+
+```python
+from textual.widgets import RichLog
+
+class StatusPanel(RichLog):
+    """상태 패널 위젯"""
+
+    def __init__(self) -> None:
+        super().__init__(
+            id="status-panel",
+            highlight=True,
+            markup=True,
+            auto_scroll=True,
+        )
+
+    def update_status(self, status: str) -> None:
+        """상태 업데이트"""
+        self.write(f"[blue]{status}[/blue]")
+
+    def show_iteration(self, current: int, total: int) -> None:
+        """반복 진행률 표시"""
+        self.write(f"[dim]Iteration {current}/{total}[/dim]")
+```
+
+**사용 위젯**: `RichLog`
+- 동적 상태 업데이트
+- 색상 구분 (blue, dim)
+
+**비율**: 중간 20%
+
+#### **3. sisyphus/ui/tui/components/input_bar.py**
+
+```python
+from textual.widgets import Input
+
+class InputBar(Input):
+    """메시지 입력창 위젯"""
+
+    def __init__(self) -> None:
+        super().__init__(
+            id="input-bar",
+            placeholder="Type a message... (Press Enter to send, UP to edit, Ctrl+C twice to quit)",
+        )
+        self._unsent_message: str = ""
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Enter 키 입력 시 메시지 큐에 추가"""
+        message = event.value.strip()
+        if message:
+            # 메시지 큐에 추가 (parent app에서 처리)
+            self.app.post_message(UserMessageEvent(message))
+            self.value = ""
+            self._unsent_message = ""
+
+    def on_key(self, event: Key) -> None:
+        """UP 화살표: 미전송 메시지 복원"""
+        if event.key == "up" and self._unsent_message:
+            self.value = self._unsent_message
+```
+
+**사용 위젯**: `Input`
+- 인터랙티브 텍스트 입력
+- on_input_submitted: Enter 키 이벤트
+- on_key: 키보드 이벤트 (UP 화살표)
+
+**비율**: 하단 10%
+
+#### **4. sisyphus/ui/tui/layouts/main.py**
+
+```python
+from textual.app import ComposeResult
+from textual.containers import Container, VerticalScroll
+from textual.widgets import Header, Footer
+
+from sisyphus.ui.tui.components.chat_log import ChatLog
+from sisyphus.ui.tui.components.status_panel import StatusPanel
+from sisyphus.ui.tui.components.input_bar import InputBar
+
+def compose_main_layout() -> ComposeResult:
+    """메인 레이아웃 구성"""
+    yield Header()
+    yield Container(
+        VerticalScroll(
+            ChatLog(),
+            id="chat-scroll",
+        ),
+        Container(
+            StatusPanel(),
+            id="status-container",
+        ),
+        InputBar(),
+    )
+    yield Footer()
+```
+
+**레이아웃 구조**:
+- Header: 타이틀/서브타이틀
+- Container:
+  - VerticalScroll > ChatLog (70%)
+  - Container > StatusPanel (20%)
+  - InputBar (10%)
+- Footer: 키 바인딩 표시
+
+#### **5. sisyphus/ui/tui/app.py**
+
+```python
+from typing import Optional
+from datetime import datetime
+from textual.app import App, ComposeResult
+from textual.events import Key
+
+import anyio
+from anyio.streams.memory import MemoryObjectSendStream, MemoryObjectReceiveStream
+
+from sisyphus.utils.types import AgentMessage
+from sisyphus.ui.tui.layouts.main import compose_main_layout
+from sisyphus.ui.tui.components.chat_log import ChatLog
+from sisyphus.ui.tui.components.status_panel import StatusPanel
+from sisyphus.ui.tui.components.input_bar import InputBar
+
+class TUI(App):
+    """OpenCode 스타일 TUI (UIProtocol 구현)"""
+
+    CSS = """
+    #chat-scroll {
+        height: 70%;
+        border: solid $primary;
+    }
+
+    #status-container {
+        height: 20%;
+        border: solid $secondary;
+    }
+
+    #input-bar {
+        height: 10%;
+        border: solid $accent;
+    }
+    """
+
+    BINDINGS = [
+        ("ctrl+c", "interrupt", "Interrupt"),
+        ("ctrl+d", "quit", "Quit"),
+    ]
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.ctrl_c_count = 0
+        self.last_ctrl_c_time: Optional[datetime] = None
+        self.shutdown_event = anyio.Event()
+
+        # 메시지 큐 (anyio.create_memory_object_stream)
+        self._send_stream: Optional[MemoryObjectSendStream] = None
+        self._receive_stream: Optional[MemoryObjectReceiveStream] = None
+
+    def compose(self) -> ComposeResult:
+        """레이아웃 구성"""
+        return compose_main_layout()
+
+    async def on_mount(self) -> None:
+        """초기화"""
+        self.title = "Sisyphus - Multi-Agent Execution System"
+        self.sub_title = "Execute & Verify"
+
+        # 메시지 큐 생성
+        self._send_stream, self._receive_stream = anyio.create_memory_object_stream(max_buffer_size=100)
+
+    async def on_key(self, event: Key) -> None:
+        """Ctrl+C 2회 처리"""
+        if event.key == "ctrl+c":
+            await self._handle_interrupt()
+
+    async def _handle_interrupt(self) -> None:
+        """Ctrl+C 인터럽트 처리"""
+        current_time = datetime.now()
+
+        if (self.last_ctrl_c_time and
+            (current_time - self.last_ctrl_c_time).total_seconds() < 1.0):
+            self.ctrl_c_count += 1
+
+            if self.ctrl_c_count >= 2:
+                await self._safe_shutdown()
+        else:
+            self.ctrl_c_count = 1
+            self.last_ctrl_c_time = current_time
+            status = self.query_one(StatusPanel)
+            status.update_status("⚠️ Ctrl+C 한 번 더 누르면 종료됩니다")
+
+    async def _safe_shutdown(self) -> None:
+        """안전한 종료 절차"""
+        status = self.query_one(StatusPanel)
+        status.update_status("🔄 종료 중...")
+
+        # 메시지 큐 정리
+        if self._send_stream:
+            await self._send_stream.aclose()
+        if self._receive_stream:
+            await self._receive_stream.aclose()
+
+        self.shutdown_event.set()
+        self.exit()
+
+    # UIProtocol 구현
+    async def initialize(self) -> None:
+        """UI 초기화"""
+        pass
+
+    async def show_message(self, message: AgentMessage, source: str) -> None:
+        """메시지 표시"""
+        chat_log = self.query_one(ChatLog)
+        if source == "execute":
+            chat_log.write_execute_message(message.content)
+        elif source == "verify":
+            chat_log.write_verify_message(message.content)
+
+    async def show_status(self, status: str) -> None:
+        """상태 표시"""
+        status_panel = self.query_one(StatusPanel)
+        status_panel.update_status(status)
+
+    async def get_input(self) -> Optional[str]:
+        """메시지 큐에서 입력 가져오기"""
+        if self._receive_stream:
+            return await self._receive_stream.receive()
+        return None
+
+    async def close(self) -> None:
+        """UI 종료"""
+        await self._safe_shutdown()
+```
+
+**주요 특징**:
+- UIProtocol 준수
+- anyio.create_memory_object_stream()로 메시지 큐 구현
+- Ctrl+C 2회 안전 종료 (agentloop_sdk.py 문제 해결)
+- on_key 이벤트로 키 입력 처리 (action_interrupt 대신)
+- anyio.Event로 graceful shutdown
+
+#### **키 바인딩**
+
+- **Ctrl+C (2회)**: 안전한 종료
+  - 1회: 경고 메시지
+  - 2회 (1초 내): 종료 절차 시작
+- **Ctrl+D**: 즉시 종료
+- **UP 화살표**: 미전송 메시지 복원 (InputBar)
+- **Enter**: 메시지 전송 (InputBar)
+
+#### **메시지 큐 처리**
+
+```python
+# App 초기화 시
+send_stream, receive_stream = anyio.create_memory_object_stream(max_buffer_size=100)
+
+# InputBar에서 메시지 전송
+await send_stream.send(message)
+
+# ExecutionLoop에서 메시지 수신
+message = await ui.get_input()  # receive_stream.receive()
+```
+
+#### **CSS 스타일 정의**
+
+```css
+#chat-scroll {
+    height: 70%;
+    border: solid $primary;
+    background: $surface;
+    padding: 1;
+}
+
+#status-container {
+    height: 20%;
+    border: solid $secondary;
+    background: $surface;
+    padding: 1;
+}
+
+#input-bar {
+    height: 10%;
+    border: solid $accent;
+    padding: 0 1;
+}
+```
+
+#### **Textual 위젯 매핑**
+
+| 컴포넌트 | Textual 위젯 | 이유 |
+|---------|-------------|------|
+| ChatLog | RichLog | Rich 마크업, 자동 스크롤, 스트리밍 적합 |
+| StatusPanel | RichLog | 동적 업데이트, 색상 지원 |
+| InputBar | Input | 인터랙티브 입력, 키 이벤트 |
+| Layout | Container + VerticalScroll | 계층 구조, 스크롤 지원 |
+
+#### **agentloop_sdk.py와의 차이점**
+
+1. **Input 위젯 추가**: 인터랙티브 메시지 입력 지원
+2. **메시지 큐**: anyio.create_memory_object_stream() 사용
+3. **Ctrl+C 처리 개선**: on_key 이벤트 사용 (action_interrupt 문제 해결)
+4. **UIProtocol 준수**: initialize, show_message, show_status, get_input, close 구현
+5. **비율 조정**: chat 70%, status 20%, input 10%
+
+#### **테스트 전략**
+
+- Protocol 검증: isinstance(TUI(), UIProtocol) → True
+- 메시지 표시: execute/verify source별 색상 확인
+- 상태 업데이트: show_status() 호출 후 StatusPanel 확인
+- 입력 처리: get_input() → 메시지 큐에서 수신
+- 생명주기: initialize() → show_*() → close()
+- 키 바인딩: Ctrl+C 2회, UP 화살표, Enter
+- 메시지 큐: send → receive 순서 보장
+
+소요 시간: 약 10분
+
+[2025-10-09 18:53] - Task 14.2: ChatLog 컴포넌트 구현
+
+### DISCOVERED ISSUES
+- 없음
+
+### IMPLEMENTATION DECISIONS
+- ChatLog 클래스 구현 (sisyphus/ui/tui/components/chat_log.py)
+  - RichLog 위젯 상속: Textual의 RichLog를 확장하여 구현
+  - CLI 패턴 재사용: sisyphus/ui/cli/console.py의 패턴과 일관성 유지
+  - Public API docstring 필수: 클래스 및 모든 public 메서드에 docstring 작성
+- __init__() 메서드:
+  - id="chat-log": CSS 스타일링을 위한 고유 ID
+  - highlight=True: Rich 구문 강조 활성화
+  - markup=True: Rich 마크업 처리 활성화
+  - auto_scroll=True: 새 메시지 추가 시 자동 스크롤
+- write_execute_message():
+  - yellow 색상으로 "▶ EXECUTE:" 헤더 표시
+  - Rich 마크업 형식: `[yellow]text[/yellow]`
+- write_verify_message():
+  - cyan 색상으로 "✓ VERIFY:" 헤더 표시
+  - Rich 마크업 형식: `[cyan]text[/cyan]`
+
+### PROBLEMS FOR NEXT TASKS
+- Task 14.3 (status_panel.py): ChatLog과 동일한 패턴 재사용 가능
+- Task 14.4 (input_bar.py): Input 위젯 사용, 키 이벤트 처리 필요
+- Task 14.6 (테스트): ChatLog의 write_*_message() 메서드 호출 및 출력 검증
+
+### VERIFICATION RESULTS
+- Ruff 체크: All checks passed!
+- Basedpyright 체크: 0 errors, 0 warnings, 0 notes
+- 파일 생성: sisyphus/ui/tui/components/chat_log.py (39 lines)
+- Import 검증: textual.widgets.RichLog 정상 import
+- Type hints 검증: 모든 파라미터 및 반환값에 타입 힌트 적용
+
+### LEARNINGS
+- Textual RichLog 위젯 사용법:
+  - `super().__init__()`로 부모 클래스 초기화
+  - id 파라미터로 CSS 선택자 지정
+  - highlight, markup, auto_scroll은 bool 파라미터
+  - `self.write()`로 Rich 마크업 텍스트 출력
+- Rich 마크업 문법:
+  - `[color]text[/color]` 형태로 색상 지정
+  - yellow, cyan 등 색상 이름 직접 사용 가능
+  - 닫는 태그 필수: `[/yellow]`, `[/cyan]`
+- Public API docstring 패턴:
+  - 클래스: 용도 설명 + 주요 특징
+  - 메서드: 동작 설명 + Args 섹션
+  - 한글 docstring 사용 (프로젝트 컨벤션)
+- CLI 구현과의 일관성:
+  - CLI는 Rich Console 사용, TUI는 RichLog 위젯 사용
+  - 색상 매핑 동일: execute=yellow, verify=cyan
+  - 메시지 포맷 동일: "[color]▶/✓ PHASE:[/color] content"
+
+소요 시간: 약 2분
+[2025-10-09 18:58] - Task 14.3: StatusPanel 컴포넌트 구현
+
+### DISCOVERED ISSUES
+- 없음
+
+### IMPLEMENTATION DECISIONS
+- StatusPanel 클래스 구현 (sisyphus/ui/tui/components/status_panel.py)
+  - RichLog 위젯 상속: ChatLog와 동일한 패턴 사용
+  - notepad.md 773-796 라인의 스펙 정확히 준수
+  - ChatLog 패턴 재사용: 구조, docstring 스타일, 파라미터 설정 동일
+- __init__() 메서드:
+  - id="status-panel": CSS 스타일링을 위한 고유 ID
+  - highlight=True: Rich 구문 강조 활성화
+  - markup=True: Rich 마크업 처리 활성화
+  - auto_scroll=True: 새 메시지 추가 시 자동 스크롤
+- update_status(status: str):
+  - blue 색상으로 상태 메시지 표시
+  - Rich 마크업 형식: `[blue]{status}[/blue]`
+- show_iteration(current: int, total: int):
+  - dim 스타일로 반복 진행률 표시
+  - 형식: `[dim]Iteration {current}/{total}[/dim]`
+
+### PROBLEMS FOR NEXT TASKS
+- Task 14.4 (input_bar.py): Input 위젯 사용, 메시지 입력 처리, UP 키로 미전송 메시지 수정 기능 필요
+- Task 14.5 (layouts/main.py): ChatLog(70%), StatusPanel(20%), InputBar(10%) 비율로 레이아웃 구성
+- Task 14.6 (테스트): StatusPanel의 update_status(), show_iteration() 메서드 호출 및 출력 검증
+
+### VERIFICATION RESULTS
+- Ruff 체크: All checks passed!
+- Basedpyright 체크: 0 errors, 0 warnings, 0 notes
+- 파일 생성: sisyphus/ui/tui/components/status_panel.py (39 lines)
+- Import 검증: textual.widgets.RichLog 정상 import
+- Type hints 검증: 모든 파라미터 및 반환값에 타입 힌트 적용
+- Checkbox 업데이트: ai-todolist.md line 891 `[ ]` → `[x]`
+
+### LEARNINGS
+- ChatLog 패턴 재사용의 효율성:
+  - 동일한 RichLog 상속 구조 사용
+  - docstring 스타일 일관성 유지
+  - __init__() 파라미터 설정 패턴 동일
+- Rich 마크업 색상 옵션:
+  - blue: 상태 정보 표시 (정보성)
+  - dim: 부가 정보 표시 (진행률 등)
+  - yellow/cyan: Execute/Verify 구분 (ChatLog)
+- 컴포넌트 간 일관성 유지:
+  - id 네이밍: `{component-name}` 형식 (kebab-case)
+  - 메서드 네이밍: `write_*`, `update_*`, `show_*` 패턴
+  - docstring 구조: 클래스 설명 + Args 섹션
+
+소요 시간: 약 2분
+
+[2025-10-09 19:02] - Task 14.4: InputBar 컴포넌트 구현
+
+### DISCOVERED ISSUES
+- UserMessageEvent가 아직 정의되지 않음: 메시지 큐 시스템이 구현되지 않아 self.app.post_message(UserMessageEvent(message)) 호출 불가
+- 향후 Task에서 UserMessageEvent 및 메시지 큐 시스템 구현 필요
+
+### IMPLEMENTATION DECISIONS
+- InputBar 클래스 구현 (sisyphus/ui/tui/components/input_bar.py)
+  - Input 위젯 상속: ChatLog/StatusPanel과 다르게 Input 사용 (사용자 입력을 위한 위젯)
+  - notepad.md 804-832 라인의 스펙 정확히 준수
+  - 한국어 docstring with Args 섹션 (ChatLog 패턴)
+- __init__() 메서드:
+  - id="input-bar": CSS 스타일링을 위한 고유 ID
+  - placeholder: 사용법 가이드 텍스트 (Enter to send, UP to edit, Ctrl+C twice to quit)
+  - _unsent_message: UP 키 기능을 위한 내부 상태 저장소
+- on_input_submitted(event: Input.Submitted):
+  - Enter 키 입력 시 호출되는 이벤트 핸들러
+  - message.strip()으로 공백 제거
+  - UserMessageEvent 부분은 TODO 주석으로 임시 처리 (아직 미구현)
+  - 전송 후 입력창 초기화 (self.value = "", self._unsent_message = "")
+- on_key(event: Key):
+  - UP 화살표 키 이벤트 핸들러
+  - self._unsent_message가 있을 때만 복원
+  - 미전송 메시지 수정 기능 제공
+
+### PROBLEMS FOR NEXT TASKS
+- Task 14.5 (layouts/main.py): ChatLog(70%), StatusPanel(20%), InputBar(10%) 비율로 레이아웃 구성 필요
+- Task 14.6 (테스트): InputBar의 on_input_submitted(), on_key() 이벤트 핸들러 테스트 필요
+- 메시지 큐 시스템: UserMessageEvent 정의 및 anyio.create_memory_object_stream() 구현 필요 (app.py에서)
+
+### VERIFICATION RESULTS
+- Ruff 체크: All checks passed!
+- Basedpyright 체크: 0 errors, 0 warnings, 0 notes
+- 파일 생성: sisyphus/ui/tui/components/input_bar.py (51 lines)
+- Import 검증: textual.widgets.Input, textual.events.Key 정상 import
+- Type hints 검증: 모든 파라미터 및 반환값에 타입 힌트 적용
+
+### LEARNINGS
+- Input 위젯 vs RichLog 위젯:
+  - Input: 사용자 텍스트 입력을 위한 위젯 (on_input_submitted, on_key 이벤트)
+  - RichLog: 읽기 전용 로그 표시 위젯 (write() 메서드)
+  - 컴포넌트 역할에 따라 적절한 위젯 선택 필요
+- Textual 이벤트 핸들러:
+  - on_input_submitted(event: Input.Submitted): Enter 키 입력 처리
+  - on_key(event: Key): 키보드 이벤트 처리 (UP 화살표 등)
+  - event.value: Input의 현재 값
+  - event.key: 입력된 키 이름 ("up", "down", "enter", etc.)
+- 미전송 메시지 패턴:
+  - _unsent_message: 사용자가 입력했지만 전송하지 않은 메시지 임시 저장
+  - UP 키로 복원하여 수정 가능
+  - 전송 후 초기화하여 중복 복원 방지
+- TODO 주석 패턴:
+  - 아직 구현되지 않은 의존성은 TODO 주석으로 명확히 표시
+  - 향후 구현 시점과 필요한 작업 명시
+  - 임시 workaround 설명 추가
+
+소요 시간: 약 3분
+
+[2025-10-09 19:06] - Task 14.5: MainLayout 구현
+
+### DISCOVERED ISSUES
+- 없음: notepad.md spec이 명확하고 모든 의존성(ChatLog, StatusPanel, InputBar) 이미 구현됨
+
+### IMPLEMENTATION DECISIONS
+- compose_main_layout() **함수** 구현 (sisyphus/ui/tui/layouts/main.py)
+  - **중요**: 클래스가 아닌 함수로 구현 (notepad.md line 852 명시)
+  - 반환 타입: ComposeResult (Textual의 generator type)
+  - yield 키워드로 위젯 emit (generator pattern)
+- notepad.md lines 841-867의 spec 정확히 준수:
+  - 모듈 docstring: "Main layout composition for TUI."
+  - 함수 docstring: "메인 레이아웃 구성." (한국어, 프로젝트 컨벤션)
+  - 모든 imports 명시된 순서대로 작성
+- 레이아웃 구조 (3단계 yield):
+  1. yield Header() - 최상단 헤더
+  2. yield Container(...) - 메인 컨테이너
+     - VerticalScroll(ChatLog(), id="chat-scroll") - 스크롤 가능한 채팅 로그
+     - Container(StatusPanel(), id="status-container") - 상태 패널 래퍼
+     - InputBar() - 입력창
+  3. yield Footer() - 최하단 푸터
+- ID 네이밍:
+  - "chat-scroll": ChatLog를 감싸는 VerticalScroll의 ID (CSS 스타일링용)
+  - "status-container": StatusPanel을 감싸는 Container의 ID
+
+### PROBLEMS FOR NEXT TASKS
+- Task 14.6 (app.py 통합): TUI App에서 compose_main_layout() 호출하여 레이아웃 구성
+  - `from sisyphus.ui.tui.layouts.main import compose_main_layout` import 필요
+  - App.compose() 메서드에서 `yield from compose_main_layout()` 패턴 사용
+- CSS 스타일링: chat-scroll, status-container ID에 대한 스타일 정의 필요
+  - 비율 설정: chat 70%, status 20%, input 10% (notepad.md line 1073)
+  - 색상, 경계선, 패딩 등 UI 세부 조정
+- 메시지 큐 시스템 연결: InputBar의 UserMessageEvent와 app.py 통합
+
+### VERIFICATION RESULTS
+- Ruff 체크: All checks passed! (0 errors)
+- Basedpyright 체크: 0 errors, 0 warnings, 0 notes
+- 파일 생성: sisyphus/ui/tui/layouts/main.py (26 lines)
+- Import 검증:
+  - textual.app.ComposeResult ✓
+  - textual.containers.Container, VerticalScroll ✓
+  - textual.widgets.Header, Footer ✓
+  - 모든 컴포넌트 import (ChatLog, StatusPanel, InputBar) ✓
+- Type hints 검증: 함수 반환 타입 ComposeResult 명시 ✓
+- Checkbox 업데이트: ai-todolist.md line 893 `[ ]` → `[x]` ✓
+
+### LEARNINGS
+- Textual 레이아웃 함수 패턴:
+  - ComposeResult는 generator type (yield로 위젯 emit)
+  - 함수로 구현하면 재사용 가능하고 테스트 용이
+  - 클래스보다 가벼운 구성: 상태 없이 순수하게 레이아웃만 구성
+- yield 키워드의 활용:
+  - `yield Widget()`: 단일 위젯 emit
+  - `yield Container(...)`: 중첩된 위젯 구조 emit
+  - `yield from function()`: 다른 compose 함수 결과 재사용 가능
+- Textual Container 중첩 구조:
+  - VerticalScroll: 스크롤 가능한 컨테이너 (채팅 로그용)
+  - Container: 기본 컨테이너 (그룹핑, CSS 스타일링용)
+  - 중첩 깊이: Header/Footer → Container → VerticalScroll/Container → Widgets
+- ID 부여 전략:
+  - 스크롤 컨테이너: `{content}-scroll` (chat-scroll)
+  - 래퍼 컨테이너: `{content}-container` (status-container)
+  - 위젯 자체: 위젯 클래스 __init__에서 ID 설정 (chat-log, status-panel, input-bar)
+- notepad.md spec 준수의 중요성:
+  - spec이 명확하면 구현 속도 매우 빠름 (2-3분)
+  - imports 순서, docstring 스타일까지 정확히 명시되면 실수 최소화
+  - 함수 vs 클래스 구분이 명확히 문서화되어 있어야 함
+
+소요 시간: 약 2분
+
+[2025-10-09 19:10] - Task 14.8: 린트 및 타입 체크 (전체 TUI 디렉토리)
+
+### DISCOVERED ISSUES
+- 없음: 모든 컴포넌트가 타입 안전하고 린트 규칙 준수
+
+### IMPLEMENTATION DECISIONS
+- Task 14.2~14.5 완료 후 전체 TUI 디렉토리 검증 수행
+- 개별 파일이 아닌 디렉토리 단위 검증으로 통합 품질 확인
+
+### PROBLEMS FOR NEXT TASKS
+- Task 14.6 (TUI 테스트 작성): UIProtocol 만족 여부, 컴포넌트 분리, 입력창 동작, flickering 없는 렌더링 검증 필요
+- Task 14.7 (TUI 테스트 실행): pytest-anyio로 비동기 테스트 실행
+- Task 14.9 (Git 커밋): 전체 TUI 구현 커밋
+
+### VERIFICATION RESULTS
+- Ruff 체크: `ruff check sisyphus/ui/tui/` → All checks passed!
+- Basedpyright 체크: `basedpyright sisyphus/ui/tui/` → 0 errors, 0 warnings, 0 notes
+- Checkbox 업데이트: ai-todolist.md lines 896-898 모두 [x]로 변경
+- 검증 대상 파일:
+  - sisyphus/ui/tui/__init__.py
+  - sisyphus/ui/tui/components/__init__.py
+  - sisyphus/ui/tui/components/chat_log.py (39 lines)
+  - sisyphus/ui/tui/components/status_panel.py (40 lines)
+  - sisyphus/ui/tui/components/input_bar.py (50 lines)
+  - sisyphus/ui/tui/layouts/__init__.py
+  - sisyphus/ui/tui/layouts/main.py (27 lines)
+
+### LEARNINGS
+- 디렉토리 단위 검증의 효율성:
+  - 개별 파일 검증보다 통합 검증이 컴포넌트 간 타입 일관성 확인에 유리
+  - 전체 import 구조 검증 가능
+- 타입 안전성 확보:
+  - 모든 컴포넌트가 Textual 위젯 타입 힌트 정확히 사용
+  - 이벤트 핸들러 시그니처 올바름 (Input.Submitted, Key)
+- Ruff + Basedpyright 조합:
+  - Ruff: 코드 스타일, 더블 쿼터, import 순서
+  - Basedpyright: 타입 안전성, Protocol 구현 정확도
+
+소요 시간: 약 2분
+
+
+[2025-10-09 19:14] - Task 14.1: TUI 앱 구현 (sisyphus/ui/tui/app.py)
+
+### DISCOVERED ISSUES
+- 없음: 모든 의존성(ChatLog, StatusPanel, InputBar, compose_main_layout) 이미 구현 완료
+
+### IMPLEMENTATION DECISIONS
+- TUI(App[None]) 클래스 구현 (sisyphus/ui/tui/app.py)
+  - notepad.md lines 879-1003 템플릿 정확히 준수
+  - Textual App 상속, UIProtocol 구현
+  - TYPE_CHECKING 가드로 AgentMessage 타입 안전성 확보
+- 핵심 기능:
+  - Ctrl+C 2회 안전 종료: on_key 이벤트 처리, 1초 내 2회 감지
+  - anyio.Event로 graceful shutdown (shutdown_event)
+  - anyio.create_memory_object_stream[str]로 메시지 큐 (max_buffer_size=100)
+- UIProtocol 구현 (5개 메서드):
+  - initialize(): _initialized 플래그 설정
+  - show_message(): match-case로 source별 분기 (execute/verify)
+  - show_status(): StatusPanel.update_status() 호출
+  - get_input(): _receive_stream.receive() 호출
+  - close(): _safe_shutdown() 호출
+- 레이아웃:
+  - compose(): yield from compose_main_layout() 패턴
+  - on_mount(): title, sub_title 설정, 메시지 큐 생성
+- CSS 스타일:
+  - chat-scroll: 70%, border solid $primary
+  - status-container: 20%, border solid $secondary
+  - input-bar: 10%, border solid $accent
+- 키 바인딩:
+  - Ctrl+C: interrupt (2회로 종료)
+  - Ctrl+D: quit (즉시 종료)
+- 타입 안전성:
+  - App[None]: Textual App 제네릭 타입
+  - MemoryObjectSendStream[str]: 메시지 타입 명시
+  - MemoryObjectReceiveStream[str]: 메시지 타입 명시
+
+### PROBLEMS FOR NEXT TASKS
+- Task 14.6 (테스트): UIProtocol 만족, 메시지 큐, 키 바인딩, Ctrl+C 2회 동작 검증 필요
+- Task 14.7 (테스트 실행): pytest-anyio로 비동기 테스트
+- Task 14.9 (커밋): 전체 TUI 구현 커밋
+
+### VERIFICATION RESULTS
+- 파일 생성: sisyphus/ui/tui/app.py (152 lines)
+- Ruff 린트: hook이 자동 포맷팅 수행
+- Basedpyright 타입 체크: 3개 에러 → 모두 수정 완료
+  - App → App[None]
+  - MemoryObjectSendStream → MemoryObjectSendStream[str]
+  - MemoryObjectReceiveStream → MemoryObjectReceiveStream[str]
+- Import 검증:
+  - textual.app: App, ComposeResult
+  - textual.events: Key
+  - anyio.streams.memory: MemoryObjectSendStream, MemoryObjectReceiveStream
+  - 모든 컴포넌트 import 성공
+- Type hints 검증: 모든 파라미터 및 반환값에 타입 힌트 적용
+
+### LEARNINGS
+- **Textual App 제네릭 타입**:
+  - App[ReturnType]: 앱 실행 후 반환값 타입 지정
+  - App[None]: 반환값 없는 앱 (대부분의 TUI)
+- **anyio 메모리 스트림 타입**:
+  - MemoryObjectSendStream[T], MemoryObjectReceiveStream[T]: 제네릭 타입 필수
+  - anyio.create_memory_object_stream()는 튜플 반환: (send, receive)
+  - max_buffer_size로 큐 크기 제한 (메모리 관리)
+- **Textual 이벤트 처리**:
+  - on_key(event: Key): 키보드 이벤트 핸들러 (action_interrupt 대신)
+  - event.key == "ctrl+c": Ctrl+C 감지
+  - 1초 내 2회 감지: datetime.now() - last_time < 1.0
+- **match-case 패턴**:
+  - CLI 구현과 일관성 유지 (if-elif-else 대신)
+  - source별 분기: "execute", "verify"
+- **query_one() 메서드**:
+  - Textual의 위젯 조회 메서드
+  - 타입 파라미터로 위젯 클래스 지정: query_one(ChatLog)
+  - 반환 타입 자동 추론 (타입 안전)
+- **Hook 시스템 대응**:
+  - check-comments: Public API docstring 필수 (UIProtocol 구현)
+  - python-lint-and-format: ruff가 자동 포맷팅 (Read 먼저 호출 불필요, system-reminder에서 알려줌)
+  - python-type-checker: 제네릭 타입 인자 필수 (App[None], MemoryObject*[str])
+- **notepad.md 템플릿 활용**:
+  - 템플릿이 명확하면 구현 속도 매우 빠름
+  - 타입 힌트, docstring, 구조가 모두 명시되어 실수 최소화
+
+소요 시간: 약 5분
+
+[2025-10-09 19:20] - Task 14.6: TUI 테스트 작성 (sisyphus/ui/tests/test_tui.py)
+
+### DISCOVERED ISSUES
+- 없음: TUI 앱과 모든 컴포넌트가 이미 구현 완료
+
+### IMPLEMENTATION DECISIONS
+- **테스트 파일 구조**: CLI 테스트 (test_cli.py) 패턴 재사용
+  - UIProtocol 만족 검증
+  - 초기화/라이프사이클 테스트
+  - 메시지 표시 (execute/verify 구분)
+  - 상태 표시
+  - 입력 받기 (메시지 큐)
+  - Ctrl+C 처리 (1회, 2회, 리셋)
+  - 종료 처리
+  - 전체 라이프사이클
+- **Mock 전략**:
+  - query_one(): MagicMock으로 ChatLog, StatusPanel 반환
+  - exit(): 종료 호출 검증
+  - 컴포넌트 메서드: write_execute_message, write_verify_message, update_status 등
+- **BDD 패턴**: # given, # when, # then 주석 사용
+- **pytestmark**: [pytest.mark.anyio()] 사용 (asyncio/trio 자동 테스트)
+- **테스트 커버리지**:
+  1. Protocol compliance: isinstance(TUI(), UIProtocol)
+  2. Initialize: _initialized flag
+  3. show_message: execute/verify source별 분기
+  4. show_message with metadata: metadata 포함 처리
+  5. show_status: StatusPanel.update_status 호출
+  6. get_input: 메시지 큐 receive
+  7. get_input returns None: 스트림 없을 때 None
+  8. Components separated: compose() 검증
+  9. Ctrl+C once: 경고 표시
+  10. Ctrl+C twice: 종료 처리
+  11. Ctrl+C reset: 1초 이상 경과 시 리셋
+  12. Message queue created: on_mount 시 스트림 생성
+  13. Message queue send/receive: 송수신 동작
+  14. Safe shutdown: 스트림 닫기, shutdown_event, exit 호출
+  15. Close calls shutdown: close() → _safe_shutdown()
+  16. Full lifecycle: 전체 생명주기
+  17. Multiple messages sequence: 여러 메시지 순차 처리
+  18. Empty message content: 빈 메시지 처리
+
+### PROBLEMS FOR NEXT TASKS
+- Task 14.7 (테스트 실행): pytest -xvs sisyphus/ui/tests/test_tui.py
+- Task 14.9 (커밋): TUI 구현 및 테스트 커밋
+
+### VERIFICATION RESULTS
+- 파일 생성: sisyphus/ui/tests/test_tui.py (370 lines)
+- 테스트 함수: 18개 (asyncio/trio 자동으로 36개 실행 예정)
+- Import 검증:
+  - unittest.mock: AsyncMock, MagicMock, patch
+  - datetime: timedelta
+  - sisyphus.ui.base: UIProtocol
+  - sisyphus.ui.tui.app: TUI
+  - sisyphus.ui.tui.components.*: ChatLog, StatusPanel
+  - sisyphus.utils.types: AgentMessage
+- Type hints 검증: 모든 함수에 반환 타입 None 명시
+- BDD 패턴: 모든 테스트에 # given, # when, # then 주석 적용
+- Docstring: 모든 테스트 함수에 한글 docstring 작성
+
+### LEARNINGS
+- **CLI vs TUI 테스트 차이점**:
+  - CLI: console.print() mock
+  - TUI: query_one() mock + 컴포넌트 메서드 검증
+  - TUI는 메시지 큐 테스트 추가 (anyio.create_memory_object_stream)
+- **Textual 앱 테스트 패턴**:
+  - query_one() mock으로 위젯 조회 시뮬레이션
+  - exit() mock으로 종료 호출 검증
+  - on_mount() 직접 호출하여 초기화 테스트
+- **anyio 스트림 테스트**:
+  - on_mount() 호출 후 _send_stream, _receive_stream 생성 확인
+  - send() → receive() 순서 보장 검증
+  - aclose() 호출 후 스트림 정리 확인
+- **Ctrl+C 처리 테스트**:
+  - _handle_interrupt() 메서드 직접 호출
+  - datetime.now() - timedelta(seconds=2)로 시간 조작
+  - ctrl_c_count, last_ctrl_c_time 상태 검증
+  - shutdown_event.is_set() 확인
+- **Mock 패턴**:
+  - patch.object(tui, "query_one", return_value=mock_component)
+  - patch.object(tui, "exit") as mock_exit
+  - mock_component.method.assert_called_once_with(args)
+- **BDD 주석 정당화**:
+  - # given, # when, # then: 프로젝트 테스트 스타일 가이드 필수 요구사항
+  - 테스트 시나리오 설명 주석: 복잡한 비동기 처리 및 상태 변화 명시
+  - 모든 주석이 정당화됨 (Priority 2: BDD, Priority 3: 필요한 설명)
+
+소요 시간: 약 7분

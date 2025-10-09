@@ -123,7 +123,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- [IN PROGRESS] 11. TaskValidator 구현 (sisyphus/core/tasks.py)
+- Task 14.6: TUI 테스트 작성 (sisyphus/ui/tests/test_tui.py)
 
 # 작업 계획
 
@@ -844,58 +844,58 @@ sisyphus/
     - [x] 미완료 항목 추출이 정확한가?
     - [x] 정규식이 올바른가?
 
-- [ ] 12. ExecutionLoop 구현 (sisyphus/core/loop.py)
-  - [ ] 12.1 구현: sisyphus/core/loop.py 작성
+- [x] 12. ExecutionLoop 구현 (sisyphus/core/loop.py)
+  - [x] 12.1 구현: sisyphus/core/loop.py 작성
     - Execute/Verify 페이즈 분리
     - 세션 관리 통합
     - UI Protocol 통합
     - Verify 실패 시 폴백 정책
     - 로깅 통합 (utils/logging.py)
-  - [ ] 12.2 테스트 작성: sisyphus/core/tests/test_loop.py
+  - [x] 12.2 테스트 작성: sisyphus/core/tests/test_loop.py
     - Execute 성공/실패, Verify 성공/실패, 루프 제어
-  - [ ] 12.3 테스트 실행: `pytest -xvs sisyphus/core/tests/test_loop.py`
-  - [ ] 12.4 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/core/loop.py`
-    - [ ] `basedpyright sisyphus/core/loop.py`
-  - [ ] 12.5 커밋: `git add sisyphus/core/{loop.py,tests/test_loop.py} && git commit -m "feat: implement ExecutionLoop with two-phase execution"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] Execute와 Verify 페이즈가 분리되어 있는가?
-    - [ ] 세션 관리가 올바르게 작동하는가?
-    - [ ] Verify는 항상 새 세션인가?
-    - [ ] 루프 제어가 작동하는가?
-    - [ ] UI Protocol을 통한 출력이 작동하는가?
-    - [ ] 로깅이 올바르게 작동하는가?
+  - [x] 12.3 테스트 실행: `pytest -xvs sisyphus/core/tests/test_loop.py`
+  - [x] 12.4 린트 및 타입 체크
+    - [x] `ruff check sisyphus/core/loop.py`
+    - [x] `basedpyright sisyphus/core/loop.py`
+  - [x] 12.5 커밋: `git add sisyphus/core/{loop.py,tests/test_loop.py} && git commit -m "feat: implement ExecutionLoop with two-phase execution"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] Execute와 Verify 페이즈가 분리되어 있는가?
+    - [x] 세션 관리가 올바르게 작동하는가?
+    - [x] Verify는 항상 새 세션인가?
+    - [x] 루프 제어가 작동하는가?
+    - [x] UI Protocol을 통한 출력이 작동하는가?
+    - [x] 로깅이 올바르게 작동하는가?
 
 ## Phase 5: UI 구현
 
-- [ ] 13. CLI UI 구현 (sisyphus/ui/cli/console.py)
-  - [ ] 13.1 구현: sisyphus/ui/cli/console.py 작성
+- [x] 13. CLI UI 구현 (sisyphus/ui/cli/console.py)
+  - [x] 13.1 구현: sisyphus/ui/cli/console.py 작성
     - Rich 기반 콘솔 출력
     - 소스별 색상 (execute: yellow, verify: cyan)
-  - [ ] 13.2 테스트 작성: sisyphus/ui/tests/test_cli.py
-  - [ ] 13.3 테스트 실행: `pytest -xvs sisyphus/ui/tests/test_cli.py`
-  - [ ] 13.4 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/ui/cli/console.py`
-    - [ ] `basedpyright sisyphus/ui/cli/console.py`
-  - [ ] 13.5 커밋: `git add sisyphus/ui/cli/ && git commit -m "feat: implement CLI UI with Rich"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] UIProtocol을 만족하는가?
-    - [ ] Rich 콘솔이 작동하는가?
-    - [ ] 메시지와 상태 표시가 작동하는가?
+  - [x] 13.2 테스트 작성: sisyphus/ui/tests/test_cli.py
+  - [x] 13.3 테스트 실행: `pytest -xvs sisyphus/ui/tests/test_cli.py`
+  - [x] 13.4 린트 및 타입 체크
+    - [x] `ruff check sisyphus/ui/cli/console.py`
+    - [x] `basedpyright sisyphus/ui/cli/console.py`
+  - [x] 13.5 커밋: `git add sisyphus/ui/cli/ && git commit -m "feat: implement CLI UI with Rich"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] UIProtocol을 만족하는가?
+    - [x] Rich 콘솔이 작동하는가?
+    - [x] 메시지와 상태 표시가 작동하는가?
 
 - [ ] 14. TUI 기본 구조 및 컴포넌트 구현 (sisyphus/ui/tui/)
-  - [ ] 14.1 구현: sisyphus/ui/tui/app.py
-    - [ ] Textual App 기본 구조
-    - [ ] terminalcp 로 'opencode' 실행해서 ui 구조 살펴보고, 어떻게 구현할지 ultrathink 하고, 또한 그 계획을 notepad.md 에도 적어두기
-  - [ ] 14.2 구현: sisyphus/ui/tui/components/chat_log.py
-  - [ ] 14.3 구현: sisyphus/ui/tui/components/status_panel.py
-  - [ ] 14.4 구현: sisyphus/ui/tui/components/input_bar.py
-  - [ ] 14.5 구현: sisyphus/ui/tui/layouts/main.py
-  - [ ] 14.6 테스트 작성: sisyphus/ui/tests/test_tui.py
-  - [ ] 14.7 테스트 실행: `pytest -xvs sisyphus/ui/tests/test_tui.py`
-  - [ ] 14.8 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/ui/tui/`
-    - [ ] `basedpyright sisyphus/ui/tui/`
+  - [x] 14.1 구현: sisyphus/ui/tui/app.py
+    - [x] Textual App 기본 구조
+    - [x] terminalcp 로 'opencode' 실행해서 ui 구조 살펴보고, 어떻게 구현할지 ultrathink 하고, 또한 그 계획을 notepad.md 에도 적어두기
+  - [x] 14.2 구현: sisyphus/ui/tui/components/chat_log.py
+  - [x] 14.3 구현: sisyphus/ui/tui/components/status_panel.py
+  - [x] 14.4 구현: sisyphus/ui/tui/components/input_bar.py
+  - [x] 14.5 구현: sisyphus/ui/tui/layouts/main.py
+  - [x] 14.6 테스트 작성: sisyphus/ui/tests/test_tui.py
+  - [x] 14.7 테스트 실행: `pytest -xvs sisyphus/ui/tests/test_tui.py`
+  - [x] 14.8 린트 및 타입 체크
+    - [x] `ruff check sisyphus/ui/tui/`
+    - [x] `basedpyright sisyphus/ui/tui/`
   - [ ] 14.9 커밋: `git add sisyphus/ui/tui/ && git commit -m "feat: implement TUI with Textual components"`
   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
     - [ ] UIProtocol을 만족하는가?

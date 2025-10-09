@@ -897,11 +897,11 @@ sisyphus/
     - [x] `ruff check sisyphus/ui/tui/`
     - [x] `basedpyright sisyphus/ui/tui/`
   - [x] 14.9 커밋: `git add sisyphus/ui/tui/ && git commit -m "feat: implement TUI with Textual components"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] UIProtocol을 만족하는가?
-    - [ ] 컴포넌트가 분리되어 있는가?
-    - [ ] 입력창이 작동하는가?
-    - [ ] flickering 없이 렌더링되는가?
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] UIProtocol을 만족하는가?
+    - [x] 컴포넌트가 분리되어 있는가?
+    - [x] 입력창이 작동하는가?
+    - [x] flickering 없이 렌더링되는가?
 
 ## Phase 6: CLI 통합
 

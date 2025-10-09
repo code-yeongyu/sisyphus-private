@@ -123,7 +123,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- [IN_PROGRESS] 7. DroidAgent 구현 (sisyphus/agents/droid.py)
+- [COMPLETED] 9. PromptResolver 구현 (sisyphus/core/prompts.py)
 
 # 작업 계획
 
@@ -743,48 +743,48 @@ sisyphus/
     - [x] 타임아웃이 작동하는가?
     - [x] autonomy가 항상 unsafe인가?
 
-- [ ] 8. OpenCodeAgent 구현 (sisyphus/agents/opencode.py)
-  - [ ] 8.1 구현: sisyphus/agents/opencode.py 작성
+- [x] 8. OpenCodeAgent 구현 (sisyphus/agents/opencode.py)
+  - [x] 8.1 구현: sisyphus/agents/opencode.py 작성
     - 참고: resources/opencode-integration.md
     - 서버 자동 시작 (opencode serve)
     - 헬스체크 (최대 5회, 2초 간격, /app 엔드포인트)
     - REST API, SSE 스트리밍 (/event)
     - SSE 파싱: httpx.stream + aiter_lines(), "data: " 라인만 처리
     - 에러 처리: 서버 시작 실패, 헬스체크 실패, SSE 파싱 에러
-  - [ ] 8.2 테스트 작성: sisyphus/agents/tests/test_opencode.py
+  - [x] 8.2 테스트 작성: sisyphus/agents/tests/test_opencode.py
     - Mock httpx, 서버 헬스체크 실패, SSE 이벤트 누락/깨진 JSON
-  - [ ] 8.3 테스트 실행: `pytest -xvs sisyphus/agents/tests/test_opencode.py`
-  - [ ] 8.4 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/agents/opencode.py`
-    - [ ] `basedpyright sisyphus/agents/opencode.py`
-  - [ ] 8.5 커밋: `git add sisyphus/agents/{opencode.py,tests/test_opencode.py} && git commit -m "feat: implement OpenCodeAgent with server auto-start"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] Agent Protocol을 만족하는가?
-    - [ ] 서버 자동 시작이 작동하는가?
-    - [ ] 헬스체크 재시도가 구현되었는가?
-    - [ ] 외부 서버 URL 주입이 가능한가?
-    - [ ] REST API 호출이 정확한가?
-    - [ ] SSE 스트리밍이 구현되었는가?
-    - [ ] SSE 파싱 에러가 처리되는가?
+  - [x] 8.3 테스트 실행: `pytest -xvs sisyphus/agents/tests/test_opencode.py`
+  - [x] 8.4 린트 및 타입 체크
+    - [x] `ruff check sisyphus/agents/opencode.py`
+    - [x] `basedpyright sisyphus/agents/opencode.py`
+  - [x] 8.5 커밋: `git add sisyphus/agents/{opencode.py,tests/test_opencode.py} && git commit -m "feat: implement OpenCodeAgent with server auto-start"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] Agent Protocol을 만족하는가?
+    - [x] 서버 자동 시작이 작동하는가?
+    - [x] 헬스체크 재시도가 구현되었는가?
+    - [x] 외부 서버 URL 주입이 가능한가?
+    - [x] REST API 호출이 정확한가?
+    - [x] SSE 스트리밍이 구현되었는가?
+    - [x] SSE 파싱 에러가 처리되는가?
 
 ## Phase 4: Core 로직 구현
 
-- [ ] 9. PromptResolver 구현 (sisyphus/core/prompts.py)
-  - [ ] 9.1 구현: sisyphus/core/prompts.py 작성
+- [x] 9. PromptResolver 구현 (sisyphus/core/prompts.py)
+  - [x] 9.1 구현: sisyphus/core/prompts.py 작성
     - slash-command, plain-text, 파일, 직접 텍스트 지원
     - extra 프롬프트 append 기능
-  - [ ] 9.2 테스트 작성: sisyphus/core/tests/test_prompts.py
+  - [x] 9.2 테스트 작성: sisyphus/core/tests/test_prompts.py
     - 모든 프롬프트 타입 테스트
-  - [ ] 9.3 테스트 실행: `pytest -xvs sisyphus/core/tests/test_prompts.py`
-  - [ ] 9.4 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/core/prompts.py`
-    - [ ] `basedpyright sisyphus/core/prompts.py`
-  - [ ] 9.5 커밋: `git add sisyphus/core/{prompts.py,tests/test_prompts.py} && git commit -m "feat: implement PromptResolver with multiple formats"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] 모든 프롬프트 타입이 지원되는가?
-    - [ ] 파일 읽기가 정확한가?
-    - [ ] extra 프롬프트 추가가 작동하는가?
-    - [ ] 테스트가 모든 케이스를 커버하는가?
+  - [x] 9.3 테스트 실행: `pytest -xvs sisyphus/core/tests/test_prompts.py`
+  - [x] 9.4 린트 및 타입 체크
+    - [x] `ruff check sisyphus/core/prompts.py`
+    - [x] `basedpyright sisyphus/core/prompts.py`
+  - [x] 9.5 커밋: `git add sisyphus/core/{prompts.py,tests/test_prompts.py} && git commit -m "feat: implement PromptResolver with multiple formats"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] 모든 프롬프트 타입이 지원되는가?
+    - [x] 파일 읽기가 정확한가?
+    - [x] extra 프롬프트 추가가 작동하는가?
+    - [x] 테스트가 모든 케이스를 커버하는가?
 
 - [ ] 10. SessionStore 구현 (sisyphus/core/session.py)
   - [ ] 10.1 구현: sisyphus/core/session.py 작성
@@ -1044,3 +1044,31 @@ sisyphus/
   - [ ] 에러 메시지가 도움이 되는가?
   - [ ] 로깅이 충분한가?
   - [ ] 문서가 완전한가? (README, 의존성 설치 방법)
+
+# Notepad
+
+[2025-10-09 17:59] - Task 9: PromptResolver 구현
+
+### DISCOVERED ISSUES
+- None
+
+### IMPLEMENTATION DECISIONS
+- 파일 경로 체크를 slash command 체크보다 먼저 수행: 절대 경로(`/path/to/file`)가 slash command로 오인되는 것 방지
+- Slash command를 단일 단어로 제한: `"/" not in prompt_str[1:]` 조건으로 `/execute`는 허용, `/path/to/file`은 제외
+- PathLike를 str로 변환하여 통일된 처리 로직 구현
+- extra append 시 `\n\n` 구분자 사용
+
+### PROBLEMS FOR NEXT TASKS
+- None
+
+### VERIFICATION RESULTS
+- 테스트: 20 tests passed (10 test cases × 2 backends: asyncio + trio)
+- 린트: ruff check 통과
+- 타입 체크: basedpyright 0 errors
+- 커버리지: slash command, file path, plain text, extra append, error cases 모두 포함
+
+### LEARNINGS
+- 절대 경로와 slash command 구분 필요: 파일 존재 여부 체크 우선, 그 다음 slash command 패턴 확인
+- Slash command는 단일 단어만 허용하여 파일 경로와 명확히 구분
+
+소요 시간: 약 5분

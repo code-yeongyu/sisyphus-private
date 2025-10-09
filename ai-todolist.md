@@ -123,7 +123,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 3. 유틸리티 모듈 구현 (sisyphus/utils/)
+- 4. Agent Protocol 정의 (sisyphus/agents/base.py)
 
 # 작업 계획
 
@@ -605,8 +605,8 @@ sisyphus/
 
 ## Phase 2: Protocol 및 UI 기반 정의
 
-- [ ] 4. Agent Protocol 정의 (sisyphus/agents/base.py)
-  - [ ] 4.1 구현: sisyphus/agents/base.py 작성
+- [x] 4. Agent Protocol 정의 (sisyphus/agents/base.py)
+  - [x] 4.1 구현: sisyphus/agents/base.py 작성
     ```python
     from typing import Protocol, AsyncIterator, Optional, runtime_checkable
     from sisyphus.utils.types import AgentMessage
@@ -637,18 +637,18 @@ sisyphus/
             """정리"""
             ...
     ```
-  - [ ] 4.2 테스트 작성: sisyphus/agents/tests/test_base.py
+  - [x] 4.2 테스트 작성: sisyphus/agents/tests/test_base.py
     - Protocol 체크 테스트 (isinstance 검증)
-  - [ ] 4.3 테스트 실행: `pytest -xvs sisyphus/agents/tests/test_base.py`
-  - [ ] 4.4 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/agents/base.py`
-    - [ ] `basedpyright sisyphus/agents/base.py`
-  - [ ] 4.5 커밋: `git add sisyphus/agents/{base.py,tests/} && git commit -m "feat: define Agent Protocol with runtime checking"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] Protocol이 @runtime_checkable로 데코레이트되었는가?
-    - [ ] 모든 필수 메서드가 정의되었는가?
-    - [ ] 타입 힌팅이 정확한가?
-    - [ ] 테스트가 Protocol 검증을 포함하는가?
+  - [x] 4.3 테스트 실행: `pytest -xvs sisyphus/agents/tests/test_base.py`
+  - [x] 4.4 린트 및 타입 체크
+    - [x] `ruff check sisyphus/agents/base.py`
+    - [x] `basedpyright sisyphus/agents/base.py`
+  - [x] 4.5 커밋: `git add sisyphus/agents/{base.py,tests/} && git commit -m "feat: define Agent Protocol with runtime checking"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] Protocol이 @runtime_checkable로 데코레이트되었는가?
+    - [x] 모든 필수 메서드가 정의되었는가?
+    - [x] 타입 힌팅이 정확한가?
+    - [x] 테스트가 Protocol 검증을 포함하는가?
 
 - [ ] 5. UIProtocol 정의 및 팩토리 (sisyphus/ui/base.py)
   - [ ] 5.1 구현: sisyphus/ui/base.py 작성

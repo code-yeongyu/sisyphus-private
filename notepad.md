@@ -110,3 +110,48 @@ All tasks execution STARTED: Thu Oct  9 16:02:47 KST 2025
 
 소요 시간: 약 15분
 
+
+[2025-10-09 16:32] - 4. Agent Protocol 정의 (sisyphus/agents/base.py)
+
+### DISCOVERED ISSUES
+- 없음: 기존 코드에서 발견된 문제 없음
+
+### IMPLEMENTATION DECISIONS
+- Agent Protocol 정의 (sisyphus/agents/base.py)
+  - @runtime_checkable 데코레이터 사용으로 런타임 타입 체킹 가능
+  - supports_interactive: bool 속성으로 인터랙티브 지원 여부 표시
+  - 5개의 async 메서드 정의: initialize, start_session, send, stream, close
+  - TYPE_CHECKING 가드로 AgentMessage 임포트 (순환 참조 방지)
+  - collections.abc.AsyncIterator 사용 (ruff가 typing.AsyncIterator에서 자동 변경)
+- 포괄적인 테스트 작성 (sisyphus/agents/tests/test_base.py)
+  - MockAgent: Protocol의 모든 메서드를 완전히 구현한 클래스
+  - IncompleteMockAgent: 일부 메서드만 구현한 불완전한 클래스
+  - Protocol 검증: isinstance()로 완전/불완전 구현 구분 테스트
+  - 각 메서드별 개별 동작 테스트 (8개 테스트)
+  - supports_interactive 속성 검증
+
+### PROBLEMS FOR NEXT TASKS
+- 없음: task 5 (UIProtocol 정의)를 진행할 준비 완료
+
+### VERIFICATION RESULTS
+- Protocol 정의 검증:
+  - @runtime_checkable 데코레이터 적용 확인
+  - supports_interactive 속성 정의 확인
+  - 모든 메서드가 올바른 타입 힌트와 ellipsis 본문 사용
+- 테스트 실행 결과: 16개 테스트 모두 통과 (asyncio 8개 + trio 8개)
+  - test_protocol_validation_complete: MockAgent가 Agent Protocol 만족
+  - test_protocol_validation_incomplete: IncompleteMockAgent가 Protocol 미만족
+  - test_protocol_supports_interactive_attribute: 속성 존재 및 타입 검증
+  - test_mock_agent_*: 각 메서드 동작 검증
+- Ruff 린트 체크: All checks passed!
+- Basedpyright 타입 체크: 0 errors, 0 warnings, 0 notes
+- Git 커밋 성공: commit 3f59359 "feat: define Agent Protocol with runtime checking"
+
+### LEARNINGS
+- Protocol에서 TYPE_CHECKING 가드를 사용하면 런타임 임포트를 피하면서도 타입 힌팅 가능
+- ruff는 typing.AsyncIterator를 자동으로 collections.abc.AsyncIterator로 변경 (PEP 585)
+- @runtime_checkable을 사용한 Protocol은 isinstance()로 런타임 검증 가능
+- Protocol의 메서드는 ellipsis(...)만 사용하고 구현 없음
+
+소요 시간: 약 2분
+

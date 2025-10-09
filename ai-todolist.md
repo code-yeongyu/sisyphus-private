@@ -123,7 +123,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- Task 14.6: TUI 테스트 작성 (sisyphus/ui/tests/test_tui.py)
+- Task 15.1: Typer CLI 구현 (sisyphus/cli.py)
 
 # 작업 계획
 

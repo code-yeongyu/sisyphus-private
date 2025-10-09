@@ -633,3 +633,5 @@ a6cef66 fix: correct Agent Protocol stream() signature and usage
   - [ ] 프롬프트 처리가 정상인가?
   - [ ] 로깅이 정상적으로 작동하는가?
 
+- [ ] 6. 실제 작업 검증
+  - [ ] 직접 terminalcp 로, ./local-ignore/playground 밑에 ai-todolist.md 계획서를 작성하고서 sisyphus 를 "직접" 호출하여 실제로 작업이 완료되는것을 확인했는가?

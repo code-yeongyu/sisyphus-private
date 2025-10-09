@@ -123,7 +123,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- [COMPLETED] 9. PromptResolver 구현 (sisyphus/core/prompts.py)
+- [IN PROGRESS] 10. SessionStore 구현 (sisyphus/core/session.py)
 
 # 작업 계획
 
@@ -786,12 +786,12 @@ sisyphus/
     - [x] extra 프롬프트 추가가 작동하는가?
     - [x] 테스트가 모든 케이스를 커버하는가?
 
-- [ ] 10. SessionStore 구현 (sisyphus/core/session.py)
-  - [ ] 10.1 구현: sisyphus/core/session.py 작성
+- [x] 10. SessionStore 구현 (sisyphus/core/session.py)
+  - [x] 10.1 구현: sisyphus/core/session.py 작성
     - JSON 파일 기반 저장소
     - 에이전트별 세션 분리
     - 원자적 쓰기 (임시 파일 + rename)
-    - 파일 락 (aiofiles + anyio.Lock 또는 filelock)
+    - 파일 락 (anyio.Lock)
     - 손상 복구 (백업 파일)
     ```python
     import json
@@ -815,19 +815,19 @@ sisyphus/
             # 구현 필요
             pass
     ```
-  - [ ] 10.2 테스트 작성: sisyphus/core/tests/test_session.py
+  - [x] 10.2 테스트 작성: sisyphus/core/tests/test_session.py
     - 동시 접근, 손상 복구 테스트
-  - [ ] 10.3 테스트 실행: `pytest -xvs sisyphus/core/tests/test_session.py`
-  - [ ] 10.4 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/core/session.py`
-    - [ ] `basedpyright sisyphus/core/session.py`
-  - [ ] 10.5 커밋: `git add sisyphus/core/{session.py,tests/test_session.py} && git commit -m "feat: implement SessionStore with file locking"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] 세션 저장/로드가 작동하는가?
-    - [ ] 에이전트별 세션 분리가 되는가?
-    - [ ] 원자적 쓰기가 구현되었는가?
-    - [ ] 파일 락이 작동하는가?
-    - [ ] JSON 파일 형식이 올바른가?
+  - [x] 10.3 테스트 실행: `pytest -xvs sisyphus/core/tests/test_session.py`
+  - [x] 10.4 린트 및 타입 체크
+    - [x] `ruff check sisyphus/core/session.py`
+    - [x] `basedpyright sisyphus/core/session.py`
+  - [x] 10.5 커밋: `git add sisyphus/core/{session.py,tests/test_session.py} && git commit -m "feat: implement SessionStore with file locking"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] 세션 저장/로드가 작동하는가?
+    - [x] 에이전트별 세션 분리가 되는가?
+    - [x] 원자적 쓰기가 구현되었는가?
+    - [x] 파일 락이 작동하는가?
+    - [x] JSON 파일 형식이 올바른가?
 
 - [ ] 11. TaskValidator 구현 (sisyphus/core/tasks.py)
   - [ ] 11.1 구현: sisyphus/core/tasks.py 작성

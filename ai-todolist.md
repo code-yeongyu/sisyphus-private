@@ -41,7 +41,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 3. ExecutionLoop에 interactive agent 지원 추가 (sisyphus/core/loop.py)
+- Task 4: 통합 테스트 및 검증 (4.1부터 4.6까지)
 
 # 작업 계획
 
@@ -768,7 +768,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
     - [x] 타입 체크와 린트가 통과하는가?
 
 - [x] 4. 통합 테스트 및 검증
-  - [ ] 4.1 수동 테스트: Terminalcp (ClaudeAgent)로 TUI 모드 실행
+  - [x] 4.1 수동 테스트: Terminalcp (ClaudeAgent)로 TUI 모드 실행
     ```
     # TUI 모드로 실행
     uv run sisyphus

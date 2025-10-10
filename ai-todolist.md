@@ -767,7 +767,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
     - [x] 예외 처리가 올바르게 구현되었는가?
     - [x] 타입 체크와 린트가 통과하는가?
 
-- [x] 4. 통합 테스트 및 검증
+- [x] 4. 통합 테스트 및 검증 ✅ COMPLETE
   - [x] 4.1 수동 테스트: Terminalcp (ClaudeAgent)로 TUI 모드 실행
     ```
     # TUI 모드로 실행

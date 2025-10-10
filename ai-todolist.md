@@ -35,13 +35,13 @@ TUI 모드에서 채팅 입력 부분(InputBar)의 메시지 전송이 작동하
 is_execution_started = TRUE
 
 # 모든 목표 달성 여부
-is_all_goals_accomplished = FALSE
+is_all_goals_accomplished = TRUE
 
 # 병렬 실행 여부
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 4. 통합 테스트 및 검증
+- 3. ExecutionLoop에 interactive agent 지원 추가 (sisyphus/core/loop.py)
 
 # 작업 계획
 
@@ -590,7 +590,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
     - [x] 타입 체크와 린트가 통과하는가?
 
 - [x] 3. ExecutionLoop에 interactive agent 지원 추가 (sisyphus/core/loop.py)
-  - [ ] 3.1 구현: loop.py 상단에 anyio import 추가
+  - [x] 3.1 구현: loop.py 상단에 anyio import 추가
     ```python
     # loop.py 파일 상단 import 섹션 (line 1-10 근처)
     import anyio  # 추가 (ClosedResourceError, EndOfStream 사용을 위해)

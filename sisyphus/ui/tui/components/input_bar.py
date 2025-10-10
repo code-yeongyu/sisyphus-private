@@ -39,6 +39,11 @@ class InputBar(Vertical):
         yield self._queue_display
         yield self._input_widget
 
+    def on_mount(self) -> None:
+        """위젯이 마운트될 때 Input에 focus 설정."""
+        self._update_queue_display()
+        self.query_one("#input-bar", Input).focus()
+
     @on(Input.Submitted, "#input-bar")
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Enter 키 입력 시 메시지를 큐에 추가.

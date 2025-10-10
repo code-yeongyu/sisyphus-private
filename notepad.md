@@ -4,7 +4,7 @@ All tasks execution STARTED: Fri Oct 10 16:25:23 KST 2025
 
 
 ## Task 1: InputReadyEvent 정의 및 TUI 앱 수정
-**시작 시각**: Fri Oct 10 16:26:00 KST 2025  
+**시작 시각**: Fri Oct 10 16:26:00 KST 2025
 **완료 시각**: Fri Oct 10 16:31:00 KST 2025
 
 ### WORK CONTEXT & HISTORY
@@ -427,7 +427,7 @@ Line 24: Footer - "^d Quit", "^p palette"
 - Header, ChatLog, StatusPanel, InputBar, Footer 모두 렌더링됨
 
 ✅ **InputBar와 큐 표시 영역이 분리되어 표시됨**
-- Evidence: 
+- Evidence:
   - queue-display (Static): Line 33 in input_bar.py
   - input-bar (Input): Line 34-37 in input_bar.py
   - CSS 스타일: #queue-display (line 78-84), #input-bar (line 86-88) in app.py
@@ -455,7 +455,7 @@ Line 24: Footer - "^d Quit", "^p palette"
 - **ANSI Escape Code 분석**: Textual TUI의 raw output을 해석하는 방법 학습
 - **Textual Placeholder 동작**: Input 위젯의 placeholder는 실제 터미널 상호작용에서만 표시됨
 - **검증 방법론**: terminalcp 없이도 timeout + ANSI 분석 + 코드 리뷰로 검증 가능
-- **UI 구조 확인**: 
+- **UI 구조 확인**:
   - Line 번호로 화면 영역 파악 (Header: 1, ChatLog: 2-16, StatusPanel: 17-20, InputBar: 21-23, Footer: 24)
   - ANSI color code로 테두리 색상 구분 (ChatLog: 파란색, StatusPanel: 어두운 파란색, InputBar: 주황색)
 
@@ -490,7 +490,7 @@ Line 24: Footer - "^d Quit", "^p palette"
 ✅ TUI 화면이 정상 표시됨
 ✅ 3개 섹션 분리 표시:
    - ChatLog (상단, 파란색 테두리 - height: 70%)
-   - StatusPanel (중간, 청록색 테두리 - height: 20%)  
+   - StatusPanel (중간, 청록색 테두리 - height: 20%)
    - InputBar (하단, 주황색 테두리 - height: 10%)
 ✅ Footer에 단축키 표시 ("^d Quit", "^p palette")
 ✅ 헤더에 "Sisyphus - Multi-Agent Execution System — Execute & Verify" 표시
@@ -761,3 +761,44 @@ Option 3: Revert to InputBar(Input) and handle queue display differently
 - Always verify event handling with actual runtime tests, not just code review
 
 소요 시간: 약 5분 (Codex research + fix + verification)
+
+
+[2025-10-10 17:59] - InputBar Focus Fix with on_mount()
+
+### ROOT CAUSE (Confirmed by Codex GPT-5)
+Input widget was not receiving focus, so keystrokes went nowhere.
+
+### FIX
+Added `on_mount()` method to set focus on Input widget after DOM is ready:
+```python
+def on_mount(self) -> None:
+    """위젯이 마운트될 때 Input에 focus 설정."""
+    self.query_one("#input-bar", Input).focus()
+```
+
+### IMPLEMENTATION DECISIONS
+- Initially tried `autofocus=True` parameter but basedpyright reported: "No parameter named 'autofocus'"
+- Switched to Codex-recommended approach: call `focus()` in `on_mount()`
+- Used `query_one("#input-bar", Input)` to safely get the Input widget after DOM mount
+- Made method synchronous (not async) since `focus()` is not awaitable
+
+### VERIFICATION RESULTS
+```bash
+$ uv run ruff check sisyphus/ui/tui/components/input_bar.py
+All checks passed!
+
+$ uv run basedpyright sisyphus/ui/tui/components/input_bar.py
+0 errors, 0 warnings, 0 notes
+```
+
+### PROBLEMS FOR NEXT TASKS
+- Must verify with actual TUI test that typing now works
+- execution_context requires terminalcp verification
+
+### LEARNINGS
+- Textual Input widget does NOT have `autofocus` parameter
+- `focus()` method is synchronous, not async - calling `await focus()` causes type error
+- `on_mount()` is the proper lifecycle hook to set initial focus after DOM ready
+- Always trust basedpyright type errors - they prevent runtime failures
+
+소요 시간: 약 1분

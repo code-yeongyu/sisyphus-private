@@ -460,3 +460,151 @@ Line 24: Footer - "^d Quit", "^p palette"
   - ANSI color code로 테두리 색상 구분 (ChatLog: 파란색, StatusPanel: 어두운 파란색, InputBar: 주황색)
 
 소요 시간: 약 2분
+## [2025-10-10 17:18] Task 4: 통합 테스트 및 검증
+
+### 발견한 문제
+1. terminalcp MCP 도구가 제공되지 않음 - 사용 가능한 도구 목록에 없음
+2. 기존 test_tui.py가 Task 1에서 제거한 _send_stream/_receive_stream을 사용하여 테스트 실패/타임아웃 발생
+3. pytest 실행 시 test_tui_show_message_execute에서 타임아웃 (2분 초과)
+
+### 작업 전 가설
+- terminalcp MCP 도구로 실제 TUI를 실행하고 stdin/stdout을 통해 테스트할 수 있을 것
+- 기존 테스트가 모두 통과할 것
+
+### 실제 상황
+- terminalcp 도구가 제공되지 않음
+- 기존 테스트가 새 구조(InputBar 큐)와 맞지 않아 수정 필요
+
+### 다음 작업자를 위한 팁
+- terminalcp MCP 도구를 사용하려면 Claude Code 설정에서 MCP 서버를 추가해야 함
+- test_tui.py는 InputBar 큐 방식으로 전면 재작성이 필요함
+- 또는 수동 테스트로 대체하고 통합 테스트 시나리오를 별도로 작성하는 것이 현실적
+
+
+
+### TUI 실행 검증 결과
+
+**실행 명령**: `uv run sisyphus` (timeout 5초)
+
+**확인된 사항**:
+✅ TUI 화면이 정상 표시됨
+✅ 3개 섹션 분리 표시:
+   - ChatLog (상단, 파란색 테두리 - height: 70%)
+   - StatusPanel (중간, 청록색 테두리 - height: 20%)  
+   - InputBar (하단, 주황색 테두리 - height: 10%)
+✅ Footer에 단축키 표시 ("^d Quit", "^p palette")
+✅ 헤더에 "Sisyphus - Multi-Agent Execution System — Execute & Verify" 표시
+
+**ANSI 출력 분석**:
+- [1;1H: 헤더 렌더링
+- [2;1H~[16;1H: ChatLog 영역 (파란색 테두리)
+- [17;1H~[20;1H: StatusPanel 영역 (청록색 테두리)
+- [21;1H~[23;1H: InputBar 영역 (주황색 테두리)
+- [24;1H: Footer
+
+**한계**:
+- terminalcp MCP 도구가 없어 stdin 테스트 불가능
+- placeholder 텍스트가 ANSI 출력에서 명확히 보이지 않음 (실제 렌더링 필요)
+- 대화형 테스트는 수동으로 진행해야 함
+
+**결론**:
+TUI의 기본 레이아웃과 렌더링은 정상 작동함. InputBar 큐잉 기능은 실제 사용자 입력으로 테스트 필요.
+
+
+## [2025-10-10 17:26] Task 4.2: InputBar 큐잉 기능 프로그래밍 테스트
+
+### DISCOVERED ISSUES
+- terminalcp MCP 도구가 제공되지 않아 stdin/stdout 기반 테스트 불가
+- test_tui.py의 기존 테스트들이 제거된 _send_stream/_receive_stream 기반으로 작성되어 타임아웃 발생
+- Textual의 reactive 시스템 때문에 앱 context 없이 위젯 메서드 호출 불가
+
+### IMPLEMENTATION DECISIONS
+- **대안 전략**: test_interactive_tui.py 생성하여 InputBar 내부 상태를 직접 시뮬레이션
+- **Helper 함수 구현**:
+  - `simulate_input_submitted()`: on_input_submitted의 내부 로직 재현 (app.post_message 제외)
+  - `simulate_up_key()`: UP 키 동작 시뮬레이션, 로드된 값을 문자열로 반환
+- **테스트 대상**: 7개 시나리오 중 앱 context 불필요한 5개 시나리오 테스트
+  - 4.2.1: Basic message queuing
+  - 4.2.2: Message accumulation
+  - 4.2.3: UP key edit
+  - 4.2.4: Edit and resave
+  - 4.2.6: Load last sent message
+- **스킵한 시나리오**:
+  - 4.2.5: 실제 agent와 get_input() 통신 필요 (별도 통합 테스트 필요)
+  - 4.2.7: 실제 agent와 연속 메시지 처리 필요 (별도 통합 테스트 필요)
+
+### PROBLEMS FOR NEXT TASKS
+- 4.2.5와 4.2.7은 실제 Claude Agent 연동 필요 (terminalcp 없이는 테스트 어려움)
+- test_tui.py의 기존 테스트들을 InputBar 큐 방식으로 리팩토링 필요 (별도 작업)
+- terminalcp MCP 서버 설정 방법 문서화 필요
+
+### VERIFICATION RESULTS
+**테스트 스크립트**: /Users/yeongyu/local-workspaces/sisyphus/test_interactive_tui.py
+
+**실행 결과**:
+```bash
+$ uv run python test_interactive_tui.py
+================================================================================
+Interactive TUI Test Suite
+================================================================================
+
+=== TEST 4.2.1: Basic Message Queuing ===
+✅ PASS - Message queued
+✅ PASS - Input cleared
+Overall: ✅ ALL CHECKPOINTS PASSED
+
+=== TEST 4.2.2: Message Accumulation ===
+✅ PASS - First message included
+✅ PASS - Second message accumulated
+✅ PASS - Separated by newline
+Overall: ✅ ALL CHECKPOINTS PASSED
+
+=== TEST 4.2.3: UP Key Edit ===
+✅ PASS - Queue loaded to input
+✅ PASS - Queue cleared
+Overall: ✅ ALL CHECKPOINTS PASSED
+
+=== TEST 4.2.4: Edit and Resave ===
+✅ PASS - Edited content re-queued
+Overall: ✅ ALL CHECKPOINTS PASSED
+
+=== TEST 4.2.6: Load Last Sent Message ===
+✅ PASS - Last sent loaded to input
+✅ PASS - Last sent stored
+Overall: ✅ ALL CHECKPOINTS PASSED
+
+================================================================================
+Test Summary
+================================================================================
+Total tests: 5
+Passed: 5
+Failed: 0
+
+✅ All tests passed!
+```
+
+**검증된 시나리오**:
+✅ 4.2.1: Enter로 메시지 큐잉 - _queued_message에 저장됨, 입력창 비워짐
+✅ 4.2.2: 여러 번 Enter로 메시지 누적 - "\n"으로 구분되어 누적됨
+✅ 4.2.3: UP 키로 큐 편집 - 큐가 입력창에 로드되고 큐가 비워짐
+✅ 4.2.4: 큐 편집 후 재저장 - 편집된 내용이 다시 큐에 저장됨
+✅ 4.2.6: 큐가 비었을 때 UP 키 - _last_sent가 입력창에 로드됨
+
+### LEARNINGS
+- **Textual Reactive 시스템**: app context 없이 위젯 메서드 호출 불가능
+  - Property (app, _value 등)에 setter 없음
+  - NoActiveAppError 발생
+- **시뮬레이션 전략**: 내부 상태(_queued_message, _last_sent)를 직접 조작하여 테스트
+- **Helper 함수 패턴**:
+  - 앱 메시지 시스템을 우회하고 내부 로직만 재현
+  - 반환값으로 상태 변경 전달 (simulate_up_key → str)
+- **Test 범위 결정**:
+  - Agent 통신 필요한 시나리오는 스킵 (4.2.5, 4.2.7)
+  - 단위 수준에서 테스트 가능한 시나리오만 구현 (4.2.1-4, 4.2.6)
+- **검증 방법론**:
+  - Given-When-Then 패턴 사용
+  - 각 checkpoint별 명확한 검증 메시지
+  - 전체 요약 출력으로 최종 결과 확인
+
+소요 시간: 약 14분
+

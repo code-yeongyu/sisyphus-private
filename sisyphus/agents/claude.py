@@ -171,6 +171,7 @@ class ClaudeAgent:
                             "result": str(message.result) if message.result else None,
                         },
                     )
+                    return
 
     async def close(self) -> None:
         """Close the Claude Agent SDK client."""

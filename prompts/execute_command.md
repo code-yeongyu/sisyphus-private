@@ -1,4 +1,4 @@
-# Execute Command Prompt
+/execute
 
 Execute tasks from the ai-todolist.md file by spawning executor agents.
 

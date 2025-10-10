@@ -32,7 +32,7 @@ TUI 모드에서 채팅 입력 부분(InputBar)의 메시지 전송이 작동하
 이로 인해 사용자가 InputBar에 메시지를 입력하고 Enter를 눌러도 아무 일도 일어나지 않습니다.
 
 # 작업 시작 여부
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 모든 목표 달성 여부
 is_all_goals_accomplished = FALSE
@@ -41,8 +41,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 작업 시작 전입니다.
-  - 작업을 시작하면 위의 `is_execution_started` 의 값을 TRUE 로 바꾸세요.
+- 1. InputReadyEvent 정의 및 TUI 앱 수정 (sisyphus/ui/tui/app.py)
   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
   - **plan reviewer 에게 OKAY 사인을 받았더라도 절대 시작하지마십시오**
   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
@@ -281,8 +280,8 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
 
 # TODOs
 
-- [ ] 1. InputReadyEvent 정의 및 TUI 앱 수정 (sisyphus/ui/tui/app.py)
-  - [ ] 1.1 구현: InputReadyEvent 클래스 정의
+- [x] 1. InputReadyEvent 정의 및 TUI 앱 수정 (sisyphus/ui/tui/app.py)
+  - [x] 1.1 구현: InputReadyEvent 클래스 정의
     ```python
     # app.py 상단, 다른 Message 클래스들과 함께 (line 20-51 근처)
     class InputReadyEvent(Message):
@@ -294,7 +293,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
       1. UpdateStatusMessage, ShowAgentMessage와 같은 패턴으로 정의
       2. line 20-51 근처 (다른 Message 클래스들 바로 뒤)에 배치
       3. 별도 필드 필요 없음 (이벤트 자체가 신호)
-  - [ ] 1.2 구현: _input_ready_event 속성 추가
+  - [x] 1.2 구현: _input_ready_event 속성 추가
     ```python
     # TUI.__init__() 메서드 (line 83-92)
     def __init__(self) -> None:
@@ -308,7 +307,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
     ```
     - 현재: `_input_ready_event` 없음
     - 변경: anyio.Event() 추가하여 InputBar Enter 신호 대기
-  - [ ] 1.3 구현: InputReadyEvent 핸들러 추가
+  - [x] 1.3 구현: InputReadyEvent 핸들러 추가
     ```python
     # TUI 클래스 내부, 다른 on_* 핸들러들과 함께
     async def on_input_ready_event(self, message: InputReadyEvent) -> None:
@@ -317,7 +316,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
     ```
     - 현재: 핸들러 없음
     - 변경: `_input_ready_event.set()`로 대기 중인 `get_input()` 깨우기
-  - [ ] 1.4 구현: _send_stream / _receive_stream 제거
+  - [x] 1.4 구현: _send_stream / _receive_stream 제거
     ```python
     # line 90-91 제거
     # self._send_stream: MemoryObjectSendStream[str] | None = None
@@ -337,7 +336,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
     ```
     - 현재: `_send_stream` / `_receive_stream` 사용하지 않지만 생성됨
     - 변경: 완전히 제거 (더 이상 필요 없음)
-  - [ ] 1.5 구현: get_input() 메서드 수정
+  - [x] 1.5 구현: get_input() 메서드 수정
     ```python
     # line 195-203
     async def get_input(self) -> str | None:
@@ -369,19 +368,19 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
       2. 큐 있으면 즉시 반환 (자동 전송)
       3. 큐 없으면 `_input_ready_event.wait()` 대기
       4. Event 리셋하여 다음 Enter 대기 가능하도록
-  - [ ] 1.6 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/ui/tui/app.py`
-    - [ ] `basedpyright sisyphus/ui/tui/app.py`
-  - [ ] 1.7 커밋: `git add sisyphus/ui/tui/app.py && git commit -m "feat: add InputReadyEvent and refactor get_input to read InputBar queue directly"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] InputReadyEvent 클래스가 다른 Message 클래스들과 같은 위치에 정의되었는가?
-    - [ ] _input_ready_event가 TUI.__init__()에 추가되었는가?
-    - [ ] on_input_ready_event 핸들러가 올바르게 구현되었는가?
-    - [ ] _send_stream / _receive_stream 관련 코드가 완전히 제거되었는가?
-    - [ ] get_input()이 InputBar.get_and_clear_queue()를 호출하는가?
-    - [ ] get_input()이 큐 없을 때 _input_ready_event.wait()를 호출하는가?
-    - [ ] Event를 리셋하여 다음 대기가 가능한가?
-    - [ ] 타입 체크와 린트가 통과하는가?
+  - [x] 1.6 린트 및 타입 체크
+    - [x] `ruff check sisyphus/ui/tui/app.py`
+    - [x] `basedpyright sisyphus/ui/tui/app.py`
+  - [x] 1.7 커밋: `git add sisyphus/ui/tui/app.py && git commit -m "feat: add InputReadyEvent and refactor get_input to read InputBar queue directly"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] InputReadyEvent 클래스가 다른 Message 클래스들과 같은 위치에 정의되었는가?
+    - [x] _input_ready_event가 TUI.__init__()에 추가되었는가?
+    - [x] on_input_ready_event 핸들러가 올바르게 구현되었는가?
+    - [x] _send_stream / _receive_stream 관련 코드가 완전히 제거되었는가?
+    - [x] get_input()이 InputBar.get_and_clear_queue()를 호출하는가?
+    - [x] get_input()이 큐 없을 때 _input_ready_event.wait()를 호출하는가?
+    - [x] Event를 리셋하여 다음 대기가 가능한가?
+    - [x] 타입 체크와 린트가 통과하는가?
 
 - [ ] 2. InputBar에서 메시지 큐잉 및 렌더링 구현 (sisyphus/ui/tui/components/input_bar.py)
   - [ ] 2.1 구현: InputBar 클래스에 큐 표시 위젯 추가

@@ -11,6 +11,7 @@ from textual.message import Message
 from sisyphus.ui.tui.components.chat_log import ChatLog
 from sisyphus.ui.tui.components.input_bar import InputBar
 from sisyphus.ui.tui.components.status_panel import StatusPanel
+from sisyphus.ui.tui.events import InputReadyEvent
 from sisyphus.ui.tui.layouts.main import compose_main_layout
 
 if TYPE_CHECKING:
@@ -51,12 +52,6 @@ class ShutdownRequestMessage(Message):
     pass
 
 
-class InputReadyEvent(Message):
-    """사용자가 Enter를 눌러 입력이 준비되었음을 알림."""
-
-    pass
-
-
 class TUI(App[None]):
     """OpenCode 스타일 TUI (UIProtocol 구현).
 
@@ -75,9 +70,21 @@ class TUI(App[None]):
         border: solid $secondary;
     }
 
-    #input-bar {
+    #input-container {
         height: 10%;
         border: solid $accent;
+    }
+
+    #queue-display {
+        height: auto;
+        color: $text-muted;
+        background: $panel;
+        padding: 0 1;
+        text-style: italic;
+    }
+
+    #input-bar {
+        height: 1;
     }
     """
 

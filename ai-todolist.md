@@ -640,7 +640,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
       1. hasattr로 supports_interactive 속성 안전하게 체크
       2. True면 _run_interactive_mode 호출
       3. False면 _run_non_interactive_mode 호출 (기존 로직)
-  - [ ] 3.3 구현: _run_interactive_mode 메서드 추가 (예외 처리 포함)
+  - [x] 3.3 구현: _run_interactive_mode 메서드 추가 (예외 처리 포함)
     ```python
     async def _run_interactive_mode(
         self,
@@ -698,7 +698,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
       2. **예외 처리 추가**: anyio.ClosedResourceError, anyio.EndOfStream 감지
       3. **finally 블록**: agent 리소스 정리 보장
       4. **타입 힌트 완성**: 모든 파라미터와 반환 타입 명시
-  - [ ] 3.4 구현: _run_non_interactive_mode 메서드 추가 (기존 로직 이동)
+  - [x] 3.4 구현: _run_non_interactive_mode 메서드 추가 (기존 로직 이동)
     ```python
     # 기존 run() 메서드의 line 78-109를 그대로 복사하여 새 메서드로 이동
     async def _run_non_interactive_mode(

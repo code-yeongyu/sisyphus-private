@@ -347,3 +347,52 @@ $ uv run pytest sisyphus/ -k "not test_tui"
 
 소요 시간: 약 6분
 
+
+[2025-10-10 17:09] - Task 3: ExecutionLoop에 interactive agent 지원 추가
+
+### DISCOVERED ISSUES
+- Task 3가 이미 완료되어 있었음: 커밋 `2e4af66` (2025-10-10 16:55:19)에서 완료됨
+- ai-todolist.md의 체크박스만 업데이트되지 않은 상태였음
+- 이는 이전 작업자가 코드 구현은 완료했지만 문서화를 건너뛴 것으로 보임
+
+### IMPLEMENTATION DECISIONS
+- 코드 검증을 먼저 수행:
+  1. sisyphus/core/loop.py 파일 읽기
+  2. anyio import 확인 (line 8) ✅
+  3. run() 메서드의 supports_interactive 체크 확인 (line 80-83) ✅
+  4. _run_interactive_mode 메서드 확인 (line 87-130) ✅
+  5. _run_non_interactive_mode 메서드 확인 (line 132-177) ✅
+- 린트 및 타입 체크 실행:
+  - `ruff check sisyphus/core/loop.py`: All checks passed!
+  - `basedpyright sisyphus/core/loop.py`: 0 errors, 0 warnings, 0 notes
+- Git 히스토리 확인으로 커밋 검증:
+  - 커밋 `2e4af66`: "feat: add interactive agent support to ExecutionLoop"
+  - 작성자: YeonGyu-Kim
+  - 날짜: Fri Oct 10 16:55:19 2025 +0900
+
+### VERIFICATION RESULTS
+✅ **모든 subtask 검증 완료**:
+- 3.1: anyio import 추가 ✅ (line 8)
+- 3.2: supports_interactive 체크 및 분기 로직 ✅ (line 80-83)
+- 3.3: _run_interactive_mode 메서드 ✅ (line 87-130)
+- 3.4: _run_non_interactive_mode 메서드 ✅ (line 132-177)
+- 3.5: 린트 및 타입 체크 ✅ (통과)
+- 3.6: 커밋 ✅ (2e4af66)
+
+✅ **코드 품질 확인**:
+- Python 언어 가이드 준수 확인 (@modular-prompts/languages/py.md)
+- 모든 함수에 타입 힌트 존재
+- imports가 파일 상단에 배치
+- 예외 처리가 올바르게 구현됨 (anyio.ClosedResourceError, anyio.EndOfStream)
+
+### PROBLEMS FOR NEXT TASKS
+없음 - Task 3는 완전히 완료된 상태
+
+### LEARNINGS
+- **항상 코드부터 확인**: 체크박스가 비어있어도 실제 코드는 완료되어 있을 수 있음
+- **Git 히스토리 활용**: `git log`와 `git show`로 이전 작업 검증 가능
+- **문서화의 중요성**: 코드 구현만큼 체크박스 업데이트도 중요함
+- **이전 작업자의 실수 바로잡기**: 문서화 누락을 발견하면 즉시 수정
+- **검증의 다층적 접근**: 코드 읽기 → 린트/타입 체크 → Git 히스토리 → 체크박스 업데이트
+
+소요 시간: 약 3분

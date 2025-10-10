@@ -35,7 +35,7 @@ TUI 모드에서 채팅 입력 부분(InputBar)의 메시지 전송이 작동하
 is_execution_started = TRUE
 
 # 모든 목표 달성 여부
-is_all_goals_accomplished = TRUE
+is_all_goals_accomplished = FALSE
 
 # 병렬 실행 여부
 parallel_requested = FALSE
@@ -754,18 +754,18 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
       1. 별도 메서드로 분리하여 기존 로직 완전히 유지
       2. **line 94-108의 task validation 로직 전체 복사** (생략 없이)
       3. 타입 힌트 및 docstring 완성
-  - [ ] 3.5 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/core/loop.py`
-    - [ ] `basedpyright sisyphus/core/loop.py`
-  - [ ] 3.6 커밋: `git add sisyphus/core/loop.py && git commit -m "feat: add interactive agent support to ExecutionLoop"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] run() 메서드가 supports_interactive를 체크하는가?
-    - [ ] _run_interactive_mode가 사용자 입력 대기 루프를 구현하는가?
-    - [ ] _run_non_interactive_mode가 기존 로직을 유지하는가?
-    - [ ] hasattr로 supports_interactive 존재 여부를 안전하게 체크하는가?
-    - [ ] anyio import가 추가되었는가?
-    - [ ] 예외 처리가 올바르게 구현되었는가?
-    - [ ] 타입 체크와 린트가 통과하는가?
+  - [x] 3.5 린트 및 타입 체크
+    - [x] `ruff check sisyphus/core/loop.py`
+    - [x] `basedpyright sisyphus/core/loop.py`
+  - [x] 3.6 커밋: `git add sisyphus/core/loop.py && git commit -m "feat: add interactive agent support to ExecutionLoop"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] run() 메서드가 supports_interactive를 체크하는가?
+    - [x] _run_interactive_mode가 사용자 입력 대기 루프를 구현하는가?
+    - [x] _run_non_interactive_mode가 기존 로직을 유지하는가?
+    - [x] hasattr로 supports_interactive 존재 여부를 안전하게 체크하는가?
+    - [x] anyio import가 추가되었는가?
+    - [x] 예외 처리가 올바르게 구현되었는가?
+    - [x] 타입 체크와 린트가 통과하는가?
 
 - [x] 4. 통합 테스트 및 검증
   - [ ] 4.1 수동 테스트: Terminalcp (ClaudeAgent)로 TUI 모드 실행

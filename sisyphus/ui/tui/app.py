@@ -60,6 +60,10 @@ class TUI(App[None]):
     """
 
     CSS = """
+    Container {
+        height: 90%;
+    }
+
     #chat-scroll {
         height: 70%;
         border: solid $primary;

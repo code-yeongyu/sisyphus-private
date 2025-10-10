@@ -21,6 +21,6 @@ def compose_main_layout() -> ComposeResult:
             StatusPanel(),
             id="status-container",
         ),
-        InputBar(),
     )
+    yield InputBar()
     yield Footer()

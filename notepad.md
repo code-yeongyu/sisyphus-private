@@ -802,3 +802,26 @@ $ uv run basedpyright sisyphus/ui/tui/components/input_bar.py
 - Always trust basedpyright type errors - they prevent runtime failures
 
 소요 시간: 약 1분
+
+## [2025-10-10 18:19] - InputBar 렌더링 문제 분석
+
+### 발견한 문제
+1. **초기 문제**: InputBar가 TUI 화면에 렌더링되지 않음
+2. **근본 원인**: `_input_widget`과 `_queue_display` 인스턴스 변수가 `__init__`에서 제거되었지만, 코드에서 여전히 참조함
+
+### 코드 변경사항 확인
+- `input_bar.py`가 이미 수정됨:
+  - Line 59-60: `self.query_one("#input-bar", Input)` 사용 (인스턴스 변수 대신)
+  - Line 67: `self.query_one("#queue-display", Static)` 사용
+  - Line 42: `self.set_timer(0.1, lambda: ...)` - focus를 지연 설정
+
+### TUI 렌더링 확인
+- `uv run sisyphus` 실행 시 InputBar 영역 렌더링됨
+- Line 21-23에 border와 일부 문자(`▔▔▔`) 표시됨
+- 하지만 placeholder 텍스트가 명확히 보이지 않음
+
+### 다음 단계
+- terminalcp MCP로 실제 TUI 상호작용 테스트 필요
+- placeholder 텍스트가 실제로 표시되는지 확인
+- 메시지 입력 및 큐잉 동작 검증
+

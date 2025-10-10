@@ -41,7 +41,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- InputBar 이벤트 핸들링 버그 수정: @on 데코레이터를 사용하여 child Input 위젯의 Submitted 이벤트를 올바르게 캐치하도록 수정
+- InputBar 렌더링 문제 수정: InputBar의 _input_widget이 TUI 화면에 표시되지 않는 문제 해결
 
 # 작업 계획
 

@@ -4,12 +4,12 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 import anyio
-from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 from textual.app import App, ComposeResult
 from textual.events import Key
 from textual.message import Message
 
 from sisyphus.ui.tui.components.chat_log import ChatLog
+from sisyphus.ui.tui.components.input_bar import InputBar
 from sisyphus.ui.tui.components.status_panel import StatusPanel
 from sisyphus.ui.tui.layouts.main import compose_main_layout
 
@@ -51,6 +51,12 @@ class ShutdownRequestMessage(Message):
     pass
 
 
+class InputReadyEvent(Message):
+    """사용자가 Enter를 눌러 입력이 준비되었음을 알림."""
+
+    pass
+
+
 class TUI(App[None]):
     """OpenCode 스타일 TUI (UIProtocol 구현).
 
@@ -87,8 +93,7 @@ class TUI(App[None]):
         self.last_ctrl_c_time: datetime | None = None
         self.shutdown_event = anyio.Event()
         self.ready_event = anyio.Event()
-        self._send_stream: MemoryObjectSendStream[str] | None = None
-        self._receive_stream: MemoryObjectReceiveStream[str] | None = None
+        self._input_ready_event = anyio.Event()
         self._initialized = False
 
     def compose(self) -> ComposeResult:
@@ -99,11 +104,6 @@ class TUI(App[None]):
         """초기화."""
         self.title = "Sisyphus - Multi-Agent Execution System"
         self.sub_title = "Execute & Verify"
-
-        (
-            self._send_stream,
-            self._receive_stream,
-        ) = anyio.create_memory_object_stream(max_buffer_size=100)
 
         self.ready_event.set()
 
@@ -136,11 +136,6 @@ class TUI(App[None]):
         status = self.query_one(StatusPanel)
         status.update_status("🔄 종료 중...")
 
-        if self._send_stream:
-            await self._send_stream.aclose()
-        if self._receive_stream:
-            await self._receive_stream.aclose()
-
         self.shutdown_event.set()
         self.exit()
 
@@ -168,6 +163,10 @@ class TUI(App[None]):
         """종료 요청 핸들러."""
         await self._safe_shutdown()
 
+    async def on_input_ready_event(self, message: InputReadyEvent) -> None:
+        """InputBar에서 Enter 눌렀을 때 get_input() 깨우기."""
+        self._input_ready_event.set()
+
     # UIProtocol 구현
     async def initialize(self) -> None:
         """UI 초기화."""
@@ -193,14 +192,26 @@ class TUI(App[None]):
         self.post_message(UpdateStatusMessage(status))
 
     async def get_input(self) -> str | None:
-        """메시지 큐에서 입력 가져오기.
+        """InputBar 큐에서 메시지를 가져옴.
+
+        큐가 비어있으면 다음 Enter를 대기합니다.
+        Agent가 이 메서드를 호출하면 자동으로 큐잉된 메시지를 전송합니다.
 
         Returns:
-            사용자 입력 메시지 또는 None
+            큐잉된 메시지 또는 None (종료 시)
         """
-        if self._receive_stream:
-            return await self._receive_stream.receive()
-        return None
+        while True:
+            try:
+                input_bar = self.query_one(InputBar)
+                queued = input_bar.get_and_clear_queue()
+                if queued:
+                    return queued
+
+                await self._input_ready_event.wait()
+                self._input_ready_event = anyio.Event()
+            except Exception as e:
+                self.log.error(f"Failed to get input: {e}")
+                return None
 
     async def close(self) -> None:
         """UI 종료."""

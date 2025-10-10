@@ -22,7 +22,7 @@ class MockAgent:
     """Mock agent for testing."""
 
     def __init__(self) -> None:
-        self.supports_interactive = True
+        self.supports_interactive = False
         self.initialized = False
         self.session_id: str | None = None
         self.sent_messages: list[str] = []

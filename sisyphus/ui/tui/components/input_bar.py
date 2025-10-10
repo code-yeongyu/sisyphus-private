@@ -1,5 +1,6 @@
 """InputBar component for TUI."""
 
+from textual import on
 from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.events import Key
@@ -38,12 +39,14 @@ class InputBar(Vertical):
         yield self._queue_display
         yield self._input_widget
 
+    @on(Input.Submitted, "#input-bar")
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Enter 키 입력 시 메시지를 큐에 추가.
 
         Args:
             event: Input.Submitted 이벤트 객체
         """
+        event.stop()
         message = event.value.strip()
         if message:
             # 큐에 메시지 누적 (개행으로 구분)

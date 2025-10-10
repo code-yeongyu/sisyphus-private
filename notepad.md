@@ -692,3 +692,72 @@ Failed: 0
 
 소요 시간: 약 3분
 
+
+## ORCHESTRATION ATTEMPT #11 - ROOT CAUSE IDENTIFIED
+**시작 시각**: Fri Oct 10 17:45:12 KST 2025
+
+### CRITICAL DISCOVERY - InputBar Event Handling Issue
+
+**PROBLEM CONFIRMED VIA TERMINALCP**:
+- InputBar widget IS rendered on screen ✓
+- Input area is visible at bottom of TUI ✓
+- BUT: Typing "Hello\r" produces NO response ✗
+- Reason: `on_input_submitted()` handler is NOT being triggered
+
+**ROOT CAUSE ANALYSIS**:
+InputBar was changed from Input (direct widget) to Vertical (container):
+- Old: `class InputBar(Input)` - events handled directly
+- New: `class InputBar(Vertical)` - contains `_input_widget: Input`
+- Problem: `on_input_submitted()` is defined on InputBar (container)
+- Reality: `Input.Submitted` events fire from `_input_widget` (child)
+- Textual event bubbling: Child events bubble up to parent
+- BUT: Handler method name must match OR use explicit event listening
+
+**SOLUTION APPROACH**:
+Option 1: Make `on_input_submitted()` listen to child Input widget's events
+Option 2: Keep handler name but ensure it catches bubbled events from child
+Option 3: Revert to InputBar(Input) and handle queue display differently
+
+**CHOSEN SOLUTION**: Option 1 - Fix event handling in Vertical container pattern
+- This preserves the visual separation of queue display and input
+- Follows Textual best practices for composite widgets
+
+### NEXT ACTIONS
+1. Call executor to fix InputBar event handling
+2. Test with terminalcp that input actually works
+3. Verify all 8 acceptance criteria pass
+4. Fix test_tui.py (broken by _send_stream removal)
+5. Update all checkboxes in ai-todolist.md
+
+
+[2025-10-10 17:50] - InputBar Event Handling Fix
+
+### DISCOVERED ISSUES
+- InputBar was changed from Input (direct widget) to Vertical (container) in previous tasks
+- This caused `on_input_submitted()` handler to NOT catch Input.Submitted events from child `_input_widget`
+- Root cause: Textual event bubbling requires explicit decorator or proper handler setup for composite widgets
+
+### IMPLEMENTATION DECISIONS
+- Solution: Use `@on(Input.Submitted, "#input-bar")` decorator to explicitly catch child Input events
+- Added `event.stop()` to prevent event from bubbling further after handling
+- This follows Textual best practices for composite widget event handling
+- Preserves visual separation of queue display and input area
+
+### VERIFICATION APPROACH
+- Used Codex (GPT-5-Thinking) to research Textual documentation on composite widget event handling
+- Codex confirmed: Input.Submitted bubbles, need @on decorator with id selector
+- Applied fix: import `on` from textual + add decorator to handler
+- Verified with ruff and basedpyright: All checks passed, 0 errors
+
+### PROBLEMS FOR NEXT TASKS
+- Must test with terminalcp to verify actual TUI input works
+- Previous executor's test_interactive_tui.py was simulation only, not real TUI test
+- Need real stdin/stdout verification as specified in execution_context
+
+### LEARNINGS
+- Textual composite widgets require `@on(EventType, "#selector")` for child events
+- `event.stop()` prevents further bubbling - important for contained handling
+- Codex research tool is excellent for framework-specific questions
+- Always verify event handling with actual runtime tests, not just code review
+
+소요 시간: 약 5분 (Codex research + fix + verification)

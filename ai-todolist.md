@@ -41,10 +41,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 1. InputReadyEvent 정의 및 TUI 앱 수정 (sisyphus/ui/tui/app.py)
-  - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
-  - **plan reviewer 에게 OKAY 사인을 받았더라도 절대 시작하지마십시오**
-  - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
+- 3. ExecutionLoop에 interactive agent 지원 추가 (sisyphus/core/loop.py)
 
 # 작업 계획
 
@@ -382,8 +379,8 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
     - [x] Event를 리셋하여 다음 대기가 가능한가?
     - [x] 타입 체크와 린트가 통과하는가?
 
-- [ ] 2. InputBar에서 메시지 큐잉 및 렌더링 구현 (sisyphus/ui/tui/components/input_bar.py)
-  - [ ] 2.1 구현: InputBar 클래스에 큐 표시 위젯 추가
+- [x] 2. InputBar에서 메시지 큐잉 및 렌더링 구현 (sisyphus/ui/tui/components/input_bar.py)
+  - [x] 2.1 구현: InputBar 클래스에 큐 표시 위젯 추가
     ```python
     # input_bar.py 파일 상단 import 섹션
     from textual.app import ComposeResult
@@ -423,7 +420,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
       3. _last_sent: 마지막 전송 메시지 (UP 키로 편집용)
       4. _queue_display Static 위젯 추가 (큐 상태 표시)
       5. _input_widget Input 위젯 추가
-  - [ ] 2.1.5 app.py에서 InputBar 사용 부분 확인 및 수정
+  - [x] 2.1.5 app.py에서 InputBar 사용 부분 확인 및 수정
     - **주의**: InputBar가 Input에서 Vertical 컨테이너로 변경되므로, app.py에서 InputBar를 사용하는 부분을 확인해야 합니다.
     - app.py의 `compose_main_layout()` 또는 다른 부분에서 InputBar 사용 확인
     - InputBar의 속성 접근이 필요한 부분 확인 (예: `.value`, `.focus()` 등)
@@ -431,7 +428,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
     - 예시: `input_bar.value` → `input_bar._input_widget.value`
     - 예시: `input_bar.focus()` → `input_bar._input_widget.focus()`
     - **확인 필요**: sisyphus/ui/tui/layouts/main.py에서 InputBar를 어떻게 사용하는지 확인
-  - [ ] 2.2 구현: Enter 키로 메시지 큐에 누적 및 InputReadyEvent 발생
+  - [x] 2.2 구현: Enter 키로 메시지 큐에 누적 및 InputReadyEvent 발생
     ```python
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Enter 키 입력 시 메시지를 큐에 추가.
@@ -464,7 +461,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
       2. 입력창 비우기
       3. 큐 표시 업데이트 호출
       4. **InputReadyEvent 발생** (get_input() 깨우기)
-  - [ ] 2.3 구현: 큐 표시 업데이트 메서드
+  - [x] 2.3 구현: 큐 표시 업데이트 메서드
     ```python
     def _update_queue_display(self) -> None:
         """큐잉된 메시지 표시를 업데이트."""
@@ -487,7 +484,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
       1. 큐가 있으면 최대 3줄까지 preview 표시
       2. 나머지 줄 수 표시
       3. 큐가 비어있으면 숨김
-  - [ ] 2.4 구현: UP 키로 큐 또는 마지막 전송 메시지 로드
+  - [x] 2.4 구현: UP 키로 큐 또는 마지막 전송 메시지 로드
     ```python
     def on_key(self, event: Key) -> None:
         """키 이벤트 처리.
@@ -514,7 +511,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
       1. UP 키 → 큐 있으면 큐 로드 (편집 가능)
       2. 큐 없으면 _last_sent에서 마지막 전송 메시지 로드
       3. 큐 로드 시 큐 비우기 (편집 상태로 전환)
-  - [ ] 2.5 구현: get_and_clear_queue() 메서드 추가
+  - [x] 2.5 구현: get_and_clear_queue() 메서드 추가
     ```python
     def get_and_clear_queue(self) -> str | None:
         """큐잉된 메시지를 반환하고 큐를 비움.
@@ -536,7 +533,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
       2. _last_sent에 저장 (UP 키용)
       3. 큐 표시 업데이트
       4. TUI.get_input()에서 호출됨
-  - [ ] 2.6 구현: CSS 스타일 수정 (sisyphus/ui/tui/app.py의 CSS 섹션)
+  - [x] 2.6 구현: CSS 스타일 수정 (sisyphus/ui/tui/app.py의 CSS 섹션)
     ```python
     # TUI 클래스의 CSS 수정 (line 61-76)
     # 기존 #input-bar 스타일 (line 72-75)을 다음으로 대체:
@@ -575,24 +572,24 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
       2. `#input-container` 스타일 추가 (Vertical 컨테이너, height: 10%)
       3. `#queue-display` 스타일 추가 (큐 표시)
       4. `#input-bar` 스타일 추가 (실제 입력창, height: 1)
-  - [ ] 2.7 린트 및 타입 체크
-    - [ ] `ruff check sisyphus/ui/tui/components/input_bar.py sisyphus/ui/tui/app.py`
-    - [ ] `basedpyright sisyphus/ui/tui/components/input_bar.py sisyphus/ui/tui/app.py`
-  - [ ] 2.8 커밋: `git add sisyphus/ui/tui/components/input_bar.py sisyphus/ui/tui/app.py && git commit -m "feat: implement message queuing with visual feedback and UP key editing"`
-  - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-    - [ ] InputBar가 Vertical 컨테이너로 변경되었는가?
-    - [ ] _queue_display Static 위젯이 추가되었는가?
-    - [ ] _last_sent 속성이 추가되었는가?
-    - [ ] Enter 키를 누르면 메시지가 큐에 누적되는가?
-    - [ ] 큐잉된 메시지가 화면에 표시되는가?
-    - [ ] 여러 번 Enter를 누르면 "\n"으로 구분되어 누적되는가?
-    - [ ] Enter 키를 누르면 InputReadyEvent가 발생하는가?
-    - [ ] get_and_clear_queue()가 큐를 반환하고 _last_sent에 저장하는가?
-    - [ ] UP 키를 누르면 큐 또는 _last_sent가 입력창에 로드되는가?
-    - [ ] CSS 스타일이 올바르게 적용되었는가?
-    - [ ] 타입 체크와 린트가 통과하는가?
+  - [x] 2.7 린트 및 타입 체크
+    - [x] `ruff check sisyphus/ui/tui/components/input_bar.py sisyphus/ui/tui/app.py`
+    - [x] `basedpyright sisyphus/ui/tui/components/input_bar.py sisyphus/ui/tui/app.py`
+  - [x] 2.8 커밋: `git add sisyphus/ui/tui/components/input_bar.py sisyphus/ui/tui/app.py && git commit -m "feat: implement message queuing with visual feedback and UP key editing"`
+  - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+    - [x] InputBar가 Vertical 컨테이너로 변경되었는가?
+    - [x] _queue_display Static 위젯이 추가되었는가?
+    - [x] _last_sent 속성이 추가되었는가?
+    - [x] Enter 키를 누르면 메시지가 큐에 누적되는가?
+    - [x] 큐잉된 메시지가 화면에 표시되는가?
+    - [x] 여러 번 Enter를 누르면 "\n"으로 구분되어 누적되는가?
+    - [x] Enter 키를 누르면 InputReadyEvent가 발생하는가?
+    - [x] get_and_clear_queue()가 큐를 반환하고 _last_sent에 저장하는가?
+    - [x] UP 키를 누르면 큐 또는 _last_sent가 입력창에 로드되는가?
+    - [x] CSS 스타일이 올바르게 적용되었는가?
+    - [x] 타입 체크와 린트가 통과하는가?
 
-- [ ] 3. ExecutionLoop에 interactive agent 지원 추가 (sisyphus/core/loop.py)
+- [x] 3. ExecutionLoop에 interactive agent 지원 추가 (sisyphus/core/loop.py)
   - [ ] 3.1 구현: loop.py 상단에 anyio import 추가
     ```python
     # loop.py 파일 상단 import 섹션 (line 1-10 근처)

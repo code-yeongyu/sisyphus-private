@@ -77,6 +77,7 @@ class TUI(App[None]):
 
     #queue-display {
         height: auto;
+        max-height: 5;
         color: $text-muted;
         background: $panel;
         padding: 0 1;
@@ -84,7 +85,8 @@ class TUI(App[None]):
     }
 
     #input-bar {
-        height: 1;
+        height: auto;
+        min-height: 1;
     }
     """
 

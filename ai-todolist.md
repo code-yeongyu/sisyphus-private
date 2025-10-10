@@ -598,7 +598,7 @@ d16cd89 docs: update Phase 2 checkboxes - all tasks completed
     ```
     - 현재: anyio import가 없음 (확인 필요)
     - 변경: anyio import 추가하여 예외 클래스 사용 가능하게 함
-  - [ ] 3.2 구현: supports_interactive 체크 및 분기 로직 추가
+  - [x] 3.2 구현: supports_interactive 체크 및 분기 로직 추가
     ```python
     # run() 메서드 전체를 다음과 같이 수정 (line 54-110)
     async def run(

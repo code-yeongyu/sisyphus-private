@@ -268,7 +268,7 @@ class ExecutionLoop:
         self,
         prompt: str,
         extra: str | None = None,
-    ) -> None:
+    ) -> tuple[str, bool]:
         """Verify phase: always starts NEW session (independent verification).
 
         Args:
@@ -279,7 +279,10 @@ class ExecutionLoop:
             SessionLimitError: Re-raised after handling sleep (for loop to retry)
         """
         if self.verify_agent is None:
-            return
+            return ("", False)
+
+        feedback_messages: list[str] = []
+        fully_done: bool = False
 
         final_prompt = await self.prompt_resolver.resolve(prompt, extra)
 
@@ -303,6 +306,11 @@ class ExecutionLoop:
             async for message in stream:
                 await self.ui.show_message(message, source="verify")
                 self.verify_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
+
+                if message.role == "assistant":
+                    feedback_messages.append(message.content)
+                    if "FULLY_DONE = TRUE" in message.content.upper():
+                        fully_done = True
         except SessionLimitError as e:
             self.verify_logger.warning(f"Session limit reached: {e}")
             await self.ui.show_status("⚠️  Verify session limit reached")
@@ -316,4 +324,9 @@ class ExecutionLoop:
             raise
 
         await self.verify_agent.close()
-        self.verify_logger.info("Verify phase complete")
+
+        feedback = "\n\n".join(feedback_messages)
+        self.verify_logger.info(
+            f"Verify feedback collected: {len(feedback_messages)} messages, fully_done={fully_done}"
+        )
+        return (feedback, fully_done)

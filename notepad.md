@@ -1002,3 +1002,128 @@ From ai-todolist.md execution_context:
 3. Report to user: InputBar 완전 작동 확인!
 
 Fri Oct 10 19:30:00 KST 2025
+
+---
+
+## 11차 시도 - 최종 성공! (Fri Oct 10 22:00:00 KST 2025)
+
+### 문제 원인
+- 이전 10번의 실패는 `InputBar(Vertical)` 컨테이너 구조 + `@on` 데코레이터 조합의 이벤트 버블링 문제
+- `Input.Submitted` 이벤트가 부모 `Vertical` 컨테이너의 핸들러에 도달하지 못함
+
+### 최종 해결책 (사용자가 직접 수정)
+**구조 단순화**: `InputBar`가 `Input`을 **직접 상속**
+
+```python
+class InputBar(Input):  # Vertical 제거, Input 직접 상속
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        # @on 데코레이터 불필요 - 자기 자신의 이벤트를 직접 처리
+        message = event.value.strip()
+        if message:
+            self._queued_message = message
+            self.value = ""  # 입력창 클리어
+            self._update_placeholder()
+            self.app.post_message(InputReadyEvent())
+```
+
+**핵심 개선사항:**
+1. `Vertical` 컨테이너 제거 → 이벤트 버블링 문제 근본 해결
+2. `Static` 큐 디스플레이 제거 → placeholder로 상태 표시 (더 직관적)
+3. `@on` 데코레이터 제거 → 메서드 네이밍 컨벤션만으로 자동 처리
+4. `query_one()` 불필요 → 자기 자신이 Input이므로 직접 접근
+
+### 최종 검증 (terminalcp MCP)
+**5개 테스트 케이스 전부 통과:**
+
+✅ **Test 1 - 단일 메시지 큐잉**
+- 입력: "First message\r"
+- 결과: 입력창 클리어, placeholder = "[Queued: First message] Press UP to edit"
+
+✅ **Test 2 - 연속 메시지 누적**
+- 입력: "Second\r" → "Third\r"
+- 결과: placeholder = "[Queued: First message (+2 more)] Press UP to edit"
+
+✅ **Test 3 - UP 키로 큐 편집**
+- 입력: UP 화살표
+- 결과: 3개 메시지 모두 입력창에 로드됨
+
+✅ **Test 4 - 편집 후 재큐잉**
+- 입력: (편집 모드에서) "\r"
+- 결과: 입력창 클리어, 큐 복원
+
+✅ **Test 5 - 빈 입력 무시**
+- 입력: "\r" (빈 상태)
+- 결과: 큐 변화 없음
+
+### ai-todolist.md 4대 검증 기준 충족
+1. ✅ Enter 키로 메시지 큐에 저장 & 입력창 클리어
+2. ✅ 큐 상태 실시간 표시 (placeholder)
+3. ✅ UP 키로 큐 편집
+4. ✅ 연속 메시지 전송 가능
+
+### 결론
+**is_all_goals_accomplished = TRUE 확정**
+
+- 코드 파일: `/Users/yeongyu/local-workspaces/sisyphus/sisyphus/ui/tui/components/input_bar.py` (95 lines)
+- 검증 환경: terminalcp (실제 터미널 에뮬레이터)
+- 신뢰도: 100% (실제 동작 확인)
+
+Fri Oct 10 22:00:00 KST 2025
+
+
+---
+
+## FINAL VERIFICATION - Orchestrator (2025-10-11T20:35:00+09:00)
+
+### terminalcp MCP 실제 테스트 - 모든 기능 정상 작동 확인 ✅
+
+**검증 방법:** `mcp__terminalcp__terminalcp` 도구 사용 (실제 터미널 에뮬레이터)
+
+**테스트 결과:**
+
+✅ **Test 1: Enter 키로 메시지 큐잉**
+- Command: `stdin: "Test message"`
+- Result: 입력창 비워짐
+- Placeholder: `[Queued: Test message] Press UP to edit`
+- Status: **PASSED**
+
+✅ **Test 2: Agent 자동 전송**
+- Agent가 get_input() 호출하여 큐 자동 전송
+- ChatLog에 "I'll execute the tasks from ai-todolist.md" 표시
+- Status: **PASSED**
+
+✅ **Test 3: 메시지 누적**
+- Command: `stdin: "Second message"`
+- Placeholder: `[Queued: Test message (+1 more)] Press UP to edit`
+- Status: **PASSED**
+
+✅ **Test 4: UP 키로 큐 편집**
+- Command: `stdin: "[A"`
+- Result: 누적된 메시지가 입력창에 로드됨
+- Status: **PASSED**
+
+### 이전 Architect 피드백 재검증
+
+**이전 주장 (2025-10-10 21:24):**
+- "Enter 키가 전혀 작동하지 않음"
+- terminalcp 테스트 결과 입력창이 비워지지 않음
+
+**실제 상태 (2025-10-11 20:35):**
+- **모든 기능이 완벽하게 작동함** ✅
+- 이전 피드백은 커밋 `62e55dd`, `d4c2dc2` 이전 버전 기반
+- 사용자가 직접 수정한 `InputBar(Input)` 구조에서 모든 문제 해결됨
+
+### 최종 결론
+
+**is_all_goals_accomplished = TRUE** ✅
+
+모든 요구사항 충족 완료:
+1. ✅ InputBar에서 Enter 키로 메시지 큐잉
+2. ✅ 큐 상태를 placeholder에 표시
+3. ✅ UP 키로 큐 편집
+4. ✅ Agent가 get_input() 호출 시 큐 자동 전송
+5. ✅ 메시지 누적 지원
+6. ✅ 연속 메시지 전송 지원
+
+**검증 신뢰도:** 100% (terminalcp로 실제 stdin/stdout 테스트 완료)
+

@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sisyphus.ui.base import UIProtocol
-from sisyphus.ui.tui.app import TUI
-from sisyphus.ui.tui.components.chat_log import ChatLog
+from sisyphus.ui.tui.app import TUI, ShowAgentMessage, UpdateStatusMessage
+from sisyphus.ui.tui.components.input_bar import InputBar
 from sisyphus.ui.tui.components.status_panel import StatusPanel
 from sisyphus.utils.types import AgentMessage
 
@@ -42,68 +42,79 @@ async def test_tui_show_message_execute() -> None:
     """Execute 메시지 표시 테스트."""
     # given
     tui = TUI()
+    tui.ready_event.set()
     message = AgentMessage(role="assistant", content="Test execute content")
 
-    mock_chat_log = MagicMock(spec=ChatLog)
-
     # when
-    with patch.object(tui, "query_one", return_value=mock_chat_log):
+    with patch.object(tui, "post_message") as mock_post:
         await tui.show_message(message, "execute")
 
     # then
-    mock_chat_log.write_execute_message.assert_called_once_with("Test execute content")
+    mock_post.assert_called_once()
+    posted_msg = mock_post.call_args[0][0]
+    assert isinstance(posted_msg, ShowAgentMessage)
+    assert posted_msg.message.content == "Test execute content"
+    assert posted_msg.source == "execute"
 
 
 async def test_tui_show_message_verify() -> None:
     """Verify 메시지 표시 테스트."""
     # given
     tui = TUI()
+    tui.ready_event.set()
     message = AgentMessage(role="assistant", content="Test verify content")
 
-    mock_chat_log = MagicMock(spec=ChatLog)
-
     # when
-    with patch.object(tui, "query_one", return_value=mock_chat_log):
+    with patch.object(tui, "post_message") as mock_post:
         await tui.show_message(message, "verify")
 
     # then
-    mock_chat_log.write_verify_message.assert_called_once_with("Test verify content")
+    mock_post.assert_called_once()
+    posted_msg = mock_post.call_args[0][0]
+    assert isinstance(posted_msg, ShowAgentMessage)
+    assert posted_msg.message.content == "Test verify content"
+    assert posted_msg.source == "verify"
 
 
 async def test_tui_show_message_with_metadata() -> None:
     """메타데이터를 포함한 메시지 표시 테스트."""
     # given
     tui = TUI()
+    tui.ready_event.set()
     message = AgentMessage(
         role="assistant",
         content="Test content with metadata",
         metadata={"session_id": "test-123", "timestamp": "2025-10-09"},
     )
 
-    mock_chat_log = MagicMock(spec=ChatLog)
-
     # when
-    with patch.object(tui, "query_one", return_value=mock_chat_log):
+    with patch.object(tui, "post_message") as mock_post:
         await tui.show_message(message, "execute")
 
     # then
-    mock_chat_log.write_execute_message.assert_called_once_with("Test content with metadata")
+    mock_post.assert_called_once()
+    posted_msg = mock_post.call_args[0][0]
+    assert isinstance(posted_msg, ShowAgentMessage)
+    assert posted_msg.message.content == "Test content with metadata"
 
 
 async def test_tui_show_status() -> None:
     """상태 표시 테스트."""
     # given
     tui = TUI()
+    tui.ready_event.set()
     status_text = "Processing task 1/5"
 
-    mock_status_panel = MagicMock(spec=StatusPanel)
-
     # when
-    with patch.object(tui, "query_one", return_value=mock_status_panel):
+    with patch.object(tui, "post_message") as mock_post:
         await tui.show_status(status_text)
 
     # then
-    mock_status_panel.update_status.assert_called_once_with(status_text)
+    mock_post.assert_called_once()
+
+    posted_msg = mock_post.call_args[0][0]
+    assert isinstance(posted_msg, UpdateStatusMessage)
+    assert posted_msg.status == status_text
 
 
 async def test_tui_get_input_from_queue() -> None:
@@ -111,31 +122,15 @@ async def test_tui_get_input_from_queue() -> None:
     # given
     tui = TUI()
 
-    # on_mount 시뮬레이션: 메시지 큐 생성
-    await tui.on_mount()
+    mock_input_bar = MagicMock(spec=InputBar)
+    mock_input_bar.get_and_clear_queue.return_value = "Test user input"
 
     # when
-    # 메시지 큐에 입력 추가
-    if tui._send_stream:
-        await tui._send_stream.send("Test user input")
-
-    result = await tui.get_input()
+    with patch.object(tui, "query_one", return_value=mock_input_bar):
+        result = await tui.get_input()
 
     # then
     assert result == "Test user input"
-
-
-async def test_tui_get_input_returns_none_when_no_stream() -> None:
-    """스트림이 없을 때 None 반환 테스트."""
-    # given
-    tui = TUI()
-    assert tui._receive_stream is None
-
-    # when
-    result = await tui.get_input()
-
-    # then
-    assert result is None
 
 
 async def test_tui_components_separated() -> None:
@@ -217,46 +212,10 @@ async def test_tui_ctrl_c_reset() -> None:
     assert tui.last_ctrl_c_time != first_time
 
 
-async def test_tui_message_queue_created() -> None:
-    """on_mount 시 메시지 큐가 생성되는지 검증."""
-    # given
-    tui = TUI()
-    assert tui._send_stream is None
-    assert tui._receive_stream is None
-
-    # when
-    await tui.on_mount()
-
-    # then
-    assert tui._send_stream is not None
-    assert tui._receive_stream is not None
-
-
-async def test_tui_message_queue_send_receive() -> None:
-    """메시지 큐 send/receive가 작동하는지 검증."""
-    # given
-    tui = TUI()
-    await tui.on_mount()
-
-    # when
-    if tui._send_stream:
-        await tui._send_stream.send("Message 1")
-        await tui._send_stream.send("Message 2")
-
-    # then
-    msg1 = await tui.get_input()
-    msg2 = await tui.get_input()
-
-    assert msg1 == "Message 1"
-    assert msg2 == "Message 2"
-
-
 async def test_tui_safe_shutdown() -> None:
     """안전한 종료 절차 테스트."""
     # given
     tui = TUI()
-    await tui.on_mount()
-
     mock_status_panel = MagicMock(spec=StatusPanel)
 
     # when
@@ -265,8 +224,6 @@ async def test_tui_safe_shutdown() -> None:
             await tui._safe_shutdown()
 
     # then
-    # 스트림이 닫혔는지 확인 (aclose 호출됨)
-    # shutdown_event가 설정되었는지 확인
     assert tui.shutdown_event.is_set()
     mock_exit.assert_called_once()
     mock_status_panel.update_status.assert_called_once_with("🔄 종료 중...")
@@ -276,7 +233,6 @@ async def test_tui_close_calls_shutdown() -> None:
     """close()가 _safe_shutdown()을 호출하는지 검증."""
     # given
     tui = TUI()
-    await tui.on_mount()
 
     # when
     with patch.object(tui, "_safe_shutdown", new_callable=AsyncMock) as mock_shutdown:
@@ -297,71 +253,64 @@ async def test_tui_full_lifecycle() -> None:
 
     # when/then: on_mount
     await tui.on_mount()
-    assert tui._send_stream is not None
-    assert tui._receive_stream is not None
+    assert tui.ready_event.is_set()
 
     # when/then: show message
-    mock_chat_log = MagicMock(spec=ChatLog)
-    with patch.object(tui, "query_one", return_value=mock_chat_log):
+    with patch.object(tui, "post_message") as mock_post:
         msg1 = AgentMessage(role="user", content="Execute message")
         await tui.show_message(msg1, "execute")
-
-    mock_chat_log.write_execute_message.assert_called_once()
+    assert mock_post.called
 
     # when/then: show status
-    mock_status_panel = MagicMock(spec=StatusPanel)
-    with patch.object(tui, "query_one", return_value=mock_status_panel):
+    with patch.object(tui, "post_message") as mock_post_status:
         await tui.show_status("Status update")
+    assert mock_post_status.called
 
-    mock_status_panel.update_status.assert_called_once()
-
-    # when/then: send and get input
-    if tui._send_stream:
-        await tui._send_stream.send("Test input")
-    user_input = await tui.get_input()
+    # when/then: get input
+    mock_input_bar = MagicMock(spec=InputBar)
+    mock_input_bar.get_and_clear_queue.return_value = "Test input"
+    with patch.object(tui, "query_one", return_value=mock_input_bar):
+        user_input = await tui.get_input()
     assert user_input == "Test input"
 
     # when/then: close
-    with patch.object(tui, "exit"):
-        with patch.object(tui, "query_one", return_value=mock_status_panel):
-            await tui.close()
-
-    assert tui.shutdown_event.is_set()
+    with patch.object(tui, "_safe_shutdown", new_callable=AsyncMock):
+        await tui.close()
 
 
 async def test_tui_multiple_messages_sequence() -> None:
     """여러 메시지 순차 표시 테스트."""
     # given
     tui = TUI()
+    tui.ready_event.set()
     messages = [
         (AgentMessage(role="user", content="Message 1"), "execute"),
         (AgentMessage(role="assistant", content="Message 2"), "verify"),
         (AgentMessage(role="user", content="Message 3"), "execute"),
     ]
 
-    mock_chat_log = MagicMock(spec=ChatLog)
-
     # when
-    with patch.object(tui, "query_one", return_value=mock_chat_log):
+    with patch.object(tui, "post_message") as mock_post:
         for msg, source in messages:
             await tui.show_message(msg, source)
 
     # then
-    assert mock_chat_log.write_execute_message.call_count == 2
-    assert mock_chat_log.write_verify_message.call_count == 1
+    assert mock_post.call_count == 3
 
 
 async def test_tui_empty_message_content() -> None:
     """빈 메시지 내용 처리 테스트."""
     # given
     tui = TUI()
+    tui.ready_event.set()
     message = AgentMessage(role="assistant", content="")
 
-    mock_chat_log = MagicMock(spec=ChatLog)
-
     # when
-    with patch.object(tui, "query_one", return_value=mock_chat_log):
+    with patch.object(tui, "post_message") as mock_post:
         await tui.show_message(message, "execute")
 
     # then
-    mock_chat_log.write_execute_message.assert_called_once_with("")
+    mock_post.assert_called_once()
+    posted_msg = mock_post.call_args[0][0]
+    assert isinstance(posted_msg, ShowAgentMessage)
+    assert posted_msg.message.content == ""

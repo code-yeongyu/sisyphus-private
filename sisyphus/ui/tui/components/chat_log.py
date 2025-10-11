@@ -19,6 +19,7 @@ class ChatLog(RichLog):
             highlight=True,
             markup=True,
             auto_scroll=True,
+            wrap=True,
         )
 
     def write_execute_message(self, content: str) -> None:

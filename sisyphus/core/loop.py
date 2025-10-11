@@ -89,7 +89,10 @@ class ExecutionLoop:
         execute_prompt: str,
         execute_extra: str | None = None,
     ) -> None:
-        """Interactive mode: continuously get user input and send to agent.
+        """Interactive mode: continuously get user input and send to agent in parallel.
+
+        사용자가 Enter를 누르는 순간 즉시 Agent에 전송됩니다.
+        Agent 응답과 사용자 입력을 병렬로 처리합니다.
 
         Args:
             execute_prompt: 초기 실행 프롬프트
@@ -100,7 +103,7 @@ class ExecutionLoop:
         session_id = await self.session_store.get_session(agent_type)
 
         self.execute_logger = self.logger_factory.create_logger(agent_type, session_id)
-        self.execute_logger.info("Interactive mode starting")
+        self.execute_logger.info("Interactive mode starting (parallel input/output)")
 
         actual_session_id = await self.execute_agent.start_session(session_id)
         await self.session_store.save_session(agent_type, actual_session_id)
@@ -108,24 +111,45 @@ class ExecutionLoop:
         final_prompt = await self.prompt_resolver.resolve(execute_prompt, execute_extra)
         await self.execute_agent.send(final_prompt)
 
-        stream = self.execute_agent.stream()
-        async for message in stream:
-            await self.ui.show_message(message, source="execute")
-
         try:
-            while True:
-                try:
-                    user_input = await self.ui.get_input()
-                    if user_input is None:
-                        break
-                except (anyio.ClosedResourceError, anyio.EndOfStream):
-                    self.execute_logger.info("Input stream closed, exiting interactive mode")
-                    break
+            async with anyio.create_task_group() as tg:
 
-                await self.execute_agent.send(user_input)
-                stream = self.execute_agent.stream()
-                async for message in stream:
-                    await self.ui.show_message(message, source="execute")
+                async def receive_loop() -> None:
+                    """Agent 응답을 계속 수신하는 루프."""
+                    try:
+                        while True:
+                            stream = self.execute_agent.stream()
+                            async for message in stream:
+                                await self.ui.show_message(message, source="execute")
+                    except Exception as e:
+                        if self.execute_logger:
+                            self.execute_logger.error(f"Receive loop error: {e}")
+                        tg.cancel_scope.cancel()
+
+                async def input_loop() -> None:
+                    """사용자 입력을 계속 받아서 즉시 전송하는 루프."""
+                    try:
+                        while True:
+                            try:
+                                user_input = await self.ui.get_input()
+                                if user_input is None:
+                                    if self.execute_logger:
+                                        self.execute_logger.info("User requested exit")
+                                    tg.cancel_scope.cancel()
+                                    break
+                                await self.execute_agent.send(user_input)
+                            except (anyio.ClosedResourceError, anyio.EndOfStream):
+                                if self.execute_logger:
+                                    self.execute_logger.info("Input stream closed, exiting interactive mode")
+                                tg.cancel_scope.cancel()
+                                break
+                    except Exception as e:
+                        if self.execute_logger:
+                            self.execute_logger.error(f"Input loop error: {e}")
+                        tg.cancel_scope.cancel()
+
+                tg.start_soon(receive_loop)
+                tg.start_soon(input_loop)
         finally:
             await self.execute_agent.close()
 

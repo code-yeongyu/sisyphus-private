@@ -275,7 +275,8 @@ class OpenCodeAgent:
     async def close(self) -> None:
         """Close the OpenCode agent and terminate server if auto-started."""
         if self._client:
-            await self._client.aclose()
+            with anyio.move_on_after(5.0):
+                await self._client.aclose()
             self._client = None
 
         if self._process:

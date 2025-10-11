@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 import anyio
 import typer
+from rich.console import Console
 
 from sisyphus.agents.claude import ClaudeAgent
 from sisyphus.agents.droid import DroidAgent
@@ -26,6 +27,8 @@ if TYPE_CHECKING:
     from sisyphus.ui.base import UIProtocol
 
 app = typer.Typer(name="sisyphus", help="Sisyphus Multi-Agent System")
+console = Console()
+error_console = Console(stderr=True)
 
 
 def validate_url(url: str) -> str:
@@ -310,10 +313,10 @@ def run(
                 backend="asyncio",
             )
     except KeyboardInterrupt:
-        typer.echo("\n[yellow]Interrupted by user[/yellow]")
+        console.print("\n[yellow]Interrupted by user[/yellow]")
         raise typer.Exit(130)
     except Exception as e:
-        typer.echo(f"[bold red]Error: {e}[/bold red]", err=True)
+        error_console.print(f"[bold red]Error: {e}[/bold red]")
         raise typer.Exit(1)
 
 

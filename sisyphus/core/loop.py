@@ -171,6 +171,7 @@ class ExecutionLoop:
             verify_extra: Extra prompt for verify phase
         """
         iteration = 0
+        verify_feedback_history: list[str] = []
         while True:
             iteration += 1
 
@@ -182,16 +183,7 @@ class ExecutionLoop:
                 await self.ui.show_status(f"[Iteration {iteration}] Session limit handled, retrying...")
                 continue
 
-            if self.verify_agent:
-                actual_verify_prompt = verify_prompt if verify_prompt is not None else DEFAULT_VERIFY_PROMPT
-                await self.ui.show_status(f"[Iteration {iteration}] Starting Verify phase...")
-
-                try:
-                    await self._verify_phase(actual_verify_prompt, verify_extra)
-                except SessionLimitError:
-                    await self.ui.show_status(f"[Iteration {iteration}] Verify session limit handled, retrying...")
-                    continue
-
+            # Task Validator 체크 (Execute 성공 후에만)
             if self.task_validator is None:
                 await self.ui.show_status("Execution complete (no task validator)")
                 break
@@ -200,17 +192,38 @@ class ExecutionLoop:
             goals_accomplished = self.task_validator.check_all_goals_accomplished(content)
             checkboxes_completed = self.task_validator.check_all_checkboxes_completed(content)
 
-            if goals_accomplished and checkboxes_completed:
-                await self.ui.show_status("All tasks completed! Exiting loop.")
-                break
+            if not (goals_accomplished and checkboxes_completed):
+                uncompleted = self.task_validator.extract_uncompleted_checkboxes(content)
+                total = self.task_validator.count_total_checkboxes(content)
+                completed = self.task_validator.count_completed_checkboxes(content)
+                await self.ui.show_status(
+                    f"Progress: {completed}/{total} completed. {len(uncompleted)} tasks remaining. Continuing..."
+                )
+                continue  # Task 미완료 → Execute 재시작
 
-            uncompleted = self.task_validator.extract_uncompleted_checkboxes(content)
-            total = self.task_validator.count_total_checkboxes(content)
-            completed = self.task_validator.count_completed_checkboxes(content)
+            # Task 완료 시에만 Verify phase
+            if self.verify_agent:
+                actual_verify_prompt = verify_prompt if verify_prompt is not None else DEFAULT_VERIFY_PROMPT
+                await self.ui.show_status(f"[Iteration {iteration}] Starting Verify phase...")
 
-            await self.ui.show_status(
-                f"Progress: {completed}/{total} completed. {len(uncompleted)} tasks remaining. Continuing..."
-            )
+                try:
+                    feedback, fully_done = await self._verify_phase(actual_verify_prompt, verify_extra)
+
+                    if fully_done:
+                        await self.ui.show_status("✅ Architect confirmed FULLY_DONE. All work verified!")
+                        break  # 완전 종료
+
+                    # FULLY_DONE = FALSE → 피드백 누적 후 계속
+                    verify_feedback_history.append(feedback)
+                    await self.ui.show_status(f"[Iteration {iteration}] Verify feedback received. Continuing...")
+                    continue  # 피드백 포함해서 Execute 재시작
+                except SessionLimitError:
+                    await self.ui.show_status(f"[Iteration {iteration}] Verify session limit handled, retrying...")
+                    continue
+
+            # Verify agent 없으면 종료
+            await self.ui.show_status("All tasks completed! Exiting loop.")
+            break
 
     async def _execute_phase(
         self,

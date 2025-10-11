@@ -221,6 +221,16 @@ class ExecutionLoop:
             # Task 완료 시에만 Verify phase
             if self.verify_agent:
                 actual_verify_prompt = verify_prompt if verify_prompt is not None else DEFAULT_VERIFY_PROMPT
+
+                # 피드백 히스토리를 verify 프롬프트 앞에 추가
+                if verify_feedback_history:
+                    history_section = "<previous_architect_reviews>\n"
+                    for i, feedback in enumerate(verify_feedback_history, 1):
+                        history_section += f'<review iteration="{i}">\n{feedback}\n</review>\n\n'
+                    history_section += "</previous_architect_reviews>\n\n"
+
+                    actual_verify_prompt = history_section + actual_verify_prompt
+
                 await self.ui.show_status(f"[Iteration {iteration}] Starting Verify phase...")
 
                 try:

@@ -177,8 +177,25 @@ class ExecutionLoop:
 
             await self.ui.show_status(f"[Iteration {iteration}] Starting Execute phase...")
 
+            # 피드백 히스토리를 execute_extra에 주입
+            current_execute_extra = execute_extra
+            if verify_feedback_history:
+                feedback_section = (
+                    "\n\n## 🔍 Architect Feedback from Previous Iterations\n\n<architect-feedback-history>\n"
+                )
+
+                for i, feedback in enumerate(verify_feedback_history, 1):
+                    feedback_section += f'<feedback iteration="{i}">\n{feedback}\n</feedback>\n\n'
+
+                feedback_section += "</architect-feedback-history>\n\n"
+                feedback_section += (
+                    "**CRITICAL**: Address ALL issues mentioned in the feedback history above before proceeding.\n"
+                )
+
+                current_execute_extra = (execute_extra or "") + feedback_section
+
             try:
-                await self._execute_phase(execute_prompt, execute_extra)
+                await self._execute_phase(execute_prompt, current_execute_extra)
             except SessionLimitError:
                 await self.ui.show_status(f"[Iteration {iteration}] Session limit handled, retrying...")
                 continue

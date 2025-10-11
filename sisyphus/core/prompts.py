@@ -246,7 +246,7 @@ Check these critical flags in ai-todolist.md:
 
 ## Completion Signal
 
-**CRITICAL**: Only include `FULLY_DONE = TRUE` in your response when you are **absolutely certain** that:
+**CRITICAL**: Include `FULLY_DONE = TRUE` in your response when you are **absolutely certain** that:
 
 - ALL work is genuinely complete
 - ALL tests pass
@@ -256,7 +256,7 @@ Check these critical flags in ai-todolist.md:
 - Code quality meets standards
 - NO issues were found
 
-If there's even the **slightest incompleteness, bug, or issue**, do NOT include `FULLY_DONE = TRUE`.
+If there's even the **slightest incompleteness, bug, or issue**, SAY `FULLY_DONE = FALSE`.
 
 ## Your Feedback Impact
 

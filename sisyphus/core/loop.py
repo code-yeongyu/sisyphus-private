@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING
 import anyio
 
 from sisyphus.core.prompts import DEFAULT_EXECUTE_PROMPT, DEFAULT_VERIFY_PROMPT
+from sisyphus.utils.errors import SessionLimitError
+from sisyphus.utils.session_limit import sleep_until_reset
 
 if TYPE_CHECKING:
     from sisyphus.agents.base import Agent
@@ -173,12 +175,22 @@ class ExecutionLoop:
             iteration += 1
 
             await self.ui.show_status(f"[Iteration {iteration}] Starting Execute phase...")
-            await self._execute_phase(execute_prompt, execute_extra)
+
+            try:
+                await self._execute_phase(execute_prompt, execute_extra)
+            except SessionLimitError:
+                await self.ui.show_status(f"[Iteration {iteration}] Session limit handled, retrying...")
+                continue
 
             if self.verify_agent:
                 actual_verify_prompt = verify_prompt if verify_prompt is not None else DEFAULT_VERIFY_PROMPT
                 await self.ui.show_status(f"[Iteration {iteration}] Starting Verify phase...")
-                await self._verify_phase(actual_verify_prompt, verify_extra)
+
+                try:
+                    await self._verify_phase(actual_verify_prompt, verify_extra)
+                except SessionLimitError:
+                    await self.ui.show_status(f"[Iteration {iteration}] Verify session limit handled, retrying...")
+                    continue
 
             if self.task_validator is None:
                 await self.ui.show_status("Execution complete (no task validator)")
@@ -210,6 +222,9 @@ class ExecutionLoop:
         Args:
             prompt: Prompt for execute agent
             extra: Extra prompt to append
+
+        Raises:
+            SessionLimitError: Re-raised after handling sleep (for loop to retry)
         """
         final_prompt = await self.prompt_resolver.resolve(prompt, extra)
 
@@ -229,10 +244,22 @@ class ExecutionLoop:
         await self.execute_agent.send(final_prompt)
         self.execute_logger.info("Prompt sent")
 
-        stream = self.execute_agent.stream()
-        async for message in stream:
-            await self.ui.show_message(message, source="execute")
-            self.execute_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
+        try:
+            stream = self.execute_agent.stream()
+            async for message in stream:
+                await self.ui.show_message(message, source="execute")
+                self.execute_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
+        except SessionLimitError as e:
+            self.execute_logger.warning(f"Session limit reached: {e}")
+            await self.ui.show_status("⚠️  Session limit reached")
+
+            if e.reset_time:
+                await sleep_until_reset(e.reset_time, self.ui)
+            else:
+                await self.ui.show_status("Reset time unknown, waiting 1 hour...")
+                await anyio.sleep(3600)
+
+            raise
 
         await self.execute_agent.close()
         self.execute_logger.info("Execute phase complete")
@@ -247,6 +274,9 @@ class ExecutionLoop:
         Args:
             prompt: Prompt for verify agent
             extra: Extra prompt to append
+
+        Raises:
+            SessionLimitError: Re-raised after handling sleep (for loop to retry)
         """
         if self.verify_agent is None:
             return
@@ -268,10 +298,22 @@ class ExecutionLoop:
         await self.verify_agent.send(final_prompt)
         self.verify_logger.info("Prompt sent")
 
-        stream = self.verify_agent.stream()
-        async for message in stream:
-            await self.ui.show_message(message, source="verify")
-            self.verify_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
+        try:
+            stream = self.verify_agent.stream()
+            async for message in stream:
+                await self.ui.show_message(message, source="verify")
+                self.verify_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
+        except SessionLimitError as e:
+            self.verify_logger.warning(f"Session limit reached: {e}")
+            await self.ui.show_status("⚠️  Verify session limit reached")
+
+            if e.reset_time:
+                await sleep_until_reset(e.reset_time, self.ui)
+            else:
+                await self.ui.show_status("Reset time unknown, waiting 1 hour...")
+                await anyio.sleep(3600)
+
+            raise
 
         await self.verify_agent.close()
         self.verify_logger.info("Verify phase complete")

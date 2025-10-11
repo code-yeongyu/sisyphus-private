@@ -16,7 +16,8 @@ from claude_agent_sdk import (
     ToolUseBlock,
 )
 
-from sisyphus.utils.errors import SessionResumeError
+from sisyphus.utils.errors import SessionLimitError, SessionResumeError
+from sisyphus.utils.session_limit import parse_reset_time
 from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:
@@ -124,6 +125,9 @@ class ClaudeAgent:
 
         Yields:
             AgentMessage objects containing the response
+
+        Raises:
+            SessionLimitError: When session limit is reached
         """
         if not self._connected or self._client is None:
             raise RuntimeError("Client not connected. Call start_session() first.")
@@ -160,6 +164,15 @@ class ClaudeAgent:
                     )
 
                 case ResultMessage():
+                    if message.is_error and message.result:
+                        result_str = str(message.result).lower()
+                        if "session limit" in result_str or "limit reached" in result_str:
+                            reset_time = parse_reset_time(str(message.result))
+                            raise SessionLimitError(
+                                f"Claude API session limit reached: {message.result}",
+                                reset_time=reset_time,
+                            )
+
                     yield AgentMessage(
                         role="system",
                         content=f"Session complete: {message.session_id}",

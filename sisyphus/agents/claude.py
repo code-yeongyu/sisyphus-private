@@ -146,7 +146,14 @@ class ClaudeAgent:
                             case TextBlock():
                                 content += block.text
                             case ToolUseBlock():
-                                content += f"[TOOL_USE: {block.name}]"
+                                tool_header = f"[TOOL_USE: {block.name}]"
+                                if block.input:
+                                    tool_input_json = json.dumps(block.input, indent=2, ensure_ascii=False)
+                                    json_block = f"```json\n{tool_input_json}\n```"
+                                    indented_json = "\n".join(f"    {line}" for line in json_block.split("\n"))
+                                    content += f"{tool_header}\n{indented_json}"
+                                else:
+                                    content += tool_header
                             case ThinkingBlock():
                                 content += "[THINKING]"
 

@@ -1,5 +1,7 @@
 """ChatLog component for TUI."""
 
+from datetime import datetime
+
 from textual.widgets import RichLog
 
 
@@ -28,7 +30,8 @@ class ChatLog(RichLog):
         Args:
             content: 표시할 메시지 내용
         """
-        self.write(f"[yellow]▶ EXECUTE:[/yellow] {content}")
+        timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        self.write(f"[dim]{timestamp}[/dim] [yellow]▶ EXECUTE:[/yellow] {content}")
 
     def write_verify_message(self, content: str) -> None:
         """Verify 메시지 작성.
@@ -36,4 +39,5 @@ class ChatLog(RichLog):
         Args:
             content: 표시할 메시지 내용
         """
-        self.write(f"[cyan]✓ VERIFY:[/cyan] {content}")
+        timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        self.write(f"[dim]{timestamp}[/dim] [cyan]✓ VERIFY:[/cyan] {content}")

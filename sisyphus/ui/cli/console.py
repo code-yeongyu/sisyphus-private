@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from rich.console import Console
@@ -34,6 +35,8 @@ class CLI:
             message: Agent message to display
             source: Message source ('execute' or 'verify')
         """
+        timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+
         match source:
             case "execute":
                 color = "yellow"
@@ -42,7 +45,7 @@ class CLI:
             case _:
                 color = "white"
 
-        self.console.print(f"[{color}]{source.upper()}:[/{color}]", end=" ")
+        self.console.print(f"[dim]{timestamp}[/dim] [{color}]{source.upper()}:[/{color}]", end=" ")
 
         if message.content:
             md = Markdown(message.content)

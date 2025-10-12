@@ -103,12 +103,12 @@ class ExecutionLoop:
         verify_prompt: str | None = None,
         verify_extra: str | None = None,
     ) -> None:
-        """Unified mode: Execute -> Task Validator -> Verify phases in one flow.
+        """Unified mode: Task Validator -> Verify -> Execute phases in one flow.
 
-        This mode combines the logic from interactive and non-interactive modes:
-        - Execute Phase uses agent.stream() which naturally handles interactive agents
-        - Task Validator checks completion after Execute (if provided)
-        - Verify Phase runs after Task completion (if verify_agent provided)
+        This mode runs in the following order:
+        - Task Validator checks completion first (if provided)
+        - If completed: Run Verify only and exit
+        - If not completed: Run Verify (analyze/plan) -> Execute -> loop back
         - Feedback loop continues until FULLY_DONE = TRUE
 
         Args:
@@ -119,8 +119,8 @@ class ExecutionLoop:
         """
         iteration = 0
         verify_feedback_history: list[str] = []
-        skip_first_execute = False
 
+        # Initial task validation check
         if self.task_validator is not None:
             content = self.task_validator.read_content()
             goals_accomplished = self.task_validator.check_all_goals_accomplished(content)
@@ -128,76 +128,31 @@ class ExecutionLoop:
 
             if goals_accomplished and checkboxes_completed:
                 if self.verify_agent:
-                    await self.ui.show_status(
-                        "✓ Tasks already completed. Skipping Execute phase, running Verify only..."
-                    )
-                    skip_first_execute = True
+                    await self.ui.show_status("✓ Tasks already completed. Running final Verify only...")
+                    iteration = 1
+
+                    actual_verify_prompt = verify_prompt if verify_prompt is not None else DEFAULT_VERIFY_PROMPT
+                    await self.ui.show_status(f"[Iteration {iteration}] Starting final Verify phase...")
+
+                    try:
+                        await self._verify_phase(actual_verify_prompt, verify_extra)
+                        await self.ui.show_status("✅ Final verification complete!")
+                    except SessionLimitError:
+                        await self.ui.show_status(f"[Iteration {iteration}] Verify session limit handled.")
+                    return
                 else:
                     await self.ui.show_status("✓ All tasks already completed!")
                     return
 
+        # Main loop: Verify -> Execute -> TaskValidator
         while True:
             iteration += 1
 
-            if not (skip_first_execute and iteration == 1):
-                await self.ui.show_status(f"[Iteration {iteration}] Starting Execute phase...")
-            else:
-                await self.ui.show_status(
-                    f"[Iteration {iteration}] Tasks already completed, skipping Execute phase..."
-                )
-
-            if not (skip_first_execute and iteration == 1):
-                current_execute_extra = execute_extra
-                if verify_feedback_history:
-                    feedback_section = (
-                        "\n\n## 🔍 Architect Feedback from Previous Iterations\n\n<architect-feedback-history>\n"
-                    )
-
-                    for i, feedback in enumerate(verify_feedback_history, 1):
-                        feedback_section += f'<feedback iteration="{i}">\n{feedback}\n</feedback>\n\n'
-
-                    feedback_section += "</architect-feedback-history>\n\n"
-                    feedback_section += (
-                        "**CRITICAL**: Address ALL issues mentioned in the feedback history above before proceeding.\n"
-                    )
-
-                    current_execute_extra = (execute_extra or "") + feedback_section
-
-                try:
-                    await self._execute_phase(execute_prompt, current_execute_extra)
-                except SessionLimitError:
-                    await self.ui.show_status(f"[Iteration {iteration}] Session limit handled, retrying...")
-                    continue
-
-            print(f"DEBUG: After execute phase, task_validator={self.task_validator}", file=sys.stderr)
-
-            if not (skip_first_execute and iteration == 1):
-                if self.task_validator is not None:
-                    content = self.task_validator.read_content()
-                    goals_accomplished = self.task_validator.check_all_goals_accomplished(content)
-                    checkboxes_completed = self.task_validator.check_all_checkboxes_completed(content)
-
-                    print(
-                        f"DEBUG: Task validation - goals={goals_accomplished}, checkboxes={checkboxes_completed}",
-                        file=sys.stderr,
-                    )
-
-                    if not (goals_accomplished and checkboxes_completed):
-                        uncompleted = self.task_validator.extract_uncompleted_checkboxes(content)
-                        total = self.task_validator.count_total_checkboxes(content)
-                        completed = self.task_validator.count_completed_checkboxes(content)
-                        await self.ui.show_status(
-                            f"Progress: {completed}/{total} completed. {len(uncompleted)} remaining. Continuing..."
-                        )
-                        continue
-
-            print(f"DEBUG: Checking verify_agent, self.verify_agent={self.verify_agent}", file=sys.stderr)
-
-            # Verify phase (verify_agent가 있는 경우)
+            # Verify phase first (analyze current state and provide feedback)
             if self.verify_agent:
                 actual_verify_prompt = verify_prompt if verify_prompt is not None else DEFAULT_VERIFY_PROMPT
 
-                # 피드백 히스토리를 verify 프롬프트 앞에 추가
+                # Add feedback history to verify prompt
                 if verify_feedback_history:
                     history_section = "<previous_architect_reviews>\n"
                     for i, feedback in enumerate(verify_feedback_history, 1):
@@ -215,19 +170,88 @@ class ExecutionLoop:
                         await self.ui.show_status("✅ Architect confirmed FULLY_DONE. All work verified!")
                         break
 
-                    if self.task_validator is None:
-                        await self.ui.show_status("Verification complete (no task validator for feedback loop).")
-                        break
-
                     verify_feedback_history.append(feedback)
-                    await self.ui.show_status(f"[Iteration {iteration}] Verify feedback received. Continuing...")
-                    continue
+                    await self.ui.show_status(f"[Iteration {iteration}] Verify feedback collected.")
                 except SessionLimitError:
                     await self.ui.show_status(f"[Iteration {iteration}] Verify session limit handled, retrying...")
                     continue
 
-            await self.ui.show_status("All tasks completed! Exiting loop.")
-            break
+            # Execute phase (using feedback from Verify)
+            await self.ui.show_status(f"[Iteration {iteration}] Starting Execute phase...")
+
+            current_execute_extra = execute_extra
+            if verify_feedback_history:
+                feedback_section = (
+                    "\n\n## 🔍 Architect Feedback from Previous Iterations\n\n<architect-feedback-history>\n"
+                )
+
+                for i, feedback in enumerate(verify_feedback_history, 1):
+                    feedback_section += f'<feedback iteration="{i}">\n{feedback}\n</feedback>\n\n'
+
+                feedback_section += "</architect-feedback-history>\n\n"
+                feedback_section += (
+                    "**CRITICAL**: Address ALL issues mentioned in the feedback history above before proceeding.\n"
+                )
+
+                current_execute_extra = (execute_extra or "") + feedback_section
+
+            try:
+                await self._execute_phase(execute_prompt, current_execute_extra)
+            except SessionLimitError:
+                await self.ui.show_status(f"[Iteration {iteration}] Session limit handled, retrying...")
+                continue
+
+            print(f"DEBUG: After execute phase, task_validator={self.task_validator}", file=sys.stderr)
+
+            # Task validation after Execute
+            if self.task_validator is not None:
+                content = self.task_validator.read_content()
+                goals_accomplished = self.task_validator.check_all_goals_accomplished(content)
+                checkboxes_completed = self.task_validator.check_all_checkboxes_completed(content)
+
+                print(
+                    f"DEBUG: Task validation - goals={goals_accomplished}, checkboxes={checkboxes_completed}",
+                    file=sys.stderr,
+                )
+
+                if not (goals_accomplished and checkboxes_completed):
+                    uncompleted = self.task_validator.extract_uncompleted_checkboxes(content)
+                    total = self.task_validator.count_total_checkboxes(content)
+                    completed = self.task_validator.count_completed_checkboxes(content)
+                    await self.ui.show_status(
+                        f"Progress: {completed}/{total} completed. {len(uncompleted)} remaining. Continuing..."
+                    )
+                    continue
+                else:
+                    # Tasks completed, run final Verify
+                    if self.verify_agent:
+                        await self.ui.show_status(f"[Iteration {iteration}] Tasks completed. Running final Verify...")
+
+                        actual_verify_prompt = verify_prompt if verify_prompt is not None else DEFAULT_VERIFY_PROMPT
+
+                        try:
+                            _, fully_done = await self._verify_phase(actual_verify_prompt, verify_extra)
+
+                            if fully_done:
+                                await self.ui.show_status("✅ Architect confirmed FULLY_DONE. All work verified!")
+                            else:
+                                await self.ui.show_status("✅ All tasks completed and verified!")
+                            break
+                        except SessionLimitError:
+                            await self.ui.show_status(f"[Iteration {iteration}] Final verify session limit handled.")
+                            break
+                    else:
+                        await self.ui.show_status("✅ All tasks completed!")
+                        break
+            else:
+                # No task validator - single iteration
+                if self.verify_agent:
+                    await self.ui.show_status("Verification complete (no task validator for feedback loop).")
+                else:
+                    await self.ui.show_status("Execution complete.")
+                break
+
+            print(f"DEBUG: Checking verify_agent, self.verify_agent={self.verify_agent}", file=sys.stderr)
 
     async def _execute_phase(
         self,

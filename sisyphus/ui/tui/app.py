@@ -52,6 +52,24 @@ class ShutdownRequestMessage(Message):
     pass
 
 
+class CompletionMessage(Message):
+    """작업 완료 메시지 (ExecutionLoop → TUI).
+
+    화면을 닫지 않고 완료 메시지만 표시합니다.
+    """
+
+    def __init__(self, message: str, elapsed_seconds: float | None = None) -> None:
+        """Initialize CompletionMessage.
+
+        Args:
+            message: 완료 메시지
+            elapsed_seconds: 작업 소요 시간 (초)
+        """
+        super().__init__()
+        self.message = message
+        self.elapsed_seconds = elapsed_seconds
+
+
 class TUI(App[None]):
     """OpenCode 스타일 TUI (UIProtocol 구현).
 
@@ -175,6 +193,38 @@ class TUI(App[None]):
     async def on_shutdown_request_message(self, message: ShutdownRequestMessage) -> None:
         """종료 요청 핸들러."""
         await self._safe_shutdown()
+
+    async def on_completion_message(self, message: CompletionMessage) -> None:
+        """작업 완료 메시지 핸들러."""
+        try:
+            chat_log = self.query_one(ChatLog)
+
+            completion_text = message.message
+            if message.elapsed_seconds is not None:
+                elapsed_str = self._format_elapsed_time(message.elapsed_seconds)
+                completion_text = f"{message.message} (소요 시간: {elapsed_str})"
+
+            chat_log.write_completion_message(completion_text)
+            status_panel = self.query_one(StatusPanel)
+            status_panel.update_status("✅ 모든 작업이 완료되었습니다. Ctrl+C 두 번으로 종료할 수 있습니다.")
+        except Exception as e:
+            self.log.error(f"Failed to show completion message: {e}")
+
+    def _format_elapsed_time(self, seconds: float) -> str:
+        """Format elapsed time in human-readable Korean format."""
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        secs = int(seconds % 60)
+
+        parts = []
+        if hours > 0:
+            parts.append(f"{hours}시간")
+        if minutes > 0:
+            parts.append(f"{minutes}분")
+        if secs > 0 or not parts:
+            parts.append(f"{secs}초")
+
+        return " ".join(parts)
 
     async def on_input_ready_event(self, message: InputReadyEvent) -> None:
         """InputBar에서 Enter 눌렀을 때 get_input() 깨우기."""

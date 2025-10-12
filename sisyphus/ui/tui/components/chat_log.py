@@ -41,3 +41,12 @@ class ChatLog(RichLog):
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [cyan]✓ VERIFY:[/cyan] {content}")
+
+    def write_completion_message(self, content: str) -> None:
+        """작업 완료 메시지 작성.
+
+        Args:
+            content: 표시할 완료 메시지 내용
+        """
+        timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        self.write(f"[dim]{timestamp}[/dim] [bold green]✅ COMPLETED:[/bold green] {content}")

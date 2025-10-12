@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
@@ -19,7 +20,7 @@ from sisyphus.core.prompts import PromptResolver
 from sisyphus.core.session import SessionStore
 from sisyphus.core.tasks import TaskValidator
 from sisyphus.ui.base import create_ui
-from sisyphus.ui.tui.app import TUI, ShutdownRequestMessage
+from sisyphus.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
 from sisyphus.utils.logging import LoggerFactory
 
 if TYPE_CHECKING:
@@ -128,6 +129,8 @@ async def _main_cli(
         ui: UI Protocol 구현
         session_store: SessionStore 인스턴스
     """
+    start_time = time.time()
+
     prompt_resolver = PromptResolver()
     logger_factory = LoggerFactory()
 
@@ -149,6 +152,29 @@ async def _main_cli(
         verify_prompt=verify_prompt_spec,
         verify_extra=verify_extra,
     )
+
+    elapsed_seconds = time.time() - start_time
+    hours = int(elapsed_seconds // 3600)
+    minutes = int((elapsed_seconds % 3600) // 60)
+    secs = int(elapsed_seconds % 60)
+
+    time_parts = []
+    if hours > 0:
+        time_parts.append(f"{hours}시간")
+    if minutes > 0:
+        time_parts.append(f"{minutes}분")
+    if secs > 0 or not time_parts:
+        time_parts.append(f"{secs}초")
+
+    elapsed_str = " ".join(time_parts)
+    await ui.show_status(f"✅ 모든 작업이 완료되었습니다. (소요 시간: {elapsed_str})")
+    await ui.show_status("Ctrl+C를 눌러 종료하세요.")
+
+    shutdown_event = anyio.Event()
+    try:
+        await shutdown_event.wait()
+    except KeyboardInterrupt:
+        pass
 
 
 async def _main_tui(
@@ -183,6 +209,9 @@ async def _main_tui(
 
     async def run_execution_loop() -> None:
         """ExecutionLoop 실행 (TUI 준비 완료 후)."""
+
+        start_time = time.time()
+
         try:
             # TUI 준비 대기 (타임아웃 10초)
             with anyio.move_on_after(10.0) as cancel_scope:
@@ -212,8 +241,11 @@ async def _main_tui(
                 verify_extra=verify_extra,
             )
 
-            # ExecutionLoop 완료 시 TUI에 종료 요청
-            ui.post_message(ShutdownRequestMessage())
+            elapsed_seconds = time.time() - start_time
+            ui.post_message(CompletionMessage("모든 작업이 완료되었습니다.", elapsed_seconds=elapsed_seconds))
+
+            completion_event = anyio.Event()
+            await completion_event.wait()
         except Exception as e:
             # 에러를 UI에 표시하고 종료 요청
             try:
@@ -265,8 +297,12 @@ def run(
     if not agent and not execute:
         agent = "claude"
 
-    execute_spec = agent if agent else execute
-    verify_spec = agent if agent else verify
+    if agent:
+        execute_spec = agent
+        verify_spec = agent
+    else:
+        execute_spec = execute if execute else "claude"
+        verify_spec = verify if verify else execute_spec
 
     if opencode_server_url:
         opencode_server_url = validate_url(opencode_server_url)

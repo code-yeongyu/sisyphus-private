@@ -50,7 +50,7 @@ interactive mode 여도 verify phase 를 돌리게 하는게 맞아. 지금 문�
 is_execution_started = TRUE
 
 # 모든 목표 달성 여부
-is_all_goals_accomplished = FALSE
+is_all_goals_accomplished = TRUE
 
 # 병렬 실행 여부
 parallel_requested = FALSE
@@ -292,53 +292,53 @@ run()
      - [x] 모든 테스트가 통합 모드에서 통과하는가?
      - [x] 린트와 타입 체크가 통과하는가?
 
-- [ ] 5. 실제 동작 검증 - ClaudeAgent로 전체 흐름 테스트
+- [x] 5. 실제 동작 검증 - ClaudeAgent로 전체 흐름 테스트
    - **목표**: humantest20251011과 같은 시나리오에서 Architect가 실행되는지 확인
    - **핵심 접근**:
      - ClaudeAgent 사용해서 실제 작업 수행
      - Task 완료 후 Verify Phase가 실행되는지 확인
      - Architect의 피드백이 정상 동작하는지 확인
-   - [ ] 5.1 테스트 시나리오 준비
+   - [x] 5.1 테스트 시나리오 준비
      - 새로운 테스트 디렉토리에서 간단한 작업 수행
      - ai-todolist.md 작성
-   - [ ] 5.2 실제 sisyphus 실행
+   - [x] 5.2 실제 sisyphus 실행
      - `uv run sisyphus run` 실행
      - Execute -> Task Validator -> Verify 순서 확인
-   - [ ] 5.3 로그 분석
+   - [x] 5.3 로그 분석
      - logs/ 디렉토리에서 각 Phase 실행 로그 확인
      - Verify Phase가 실행되었는지 확인
      - FULLY_DONE 신호가 올바르게 처리되었는지 확인
-   - [ ] 5.4 최종 커밋
+   - [x] 5.4 최종 커밋
      - `git add -A && git commit -m "interactive/non-interactive 모드 통합 및 verify phase 항상 실행"`
-   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-     - [ ] ClaudeAgent 사용 시 Verify Phase가 실행되는가?
-     - [ ] Task Validator와 Verify가 순서대로 동작하는가?
-     - [ ] 로그에 모든 Phase 실행이 기록되는가?
-     - [ ] 피드백 루프가 정상 동작하는가?
-     - [ ] 최종 커밋이 생성되었는가?
+   - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+     - [x] ClaudeAgent 사용 시 Verify Phase가 실행되는가?
+     - [x] Task Validator와 Verify가 순서대로 동작하는가?
+     - [x] 로그에 모든 Phase 실행이 기록되는가?
+     - [x] 피드백 루프가 정상 동작하는가?
+     - [x] 최종 커밋이 생성되었는가?
 
 # 최종 작업 검증 체크리스트
 
-- [ ] 1. ExecutionLoop에 단일 통합 모드만 존재하는가?
-   - [ ] `supports_interactive` 체크가 완전히 제거되었는가?
-   - [ ] `_run_interactive_mode`와 `_run_non_interactive_mode`가 제거되었는가?
-- [ ] 2. 모든 Agent에서 Verify Phase가 동작하는가?
-   - [ ] ClaudeAgent 사용 시 Verify가 실행되는가?
-   - [ ] DroidAgent 사용 시에도 Verify가 실행되는가?
-- [ ] 3. Task Validator와 Verify의 실행 순서가 올바른가?
-   - [ ] Execute -> Task Validator -> Verify 순서인가?
-   - [ ] Task 미완료 시 Verify를 건너뛰는가?
-- [ ] 4. 피드백 루프가 정상 동작하는가?
-   - [ ] FULLY_DONE = FALSE 시 피드백이 전달되는가?
-   - [ ] 피드백이 Execute Phase에 포함되는가?
-- [ ] 5. 기존 기능이 손상되지 않았는가?
-   - [ ] Agent의 실시간 응답 특성이 유지되는가?
-   - [ ] 세션 관리가 올바르게 동작하는가?
-   - [ ] 에러 처리가 정상 작동하는가?
-- [ ] 6. 모든 테스트가 통과하는가?
-   - [ ] 단위 테스트 통과
-   - [ ] 통합 테스트 통과
-   - [ ] 린트 및 타입 체크 통과
-- [ ] 7. 실제 사용 시나리오에서 정상 동작하는가?
-   - [ ] humantest20251011과 같은 상황에서 Architect 실행
-   - [ ] 로그에 모든 Phase가 기록됨
+- [x] 1. ExecutionLoop에 단일 통합 모드만 존재하는가?
+   - [x] `supports_interactive` 체크가 완전히 제거되었는가?
+   - [x] `_run_interactive_mode`와 `_run_non_interactive_mode`가 제거되었는가?
+- [x] 2. 모든 Agent에서 Verify Phase가 동작하는가?
+   - [x] ClaudeAgent 사용 시 Verify가 실행되는가?
+   - [x] DroidAgent 사용 시에도 Verify가 실행되는가?
+- [x] 3. Task Validator와 Verify의 실행 순서가 올바른가?
+   - [x] Execute -> Task Validator -> Verify 순서인가?
+   - [x] Task 미완료 시 Verify를 건너뛰는가?
+- [x] 4. 피드백 루프가 정상 동작하는가?
+   - [x] FULLY_DONE = FALSE 시 피드백이 전달되는가?
+   - [x] 피드백이 Execute Phase에 포함되는가?
+- [x] 5. 기존 기능이 손상되지 않았는가?
+   - [x] Agent의 실시간 응답 특성이 유지되는가?
+   - [x] 세션 관리가 올바르게 동작하는가?
+   - [x] 에러 처리가 정상 작동하는가?
+- [x] 6. 모든 테스트가 통과하는가?
+   - [x] 단위 테스트 통과
+   - [x] 통합 테스트 통과
+   - [x] 린트 및 타입 체크 통과
+- [x] 7. 실제 사용 시나리오에서 정상 동작하는가?
+   - [x] humantest20251011과 같은 상황에서 Architect 실행
+   - [x] 로그에 모든 Phase가 기록됨

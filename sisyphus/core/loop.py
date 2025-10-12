@@ -62,7 +62,14 @@ class ExecutionLoop:
         verify_prompt: str | None = None,
         verify_extra: str | None = None,
     ) -> None:
-        """Run the execution loop.
+        """Run the execution loop in unified mode.
+
+        This method runs a unified execution flow that works for both interactive
+        and non-interactive agents:
+        - Execute Phase: Agent performs tasks (interactive features handled by agent)
+        - Task Validator: Checks completion (if ai-todolist.md exists)
+        - Verify Phase: Quality verification (if verify_agent provided)
+        - Feedback Loop: Continues until FULLY_DONE = TRUE
 
         Args:
             execute_prompt: Execute phase prompt (None = use DEFAULT_EXECUTE_PROMPT)
@@ -74,15 +81,13 @@ class ExecutionLoop:
             - Execute agent can resume previous session
             - Verify agent always starts new session (independent verification)
             - Loop continues until task_validator confirms completion (if provided)
+            - Interactive/non-interactive distinction is handled by agent implementation
         """
         await self.ui.initialize()
 
         actual_execute_prompt = execute_prompt if execute_prompt is not None else DEFAULT_EXECUTE_PROMPT
 
-        if hasattr(self.execute_agent, "supports_interactive") and self.execute_agent.supports_interactive:
-            await self._run_interactive_mode(actual_execute_prompt, execute_extra)
-        else:
-            await self._run_non_interactive_mode(actual_execute_prompt, execute_extra, verify_prompt, verify_extra)
+        await self._run_unified_mode(actual_execute_prompt, execute_extra, verify_prompt, verify_extra)
 
         await self.ui.close()
 

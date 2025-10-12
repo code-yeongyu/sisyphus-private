@@ -49,3 +49,49 @@ All tasks execution STARTED: Sun Oct 12 12:38:59 KST 2025
 소요 시간: 10분
 
 
+[2025-10-12 13:02] - 1.2 `run()` 메서드 단순화
+
+### DISCOVERED ISSUES
+- 없음 (기존 코드가 잘 구조화되어 있어서 단순히 제거만 하면 됨)
+
+### IMPLEMENTATION DECISIONS
+- `run()` 메서드 단순화 완료 (sisyphus/core/loop.py:58-92)
+  - Line 82-85의 `supports_interactive` 체크 제거
+  - Line 82-85의 if/else 분기 제거 (기존: `_run_interactive_mode()` 또는 `_run_non_interactive_mode()` 호출)
+  - Line 90에 `_run_unified_mode()` 직접 호출로 변경
+  - Docstring 업데이트: unified mode 설명 추가, interactive/non-interactive 구분이 agent에서 처리됨을 명시
+
+- 변경 전 구조:
+  ```python
+  if supports_interactive:
+      await self._run_interactive_mode(...)
+  else:
+      await self._run_non_interactive_mode(...)
+  ```
+
+- 변경 후 구조:
+  ```python
+  await self._run_unified_mode(...)
+  ```
+
+### PROBLEMS FOR NEXT TASKS
+- Task 1.3: Interactive 기능이 실제로 유지되는지 검증 필요
+- Task 4.1: `_run_interactive_mode()`와 `_run_non_interactive_mode()` 메서드 제거 가능
+- 현재 상태: 두 메서드가 아직 코드에 남아있지만 사용되지 않음
+
+### VERIFICATION RESULTS
+- 실행 명령: uv run pytest sisyphus/core/tests/test_loop*.py -v
+- 결과: 50개 테스트 모두 PASSED (0.14초)
+- 수정한 파일: sisyphus/core/loop.py
+  - Line 58-92: `run()` 메서드 단순화
+  - Docstring: unified mode 동작 설명으로 업데이트
+
+### LEARNINGS
+- `_run_unified_mode()` 메서드가 Task 1.1에서 이미 완벽하게 구현되어 있어서 `run()` 메서드 단순화가 매우 쉬웠음
+- Interactive/Non-Interactive 구분은 Agent Protocol의 책임이므로 ExecutionLoop은 신경쓸 필요 없음
+- 기존 50개 테스트가 모두 통과하는 것으로 보아, unified mode가 양쪽 케이스를 모두 완벽하게 처리함
+- 코드 단순화: 30줄 코드에서 4줄로 감소 (if/else 분기 제거)
+
+소요 시간: 3분
+
+

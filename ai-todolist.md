@@ -56,9 +56,9 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- [ ] 1.1 `_run_unified_mode()` 메서드 설계
-  - Execute Phase + Task Validator + Verify Phase 통합
-  - 기존 interactive/non-interactive 로직 재사용
+- [x] 1.2 `run()` 메서드 단순화
+  - `supports_interactive` 체크 제거
+  - 항상 `_run_unified_mode()` 호출
 
 # 필요한 사전 지식
 
@@ -220,7 +220,7 @@ run()
      - Execute Phase 로직 (기존 non-interactive 기반, stream 소비 방식)
      - Task Validator 체크 (optional, ai-todolist.md 있을 때)
      - Verify Phase 호출 (optional, verify_agent 있을 때)
-   - [ ] 1.2 `run()` 메서드 단순화
+   - [x] 1.2 `run()` 메서드 단순화
      - `supports_interactive` 체크 제거
      - 항상 `_run_unified_mode()` 호출
    - [ ] 1.3 기존 interactive 기능 보존 확인

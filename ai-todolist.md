@@ -28,7 +28,7 @@ interactive mode 여도 verify phase 를 돌리게 하는게 맞아. 지금 문�
 
 ### 2. humantest20251011 사례
 - /Users/yeongyu/local-workspaces/humantest20251011
-- ai-todolist.md의 모든 체크박스가 완료됨 (`is_all_goals_accomplished = TRUE`)
+- ai-todolist.md의 모든 체크박스가 완료됨 (`is_all_goals_accomplished = FALSE`)
 - 하지만 ClaudeAgent의 `supports_interactive = True` 때문에 Interactive Mode로 실행
 - Task Validator도, Verify Phase도 실행되지 않음
 - Architect의 최종 검증 없이 작업 종료
@@ -47,7 +47,7 @@ interactive mode 여도 verify phase 를 돌리게 하는게 맞아. 지금 문�
 4. FULLY_DONE = TRUE 신호로 최종 종료
 
 # 작업 시작 여부
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 모든 목표 달성 여부
 is_all_goals_accomplished = FALSE
@@ -56,9 +56,9 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 작업 시작 전입니다.
-   - 작업을 시작하면 위의 `is_execution_started` 의 값을 TRUE 로 바꾸세요.
-   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
+- [ ] 1.1 `_run_unified_mode()` 메서드 설계
+  - Execute Phase + Task Validator + Verify Phase 통합
+  - 기존 interactive/non-interactive 로직 재사용
 
 # 필요한 사전 지식
 
@@ -216,7 +216,7 @@ run()
      - Agent의 interactive 특성은 Agent가 처리하도록 위임
      - ExecutionLoop은 Execute -> Validate -> Verify 흐름만 관리
      - 실시간 대화는 Agent의 stream() 메커니즘으로 자연스럽게 처리됨
-   - [ ] 1.1 `_run_unified_mode()` 메서드 설계
+   - [x] 1.1 `_run_unified_mode()` 메서드 설계
      - Execute Phase 로직 (기존 non-interactive 기반, stream 소비 방식)
      - Task Validator 체크 (optional, ai-todolist.md 있을 때)
      - Verify Phase 호출 (optional, verify_agent 있을 때)

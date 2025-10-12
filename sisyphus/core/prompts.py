@@ -175,9 +175,9 @@ DEFAULT_VERIFY_PROMPT = (
     "  * Why their claim was false/misleading\n"
     "  * What they need to fix and how to do it properly\n"
     "  * That lying about completion or skipping work wastes everyone's time and is unacceptable\n\n"
-    "**CRITICAL**: Only include 'FULLY_DONE = TRUE' in your response when you are "
-    "absolutely certain that ALL work is genuinely complete and working. "
-    "If there's even the slightest incompleteness, bug, or issue, do NOT include it. "
+    "**INCLUDE THE RESULT, IN FORMAT**\n"
+    "If you absolutely certain that ALL work is genuinely complete and working, say `FULLY_DONE = TRUE`"
+    "If not, say `FULLY_DONE = FALSE`"
     "Your harsh feedback will be sent directly to the agent who did the work."
 )
 

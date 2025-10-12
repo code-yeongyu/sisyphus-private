@@ -170,10 +170,10 @@ async def _main_cli(
     await ui.show_status(f"✅ 모든 작업이 완료되었습니다. (소요 시간: {elapsed_str})")
     await ui.show_status("Ctrl+C를 눌러 종료하세요.")
 
-    shutdown_event = anyio.Event()
     try:
+        shutdown_event = anyio.Event()
         await shutdown_event.wait()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, anyio.get_cancelled_exc_class()):
         pass
 
 
@@ -244,8 +244,11 @@ async def _main_tui(
             elapsed_seconds = time.time() - start_time
             ui.post_message(CompletionMessage("모든 작업이 완료되었습니다.", elapsed_seconds=elapsed_seconds))
 
-            completion_event = anyio.Event()
-            await completion_event.wait()
+            try:
+                completion_event = anyio.Event()
+                await completion_event.wait()
+            except (KeyboardInterrupt, anyio.get_cancelled_exc_class()):
+                pass
         except Exception as e:
             # 에러를 UI에 표시하고 종료 요청
             try:

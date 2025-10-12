@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any
 
-import anyio
 from claude_agent_sdk import (
     AssistantMessage,
     ClaudeAgentOptions,
@@ -195,8 +194,11 @@ class ClaudeAgent:
                     return
 
     async def close(self) -> None:
-        """Close the Claude Agent SDK client with timeout."""
+        """Close the Claude Agent SDK client."""
         if self._client and self._connected:
-            with anyio.move_on_after(5.0):
+            try:
                 await self._client.disconnect()
-            self._connected = False
+            except Exception:
+                pass
+            finally:
+                self._connected = False

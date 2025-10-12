@@ -319,6 +319,9 @@ def run(
     execute_agent = create_agent(execute_spec, execute_sdk_options, exec_bin, opencode_server_url)
     verify_agent = create_agent(verify_spec, verify_sdk_options, ver_bin, opencode_server_url) if verify_spec else None
 
+    # DEBUG: verify_agent 생성 확인
+    console.print(f"[yellow]DEBUG: verify_spec={verify_spec}, verify_agent={verify_agent}[/yellow]")
+
     ui = create_ui("cli" if no_tui else "tui")
 
     session_store = SessionStore()

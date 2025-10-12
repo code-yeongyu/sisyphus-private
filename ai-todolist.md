@@ -28,7 +28,7 @@ interactive mode 여도 verify phase 를 돌리게 하는게 맞아. 지금 문�
 
 ### 2. humantest20251011 사례
 - /Users/yeongyu/local-workspaces/humantest20251011
-- ai-todolist.md의 모든 체크박스가 완료됨 (`is_all_goals_accomplished = FALSE`)
+- ai-todolist.md의 모든 체크박스가 완료됨 (`is_all_goals_accomplished = TRUE`)
 - 하지만 ClaudeAgent의 `supports_interactive = True` 때문에 Interactive Mode로 실행
 - Task Validator도, Verify Phase도 실행되지 않음
 - Architect의 최종 검증 없이 작업 종료

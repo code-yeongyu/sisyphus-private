@@ -45,7 +45,7 @@ async def test_feedback_loop__scenario_1_immediate_success() -> None:
     )
 
     # when
-    await loop._run_non_interactive_mode(
+    await loop._run_unified_mode(
         execute_prompt="Do the work",
         execute_extra=None,
         verify_prompt="Verify the work",
@@ -85,7 +85,7 @@ async def test_feedback_loop__scenario_2_task_incomplete_retry() -> None:
     )
 
     # when
-    await loop._run_non_interactive_mode(
+    await loop._run_unified_mode(
         execute_prompt="Do the work",
         execute_extra=None,
         verify_prompt="Verify the work",
@@ -127,7 +127,7 @@ async def test_feedback_loop__scenario_3_verify_feedback_iteration() -> None:
     )
 
     # when
-    await loop._run_non_interactive_mode(
+    await loop._run_unified_mode(
         execute_prompt="Do the work",
         execute_extra="Initial context",
         verify_prompt="Verify the work",

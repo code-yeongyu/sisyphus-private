@@ -1,4 +1,4 @@
-"""Tests for ExecutionLoop._run_non_interactive_mode flow control."""
+"""Tests for ExecutionLoop._run_unified_mode flow control."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 pytestmark = [pytest.mark.anyio]
 
 
-async def test_non_interactive__if_task_incomplete__skips_verify_and_retries_execute() -> None:
+async def test_unified__if_task_incomplete__skips_verify_and_retries_execute() -> None:
     # given
     execute_agent = MockAgent()
     execute_agent.messages_to_return = [
@@ -53,7 +53,7 @@ async def test_non_interactive__if_task_incomplete__skips_verify_and_retries_exe
     )
 
     # when
-    await loop._run_non_interactive_mode("execute prompt", None, "verify prompt", None)
+    await loop._run_unified_mode("execute prompt", None, "verify prompt", None)
 
     # then
     assert task_validator.check_call_count == 2
@@ -61,7 +61,7 @@ async def test_non_interactive__if_task_incomplete__skips_verify_and_retries_exe
     assert len(verify_agent.sent_messages) == 1
 
 
-async def test_non_interactive__if_task_complete_and_fully_done__exits_loop() -> None:
+async def test_unified__if_task_complete_and_fully_done__exits_loop() -> None:
     # given
     execute_agent = MockAgent()
     execute_agent.messages_to_return = [
@@ -92,7 +92,7 @@ async def test_non_interactive__if_task_complete_and_fully_done__exits_loop() ->
     )
 
     # when
-    await loop._run_non_interactive_mode("execute prompt", None, "verify prompt", None)
+    await loop._run_unified_mode("execute prompt", None, "verify prompt", None)
 
     # then
     assert task_validator.check_call_count == 1
@@ -100,7 +100,7 @@ async def test_non_interactive__if_task_complete_and_fully_done__exits_loop() ->
     assert any("FULLY_DONE" in status for status in ui.statuses)
 
 
-async def test_non_interactive__if_task_complete_but_not_fully_done__continues_with_feedback() -> None:
+async def test_unified__if_task_complete_but_not_fully_done__continues_with_feedback() -> None:
     # given
     execute_agent = MockAgent()
     execute_agent.messages_to_return = [
@@ -136,7 +136,7 @@ async def test_non_interactive__if_task_complete_but_not_fully_done__continues_w
     )
 
     # when
-    await loop._run_non_interactive_mode("execute prompt", None, "verify prompt", None)
+    await loop._run_unified_mode("execute prompt", None, "verify prompt", None)
 
     # then
     assert task_validator.check_call_count == 2

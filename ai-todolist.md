@@ -56,9 +56,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- [x] 1.2 `run()` 메서드 단순화
-  - `supports_interactive` 체크 제거
-  - 항상 `_run_unified_mode()` 호출
+없음 (Task 4 완료)
 
 # 필요한 사전 지식
 
@@ -210,7 +208,7 @@ run()
 
 # TODOs
 
-- [ ] 1. ExecutionLoop 아키텍처 재설계 - 통합 실행 모드 구현
+- [x] 1. ExecutionLoop 아키텍처 재설계 - 통합 실행 모드 구현
    - **목표**: `_run_interactive_mode`와 `_run_non_interactive_mode`를 하나의 통합 모드로 병합
    - **핵심 접근**:
      - Agent의 interactive 특성은 Agent가 처리하도록 위임
@@ -231,68 +229,68 @@ run()
      - [x] `supports_interactive` 체크가 완전히 제거되었는가?
      - [x] 새로운 통합 모드의 구조가 명확한가?
 
-- [ ] 2. 통합 모드 구현 - Execute Phase + Task Validator
+- [x] 2. 통합 모드 구현 - Execute Phase + Task Validator
    - **목표**: Execute 실행 후 Task Validator 체크까지 구현
    - **핵심 접근**:
      - Execute Phase는 agent.stream()을 통해 메시지 수신
      - Task Validator는 Execute 성공 후 체크
      - 미완료 시 Execute 재시작
-   - [ ] 2.1 Execute Phase 구현
+   - [x] 2.1 Execute Phase 구현
      - 기존 `_execute_phase()` 로직 재사용
      - agent.send()로 프롬프트 전송
      - agent.stream()으로 응답 수신 및 UI 표시
-   - [ ] 2.2 Task Validator 통합
+   - [x] 2.2 Task Validator 통합
      - Execute 완료 후 ai-todolist.md 체크
      - 미완료 시 continue로 Execute 재시작
-   - [ ] 2.3 테스트 작성
+   - [x] 2.3 테스트 작성
      - Execute -> Task incomplete -> Execute 재시작 시나리오
      - Execute -> Task complete -> 다음 단계 진행 시나리오
-   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-     - [ ] Execute Phase가 정상 동작하는가?
-     - [ ] Task Validator가 올바르게 체크하는가?
-     - [ ] 미완료 시 Execute가 재시작되는가?
-     - [ ] 테스트가 통과하는가?
+   - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+     - [x] Execute Phase가 정상 동작하는가?
+     - [x] Task Validator가 올바르게 체크하는가?
+     - [x] 미완료 시 Execute가 재시작되는가?
+     - [x] 테스트가 통과하는가?
 
-- [ ] 3. 통합 모드 구현 - Verify Phase 추가
+- [x] 3. 통합 모드 구현 - Verify Phase 추가
    - **목표**: Task 완료 후 Verify Phase 실행 및 피드백 루프 구현
    - **핵심 접근**:
      - Task Validator 통과 시에만 Verify 실행
      - FULLY_DONE = TRUE 시 종료
      - FULLY_DONE = FALSE 시 피드백 포함해서 Execute 재시작
-   - [ ] 3.1 Verify Phase 통합
+   - [x] 3.1 Verify Phase 통합
      - 기존 `_verify_phase()` 로직 재사용
      - Task 완료 시에만 실행
      - 피드백 히스토리 관리
-   - [ ] 3.2 피드백 루프 구현
+   - [x] 3.2 피드백 루프 구현
      - verify_feedback_history 변수로 피드백 누적
      - Execute 재시작 시 피드백 전달
-   - [ ] 3.3 테스트 작성
+   - [x] 3.3 테스트 작성
      - Task complete -> Verify (FULLY_DONE=TRUE) -> 종료
      - Task complete -> Verify (FULLY_DONE=FALSE) -> Execute with feedback
-   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-     - [ ] Verify Phase가 Task 완료 시에만 실행되는가?
-     - [ ] FULLY_DONE 신호로 종료가 작동하는가?
-     - [ ] 피드백이 올바르게 전달되는가?
-     - [ ] 테스트가 통과하는가?
+   - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+     - [x] Verify Phase가 Task 완료 시에만 실행되는가?
+     - [x] FULLY_DONE 신호로 종료가 작동하는가?
+     - [x] 피드백이 올바르게 전달되는가?
+     - [x] 테스트가 통과하는가?
 
-- [ ] 4. 기존 모드 메서드 제거 및 정리
+- [x] 4. 기존 모드 메서드 제거 및 정리
    - **목표**: 사용하지 않는 `_run_interactive_mode`, `_run_non_interactive_mode` 제거
    - **핵심 접근**:
      - 통합 모드로 완전히 이전 후 제거
      - 관련 테스트 업데이트
-   - [ ] 4.1 기존 메서드 제거
+   - [x] 4.1 기존 메서드 제거
      - `_run_interactive_mode()` 삭제
      - `_run_non_interactive_mode()` 삭제
-   - [ ] 4.2 관련 테스트 업데이트
+   - [x] 4.2 관련 테스트 업데이트
      - 기존 모드별 테스트를 통합 모드 테스트로 전환
      - 모든 테스트 케이스가 통합 모드에서 통과하는지 확인
-   - [ ] 4.3 린트 및 타입 체크
+   - [x] 4.3 린트 및 타입 체크
      - `uv run ruff check sisyphus/core/loop.py`
      - `uv run basedpyright sisyphus/core/loop.py`
-   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-     - [ ] 기존 모드 메서드가 완전히 제거되었는가?
-     - [ ] 모든 테스트가 통합 모드에서 통과하는가?
-     - [ ] 린트와 타입 체크가 통과하는가?
+   - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+     - [x] 기존 모드 메서드가 완전히 제거되었는가?
+     - [x] 모든 테스트가 통합 모드에서 통과하는가?
+     - [x] 린트와 타입 체크가 통과하는가?
 
 - [ ] 5. 실제 동작 검증 - ClaudeAgent로 전체 흐름 테스트
    - **목표**: humantest20251011과 같은 시나리오에서 Architect가 실행되는지 확인

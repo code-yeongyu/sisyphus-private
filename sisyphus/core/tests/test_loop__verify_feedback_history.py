@@ -46,7 +46,7 @@ async def test_verify__if_no_feedback_history__uses_original_prompt() -> None:
     original_verify_prompt = "Please verify the work."
 
     # when
-    await loop._run_non_interactive_mode(
+    await loop._run_unified_mode(
         execute_prompt="Do work",
         execute_extra=None,
         verify_prompt=original_verify_prompt,
@@ -91,7 +91,7 @@ async def test_verify__if_feedback_history_exists__prepends_history_section() ->
     original_verify_prompt = "Please verify the work."
 
     # when
-    await loop._run_non_interactive_mode(
+    await loop._run_unified_mode(
         execute_prompt="Do work",
         execute_extra=None,
         verify_prompt=original_verify_prompt,
@@ -141,7 +141,7 @@ async def test_verify__if_multiple_feedbacks__includes_all_in_history() -> None:
     original_verify_prompt = "Please verify the work."
 
     # when
-    await loop._run_non_interactive_mode(
+    await loop._run_unified_mode(
         execute_prompt="Do work",
         execute_extra=None,
         verify_prompt=original_verify_prompt,

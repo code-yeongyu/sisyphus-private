@@ -134,3 +134,111 @@ All tasks execution STARTED: Sun Oct 12 12:38:59 KST 2025
 
 소요 시간: 2분
 
+
+[2025-10-12 17:51] - Task 2, 3 검증 (Orchestrator 직접 수행)
+
+### DISCOVERED ISSUES
+- 없음 (Task 1.1에서 이미 완벽하게 구현됨)
+
+### IMPLEMENTATION DECISIONS
+- Task 2 (Execute Phase + Task Validator):
+  - Task 1.1의 `_run_unified_mode()` 구현 시 이미 완료됨
+  - `_execute_phase()` 메서드: loop.py:361-411
+  - Task Validator 통합: loop.py:214-227
+  - 관련 테스트: test_loop__non_interactive_flow.py, test_loop__integration_feedback_loop.py
+  
+- Task 3 (Verify Phase 추가):
+  - Task 1.1의 `_run_unified_mode()` 구현 시 이미 완료됨
+  - Verify Phase 통합: loop.py:229-258
+  - 피드백 루프: loop.py:184-206 (verify_feedback_history)
+  - 관련 테스트: test_loop__verify_phase_feedback.py, test_loop__verify_feedback_history.py
+
+### PROBLEMS FOR NEXT TASKS
+- Task 4: 기존 모드 메서드 제거 및 정리
+  - `_run_interactive_mode()` 제거 필요 (loop.py:94-162)
+  - `_run_non_interactive_mode()` 제거 필요 (loop.py:260-354)
+  - 이 메서드들은 현재 사용되지 않지만 코드에 여전히 존재함
+  
+- Task 5: 실제 동작 검증
+  - ClaudeAgent로 실제 sisyphus 실행 필요
+  - 로그 분석하여 모든 Phase 실행 확인
+
+### VERIFICATION RESULTS
+- Task 2 검증:
+  - ✓ Execute Phase 정상 동작 (loop.py:361-411)
+  - ✓ Task Validator 올바른 체크 (loop.py:214-227)
+  - ✓ 미완료 시 Execute 재시작 (loop.py:227 `continue`)
+  - ✓ 테스트 통과 (50/50 PASSED)
+
+- Task 3 검증:
+  - ✓ Verify Phase가 Task 완료 시에만 실행 (loop.py:229-230)
+  - ✓ FULLY_DONE 신호로 종료 작동 (loop.py:247-249)
+  - ✓ 피드백 올바르게 전달 (loop.py:193-206)
+  - ✓ 테스트 통과 (50/50 PASSED)
+
+### LEARNINGS
+- Task 1.1에서 `_run_unified_mode()` 구현이 매우 포괄적이어서 Task 2, 3이 자동으로 완료됨
+- Orchestrator의 검증 방법:
+  1. 코드 직접 읽기로 구현 확인
+  2. 각 acceptance criterion별로 증거 수집
+  3. 테스트 실행으로 최종 확인
+- `_run_unified_mode()`의 구조:
+  - Execute Phase (loop.py:208-212)
+  - Task Validator (loop.py:214-227)
+  - Verify Phase (loop.py:229-258)
+  - 피드백 루프 (loop.py:184-206, 255)
+- 50개 테스트가 모두 통과하므로 모든 시나리오가 정상 동작함
+
+소요 시간: 5분 (검증 작업)
+
+
+[2025-10-12 17:57] - 4. 기존 모드 메서드 제거 및 정리
+
+### DISCOVERED ISSUES
+- 4개 테스트 파일이 `_run_non_interactive_mode()`를 직접 호출하고 있었음
+  - test_loop__non_interactive_flow.py
+  - test_loop__integration_feedback_loop.py
+  - test_loop__verify_feedback_history.py
+  - test_loop__execute_feedback_injection.py
+- 테스트 파일들을 먼저 수정해야 메서드 제거 가능
+
+### IMPLEMENTATION DECISIONS
+- 테스트 파일 수정 전략:
+  1. `_run_non_interactive_mode()` → `_run_unified_mode()` 일괄 변경
+  2. 테스트 함수 이름도 `test_non_interactive__*` → `test_unified__*` 변경
+  3. docstring 업데이트 (non_interactive → unified)
+  
+- loop.py에서 메서드 삭제:
+  1. `_run_interactive_mode()` 전체 삭제 (line 94-162, 69줄)
+  2. `_run_non_interactive_mode()` 전체 삭제 (line 265-360, 96줄)
+  3. 총 165줄의 중복 코드 제거
+
+- sed 명령어 활용:
+  - 3개 테스트 파일을 한 번에 일괄 변경
+  - `sed -i '' 's/_run_non_interactive_mode/_run_unified_mode/g'`
+
+### PROBLEMS FOR NEXT TASKS
+- Task 5: 실제 ClaudeAgent로 동작 검증 필요
+- 통합 모드가 실제 시나리오에서도 정상 동작하는지 확인
+
+### VERIFICATION RESULTS
+- 테스트 실행: `uv run pytest sisyphus/core/tests/test_loop*.py -v`
+  - 결과: **50/50 PASSED** (0.21초)
+  - asyncio/trio 모두 통과
+  
+- Lint 체크: `uv run ruff check sisyphus/core/loop.py`
+  - 결과: **All checks passed!**
+  
+- Type 체크: `uv run basedpyright sisyphus/core/loop.py`
+  - 결과: **0 errors, 0 warnings, 0 notes**
+
+### LEARNINGS
+- 메서드 제거 전 모든 참조를 먼저 업데이트해야 함
+- grep으로 참조 위치 먼저 확인하는 것이 중요
+- sed를 활용한 일괄 변경이 효율적 (반복 작업 최소화)
+- 테스트가 있어서 리팩토링이 안전하게 진행됨 (50개 테스트 모두 통과)
+- `_run_unified_mode()`가 Task 1.1에서 완벽하게 구현되어 있어서 단순히 사용하지 않는 코드를 제거하는 작업이었음
+- 165줄의 중복 코드 제거로 코드베이스가 더 깔끔해짐
+
+소요 시간: 3분
+

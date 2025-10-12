@@ -44,7 +44,7 @@ async def test_execute__if_no_feedback_history__uses_original_extra() -> None:
     )
 
     # when
-    await loop._run_non_interactive_mode(
+    await loop._run_unified_mode(
         execute_prompt="Do the task",
         execute_extra="Original extra content",
         verify_prompt=None,
@@ -86,7 +86,7 @@ async def test_execute__if_feedback_history_exists__appends_feedback_section() -
     )
 
     # when
-    await loop._run_non_interactive_mode(
+    await loop._run_unified_mode(
         execute_prompt="Do the task",
         execute_extra="Original extra",
         verify_prompt=None,
@@ -137,7 +137,7 @@ async def test_execute__if_multiple_feedbacks__includes_all_with_correct_numberi
     )
 
     # when
-    await loop._run_non_interactive_mode(
+    await loop._run_unified_mode(
         execute_prompt="Do the task",
         execute_extra=None,
         verify_prompt=None,

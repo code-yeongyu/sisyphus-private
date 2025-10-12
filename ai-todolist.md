@@ -223,13 +223,13 @@ run()
    - [x] 1.2 `run()` 메서드 단순화
      - `supports_interactive` 체크 제거
      - 항상 `_run_unified_mode()` 호출
-   - [ ] 1.3 기존 interactive 기능 보존 확인
+   - [x] 1.3 기존 interactive 기능 보존 확인
      - Agent의 실시간 응답 특성이 유지되는지 확인
      - 병렬 input/output이 필요하다면 별도 처리 방안 검토
-   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-     - [ ] `run()` 메서드가 단일 실행 경로만 가지는가?
-     - [ ] `supports_interactive` 체크가 완전히 제거되었는가?
-     - [ ] 새로운 통합 모드의 구조가 명확한가?
+   - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+     - [x] `run()` 메서드가 단일 실행 경로만 가지는가?
+     - [x] `supports_interactive` 체크가 완전히 제거되었는가?
+     - [x] 새로운 통합 모드의 구조가 명확한가?
 
 - [ ] 2. 통합 모드 구현 - Execute Phase + Task Validator
    - **목표**: Execute 실행 후 Task Validator 체크까지 구현

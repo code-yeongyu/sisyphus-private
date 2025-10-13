@@ -106,3 +106,41 @@ async def sleep_until_reset(
 
     if ui:
         await ui.show_status("✅ Session limit reset time reached, continuing...")
+
+
+async def sleep_until_next_hour(
+    ui: UIProtocol | None = None,
+) -> None:
+    """Sleep until the next hour (top of the hour) with periodic UI updates.
+
+    Args:
+        ui: Optional UI protocol for status updates
+    """
+    now = datetime.now().astimezone()
+    next_hour = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+
+    total_seconds = (next_hour - now).total_seconds()
+
+    if ui:
+        reset_str = next_hour.strftime("%Y-%m-%d %H:%M:%S")
+        await ui.show_status(f"⚠️  Session limit reached. Sleeping until next hour {reset_str} ({int(total_seconds)}s)")
+
+    remaining = total_seconds
+    while remaining > 0:
+        sleep_chunk = min(remaining, 60)
+        await anyio.sleep(sleep_chunk)
+        remaining -= sleep_chunk
+
+        if remaining > 0 and ui:
+            minutes = int((remaining % 3600) // 60)
+            seconds = int(remaining % 60)
+
+            if minutes > 0:
+                time_str = f"{minutes}m {seconds}s"
+            else:
+                time_str = f"{seconds}s"
+
+            await ui.show_status(f"Waiting for next hour... {time_str} remaining")
+
+    if ui:
+        await ui.show_status("✅ Next hour reached, continuing...")

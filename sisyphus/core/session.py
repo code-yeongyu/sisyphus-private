@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -18,6 +19,12 @@ class SessionStore:
         self.sessions_file = self.base_dir / "sessions.json"
         self.backup_file = self.base_dir / "sessions.json.bak"
         self.lock = anyio.Lock()
+
+    def _remove_path_sync(self, path: Path) -> None:
+        if path.is_dir():
+            shutil.rmtree(path)
+        else:
+            path.unlink()
 
     def _load_sessions_sync(self) -> dict[str, dict[str, Any]]:
         """Load sessions from file with corruption recovery (synchronous)"""
@@ -43,12 +50,9 @@ class SessionStore:
 
     async def _save_sessions_atomic(self, sessions: dict[str, dict[str, Any]]) -> None:
         """원자적 저장 (임시 파일 + rename)"""
-        # Create backup of existing file before writing
         if self.sessions_file.exists():
-            # Remove old backup if exists
             if self.backup_file.exists():
-                await anyio.to_thread.run_sync(self.backup_file.unlink)
-            # Rename current file to backup
+                await anyio.to_thread.run_sync(self._remove_path_sync, self.backup_file)
             await anyio.to_thread.run_sync(self.sessions_file.rename, self.backup_file)
 
         # Write to temporary file

@@ -6,11 +6,9 @@ import logging
 import sys
 from typing import TYPE_CHECKING
 
-import anyio
-
 from sisyphus.core.prompts import DEFAULT_EXECUTE_PROMPT, DEFAULT_VERIFY_PROMPT
 from sisyphus.utils.errors import SessionLimitError, SessionResumeError
-from sisyphus.utils.session_limit import sleep_until_reset
+from sisyphus.utils.session_limit import sleep_until_next_hour, sleep_until_reset
 
 if TYPE_CHECKING:
     from sisyphus.agents.base import Agent
@@ -258,8 +256,8 @@ class ExecutionLoop:
             if e.reset_time:
                 await sleep_until_reset(e.reset_time, self.ui)
             else:
-                await self.ui.show_status("Reset time unknown, waiting 1 hour...")
-                await anyio.sleep(3600)
+                await self.ui.show_status("Reset time unknown, waiting until next hour...")
+                await sleep_until_next_hour(self.ui)
 
             raise
 
@@ -333,8 +331,8 @@ class ExecutionLoop:
             if e.reset_time:
                 await sleep_until_reset(e.reset_time, self.ui)
             else:
-                await self.ui.show_status("Reset time unknown, waiting 1 hour...")
-                await anyio.sleep(3600)
+                await self.ui.show_status("Reset time unknown, waiting until next hour...")
+                await sleep_until_next_hour(self.ui)
 
             raise
 

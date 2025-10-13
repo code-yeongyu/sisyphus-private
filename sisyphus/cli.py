@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import time
+import traceback
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
@@ -269,6 +270,14 @@ async def _main_tui(
     except* (SystemExit, KeyboardInterrupt):
         # 정상 종료 (Ctrl+C 등) - ExceptionGroup 처리
         pass
+    except* Exception as eg:
+        for e in eg.exceptions:
+            error_console.print("\n[bold red]═══ Unhandled Error ═══[/bold red]")
+            error_console.print(f"[red]Type: {type(e).__name__}[/red]")
+            error_console.print(f"[red]Message: {e}[/red]")
+            error_console.print("\n[yellow]Traceback:[/yellow]")
+            traceback.print_exception(type(e), e, e.__traceback__)
+        raise typer.Exit(1)
 
 
 @app.command(name="run")

@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 DEFAULT_EXECUTE_PROMPT = """/execute
 
 Execute tasks from the ai-todolist.md file by spawning executor agents.
+I am ordering you to start working.
 
 ## Your Mission
 

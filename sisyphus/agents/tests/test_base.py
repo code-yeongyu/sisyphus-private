@@ -17,6 +17,10 @@ class MockAgent:
 
     supports_interactive = True
 
+    @property
+    def session_id(self) -> str | None:
+        return "test-session-id"
+
     async def initialize(self) -> None:
         pass
 

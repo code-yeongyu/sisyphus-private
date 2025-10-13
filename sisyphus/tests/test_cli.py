@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 import typer
@@ -509,8 +509,8 @@ async def test_run_ui_mode_cli() -> None:
                     )
 
                     # then
-                    # create_ui가 "cli"로 호출되는지 확인
-                    mock_create_ui.assert_called_once_with("cli")
+                    # create_ui가 "cli"로 호출되는지 확인 (theme=None for CLI mode)
+                    mock_create_ui.assert_called_once_with("cli", theme=None)
 
 
 async def test_run_ui_mode_tui() -> None:
@@ -548,8 +548,7 @@ async def test_run_ui_mode_tui() -> None:
                     )
 
                     # then
-                    # create_ui가 "tui"로 호출되는지 확인
-                    mock_create_ui.assert_called_once_with("tui")
+                    mock_create_ui.assert_called_once_with("tui", theme=ANY)
 
 
 async def test_run_verify_only_uses_claude_for_both() -> None:

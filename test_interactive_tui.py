@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import anyio
 import pytest
-from textual.widgets import Input
 
 from sisyphus.ui.tui.app import TUI
 from sisyphus.ui.tui.components.input_bar import InputBar
@@ -40,17 +39,12 @@ def simulate_up_key(input_bar: InputBar) -> str:
     return ""
 
 
-class MockKeyEvent:
-    key = "up"
-
-
 async def test_scenario_4_2_1_basic_queuing() -> bool:
     """Test 4.2.1: Basic message queuing."""
     print("\n=== TEST 4.2.1: Basic Message Queuing ===")
 
     TUI()
     input_bar = InputBar()
-    input_bar._input_widget = Input()
 
     simulate_input_submitted(input_bar, "Hello")
 
@@ -58,14 +52,11 @@ async def test_scenario_4_2_1_basic_queuing() -> bool:
     print(f"Queued message: {input_bar._queued_message!r}")
 
     checkpoint_1 = input_bar._queued_message == "Hello"
-    checkpoint_2 = input_bar._input_widget.value == "" if input_bar._input_widget else False
+    checkpoint_2 = input_bar.value == ""
 
     print("\nCheckpoint verification:")
     print("✅ PASS - Message queued" if checkpoint_1 else "❌ FAIL")
-    if input_bar._input_widget:
-        print(
-            "✅ PASS - Input cleared" if checkpoint_2 else f"❌ FAIL - Input value: {input_bar._input_widget.value!r}"
-        )
+    print("✅ PASS - Input cleared" if checkpoint_2 else f"❌ FAIL - Input value: {input_bar.value!r}")
 
     overall = checkpoint_1 and checkpoint_2
     print(f"\nOverall: {'✅ ALL CHECKPOINTS PASSED' if overall else '❌ SOME FAILED'}")
@@ -78,7 +69,6 @@ async def test_scenario_4_2_2_message_accumulation() -> bool:
     print("\n=== TEST 4.2.2: Message Accumulation ===")
 
     input_bar = InputBar()
-    input_bar._input_widget = Input()
 
     simulate_input_submitted(input_bar, "Hello")
     print("Step 1: Sent 'Hello'")
@@ -108,7 +98,6 @@ async def test_scenario_4_2_3_up_key_edit() -> bool:
     print("\n=== TEST 4.2.3: UP Key Edit ===")
 
     input_bar = InputBar()
-    input_bar._input_widget = Input()
 
     simulate_input_submitted(input_bar, "Hello")
     simulate_input_submitted(input_bar, "World")
@@ -140,7 +129,6 @@ async def test_scenario_4_2_4_edit_and_resave() -> bool:
     print("\n=== TEST 4.2.4: Edit and Resave ===")
 
     input_bar = InputBar()
-    input_bar._input_widget = Input()
 
     simulate_input_submitted(input_bar, "Hello")
 
@@ -170,7 +158,6 @@ async def test_scenario_4_2_6_load_last_sent() -> bool:
     print("\n=== TEST 4.2.6: Load Last Sent Message ===")
 
     input_bar = InputBar()
-    input_bar._input_widget = Input()
 
     simulate_input_submitted(input_bar, "First")
 

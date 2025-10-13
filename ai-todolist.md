@@ -509,7 +509,7 @@ Remove DroidAgent support
     # - "Attempting to resume session: sess_xxx"
     # - "✅ Session resumed successfully: sess_xxx"
     ```
-  - [ ] 5.4 Resume 실패 시나리오 테스트 (선택)
+  - [x] 5.4 Resume 실패 시나리오 테스트 (선택)
     ```bash
     # 1. sessions.json에 잘못된 session_id 입력
     echo '{"claude": {"session_id": "invalid_id", "updated": "2025-10-13T00:00:00+00:00"}}' > ./sessions/sessions.json
@@ -525,15 +525,15 @@ Remove DroidAgent support
     # - "Starting new session instead"
     # - "Updating session ID: '' -> 'sess_yyy'"
     ```
-  - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 5번 작업 검증 성공 여부
-    - [ ] basedpyright 타입 체크가 모든 파일에서 통과하는가?
-    - [ ] ruff lint 체크가 통과하는가?
-    - [ ] 첫 실행 시 sessions.json에 실제 session_id가 저장되는가? (빈 문자열 아님)
-    - [ ] 두 번째 실행 시 "Attempting to resume" 로그가 찍히는가?
-    - [ ] Resume 성공 시 "✅ Session resumed successfully" 로그가 찍히는가?
-    - [ ] 잘못된 session_id로 Resume 실패 시 "❌ Failed to resume" 로그가 찍히는가?
-    - [ ] Resume 실패 후 새 세션으로 fallback하는가?
-    - [ ] 새 세션 시작 후 "Updating session ID" 로그가 찍히는가?
+  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 5번 작업 검증 성공 여부
+    - [x] basedpyright 타입 체크가 모든 파일에서 통과하는가?
+    - [x] ruff lint 체크가 통과하는가?
+    - [x] 첫 실행 시 sessions.json에 실제 session_id가 저장되는가? (빈 문자열 아님)
+    - [x] 두 번째 실행 시 "Attempting to resume" 로그가 찍히는가?
+    - [x] Resume 성공 시 "✅ Session resumed successfully" 로그가 찍히는가?
+    - [x] 잘못된 session_id로 Resume 실패 시 "❌ Failed to resume" 로그가 찍히는가?
+    - [x] Resume 실패 후 새 세션으로 fallback하는가?
+    - [x] 새 세션 시작 후 "Updating session ID" 로그가 찍히는가?
 
 - [x] 6. 커밋
   - [x] 6.1 변경사항 확인

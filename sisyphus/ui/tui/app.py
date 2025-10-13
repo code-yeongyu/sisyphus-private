@@ -194,9 +194,6 @@ class TUI(App[None]):
         self.register_theme(latte_theme)
         self.theme = self.theme_name
 
-        self.title = "Sisyphus - Multi-Agent Execution System"
-        self.sub_title = "Execute & Verify"
-
         if self.task_validator is not None:
             self.set_interval(2.0, self._monitor_todolist)
 

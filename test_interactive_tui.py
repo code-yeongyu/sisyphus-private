@@ -7,10 +7,13 @@ Tests InputBar queuing functionality without terminalcp MCP tool.
 from __future__ import annotations
 
 import anyio
+import pytest
 from textual.widgets import Input
 
 from sisyphus.ui.tui.app import TUI
 from sisyphus.ui.tui.components.input_bar import InputBar
+
+pytestmark = [pytest.mark.anyio]
 
 
 def simulate_input_submitted(input_bar: InputBar, message: str) -> None:
@@ -24,7 +27,7 @@ def simulate_input_submitted(input_bar: InputBar, message: str) -> None:
         if input_bar._input_widget:
             input_bar._input_widget.value = ""
 
-        input_bar._update_queue_display()
+        input_bar._update_placeholder()
 
 
 def simulate_up_key(input_bar: InputBar) -> str:
@@ -32,7 +35,7 @@ def simulate_up_key(input_bar: InputBar) -> str:
     if input_bar._queued_message:
         loaded_value = input_bar._queued_message
         input_bar._queued_message = ""
-        input_bar._update_queue_display()
+        input_bar._update_placeholder()
         return loaded_value
     elif input_bar._last_sent:
         return input_bar._last_sent

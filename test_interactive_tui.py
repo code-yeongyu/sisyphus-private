@@ -24,9 +24,7 @@ def simulate_input_submitted(input_bar: InputBar, message: str) -> None:
         else:
             input_bar._queued_message = message
 
-        if input_bar._input_widget:
-            input_bar._input_widget.value = ""
-
+        input_bar.value = ""
         input_bar._update_placeholder()
 
 

@@ -20,7 +20,7 @@ class LoggerFactory:
         Create agent/session-specific logger.
 
         Args:
-            agent_type: Type of agent (claude, droid, opencode)
+            agent_type: Type of agent (claude, opencode)
             session_id: Optional session ID for session-specific logging
             log_dir: Directory to store log files
 

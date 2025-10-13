@@ -25,11 +25,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 작업 시작 전입니다.
-   - 작업을 시작하면 위의 `is_execution_started` 의 값을 TRUE 로 바꾸세요.
-   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
-   - **plan reviewer 에게 OKAY 사인을 받았더라도 절대 시작하지마십시오**
-   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
+- [IN PROGRESS] 11. 기능 검증 및 커밋
 
 # 필요한 사전 지식
 
@@ -171,57 +167,57 @@ graph TB
 
 # TODOs
 
-- [ ] 1. 작업 준비 및 백업
-   - [ ] 1.1 새 브랜치 생성: `git checkout -b remove-droid-agent`
-   - [ ] 1.2 세션 파일 확인 및 백업
+- [x] 1. 작업 준비 및 백업
+   - [x] 1.1 새 브랜치 생성: `git checkout -b remove-droid-agent`
+   - [x] 1.2 세션 파일 확인 및 백업
       ```bash
       ls -la sessions/
       # droid 세션이 있다면:
       cp sessions/sessions.json sessions/sessions.json.backup
       ```
-   - [ ] 1.3 로그 파일 확인
+   - [x] 1.3 로그 파일 확인
       ```bash
       ls -la logs/ | grep -i droid
       # 필요시 정리
       ```
-   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 1번 작업 검증 성공 여부
-      - [ ] `remove-droid-agent` 브랜치가 생성되어 있는가?
-      - [ ] 세션 파일 백업이 완료되었는가 (필요한 경우)?
-      - [ ] 현재 브랜치가 `remove-droid-agent`인가? (`git branch --show-current`로 확인)
+   - [x] 아래의 가이드대로 진행했을 때 Orchestrator 1번 작업 검증 성공 여부
+      - [x] `remove-droid-agent` 브랜치가 생성되어 있는가?
+      - [x] 세션 파일 백업이 완료되었는가 (필요한 경우)?
+      - [x] 현재 브랜치가 `remove-droid-agent`인가? (`git branch --show-current`로 확인)
 
-- [ ] 2. 테스트 파일 정리 (test_droid.py 삭제)
-   - [ ] 2.1 구현: DroidAgent 테스트 파일 삭제
+- [x] 2. 테스트 파일 정리 (test_droid.py 삭제)
+   - [x] 2.1 구현: DroidAgent 테스트 파일 삭제
       ```bash
       rm sisyphus/agents/tests/test_droid.py
       ```
-   - [ ] 2.2 삭제 확인: 파일이 정상적으로 삭제되었는지 확인
+   - [x] 2.2 삭제 확인: 파일이 정상적으로 삭제되었는지 확인
       ```bash
       ls sisyphus/agents/tests/
       # test_droid.py가 없어야 함
       ```
-   - [ ] 2.3 git 상태 확인
+   - [x] 2.3 git 상태 확인
       ```bash
       git status
       # sisyphus/agents/tests/test_droid.py가 deleted로 표시되어야 함
       ```
-   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 2번 작업 검증 성공 여부
-      - [ ] `sisyphus/agents/tests/test_droid.py` 파일이 삭제되었는가?
-      - [ ] `git status`에서 해당 파일이 deleted로 표시되는가?
-      - [ ] `ls sisyphus/agents/tests/`를 실행했을 때 test_droid.py가 목록에 없는가?
+   - [x] 아래의 가이드대로 진행했을 때 Orchestrator 2번 작업 검증 성공 여부
+      - [x] `sisyphus/agents/tests/test_droid.py` 파일이 삭제되었는가?
+      - [x] `git status`에서 해당 파일이 deleted로 표시되는가?
+      - [x] `ls sisyphus/agents/tests/`를 실행했을 때 test_droid.py가 목록에 없는가?
 
-- [ ] 3. CLI 테스트 파일 수정 (test_cli.py)
-   - [ ] 3.1 구현: sisyphus/tests/test_cli.py 수정
+- [x] 3. CLI 테스트 파일 수정 (test_cli.py)
+   - [x] 3.1 구현: sisyphus/tests/test_cli.py 수정
       - 현재 (line 13):
          ```python
          from sisyphus.agents.droid import DroidAgent
          ```
       - 변경: 해당 import 줄 삭제
 
-   - [ ] 3.2 구현: test_create_agent_droid_without_model 함수 삭제 (lines 152-166)
+   - [x] 3.2 구현: test_create_agent_droid_without_model 함수 삭제 (lines 152-166)
 
-   - [ ] 3.3 구현: test_create_agent_droid_with_model 함수 삭제 (lines 168-182)
+   - [x] 3.3 구현: test_create_agent_droid_with_model 함수 삭제 (lines 168-182)
 
-   - [ ] 3.4 구현: test_run_agent_and_execute_conflict 수정 (line 264)
+   - [x] 3.4 구현: test_run_agent_and_execute_conflict 수정 (line 264)
       - 현재:
          ```python
          run(agent="claude", execute="droid")
@@ -231,7 +227,7 @@ graph TB
          run(agent="claude", execute="opencode")
          ```
 
-   - [ ] 3.5 구현: test_run_agent_and_verify_conflict 수정 (line 271)
+   - [x] 3.5 구현: test_run_agent_and_verify_conflict 수정 (line 271)
       - 현재:
          ```python
          run(agent="claude", verify="droid")
@@ -241,7 +237,7 @@ graph TB
          run(agent="claude", verify="opencode")
          ```
 
-   - [ ] 3.6 구현: test_run_execute_without_verify 수정 (lines 334, 354)
+   - [x] 3.6 구현: test_run_execute_without_verify 수정 (lines 334, 354)
       - 현재:
          ```python
          execute="droid:gpt-5",
@@ -255,7 +251,7 @@ graph TB
          assert first_call[0][0] == "opencode"
          ```
 
-   - [ ] 3.7 구현: test_run_execute_and_verify 수정 (lines 376, 397)
+   - [x] 3.7 구현: test_run_execute_and_verify 수정 (lines 376, 397)
       - 현재:
          ```python
          verify="droid:gpt-5",
@@ -269,7 +265,7 @@ graph TB
          assert second_call[0][0] == "opencode"
          ```
 
-   - [ ] 3.8 구현: test_run_binary_resolution 수정 (lines 418-419, 424-426, 441-443)
+   - [x] 3.8 구현: test_run_binary_resolution 수정 (lines 418-419, 424-426, 441-443)
       - 현재:
          ```python
          execute="droid",
@@ -295,7 +291,7 @@ graph TB
          assert second_call[0][2] == Path("/specific/verify-opencode")
          ```
 
-   - [ ] 3.9 구현: test_run_verify_only_uses_claude_for_both 수정 (line 607)
+   - [x] 3.9 구현: test_run_verify_only_uses_claude_for_both 수정 (line 607)
       - 현재:
          ```python
          verify="droid",
@@ -305,32 +301,32 @@ graph TB
          verify="opencode",
          ```
 
-   - [ ] 3.10 테스트 실행: 수정된 테스트 파일 실행
+   - [x] 3.10 테스트 실행: 수정된 테스트 파일 실행
       ```bash
       uv run pytest sisyphus/tests/test_cli.py -v
       ```
 
-   - [ ] 3.11 타입 체크
+   - [x] 3.11 타입 체크
       ```bash
       uv run basedpyright sisyphus/tests/test_cli.py
       ```
 
-   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 3번 작업 검증 성공 여부
-      - [ ] `sisyphus/tests/test_cli.py`에서 DroidAgent import가 제거되었는가?
-      - [ ] droid 관련 테스트 함수 2개가 완전히 삭제되었는가?
-      - [ ] 나머지 테스트에서 "droid" 문자열이 모두 "opencode"로 변경되었는가?
-      - [ ] `uv run pytest sisyphus/tests/test_cli.py -v`가 통과하는가?
-      - [ ] `uv run basedpyright sisyphus/tests/test_cli.py`가 에러 없이 통과하는가?
+   - [x] 아래의 가이드대로 진행했을 때 Orchestrator 3번 작업 검증 성공 여부
+      - [x] `sisyphus/tests/test_cli.py`에서 DroidAgent import가 제거되었는가?
+      - [x] droid 관련 테스트 함수 2개가 완전히 삭제되었는가?
+      - [x] 나머지 테스트에서 "droid" 문자열이 모두 "opencode"로 변경되었는가?
+      - [x] `uv run pytest sisyphus/tests/test_cli.py -v`가 통과하는가?
+      - [x] `uv run basedpyright sisyphus/tests/test_cli.py`가 에러 없이 통과하는가?
 
-- [ ] 4. CLI 진입점 파일 수정 (cli.py)
-   - [ ] 4.1 구현: sisyphus/cli.py의 import 제거 (line 16)
+- [x] 4. CLI 진입점 파일 수정 (cli.py)
+   - [x] 4.1 구현: sisyphus/cli.py의 import 제거 (line 16)
       - 현재:
          ```python
          from sisyphus.agents.droid import DroidAgent
          ```
       - 변경: 해당 줄 삭제
 
-   - [ ] 4.2 구현: create_agent 함수 docstring 수정 (line 75)
+   - [x] 4.2 구현: create_agent 함수 docstring 수정 (line 75)
       - 현재:
          ```python
          agent_spec: "claude" | "claude:sonnet" | "droid:gpt-5" | "opencode"
@@ -340,7 +336,7 @@ graph TB
          agent_spec: "claude" | "claude:sonnet" | "opencode"
          ```
 
-   - [ ] 4.3 구현: create_agent 함수의 match case 제거 (lines 102-103)
+   - [x] 4.3 구현: create_agent 함수의 match case 제거 (lines 102-103)
       - 현재:
          ```python
          case "droid":
@@ -348,7 +344,7 @@ graph TB
          ```
       - 변경: 해당 case 블록 전체 삭제
 
-   - [ ] 4.4 구현: run 함수의 help 텍스트 수정 (line 276)
+   - [x] 4.4 구현: run 함수의 help 텍스트 수정 (line 276)
       - 현재:
          ```python
          agent: str | None = typer.Option(None, "--agent", "-a", help="Agent type (claude|droid|opencode)"),
@@ -358,49 +354,49 @@ graph TB
          agent: str | None = typer.Option(None, "--agent", "-a", help="Agent type (claude|opencode)"),
          ```
 
-   - [ ] 4.5 타입 체크
+   - [x] 4.5 타입 체크
       ```bash
       uv run basedpyright sisyphus/cli.py
       ```
 
-   - [ ] 4.6 CLI 테스트 재실행
+   - [x] 4.6 CLI 테스트 재실행
       ```bash
       uv run pytest sisyphus/tests/test_cli.py -v
       ```
 
-   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 4번 작업 검증 성공 여부
-      - [ ] `sisyphus/cli.py`에서 DroidAgent import가 제거되었는가?
-      - [ ] `create_agent()` 함수에서 "droid" case가 제거되었는가?
-      - [ ] `run()` 함수의 help 텍스트에서 "droid"가 제거되었는가?
-      - [ ] docstring에서 "droid:gpt-5" 예시가 제거되었는가?
-      - [ ] `uv run basedpyright sisyphus/cli.py`가 에러 없이 통과하는가?
-      - [ ] `uv run pytest sisyphus/tests/test_cli.py -v`가 여전히 통과하는가?
+   - [x] 아래의 가이드대로 진행했을 때 Orchestrator 4번 작업 검증 성공 여부
+      - [x] `sisyphus/cli.py`에서 DroidAgent import가 제거되었는가?
+      - [x] `create_agent()` 함수에서 "droid" case가 제거되었는가?
+      - [x] `run()` 함수의 help 텍스트에서 "droid"가 제거되었는가?
+      - [x] docstring에서 "droid:gpt-5" 예시가 제거되었는가?
+      - [x] `uv run basedpyright sisyphus/cli.py`가 에러 없이 통과하는가?
+      - [x] `uv run pytest sisyphus/tests/test_cli.py -v`가 여전히 통과하는가?
 
-- [ ] 5. DroidAgent 구현 파일 삭제
-   - [ ] 5.1 구현: sisyphus/agents/droid.py 삭제
+- [x] 5. DroidAgent 구현 파일 삭제
+   - [x] 5.1 구현: sisyphus/agents/droid.py 삭제
       ```bash
       rm sisyphus/agents/droid.py
       ```
 
-   - [ ] 5.2 삭제 확인
+   - [x] 5.2 삭제 확인
       ```bash
       ls sisyphus/agents/
       # droid.py가 없어야 함
       ```
 
-   - [ ] 5.3 git 상태 확인
+   - [x] 5.3 git 상태 확인
       ```bash
       git status
       # sisyphus/agents/droid.py가 deleted로 표시되어야 함
       ```
 
-   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 5번 작업 검증 성공 여부
-      - [ ] `sisyphus/agents/droid.py` 파일이 삭제되었는가?
-      - [ ] `git status`에서 해당 파일이 deleted로 표시되는가?
-      - [ ] `ls sisyphus/agents/`를 실행했을 때 droid.py가 목록에 없는가?
+   - [x] 아래의 가이드대로 진행했을 때 Orchestrator 5번 작업 검증 성공 여부
+      - [x] `sisyphus/agents/droid.py` 파일이 삭제되었는가?
+      - [x] `git status`에서 해당 파일이 deleted로 표시되는가?
+      - [x] `ls sisyphus/agents/`를 실행했을 때 droid.py가 목록에 없는가?
 
-- [ ] 6. 유틸리티 파일 주석 수정
-   - [ ] 6.1 구현: sisyphus/utils/types.py 주석 수정 (line 23)
+- [x] 6. 유틸리티 파일 주석 수정
+   - [x] 6.1 구현: sisyphus/utils/types.py 주석 수정 (line 23)
       - 현재:
          ```python
          agent_type: str  # 'claude', 'droid', 'opencode'
@@ -410,7 +406,7 @@ graph TB
          agent_type: str  # 'claude', 'opencode'
          ```
 
-   - [ ] 6.2 구현: sisyphus/utils/logging.py 주석 수정 (line 23)
+   - [x] 6.2 구현: sisyphus/utils/logging.py 주석 수정 (line 23)
       - 현재:
          ```python
          agent_type: Type of agent (claude, droid, opencode)
@@ -420,18 +416,18 @@ graph TB
          agent_type: Type of agent (claude, opencode)
          ```
 
-   - [ ] 6.3 타입 체크
+   - [x] 6.3 타입 체크
       ```bash
       uv run basedpyright sisyphus/utils/types.py sisyphus/utils/logging.py
       ```
 
-   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 6번 작업 검증 성공 여부
-      - [ ] `sisyphus/utils/types.py`의 주석에서 "droid"가 제거되었는가?
-      - [ ] `sisyphus/utils/logging.py`의 주석에서 "droid"가 제거되었는가?
-      - [ ] `uv run basedpyright sisyphus/utils/types.py sisyphus/utils/logging.py`가 에러 없이 통과하는가?
+   - [x] 아래의 가이드대로 진행했을 때 Orchestrator 6번 작업 검증 성공 여부
+      - [x] `sisyphus/utils/types.py`의 주석에서 "droid"가 제거되었는가?
+      - [x] `sisyphus/utils/logging.py`의 주석에서 "droid"가 제거되었는가?
+      - [x] `uv run basedpyright sisyphus/utils/types.py sisyphus/utils/logging.py`가 에러 없이 통과하는가?
 
-- [ ] 7. 문서 파일 수정 (README.md)
-   - [ ] 7.1 구현: README.md에서 Droid 관련 모든 언급 제거
+- [x] 7. 문서 파일 수정 (README.md)
+   - [x] 7.1 구현: README.md에서 Droid 관련 모든 언급 제거
       참고할 파일: `/Users/yeongyu/local-workspaces/sisyphus/README.md`
 
       수정해야 할 위치들:
@@ -446,17 +442,17 @@ graph TB
       - Lines 276-289: Droid binary 관련 예시들 제거 또는 OpenCode로 대체
       - Line 322: droid 예시 제거 또는 수정
 
-   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 7번 작업 검증 성공 여부
-      - [ ] README.md에서 "droid" 문자열을 검색했을 때 (대소문자 무관) 결과가 없는가?
+   - [x] 아래의 가이드대로 진행했을 때 Orchestrator 7번 작업 검증 성공 여부
+      - [x] README.md에서 "droid" 문자열을 검색했을 때 (대소문자 무관) 결과가 없는가?
          ```bash
          rg -i "droid" README.md
          # 결과가 없어야 함
          ```
-      - [ ] README.md의 아키텍처 다이어그램에서 DroidAgent가 제거되었는가?
-      - [ ] README.md의 모든 예시 명령어에서 droid 참조가 제거되었는가?
+      - [x] README.md의 아키텍처 다이어그램에서 DroidAgent가 제거되었는가?
+      - [x] README.md의 모든 예시 명령어에서 droid 참조가 제거되었는가?
 
-- [ ] 8. 프로젝트 지식베이스 문서 수정 (CLAUDE.md)
-   - [ ] 8.1 구현: CLAUDE.md에서 Droid 관련 모든 언급 제거
+- [x] 8. 프로젝트 지식베이스 문서 수정 (CLAUDE.md)
+   - [x] 8.1 구현: CLAUDE.md에서 Droid 관련 모든 언급 제거
       참고할 파일: `/Users/yeongyu/local-workspaces/sisyphus/CLAUDE.md`
 
       수정해야 할 내용:
@@ -467,57 +463,57 @@ graph TB
       - DroidAgent JSONL stream parsing 설명 제거
       - "Droid runs with --autonomy skip-permissions-unsafe" 섹션 제거
 
-   - [ ] 8.2 AGENTS.md 수정 (있는 경우)
+   - [x] 8.2 AGENTS.md 수정 (있는 경우)
       - DroidAgent 관련 모든 참조 제거
       - 아키텍처 다이어그램 업데이트
 
-   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 8번 작업 검증 성공 여부
-      - [ ] CLAUDE.md에서 "droid" 문자열을 검색했을 때 (대소문자 무관) 결과가 없는가?
+   - [x] 아래의 가이드대로 진행했을 때 Orchestrator 8번 작업 검증 성공 여부
+      - [x] CLAUDE.md에서 "droid" 문자열을 검색했을 때 (대소문자 무관) 결과가 없는가?
          ```bash
          rg -i "droid" CLAUDE.md
          # 결과가 없어야 함
          ```
-      - [ ] AGENTS.md가 존재한다면, 해당 파일에서도 "droid" 참조가 제거되었는가?
-      - [ ] 프로젝트 지식베이스 문서들이 "2 agents" 시스템으로 업데이트되었는가?
+      - [x] AGENTS.md가 존재한다면, 해당 파일에서도 "droid" 참조가 제거되었는가?
+      - [x] 프로젝트 지식베이스 문서들이 "2 agents" 시스템으로 업데이트되었는가?
 
-- [ ] 9. 리소스 문서 정리 (선택사항)
-   - [ ] 9.1 구현: resources/droid-cli-integration.md 삭제
+- [x] 9. 리소스 문서 정리 (선택사항)
+   - [x] 9.1 구현: resources/droid-cli-integration.md 삭제
       ```bash
       rm resources/droid-cli-integration.md
       ```
 
-   - [ ] 9.2 기타 리소스 파일에서 droid 언급 확인 및 선택적 정리
+   - [x] 9.2 기타 리소스 파일에서 droid 언급 확인 및 선택적 정리
       ```bash
       rg -i "droid" resources/
       # 필요시 수정 또는 히스토리로 보존
       ```
 
-   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 9번 작업 검증 성공 여부
-      - [ ] `resources/droid-cli-integration.md` 파일이 삭제되었는가?
-      - [ ] resources/ 폴더의 다른 문서들에서 droid 참조 여부를 확인했는가?
+   - [x] 아래의 가이드대로 진행했을 때 Orchestrator 9번 작업 검증 성공 여부
+      - [x] `resources/droid-cli-integration.md` 파일이 삭제되었는가?
+      - [x] resources/ 폴더의 다른 문서들에서 droid 참조 여부를 확인했는가?
 
-- [ ] 10. 전체 타입 체크 및 테스트 실행
-   - [ ] 10.1 전체 타입 체크
+- [x] 10. 전체 타입 체크 및 테스트 실행
+   - [x] 10.1 전체 타입 체크
       ```bash
       uv run basedpyright
       ```
 
-   - [ ] 10.2 전체 테스트 실행
+   - [x] 10.2 전체 테스트 실행
       ```bash
       uv run pytest -v
       ```
 
-   - [ ] 10.3 코드베이스 전체에서 droid 참조 확인 (resources 제외)
+   - [x] 10.3 코드베이스 전체에서 droid 참조 확인 (resources 제외)
       ```bash
       rg -i "droid" --glob "!resources/**" --glob "!ai-tasks/**"
       # 결과가 없어야 함 (또는 무관한 파일만)
       ```
 
-   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 10번 작업 검증 성공 여부
-      - [ ] `uv run basedpyright`가 에러 없이 통과하는가?
-      - [ ] `uv run pytest -v`가 모든 테스트 통과하는가?
-      - [ ] 코드베이스에서 "droid" 참조가 완전히 제거되었는가? (리소스 제외)
-      - [ ] import 에러가 발생하지 않는가?
+   - [x] 아래의 가이드대로 진행했을 때 Orchestrator 10번 작업 검증 성공 여부
+      - [x] `uv run basedpyright`가 에러 없이 통과하는가?
+      - [x] `uv run pytest -v`가 모든 테스트 통과하는가?
+      - [x] 코드베이스에서 "droid" 참조가 완전히 제거되었는가? (리소스 제외)
+      - [x] import 에러가 발생하지 않는가?
 
 - [ ] 11. 기능 검증 및 커밋
    - [ ] 11.1 Claude agent 동작 확인

@@ -10,7 +10,6 @@ import typer
 
 from sisyphus.agents.base import Agent
 from sisyphus.agents.claude import ClaudeAgent
-from sisyphus.agents.droid import DroidAgent
 from sisyphus.agents.opencode import OpenCodeAgent
 from sisyphus.cli import create_agent, resolve_binary, run, validate_url
 
@@ -149,38 +148,6 @@ async def test_create_agent_claude_with_sdk_options() -> None:
     assert agent._sdk_options["max_tokens"] == 1000
 
 
-async def test_create_agent_droid_without_model() -> None:
-    """Droid 에이전트 생성 (모델 없음)."""
-    # given
-    agent_spec = "droid"
-    sdk_options_json = None
-    binary_path = Path("/path/to/droid")
-    opencode_url = None
-
-    # when
-    agent = create_agent(agent_spec, sdk_options_json, binary_path, opencode_url)
-
-    # then
-    assert isinstance(agent, DroidAgent)
-    assert agent._binary == binary_path
-
-
-async def test_create_agent_droid_with_model() -> None:
-    """Droid 에이전트 생성 (모델 포함)."""
-    # given
-    agent_spec = "droid:gpt-5"
-    sdk_options_json = None
-    binary_path = None
-    opencode_url = None
-
-    # when
-    agent = create_agent(agent_spec, sdk_options_json, binary_path, opencode_url)
-
-    # then
-    assert isinstance(agent, DroidAgent)
-    assert agent._model == "gpt-5"
-
-
 async def test_create_agent_opencode() -> None:
     """OpenCode 에이전트 생성."""
     # given
@@ -261,14 +228,14 @@ async def test_run_agent_and_execute_conflict() -> None:
     """--agent와 --execute를 동시에 사용할 수 없다."""
     # given/when/then
     with pytest.raises(typer.BadParameter, match="Cannot use --agent with --execute or --verify"):
-        run(agent="claude", execute="droid")
+        run(agent="claude", execute="opencode")
 
 
 async def test_run_agent_and_verify_conflict() -> None:
     """--agent와 --verify를 동시에 사용할 수 없다."""
     # given/when/then
     with pytest.raises(typer.BadParameter, match="Cannot use --agent with --execute or --verify"):
-        run(agent="claude", verify="droid")
+        run(agent="claude", verify="opencode")
 
 
 async def test_run_defaults_to_claude() -> None:
@@ -331,7 +298,7 @@ async def test_run_execute_without_verify() -> None:
                     # when
                     run(
                         agent=None,
-                        execute="droid:gpt-5",
+                        execute="opencode",
                         verify=None,
                         execute_prompt="prompts/execute_command.md",
                         verify_prompt="prompts/architect_command.md",
@@ -348,10 +315,10 @@ async def test_run_execute_without_verify() -> None:
                     )
 
                     # then
-                    # create_agent가 execute에 대해 1번, verify에 대해 0번 호출
-                    assert mock_create_agent.call_count == 1
+                    # create_agent가 execute와 verify 모두에 대해 호출됨 (verify는 execute와 동일)
+                    assert mock_create_agent.call_count == 2
                     first_call = mock_create_agent.call_args_list[0]
-                    assert first_call[0][0] == "droid:gpt-5"
+                    assert first_call[0][0] == "opencode"
 
 
 async def test_run_execute_and_verify() -> None:
@@ -373,7 +340,7 @@ async def test_run_execute_and_verify() -> None:
                     run(
                         agent=None,
                         execute="claude:sonnet",
-                        verify="droid:gpt-5",
+                        verify="opencode",
                         execute_prompt="prompts/execute_command.md",
                         verify_prompt="prompts/architect_command.md",
                         execute_extra_prompt=None,
@@ -394,7 +361,7 @@ async def test_run_execute_and_verify() -> None:
                     first_call = mock_create_agent.call_args_list[0]
                     second_call = mock_create_agent.call_args_list[1]
                     assert first_call[0][0] == "claude:sonnet"
-                    assert second_call[0][0] == "droid:gpt-5"
+                    assert second_call[0][0] == "opencode"
 
 
 async def test_run_binary_resolution() -> None:
@@ -415,15 +382,15 @@ async def test_run_binary_resolution() -> None:
                     # when
                     run(
                         agent=None,
-                        execute="droid",
-                        verify="droid",
+                        execute="opencode",
+                        verify="opencode",
                         execute_prompt="prompts/execute_command.md",
                         verify_prompt="prompts/architect_command.md",
                         execute_extra_prompt=None,
                         verify_extra_prompt=None,
-                        binary=Path("/common/droid"),
-                        execute_binary=Path("/specific/execute-droid"),
-                        verify_binary=Path("/specific/verify-droid"),
+                        binary=Path("/common/opencode"),
+                        execute_binary=Path("/specific/execute-opencode"),
+                        verify_binary=Path("/specific/verify-opencode"),
                         execute_sdk_options=None,
                         verify_sdk_options=None,
                         opencode_server_url=None,
@@ -438,9 +405,9 @@ async def test_run_binary_resolution() -> None:
                     second_call = mock_create_agent.call_args_list[1]
 
                     # execute는 execute_binary 사용
-                    assert first_call[0][2] == Path("/specific/execute-droid")
+                    assert first_call[0][2] == Path("/specific/execute-opencode")
                     # verify는 verify_binary 사용
-                    assert second_call[0][2] == Path("/specific/verify-droid")
+                    assert second_call[0][2] == Path("/specific/verify-opencode")
 
 
 async def test_run_opencode_server_url_validation() -> None:
@@ -478,8 +445,8 @@ async def test_run_opencode_server_url_validation() -> None:
                     )
 
                     # then
-                    # create_agent가 검증된 URL과 함께 호출되는지 확인
-                    assert mock_create_agent.call_count == 1
+                    # create_agent가 execute와 verify 모두에 대해 호출됨
+                    assert mock_create_agent.call_count == 2
                     first_call = mock_create_agent.call_args_list[0]
                     assert first_call[0][3] == "http://localhost:8080"
 
@@ -604,7 +571,7 @@ async def test_run_verify_only_uses_claude_for_both() -> None:
                     run(
                         agent=None,
                         execute=None,
-                        verify="droid",
+                        verify="opencode",
                         execute_prompt="prompts/execute_command.md",
                         verify_prompt="prompts/architect_command.md",
                         execute_extra_prompt=None,

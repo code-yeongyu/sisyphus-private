@@ -20,7 +20,7 @@ class AgentMessage:
 class AgentConfig:
     """에이전트 설정."""
 
-    agent_type: str  # 'claude', 'droid', 'opencode'
+    agent_type: str  # 'claude', 'opencode'
     model: str | None
     prompt: tuple[str, str | None]  # (base_prompt, extra_prompt)
     binary: Path | None

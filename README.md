@@ -1,6 +1,6 @@
 # Sisyphus
 
-**A multi-agent orchestration system supporting Claude, Droid, and OpenCode agents with flexible execution strategies and interactive TUI/CLI interfaces.**
+**A multi-agent orchestration system supporting Claude and OpenCode agents with flexible execution strategies and interactive TUI/CLI interfaces.**
 
 ## Table of Contents
 
@@ -24,7 +24,7 @@
 
 Sisyphus is a Python 3.12-based multi-agent orchestration system that allows you to:
 
-- **Run multiple AI agents**: Claude (Anthropic), Droid (CLI-based), OpenCode (REST API-based)
+- **Run multiple AI agents**: Claude (Anthropic), OpenCode (REST API-based)
 - **Separate execution phases**: Use different agents for execute and verify phases
 - **Choose your interface**: Interactive TUI (Textual) or CLI (Rich) mode
 - **Manage sessions**: Persistent session storage with resume capability
@@ -38,7 +38,6 @@ Built with SOLID principles, Protocol-based interfaces, and anyio for asyncio/tr
 
 ### 🤖 Multi-Agent Support
 - **Claude Agent**: Official SDK integration with session resume support
-- **Droid Agent**: Subprocess-based with stream-json mode and JSONL communication
 - **OpenCode Agent**: REST API with SSE streaming and auto-server startup
 
 ### 🔄 Two-Phase Execution
@@ -57,7 +56,7 @@ Built with SOLID principles, Protocol-based interfaces, and anyio for asyncio/tr
 
 ### 💾 Session Management
 - Persistent session storage in `./sessions/`
-- Automatic session resume (Claude, Droid)
+- Automatic session resume (Claude)
 - File locking for concurrent access safety
 - Atomic writes with corruption recovery
 
@@ -107,14 +106,14 @@ Built with SOLID principles, Protocol-based interfaces, and anyio for asyncio/tr
                             ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │                     Agent Layer (Protocol)                        │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐          │
-│  │ ClaudeAgent │  │ DroidAgent  │  │ OpenCodeAgent   │          │
-│  │  - SDK      │  │  - anyio    │  │  - anyio        │          │
-│  │  - Resume   │  │    subprocess│  │    subprocess  │          │
-│  │  - Interactive│ │  - JSONL    │  │  - REST API     │          │
-│  │             │  │  - unsafe   │  │  - SSE stream   │          │
-│  │             │  │    autonomy │  │  - Interactive  │          │
-│  └─────────────┘  └─────────────┘  └─────────────────┘          │
+│  ┌─────────────┐                    ┌─────────────────┐          │
+│  │ ClaudeAgent │                    │ OpenCodeAgent   │          │
+│  │  - SDK      │                    │  - anyio        │          │
+│  │  - Resume   │                    │    subprocess  │          │
+│  │  - Interactive│                  │  - REST API     │          │
+│  │             │                    │  - SSE stream   │          │
+│  │             │                    │  - Interactive  │          │
+│  └─────────────┘                    └─────────────────┘          │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -200,9 +199,6 @@ uv run sisyphus run --help
 # Use Claude (default)
 uv run sisyphus run --agent claude
 
-# Use Droid
-uv run sisyphus run --agent droid
-
 # Use OpenCode
 uv run sisyphus run --agent opencode
 ```
@@ -213,9 +209,6 @@ uv run sisyphus run --agent opencode
 # Claude with specific model
 uv run sisyphus run --agent claude:sonnet
 
-# Droid with GPT-5
-uv run sisyphus run --agent droid:gpt-5
-
 # OpenCode (model selection not applicable)
 uv run sisyphus run --agent opencode
 ```
@@ -223,8 +216,8 @@ uv run sisyphus run --agent opencode
 ### 3. Separate Execute and Verify Agents
 
 ```bash
-# Execute with Claude Sonnet, verify with Droid GPT-5
-uv run sisyphus run --execute claude:sonnet --verify droid:gpt-5
+# Execute with Claude Sonnet, verify with OpenCode
+uv run sisyphus run --execute claude:sonnet --verify opencode
 
 # Execute with OpenCode, verify with Claude
 uv run sisyphus run --execute opencode --verify claude
@@ -269,27 +262,7 @@ uv run sisyphus run \
   --verify-extra-prompt "Check for type safety violations"
 ```
 
-### 6. Binary Overrides
-
-```bash
-# Specify common binary for all agents
-uv run sisyphus run --agent droid --binary /usr/local/bin/droid
-
-# Override specific phase binaries
-uv run sisyphus run \
-  --execute droid \
-  --verify droid \
-  --execute-binary /usr/local/bin/droid-v1 \
-  --verify-binary /usr/local/bin/droid-v2
-
-# Common binary with specific override
-uv run sisyphus run \
-  --agent droid \
-  --binary /usr/local/bin/droid \
-  --execute-binary /custom/path/droid-dev
-```
-
-### 7. SDK Options (JSON)
+### 6. SDK Options (JSON)
 
 ```bash
 # Pass SDK options to Claude agent
@@ -304,7 +277,7 @@ uv run sisyphus run \
   --verify-sdk-options '{"temperature": 0.3}'
 ```
 
-### 8. OpenCode Server URL
+### 7. OpenCode Server URL
 
 ```bash
 # Use external OpenCode server instead of auto-starting
@@ -312,24 +285,24 @@ uv run sisyphus run --agent opencode \
   --opencode-server-url http://localhost:8080
 ```
 
-### 9. CLI Mode for Automation
+### 8. CLI Mode for Automation
 
 ```bash
 # Non-interactive CLI mode (suitable for CI/CD)
 uv run sisyphus run --agent claude --no-tui
 
 # Redirect output to file
-uv run sisyphus run --agent droid --no-tui > output.log 2>&1
+uv run sisyphus run --agent opencode --no-tui > output.log 2>&1
 ```
 
-### 10. Complex Workflow
+### 9. Complex Workflow
 
 ```bash
-# Execute with Claude Sonnet, verify with Droid GPT-5
+# Execute with Claude Sonnet, verify with OpenCode
 # Custom prompts, extra instructions, CLI mode
 uv run sisyphus run \
   --execute claude:sonnet \
-  --verify droid:gpt-5 \
+  --verify opencode \
   --execute-prompt prompts/custom-execute.md \
   --verify-prompt prompts/custom-verify.md \
   --execute-extra-prompt "Prioritize code quality" \
@@ -346,7 +319,7 @@ uv run sisyphus run \
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `--agent`, `-a` | `str` | Agent type for both execute and verify phases. Options: `claude`, `droid`, `opencode`. Format: `AGENT[:MODEL]` (e.g., `claude:sonnet`, `droid:gpt-5`). **Cannot be used with `--execute` or `--verify`.** |
+| `--agent`, `-a` | `str` | Agent type for both execute and verify phases. Options: `claude`, `opencode`. Format: `AGENT[:MODEL]` (e.g., `claude:sonnet`). **Cannot be used with `--execute` or `--verify`.** |
 | `--execute` | `str` | Execute phase agent. Format: `AGENT[:MODEL]`. **Overrides `--agent` for execute phase.** |
 | `--verify` | `str` | Verify phase agent. Format: `AGENT[:MODEL]`. **Overrides `--agent` for verify phase.** If omitted, no verify phase. |
 
@@ -422,34 +395,6 @@ uv run sisyphus run \
 ```bash
 uv run sisyphus run --agent claude:sonnet \
   --execute-sdk-options '{"temperature": 0.8, "max_tokens": 8192}'
-```
-
-### Droid Agent
-
-**Features:**
-- CLI-based subprocess execution
-- Stream-json mode with JSONL communication
-- Auto-detection of `droid` binary in PATH
-- Autonomy mode always set to `skip-permissions-unsafe`
-
-**Model Selection:**
-- Specify model with `:` separator (e.g., `droid:gpt-5`)
-- Passed to Droid CLI as `--model` argument
-
-**Binary Detection:**
-- Priority: `--execute-binary` / `--verify-binary` > `--binary` > PATH
-
-**Session Management:**
-- Client-managed UUIDs
-- Sessions stored in `./sessions/sessions.json`
-
-**Limitations:**
-- **No interactive message input** (TUI input bar disabled for Droid)
-- Single-turn execution only
-
-**Example:**
-```bash
-uv run sisyphus run --agent droid:gpt-5 --binary /usr/local/bin/droid
 ```
 
 ### OpenCode Agent
@@ -554,12 +499,6 @@ Sessions are stored in `./sessions/sessions.json` with the following structure:
     "created_at": "2025-10-09T12:00:00Z",
     "last_used": "2025-10-09T13:30:00Z"
   },
-  "droid": {
-    "session_id": "uuid-v4",
-    "agent_type": "droid",
-    "created_at": "2025-10-09T12:00:00Z",
-    "last_used": "2025-10-09T13:30:00Z"
-  },
   "opencode": {
     "session_id": "ses_xxx",
     "agent_type": "opencode",
@@ -601,12 +540,12 @@ rm ./sessions/sessions.json
 
 #### 1. `Agent binary not found`
 
-**Problem**: Droid or OpenCode binary not in PATH.
+**Problem**: OpenCode binary not in PATH.
 
 **Solution**:
 ```bash
 # Specify binary path explicitly
-uv run sisyphus run --agent droid --binary /path/to/droid
+uv run sisyphus run --agent opencode --binary /path/to/opencode
 
 # Or add to PATH
 export PATH=$PATH:/path/to/agent/bin
@@ -651,7 +590,7 @@ lsof -i :8080
 uv run sisyphus run --agent claude
 
 # Or --execute / --verify (different per phase)
-uv run sisyphus run --execute claude --verify droid
+uv run sisyphus run --execute claude --verify opencode
 
 # But NOT both
 ```
@@ -751,7 +690,6 @@ sisyphus/
 │   ├── agents/           # Agent implementations
 │   │   ├── base.py       # Agent Protocol
 │   │   ├── claude.py     # ClaudeAgent
-│   │   ├── droid.py      # DroidAgent
 │   │   └── opencode.py   # OpenCodeAgent
 │   ├── core/             # Core business logic
 │   │   ├── loop.py       # ExecutionLoop

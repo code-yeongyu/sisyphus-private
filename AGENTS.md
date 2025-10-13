@@ -43,7 +43,6 @@ graph TB
     VA --> AP
 
     AP --> CA[ClaudeAgent<br/>SDK + Resume]
-    AP --> DA[DroidAgent<br/>Subprocess + JSONL]
     AP --> OA[OpenCodeAgent<br/>REST + SSE]
 
     EL -.->|feedback loop| EL
@@ -61,7 +60,7 @@ graph TB
 - TaskValidator: Checks `is_all_goals_accomplished=TRUE` + all checkboxes `[x]`
 
 **Data Flow:**
-1. CLI parses args → factory creates agents (ClaudeAgent, DroidAgent, OpenCodeAgent)
+1. CLI parses args → factory creates agents (ClaudeAgent, OpenCodeAgent)
 2. UI renders messages from ExecutionLoop.stream()
 3. ExecutionLoop: Execute phase → TaskValidator checks completion → Verify phase (new session) → Collects feedback
 4. Feedback loop: `verify_feedback_history` injected into next Execute prompt as `<architect-feedback-history>`
@@ -71,19 +70,17 @@ graph TB
 - **Verify always new session:** Independent verification, no conversation history from Execute
 - **Feedback injection:** XML-tagged history (`<feedback iteration="N">`) appended to Execute extra prompt
 - **ai-todolist.md:** External task source, not in-memory; system monitors checkbox completion
-- **Unified mode:** Single `run()` method handles both interactive (Claude/OpenCode) and non-interactive (Droid) agents
+- **Unified mode:** Single `run()` method handles interactive agents (Claude/OpenCode)
 - **anyio backend split:** TUI forces asyncio (Textual limitation), CLI auto-selects (anyio default)
 
 ## DEPENDENCIES
 
 **External Services:**
 - Claude API: ClaudeAgent → Anthropic SDK
-- Droid binary: DroidAgent → subprocess CLI (gpt-5, gpt-4.5)
 - OpenCode server: OpenCodeAgent → REST API @ localhost:8080 (auto-start or external)
 
 **Key Integrations:**
 - ClaudeAgent: SDK session resume, interactive input via TUI
-- DroidAgent: JSONL stream parsing, `--mode stream-json`, `--autonomy skip-permissions-unsafe`
 - OpenCodeAgent: SSE streaming, health check (5 retries × 2s), 60s idle timeout
 
 **Session Storage:**
@@ -98,7 +95,6 @@ sisyphus/
 │   ├── agents/            # Agent implementations
 │   │   ├── base.py        # Protocol
 │   │   ├── claude.py      # ClaudeAgent
-│   │   ├── droid.py       # DroidAgent
 │   │   └── opencode.py    # OpenCodeAgent
 │   ├── core/              # Business logic
 │   │   ├── loop.py        # ExecutionLoop
@@ -130,7 +126,7 @@ sisyphus/
 graph LR
     P[Problem:<br/>AI agents lack<br/>quality verification] --> S[Solution:<br/>Two-phase<br/>Execute+Verify]
 
-    S --> F1[Multi-agent support<br/>Claude/Droid/OpenCode]
+    S --> F1[Multi-agent support<br/>Claude/OpenCode]
     S --> F2[Feedback loop<br/>until FULLY_DONE]
     S --> F3[Dual UI<br/>TUI/CLI]
     S --> F4[Session persistence<br/>Resume capability]
@@ -144,7 +140,7 @@ graph LR
 **Core Purpose:** Multi-agent orchestration system → Execute task + Verify quality in 2-phase loop
 
 **Key Features:**
-- 3 agents: Claude (SDK), Droid (CLI), OpenCode (REST)
+- 2 agents: Claude (SDK), OpenCode (REST)
 - Execute-Verify phases: Different agents per phase, verify always new session
 - Feedback loop: Architect reviews Execute output → feedback injected into next iteration
 - Task validation: Monitors ai-todolist.md checkboxes (`- [x]`) + `is_all_goals_accomplished=TRUE`
@@ -196,7 +192,7 @@ uv run sisyphus run
 uv run sisyphus run --no-tui
 
 # Custom agents
-uv run sisyphus run --execute claude:sonnet --verify droid:gpt-5
+uv run sisyphus run --execute claude:sonnet --verify opencode
 
 # Custom prompts
 uv run sisyphus run --execute-prompt prompts/custom.md --verify-prompt /architect
@@ -249,7 +245,7 @@ def my_fixture(): ...
 
 3. **TUI asyncio-only:** Textual limitation, not choice. CLI mode supports trio via anyio auto-detect.
 
-4. **Agent.supports_interactive unused:** Removed in recent refactor (commit 0852b4f). Interactive behavior now implicit (ClaudeAgent/OpenCodeAgent support `get_input()`, Droid doesn't).
+4. **Agent.supports_interactive unused:** Removed in recent refactor (commit 0852b4f). Interactive behavior now implicit (ClaudeAgent/OpenCodeAgent support `get_input()`).
 
 5. **SessionLimitError special handling:** Rate limit → sleep until `reset_time` → retry same phase (not fail). Loop continues transparently.
 
@@ -268,7 +264,6 @@ def my_fixture(): ...
 10. **Log files not gitignored:** Many `.log` files in root (see ls output). Consider adding `*.log` to `.gitignore` unless intentional.
 
 **Security:**
-- Droid runs with `--autonomy skip-permissions-unsafe` → full file system access, no sandboxing
 - No credential validation for external APIs (Claude, OpenCode)
 - Session files world-readable (no encryption)
 

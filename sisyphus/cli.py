@@ -13,7 +13,6 @@ import typer
 from rich.console import Console
 
 from sisyphus.agents.claude import ClaudeAgent
-from sisyphus.agents.droid import DroidAgent
 from sisyphus.agents.opencode import OpenCodeAgent
 from sisyphus.core.loop import ExecutionLoop
 from sisyphus.core.prompts import PromptResolver
@@ -72,7 +71,7 @@ def create_agent(
     """에이전트 spec에서 에이전트 생성.
 
     Args:
-        agent_spec: "claude" | "claude:sonnet" | "droid:gpt-5" | "opencode"
+        agent_spec: "claude" | "claude:sonnet" | "opencode"
         sdk_options_json: JSON 문자열 (SDK 옵션)
         binary_path: 바이너리 경로 (None이면 auto-detect)
         opencode_url: OpenCode 서버 URL (None이면 auto-start)
@@ -99,8 +98,6 @@ def create_agent(
     match agent_type:
         case "claude":
             return cast("Agent", ClaudeAgent(model=model, sdk_options=sdk_options))
-        case "droid":
-            return cast("Agent", DroidAgent(binary=binary_path, model=model))
         case "opencode":
             return cast("Agent", OpenCodeAgent(binary=binary_path, server_url=opencode_url))
         case _:
@@ -273,7 +270,7 @@ async def _main_tui(
 
 @app.command(name="run")
 def run(
-    agent: str | None = typer.Option(None, "--agent", "-a", help="Agent type (claude|droid|opencode)"),
+    agent: str | None = typer.Option(None, "--agent", "-a", help="Agent type (claude|opencode)"),
     execute: str | None = typer.Option(None, "--execute", help="Execute agent (AGENT[:MODEL])"),
     verify: str | None = typer.Option(None, "--verify", help="Verify agent (AGENT[:MODEL])"),
     execute_prompt: str | None = typer.Option(

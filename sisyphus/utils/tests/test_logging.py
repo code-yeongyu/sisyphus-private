@@ -117,7 +117,7 @@ def test_create_logger_reuses_existing(tmp_path: Path) -> None:
 def test_create_logger_log_file_created(tmp_path: Path) -> None:
     """Test that log file is created with correct name pattern."""
     # given
-    agent_type = "droid"
+    agent_type = "opencode"
     log_dir = tmp_path / "logs"
 
     # when
@@ -125,7 +125,7 @@ def test_create_logger_log_file_created(tmp_path: Path) -> None:
     logger.debug("Test message")
 
     # then
-    log_files = list(log_dir.glob("droid_*.log"))
+    log_files = list(log_dir.glob("opencode_*.log"))
     assert len(log_files) >= 1
 
     # Verify log file contains message
@@ -156,7 +156,7 @@ def test_create_logger_different_agents_separate_loggers(tmp_path: Path) -> None
 
     # when
     logger1 = LoggerFactory.create_logger("claude", log_dir=log_dir)
-    logger2 = LoggerFactory.create_logger("droid", log_dir=log_dir)
+    logger2 = LoggerFactory.create_logger("opencode", log_dir=log_dir)
 
     # then
     assert logger1 is not logger2

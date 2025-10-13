@@ -88,7 +88,7 @@ async def test_agent_config_creation() -> None:
 
 async def test_agent_config_with_none_values() -> None:
     # given
-    agent_type = "droid"
+    agent_type = "opencode"
     base_prompt = "plain-text-prompt"
 
     # when
@@ -140,7 +140,7 @@ async def test_agent_config_sdk_options_default_factory() -> None:
         binary=None,
     )
     config2 = AgentConfig(
-        agent_type="droid",
+        agent_type="opencode",
         model=None,
         prompt=("prompt", None),
         binary=None,

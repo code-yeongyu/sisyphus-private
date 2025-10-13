@@ -77,18 +77,15 @@ async def test_get_nonexistent_session(session_store: SessionStore) -> None:
 async def test_agent_separation(session_store: SessionStore) -> None:
     # given
     claude_session = "claude-session-456"
-    droid_session = "droid-session-789"
-    opencode_session = "ses_opencode_abc"
+    opencode_session_1 = "opencode-session-789"
 
     # when
     await session_store.save_session("claude", claude_session)
-    await session_store.save_session("droid", droid_session)
-    await session_store.save_session("opencode", opencode_session)
+    await session_store.save_session("opencode", opencode_session_1)
 
     # then
     assert await session_store.get_session("claude") == claude_session
-    assert await session_store.get_session("droid") == droid_session
-    assert await session_store.get_session("opencode") == opencode_session
+    assert await session_store.get_session("opencode") == opencode_session_1
 
 
 async def test_session_update(session_store: SessionStore) -> None:
@@ -108,7 +105,7 @@ async def test_session_update(session_store: SessionStore) -> None:
 
 async def test_delete_session(session_store: SessionStore) -> None:
     # given
-    agent_type = "droid"
+    agent_type = "opencode"
     session_id = "session-to-delete"
     await session_store.save_session(agent_type, session_id)
 
@@ -134,18 +131,18 @@ async def test_delete_nonexistent_session(session_store: SessionStore) -> None:
 async def test_list_sessions(session_store: SessionStore) -> None:
     # given
     await session_store.save_session("claude", "session-1")
-    await session_store.save_session("droid", "session-2")
+    await session_store.save_session("opencode", "session-2")
 
     # when
     sessions = await session_store.list_sessions()
 
     # then
     assert "claude" in sessions
-    assert "droid" in sessions
+    assert "opencode" in sessions
     assert sessions["claude"]["session_id"] == "session-1"
-    assert sessions["droid"]["session_id"] == "session-2"
+    assert sessions["opencode"]["session_id"] == "session-2"
     assert "updated" in sessions["claude"]
-    assert "updated" in sessions["droid"]
+    assert "updated" in sessions["opencode"]
 
 
 async def test_list_sessions_empty(session_store: SessionStore) -> None:
@@ -165,7 +162,7 @@ async def test_atomic_write_creates_backup(session_store: SessionStore, temp_ses
     backup_file = temp_sessions_dir / "sessions.json.bak"
 
     # when
-    await session_store.save_session("droid", "second-session")
+    await session_store.save_session("opencode", "second-session")
 
     # then
     assert backup_file.exists()
@@ -195,7 +192,7 @@ async def test_corruption_recovery_from_backup(session_store: SessionStore, temp
     # given
     await session_store.save_session("claude", "backup-session")
     # Second save to create backup file
-    await session_store.save_session("droid", "another-session")
+    await session_store.save_session("opencode", "another-session")
     sessions_file = temp_sessions_dir / "sessions.json"
 
     # Corrupt main file

@@ -79,7 +79,7 @@ await self.session_store.save_session(agent_type, actual_session_id)  # ⚠️ �
 is_execution_started = TRUE
 
 # 모든 목표 달성 여부
-is_all_goals_accomplished = FALSE
+is_all_goals_accomplished = TRUE
 
 # 병렬 실행 여부
 parallel_requested = FALSE

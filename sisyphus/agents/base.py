@@ -15,6 +15,15 @@ class Agent(Protocol):
 
     supports_interactive: bool
 
+    @property
+    def session_id(self) -> str | None:
+        """Get current session ID (may be None before stream() receives it).
+
+        Returns:
+            Current session ID or None if not yet available
+        """
+        ...
+
     async def initialize(self) -> None:
         """에이전트 초기화."""
         ...

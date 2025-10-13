@@ -47,6 +47,15 @@ class ClaudeAgent:
         self._session_id: str | None = None
         self._connected: bool = False
 
+    @property
+    def session_id(self) -> str | None:
+        """Get current session ID (available after stream() receives init message).
+
+        Returns:
+            Current session ID or None if not yet received
+        """
+        return self._session_id
+
     async def initialize(self) -> None:
         """Initialize the Claude Agent SDK client."""
         base_options: dict[str, Any] = {

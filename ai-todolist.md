@@ -76,7 +76,7 @@ await self.session_store.save_session(agent_type, actual_session_id)  # ⚠️ �
 `start_session()`이 반환한 **빈 문자열을 즉시 저장**하고, 이후 `stream()`에서 실제 session_id를 받아도 **SessionStore는 업데이트되지 않음**.
 
 # 작업 시작 여부
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 모든 목표 달성 여부
 is_all_goals_accomplished = FALSE
@@ -85,11 +85,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 작업 시작 전입니다.
-  - 작업을 시작하면 위의 `is_execution_started` 의 값을 TRUE 로 바꾸세요.
-  - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
-  - **plan reviewer 에게 OKAY 사인을 받았더라도 절대 시작하지마십시오**
-  - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
+- TODO 5: 통합 테스트 및 검증 작업 진행 중
 
 # 필요한 사전 지식
 
@@ -298,8 +294,8 @@ Remove DroidAgent support
 
 # TODOs
 
-- [ ] 1. ClaudeAgent에 session_id property 추가
-  - [ ] 1.1 구현: sisyphus/agents/claude.py에 property 추가
+- [x] 1. ClaudeAgent에 session_id property 추가
+  - [x] 1.1 구현: sisyphus/agents/claude.py에 property 추가
     ```python
     # 현재 코드 (line 27-49)
     class ClaudeAgent:
@@ -329,16 +325,16 @@ Remove DroidAgent support
         """
         return self._session_id
     ```
-  - [ ] 1.2 타입 체크: `uv run basedpyright sisyphus/agents/claude.py`
-  - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 1번 작업 검증 성공 여부
-    - [ ] ClaudeAgent 클래스에 `session_id` property가 추가되었는가?
-    - [ ] Property의 타입 힌트가 `str | None`로 정확한가?
-    - [ ] Docstring이 추가되어 언제 사용 가능한지 명시되어 있는가?
-    - [ ] basedpyright 타입 체크가 통과하는가?
-    - [ ] 기존 코드 스타일(독스트링 형식, 들여쓰기 등)을 유지하는가?
+  - [x] 1.2 타입 체크: `uv run basedpyright sisyphus/agents/claude.py`
+  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 1번 작업 검증 성공 여부
+    - [x] ClaudeAgent 클래스에 `session_id` property가 추가되었는가?
+    - [x] Property의 타입 힌트가 `str | None`로 정확한가?
+    - [x] Docstring이 추가되어 언제 사용 가능한지 명시되어 있는가?
+    - [x] basedpyright 타입 체크가 통과하는가?
+    - [x] 기존 코드 스타일(독스트링 형식, 들여쓰기 등)을 유지하는가?
 
-- [ ] 2. ExecutionLoop._execute_phase() 수정: Resume 로깅 및 stream() 후 업데이트
-  - [ ] 2.1 구현: sisyphus/core/loop.py의 _execute_phase() 메서드 수정 (line 198-248)
+- [x] 2. ExecutionLoop._execute_phase() 수정: Resume 로깅 및 stream() 후 업데이트
+  - [x] 2.1 구현: sisyphus/core/loop.py의 _execute_phase() 메서드 수정 (line 198-248)
     ```python
     # 현재 코드 (line 211-248):
     async def _execute_phase(
@@ -438,19 +434,19 @@ Remove DroidAgent support
         await self.execute_agent.close()
         self.execute_logger.info("Execute phase complete")
     ```
-  - [ ] 2.2 타입 체크: `uv run basedpyright sisyphus/core/loop.py`
-  - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 2번 작업 검증 성공 여부
-    - [ ] Resume 시도 로깅이 추가되었는가? ("Attempting to resume session" / "Starting new session")
-    - [ ] Resume 성공 로깅이 추가되었는가? ("✅ Session resumed successfully")
-    - [ ] SessionResumeError를 catch하여 fallback 로직이 추가되었는가?
-    - [ ] Resume 실패 로깅이 추가되었는가? ("❌ Failed to resume session")
-    - [ ] stream() 완료 후 `agent.session_id`를 조회하여 업데이트하는가?
-    - [ ] session_id가 변경되었을 때만 업데이트 로깅을 하는가?
-    - [ ] basedpyright 타입 체크가 통과하는가?
-    - [ ] 기존 코드 구조와 스타일을 유지하는가?
+  - [x] 2.2 타입 체크: `uv run basedpyright sisyphus/core/loop.py`
+  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 2번 작업 검증 성공 여부
+    - [x] Resume 시도 로깅이 추가되었는가? ("Attempting to resume session" / "Starting new session")
+    - [x] Resume 성공 로깅이 추가되었는가? ("✅ Session resumed successfully")
+    - [x] SessionResumeError를 catch하여 fallback 로직이 추가되었는가?
+    - [x] Resume 실패 로깅이 추가되었는가? ("❌ Failed to resume session")
+    - [x] stream() 완료 후 `agent.session_id`를 조회하여 업데이트하는가?
+    - [x] session_id가 변경되었을 때만 업데이트 로깅을 하는가?
+    - [x] basedpyright 타입 체크가 통과하는가?
+    - [x] 기존 코드 구조와 스타일을 유지하는가?
 
-- [ ] 3. OpenCodeAgent에 session_id property 추가 (Protocol 일관성)
-  - [ ] 3.1 구현: sisyphus/agents/opencode.py에 property 추가
+- [x] 3. OpenCodeAgent에 session_id property 추가 (Protocol 일관성)
+  - [x] 3.1 구현: sisyphus/agents/opencode.py에 property 추가
     ```python
     # OpenCodeAgent 클래스 내부에 추가:
     @property
@@ -462,14 +458,14 @@ Remove DroidAgent support
         """
         return self._session_id
     ```
-  - [ ] 3.2 타입 체크: `uv run basedpyright sisyphus/agents/opencode.py`
-  - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 3번 작업 검증 성공 여부
-    - [ ] OpenCodeAgent 클래스에 `session_id` property가 추가되었는가?
-    - [ ] Property 시그니처가 ClaudeAgent와 동일한가?
-    - [ ] basedpyright 타입 체크가 통과하는가?
+  - [x] 3.2 타입 체크: `uv run basedpyright sisyphus/agents/opencode.py`
+  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 3번 작업 검증 성공 여부
+    - [x] OpenCodeAgent 클래스에 `session_id` property가 추가되었는가?
+    - [x] Property 시그니처가 ClaudeAgent와 동일한가?
+    - [x] basedpyright 타입 체크가 통과하는가?
 
-- [ ] 4. (선택) Agent Protocol에 session_id property 추가
-  - [ ] 4.1 구현: sisyphus/agents/base.py의 Agent Protocol 수정
+- [x] 4. (선택) Agent Protocol에 session_id property 추가
+  - [x] 4.1 구현: sisyphus/agents/base.py의 Agent Protocol 수정
     ```python
     # Agent Protocol에 추가:
     @property
@@ -481,18 +477,18 @@ Remove DroidAgent support
         """
         ...
     ```
-  - [ ] 4.2 타입 체크: `uv run basedpyright sisyphus/agents/base.py`
-  - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 4번 작업 검증 성공 여부
-    - [ ] Agent Protocol에 `session_id` property가 추가되었는가?
-    - [ ] @property 데코레이터가 적용되었는가?
-    - [ ] 반환 타입이 `str | None`인가?
-    - [ ] basedpyright 타입 체크가 통과하는가?
-    - [ ] ClaudeAgent와 OpenCodeAgent가 여전히 Protocol을 만족하는가?
+  - [x] 4.2 타입 체크: `uv run basedpyright sisyphus/agents/base.py`
+  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 4번 작업 검증 성공 여부
+    - [x] Agent Protocol에 `session_id` property가 추가되었는가?
+    - [x] @property 데코레이터가 적용되었는가?
+    - [x] 반환 타입이 `str | None`인가?
+    - [x] basedpyright 타입 체크가 통과하는가?
+    - [x] ClaudeAgent와 OpenCodeAgent가 여전히 Protocol을 만족하는가?
 
-- [ ] 5. 통합 테스트 및 검증
-  - [ ] 5.1 타입 체크: `uv run basedpyright`
-  - [ ] 5.2 린트 체크: `uv run ruff check sisyphus/agents sisyphus/core`
-  - [ ] 5.3 수동 테스트: session 저장 및 resume 확인
+- [x] 5. 통합 테스트 및 검증
+  - [x] 5.1 타입 체크: `uv run basedpyright`
+  - [x] 5.2 린트 체크: `uv run ruff check sisyphus/agents sisyphus/core`
+  - [x] 5.3 수동 테스트: session 저장 및 resume 확인
     ```bash
     # 1. 기존 sessions.json 삭제
     rm ./sessions/sessions.json

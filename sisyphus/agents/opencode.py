@@ -43,6 +43,15 @@ class OpenCodeAgent:
         self._auto_port: int | None = None
         self._client: httpx.AsyncClient | None = None
 
+    @property
+    def session_id(self) -> str | None:
+        """Get current session ID.
+
+        Returns:
+            Current session ID or None if not yet received
+        """
+        return self._session_id
+
     async def initialize(self) -> None:
         """Initialize the OpenCode agent.
 

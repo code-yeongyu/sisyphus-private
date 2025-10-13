@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import anyio
 
 from sisyphus.core.prompts import DEFAULT_EXECUTE_PROMPT, DEFAULT_VERIFY_PROMPT
-from sisyphus.utils.errors import SessionLimitError
+from sisyphus.utils.errors import SessionLimitError, SessionResumeError
 from sisyphus.utils.session_limit import sleep_until_reset
 
 if TYPE_CHECKING:
@@ -219,8 +219,27 @@ class ExecutionLoop:
         self.execute_logger = self.logger_factory.create_logger(agent_type, session_id)
         self.execute_logger.info(f"Execute phase starting (session_id={session_id})")
 
-        actual_session_id = await self.execute_agent.start_session(session_id)
-        self.execute_logger.info(f"Session started: {actual_session_id}")
+        # Resume 시도 로깅
+        if session_id:
+            self.execute_logger.info(f"Attempting to resume session: {session_id}")
+        else:
+            self.execute_logger.info("Starting new session")
+
+        # Resume 실패 시 fallback
+        try:
+            actual_session_id = await self.execute_agent.start_session(session_id)
+
+            # Resume 성공 로깅
+            if session_id:
+                self.execute_logger.info(f"✅ Session resumed successfully: {session_id}")
+            else:
+                self.execute_logger.info("New session initialized (ID will be received during stream)")
+
+        except SessionResumeError as e:
+            # Resume 실패 로깅 및 새 세션 시작
+            self.execute_logger.warning(f"❌ Failed to resume session {session_id}: {e}")
+            self.execute_logger.info("Starting new session instead")
+            actual_session_id = await self.execute_agent.start_session(None)
 
         await self.session_store.save_session(agent_type, actual_session_id)
 
@@ -243,6 +262,12 @@ class ExecutionLoop:
                 await anyio.sleep(3600)
 
             raise
+
+        # stream() 완료 후 실제 session_id 업데이트
+        final_session_id = self.execute_agent.session_id
+        if final_session_id and final_session_id != actual_session_id:
+            self.execute_logger.info(f"Updating session ID: '{actual_session_id}' -> '{final_session_id}'")
+            await self.session_store.save_session(agent_type, final_session_id)
 
         await self.execute_agent.close()
         self.execute_logger.info("Execute phase complete")

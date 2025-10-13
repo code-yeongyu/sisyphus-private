@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+from sisyphus.utils.theme import ThemeName
+
 if TYPE_CHECKING:
     from sisyphus.utils.types import AgentMessage
 
@@ -33,11 +35,12 @@ class UIProtocol(Protocol):
         ...
 
 
-def create_ui(mode: str) -> UIProtocol:
+def create_ui(mode: str, theme: ThemeName | None = None) -> UIProtocol:
     """UI 팩토리.
 
     Args:
         mode: UI 모드 ('tui' 또는 'cli')
+        theme: TUI 테마 ("mocha" | "latte"), None이면 기본값
 
     Returns:
         UIProtocol을 구현하는 UI 인스턴스
@@ -45,7 +48,7 @@ def create_ui(mode: str) -> UIProtocol:
     if mode == "tui":
         from sisyphus.ui.tui import TUI
 
-        return TUI()
+        return TUI(theme=theme or "mocha")
     else:
         from sisyphus.ui.cli import CLI
 

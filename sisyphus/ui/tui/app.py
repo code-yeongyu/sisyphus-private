@@ -9,6 +9,7 @@ from textual.events import Key
 from textual.message import Message
 
 from sisyphus.core.tasks import TaskValidator
+from sisyphus.ui.themes import THEMES
 from sisyphus.ui.tui.components.chat_log import ChatLog
 from sisyphus.ui.tui.components.input_bar import InputBar
 from sisyphus.ui.tui.components.status_panel import StatusPanel
@@ -78,6 +79,10 @@ class TUI(App[None]):
     사용자 입력을 메시지 큐로 관리합니다.
     """
 
+    show_header = False
+    show_footer = False
+    ENABLE_COMMAND_PALETTE = False
+
     CSS = """
     Container {
         height: 90%;
@@ -119,9 +124,14 @@ class TUI(App[None]):
         ("ctrl+q", "quit", "Quit"),
     ]
 
-    def __init__(self) -> None:
-        """TUI 앱 초기화."""
+    def __init__(self, theme: str = "mocha") -> None:
+        """TUI 앱 초기화.
+
+        Args:
+            theme: 테마 이름 ("mocha" | "latte")
+        """
         super().__init__()
+        self.theme_name = theme
         self.ctrl_c_count = 0
         self.last_ctrl_c_time: datetime | None = None
         self.shutdown_event = anyio.Event()
@@ -175,6 +185,14 @@ class TUI(App[None]):
 
     async def on_mount(self) -> None:
         """초기화."""
+
+        mocha_theme = THEMES["mocha"]
+        latte_theme = THEMES["latte"]
+
+        self.register_theme(mocha_theme)
+        self.register_theme(latte_theme)
+        self.theme = self.theme_name
+
         self.title = "Sisyphus - Multi-Agent Execution System"
         self.sub_title = "Execute & Verify"
 

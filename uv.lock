@@ -56,6 +56,15 @@ wheels = [
 ]
 
 [[package]]
+name = "catppuccin"
+version = "2.5.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b6/31/87c3ca25d29678e076e1f0d151ef8792f0557b26a8dc865035b5f1fa96c4/catppuccin-2.5.0.tar.gz", hash = "sha256:3035f3bf35bc2369d1cb4c754272a494708592a1e62d42655a371863ac7c6834", size = 1918017, upload-time = "2025-08-03T20:06:40.089Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c8/9c/7908f34009eec72884fe9448a62188423a3621f04ee58e2abaec379c9cc0/catppuccin-2.5.0-py3-none-any.whl", hash = "sha256:74a1f1db79d527905225f1afce1c8858d06e2dd1231e4300a72a812797cdb572", size = 19600, upload-time = "2025-08-03T20:06:38.912Z" },
+]
+
+[[package]]
 name = "certifi"
 version = "2025.10.5"
 source = { registry = "https://pypi.org/simple" }
@@ -558,6 +567,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
     { name = "anyio" },
+    { name = "catppuccin" },
     { name = "claude-agent-sdk" },
     { name = "httpx" },
     { name = "rich" },
@@ -579,6 +589,7 @@ dev = [
 requires-dist = [
     { name = "aiofiles", specifier = ">=24.0.0" },
     { name = "anyio", specifier = ">=4.11.0" },
+    { name = "catppuccin", specifier = ">=2.5.0" },
     { name = "claude-agent-sdk", specifier = ">=0.1.0" },
     { name = "httpx", specifier = ">=0.28.0" },
     { name = "rich", specifier = ">=13.0.0" },

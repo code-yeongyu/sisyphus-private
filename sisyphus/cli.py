@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import time
 import traceback
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
@@ -22,6 +23,7 @@ from sisyphus.core.tasks import TaskValidator
 from sisyphus.ui.base import create_ui
 from sisyphus.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
 from sisyphus.utils.logging import LoggerFactory
+from sisyphus.utils.theme import ThemeName, detect_system_theme
 
 if TYPE_CHECKING:
     from sisyphus.agents.base import Agent
@@ -30,6 +32,14 @@ if TYPE_CHECKING:
 app = typer.Typer(name="sisyphus", help="Sisyphus Multi-Agent System")
 console = Console()
 error_console = Console(stderr=True)
+
+
+class ThemeOption(str, Enum):
+    """TUI 테마 옵션."""
+
+    SYSTEM = "system"
+    MOCHA = "mocha"
+    LATTE = "latte"
 
 
 def validate_url(url: str) -> str:
@@ -48,6 +58,24 @@ def validate_url(url: str) -> str:
     if not parsed.scheme or not parsed.netloc:
         raise typer.BadParameter(f"Invalid URL: {url}")
     return url
+
+
+def resolve_theme(option: ThemeOption) -> ThemeName:
+    """ThemeOption을 실제 테마 이름으로 변환.
+
+    Args:
+        option: CLI에서 받은 테마 옵션
+
+    Returns:
+        "mocha" 또는 "latte"
+    """
+    match option:
+        case ThemeOption.SYSTEM:
+            return detect_system_theme()
+        case ThemeOption.MOCHA:
+            return "mocha"
+        case _:
+            return "latte"
 
 
 def resolve_binary(common: Path | None, specific: Path | None) -> Path | None:
@@ -300,6 +328,12 @@ def run(
     verify_sdk_options: str | None = typer.Option(None, "--verify-sdk-options", help="Verify SDK options (JSON)"),
     opencode_server_url: str | None = typer.Option(None, "--opencode-server-url", help="OpenCode server URL"),
     no_tui: bool = typer.Option(False, "--no-tui", help="Disable TUI, use CLI mode"),
+    theme: ThemeOption = typer.Option(
+        ThemeOption.SYSTEM,
+        "--theme",
+        help="TUI theme (system: auto-detect, mocha: dark, latte: light)",
+        case_sensitive=False,
+    ),
     log: Path | None = typer.Option(None, "--log", help="Log file path"),
 ) -> None:
     """Run Sisyphus multi-agent system."""
@@ -331,7 +365,8 @@ def run(
     # DEBUG: verify_agent 생성 확인
     console.print(f"[yellow]DEBUG: verify_spec={verify_spec}, verify_agent={verify_agent}[/yellow]")
 
-    ui = create_ui("cli" if no_tui else "tui")
+    resolved_theme = resolve_theme(theme)
+    ui = create_ui("cli" if no_tui else "tui", theme=resolved_theme if not no_tui else None)
 
     session_store = SessionStore()
 

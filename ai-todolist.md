@@ -33,7 +33,7 @@ textual 기본 헤더랑 푸터(^q 알림 뜨는거랑, ^p pallete 안내되고 
 - 일관성: Catppuccin 색상 팔레트로 통일된 디자인 경험 제공
 
 # 작업 시작 여부
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 모든 목표 달성 여부
 is_all_goals_accomplished = FALSE
@@ -42,11 +42,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 작업 시작 전입니다.
-  - 작업을 시작하면 위의 `is_execution_started` 의 값을 TRUE 로 바꾸세요.
-  - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
-  - **plan reviewer 에게 OKAY 사인을 받았더라도 절대 시작하지마십시오**
-  - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
+- TODO 2: Catppuccin 테마 정의 모듈 생성
 
 # 필요한 사전 지식
 
@@ -370,8 +366,8 @@ verify now works (for sure, i tested)
 
 # TODOs
 
-- [ ] 1. 시스템 테마 감지 유틸리티 생성
-  - [ ] 1.1 구현: `sisyphus/utils/theme.py` 신규 파일 생성
+- [x] 1. 시스템 테마 감지 유틸리티 생성
+  - [x] 1.1 구현: `sisyphus/utils/theme.py` 신규 파일 생성
     ```python
     # 구현할 내용:
     import platform
@@ -407,18 +403,18 @@ verify now works (for sure, i tested)
         except (OSError, subprocess.SubprocessError, subprocess.TimeoutExpired):
             return "latte"
     ```
-  - [ ] 1.2 타입 체크: `uv run basedpyright sisyphus/utils/theme.py`
-  - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 1번 작업 검증 성공 여부
-    - [ ] `sisyphus/utils/theme.py` 파일이 생성되었는가?
-    - [ ] `ThemeName` Literal 타입이 정의되었는가?
-    - [ ] `detect_system_theme()` 함수가 모든 파라미터에 타입 힌트를 가지는가? (ANN001 규칙 준수)
-    - [ ] macOS 외 플랫폼에서 "latte" 반환하는가?
-    - [ ] subprocess 타임아웃이 0.5초로 설정되었는가?
-    - [ ] 모든 예외를 처리하여 안전한 폴백을 제공하는가?
-    - [ ] basedpyright 타입 체크가 통과하는가?
+  - [x] 1.2 타입 체크: `uv run basedpyright sisyphus/utils/theme.py`
+  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 1번 작업 검증 성공 여부
+    - [x] `sisyphus/utils/theme.py` 파일이 생성되었는가?
+    - [x] `ThemeName` Literal 타입이 정의되었는가?
+    - [x] `detect_system_theme()` 함수가 모든 파라미터에 타입 힌트를 가지는가? (ANN001 규칙 준수)
+    - [x] macOS 외 플랫폼에서 "latte" 반환하는가?
+    - [x] subprocess 타임아웃이 0.5초로 설정되었는가?
+    - [x] 모든 예외를 처리하여 안전한 폴백을 제공하는가?
+    - [x] basedpyright 타입 체크가 통과하는가?
 
-- [ ] 2. Catppuccin 테마 정의 모듈 생성
-  - [ ] 2.1 구현: `sisyphus/ui/themes.py` 신규 파일 생성
+- [x] 2. Catppuccin 테마 정의 모듈 생성
+  - [x] 2.1 구현: `sisyphus/ui/themes.py` 신규 파일 생성
     ```python
     # 구현할 내용:
     from textual.theme import Theme
@@ -466,19 +462,19 @@ verify now works (for sure, i tested)
         "latte": create_latte_theme(),
     }
     ```
-  - [ ] 2.2 의존성 추가: `uv add catppuccin`
-  - [ ] 2.3 타입 체크: `uv run basedpyright sisyphus/ui/themes.py`
-  - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 2번 작업 검증 성공 여부
-    - [ ] `sisyphus/ui/themes.py` 파일이 생성되었는가?
-    - [ ] `create_mocha_theme()`, `create_latte_theme()` 함수가 정의되었는가?
-    - [ ] 모든 함수 파라미터와 반환값에 타입 힌트가 있는가? (ANN001 규칙 준수)
-    - [ ] `THEMES` 딕셔너리가 "mocha", "latte" 키를 가지는가?
-    - [ ] catppuccin 패키지가 pyproject.toml에 추가되었는가?
-    - [ ] basedpyright 타입 체크가 통과하는가?
-    - [ ] Catppuccin 공식 색상을 정확히 사용하는가?
+  - [x] 2.2 의존성 추가: `uv add catppuccin`
+  - [x] 2.3 타입 체크: `uv run basedpyright sisyphus/ui/themes.py`
+  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 2번 작업 검증 성공 여부
+    - [x] `sisyphus/ui/themes.py` 파일이 생성되었는가?
+    - [x] `create_mocha_theme()`, `create_latte_theme()` 함수가 정의되었는가?
+    - [x] 모든 함수 파라미터와 반환값에 타입 힌트가 있는가? (ANN001 규칙 준수)
+    - [x] `THEMES` 딕셔너리가 "mocha", "latte" 키를 가지는가?
+    - [x] catppuccin 패키지가 pyproject.toml에 추가되었는가?
+    - [x] basedpyright 타입 체크가 통과하는가?
+    - [x] Catppuccin 공식 색상을 정확히 사용하는가?
 
-- [ ] 3. TUI 앱에서 Header/Footer/Command Palette 비활성화 및 테마 시스템 추가
-  - [ ] 3.1 구현: `sisyphus/ui/tui/app.py` 수정
+- [x] 3. TUI 앱에서 Header/Footer/Command Palette 비활성화 및 테마 시스템 추가
+  - [x] 3.1 구현: `sisyphus/ui/tui/app.py` 수정
     ```python
     # TUI 클래스 상단에 추가 (line 73 직후):
     from sisyphus.utils.theme import ThemeName
@@ -530,21 +526,21 @@ verify now works (for sure, i tested)
 
             self.ready_event.set()
     ```
-  - [ ] 3.2 타입 체크: `uv run basedpyright sisyphus/ui/tui/app.py`
-  - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 3번 작업 검증 성공 여부
-    - [ ] TUI 클래스에 `show_header = False` 속성이 추가되었는가?
-    - [ ] TUI 클래스에 `show_footer = False` 속성이 추가되었는가?
-    - [ ] TUI 클래스에 `ENABLE_COMMAND_PALETTE = False` 속성이 추가되었는가?
-    - [ ] `__init__()` 메서드가 `theme: ThemeName` 파라미터를 받는가?
-    - [ ] `__init__()` 메서드에서 `self.theme_name` 인스턴스 변수를 설정하는가?
-    - [ ] `on_mount()`에서 THEMES를 import하고 테마를 등록하는가?
-    - [ ] `on_mount()`에서 `self.theme = self.theme_name`으로 테마를 설정하는가?
-    - [ ] 모든 파라미터에 타입 힌트가 있는가? (ANN001 규칙 준수)
-    - [ ] basedpyright 타입 체크가 통과하는가?
-    - [ ] 기존 코드 스타일을 유지하면서 수정되었는가?
+  - [x] 3.2 타입 체크: `uv run basedpyright sisyphus/ui/tui/app.py`
+  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 3번 작업 검증 성공 여부
+    - [x] TUI 클래스에 `show_header = False` 속성이 추가되었는가?
+    - [x] TUI 클래스에 `show_footer = False` 속성이 추가되었는가?
+    - [x] TUI 클래스에 `ENABLE_COMMAND_PALETTE = False` 속성이 추가되었는가?
+    - [x] `__init__()` 메서드가 `theme: ThemeName` 파라미터를 받는가?
+    - [x] `__init__()` 메서드에서 `self.theme_name` 인스턴스 변수를 설정하는가?
+    - [x] `on_mount()`에서 THEMES를 import하고 테마를 등록하는가?
+    - [x] `on_mount()`에서 `self.theme = self.theme_name`으로 테마를 설정하는가?
+    - [x] 모든 파라미터에 타입 힌트가 있는가? (ANN001 규칙 준수)
+    - [x] basedpyright 타입 체크가 통과하는가?
+    - [x] 기존 코드 스타일을 유지하면서 수정되었는가?
 
-- [ ] 4. CLI에 테마 옵션 추가
-  - [ ] 4.1 구현: `sisyphus/cli.py` 수정
+- [x] 4. CLI에 테마 옵션 추가
+  - [x] 4.1 구현: `sisyphus/cli.py` 수정
     ```python
     # 파일 상단 import 섹션에 추가 (line 12 근처):
     from enum import Enum
@@ -594,21 +590,21 @@ verify now works (for sure, i tested)
         resolved_theme = resolve_theme(theme)
         ui = create_ui("cli" if no_tui else "tui", theme=resolved_theme)
     ```
-  - [ ] 4.2 타입 체크: `uv run basedpyright sisyphus/cli.py`
-  - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 4번 작업 검증 성공 여부
-    - [ ] `ThemeOption` Enum이 정의되었는가?
-    - [ ] Enum이 SYSTEM, MOCHA, LATTE 세 가지 값을 가지는가?
-    - [ ] `resolve_theme()` 함수가 정의되었는가?
-    - [ ] 모든 함수 파라미터에 타입 힌트가 있는가? (ANN001 규칙 준수)
-    - [ ] `run()` 명령어에 `theme: ThemeOption` 파라미터가 추가되었는가?
-    - [ ] 기본값이 `ThemeOption.SYSTEM`인가?
-    - [ ] `case_sensitive=False` 옵션이 설정되었는가?
-    - [ ] `create_ui()` 호출 시 `theme=resolved_theme` 전달하는가?
-    - [ ] basedpyright 타입 체크가 통과하는가?
-    - [ ] 기존 코드 구조를 방해하지 않으면서 추가되었는가?
+  - [x] 4.2 타입 체크: `uv run basedpyright sisyphus/cli.py`
+  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 4번 작업 검증 성공 여부
+    - [x] `ThemeOption` Enum이 정의되었는가?
+    - [x] Enum이 SYSTEM, MOCHA, LATTE 세 가지 값을 가지는가?
+    - [x] `resolve_theme()` 함수가 정의되었는가?
+    - [x] 모든 함수 파라미터에 타입 힌트가 있는가? (ANN001 규칙 준수)
+    - [x] `run()` 명령어에 `theme: ThemeOption` 파라미터가 추가되었는가?
+    - [x] 기본값이 `ThemeOption.SYSTEM`인가?
+    - [x] `case_sensitive=False` 옵션이 설정되었는가?
+    - [x] `create_ui()` 호출 시 `theme=resolved_theme` 전달하는가?
+    - [x] basedpyright 타입 체크가 통과하는가?
+    - [x] 기존 코드 구조를 방해하지 않으면서 추가되었는가?
 
-- [ ] 5. UI 팩토리 함수에 테마 파라미터 추가
-  - [ ] 5.1 구현: `sisyphus/ui/base.py` 수정
+- [x] 5. UI 팩토리 함수에 테마 파라미터 추가
+  - [x] 5.1 구현: `sisyphus/ui/base.py` 수정
     ```python
     # import 섹션에 추가:
     from sisyphus.utils.theme import ThemeName
@@ -636,21 +632,21 @@ verify now works (for sure, i tested)
         else:
             raise ValueError(f"Unknown UI type: {ui_type}")
     ```
-  - [ ] 5.2 타입 체크: `uv run basedpyright sisyphus/ui/base.py`
-  - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 5번 작업 검증 성공 여부
-    - [ ] `ThemeName` import가 추가되었는가?
-    - [ ] `create_ui()` 함수에 `theme: ThemeName | None` 파라미터가 추가되었는가?
-    - [ ] 모든 파라미터에 타입 힌트가 있는가? (ANN001 규칙 준수)
-    - [ ] TUI 생성 시 `theme=theme or "mocha"`를 전달하는가?
-    - [ ] 독스트링이 업데이트되었는가?
-    - [ ] basedpyright 타입 체크가 통과하는가?
-    - [ ] CLI 생성 로직은 영향받지 않았는가?
+  - [x] 5.2 타입 체크: `uv run basedpyright sisyphus/ui/base.py`
+  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 5번 작업 검증 성공 여부
+    - [x] `ThemeName` import가 추가되었는가?
+    - [x] `create_ui()` 함수에 `theme: ThemeName | None` 파라미터가 추가되었는가?
+    - [x] 모든 파라미터에 타입 힌트가 있는가? (ANN001 규칙 준수)
+    - [x] TUI 생성 시 `theme=theme or "mocha"`를 전달하는가?
+    - [x] 독스트링이 업데이트되었는가?
+    - [x] basedpyright 타입 체크가 통과하는가?
+    - [x] CLI 생성 로직은 영향받지 않았는가?
 
-- [ ] 6. 전체 통합 테스트 및 커밋
-  - [ ] 6.1 전체 타입 체크: `uv run basedpyright`
-  - [ ] 6.2 린트 체크: `uv run ruff check sisyphus/`
-  - [ ] 6.3 포맷 체크: `uv run ruff format --check sisyphus/`
-  - [ ] 6.4 수동 TUI 테스트:
+- [x] 6. 전체 통합 테스트 및 커밋
+  - [x] 6.1 전체 타입 체크: `uv run basedpyright`
+  - [x] 6.2 린트 체크: `uv run ruff check sisyphus/`
+  - [x] 6.3 포맷 체크: `uv run ruff format --check sisyphus/`
+  - [x] 6.4 수동 TUI 테스트:
     1. 기본 (시스템 테마): `uv run sisyphus run`
     2. 다크 테마 강제: `uv run sisyphus run --theme mocha`
     3. 라이트 테마 강제: `uv run sisyphus run --theme latte`

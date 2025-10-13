@@ -15,6 +15,7 @@ from sisyphus.ui.tui.components.input_bar import InputBar
 from sisyphus.ui.tui.components.status_panel import StatusPanel
 from sisyphus.ui.tui.events import InputReadyEvent
 from sisyphus.ui.tui.layouts.main import compose_main_layout
+from sisyphus.utils.theme import ThemeName
 
 if TYPE_CHECKING:
     from sisyphus.utils.types import AgentMessage
@@ -124,7 +125,7 @@ class TUI(App[None]):
         ("ctrl+q", "quit", "Quit"),
     ]
 
-    def __init__(self, theme: str = "mocha") -> None:
+    def __init__(self, theme: ThemeName = "mocha") -> None:
         """TUI 앱 초기화.
 
         Args:

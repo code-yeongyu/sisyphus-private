@@ -577,6 +577,8 @@ session resume on next execution"
 
 - [x] 2. Resume 기능 확인
   - [x] 두 번째 실행 시 이전 session_id를 로드하는가?
+    - [x] 오로지 execute phase session 만 재활성화하고 하는가?
+    - [x] verify phase 는 매번 새 session 을 쓰고 절대 resume 을 안하는가?
   - [x] Resume 시도 로그가 찍히는가?
   - [x] Resume 성공 시 이전 대화 기록이 유지되는가?
   - [x] Resume 실패 시 새 세션으로 fallback하는가?

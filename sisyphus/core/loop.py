@@ -340,6 +340,12 @@ class ExecutionLoop:
 
             raise
 
+        # stream() 완료 후 실제 session_id 업데이트
+        final_session_id = self.verify_agent.session_id
+        if final_session_id and final_session_id != actual_session_id:
+            self.verify_logger.info(f"Updating session ID: '{actual_session_id}' -> '{final_session_id}'")
+            await self.session_store.save_session(agent_type, final_session_id)
+
         await self.verify_agent.close()
 
         feedback = "\n\n".join(feedback_messages)

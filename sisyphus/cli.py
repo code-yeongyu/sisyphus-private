@@ -221,6 +221,9 @@ async def _main_tui(
             logger_factory = LoggerFactory()
             task_validator = TaskValidator() if Path("ai-todolist.md").exists() else None
 
+            if isinstance(ui, TUI):
+                ui.set_task_validator(task_validator)
+
             loop = ExecutionLoop(
                 execute_agent=execute_agent,
                 ui=ui,

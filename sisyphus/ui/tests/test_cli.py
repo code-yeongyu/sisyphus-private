@@ -137,17 +137,15 @@ async def test_cli_get_input_returns_none() -> None:
     assert result is None
 
 
-async def test_cli_close() -> None:
+async def test_cli_lifecycle() -> None:
     # given
     cli = CLI()
-    await cli.initialize()
-    assert cli._initialized is True
 
     # when
-    await cli.close()
+    await cli.initialize()
 
     # then
-    assert cli._initialized is False
+    assert cli._initialized is True
 
 
 async def test_cli_full_lifecycle() -> None:
@@ -175,9 +173,8 @@ async def test_cli_full_lifecycle() -> None:
     user_input = await cli.get_input()
     assert user_input is None
 
-    # when/then: close
-    await cli.close()
-    assert cli._initialized is False
+    # then: CLI remains initialized (no close method)
+    assert cli._initialized is True
 
 
 async def test_cli_multiple_messages_sequence() -> None:

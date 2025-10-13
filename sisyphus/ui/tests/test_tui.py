@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -229,19 +229,6 @@ async def test_tui_safe_shutdown() -> None:
     mock_status_panel.update_status.assert_called_once_with("🔄 종료 중...")
 
 
-async def test_tui_close_calls_shutdown() -> None:
-    """close()가 _safe_shutdown()을 호출하는지 검증."""
-    # given
-    tui = TUI()
-
-    # when
-    with patch.object(tui, "_safe_shutdown", new_callable=AsyncMock) as mock_shutdown:
-        await tui.close()
-
-    # then
-    mock_shutdown.assert_called_once()
-
-
 async def test_tui_full_lifecycle() -> None:
     """전체 라이프사이클 테스트."""
     # given
@@ -272,10 +259,6 @@ async def test_tui_full_lifecycle() -> None:
     with patch.object(tui, "query_one", return_value=mock_input_bar):
         user_input = await tui.get_input()
     assert user_input == "Test input"
-
-    # when/then: close
-    with patch.object(tui, "_safe_shutdown", new_callable=AsyncMock):
-        await tui.close()
 
 
 async def test_tui_multiple_messages_sequence() -> None:

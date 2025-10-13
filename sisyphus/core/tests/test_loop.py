@@ -60,7 +60,6 @@ class MockUI:
         self.initialized = False
         self.messages: list[tuple[AgentMessage, str]] = []
         self.statuses: list[str] = []
-        self.closed = False
 
     async def initialize(self) -> None:
         self.initialized = True
@@ -73,9 +72,6 @@ class MockUI:
 
     async def get_input(self) -> str | None:
         return None
-
-    async def close(self) -> None:
-        self.closed = True
 
 
 class MockSessionStore:
@@ -175,7 +171,7 @@ async def test_execution_loop_execute_only() -> None:
     assert "Execute task" in execute_agent.sent_messages
     assert execute_agent.closed
     assert ui.initialized
-    assert ui.closed
+    # UI remains initialized after ExecutionLoop completes (no longer closes automatically)
     assert len(ui.messages) == 1
     assert ui.messages[0][0].content == "Hello from execute"
     assert ui.messages[0][1] == "execute"
@@ -190,13 +186,14 @@ async def test_execution_loop_execute_and_verify() -> None:
 
     verify_agent = MockAgent()
     verify_agent.messages_to_return = [
-        AgentMessage(role="assistant", content="Verify done", metadata={}),
+        AgentMessage(role="assistant", content="Verify done\n\nFULLY_DONE = TRUE", metadata={}),
     ]
 
     ui = MockUI()
     session_store = MockSessionStore()
     prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
+    task_validator = MockTaskValidator(all_complete=True)
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
@@ -205,6 +202,7 @@ async def test_execution_loop_execute_and_verify() -> None:
         session_store=session_store,  # type: ignore[arg-type]
         prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
+        task_validator=task_validator,  # type: ignore[arg-type]
     )
 
     # when
@@ -226,7 +224,9 @@ async def test_execution_loop_verify_always_new_session() -> None:
     execute_agent.messages_to_return = []
 
     verify_agent = MockAgent()
-    verify_agent.messages_to_return = []
+    verify_agent.messages_to_return = [
+        AgentMessage(role="assistant", content="Verify complete\n\nFULLY_DONE = TRUE", metadata={}),
+    ]
 
     ui = MockUI()
     session_store = MockSessionStore()
@@ -234,6 +234,7 @@ async def test_execution_loop_verify_always_new_session() -> None:
 
     prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
+    task_validator = MockTaskValidator(all_complete=True)
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
@@ -242,6 +243,7 @@ async def test_execution_loop_verify_always_new_session() -> None:
         session_store=session_store,  # type: ignore[arg-type]
         prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
+        task_validator=task_validator,  # type: ignore[arg-type]
     )
 
     # when

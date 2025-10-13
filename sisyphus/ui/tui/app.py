@@ -8,6 +8,7 @@ from textual.app import App, ComposeResult
 from textual.events import Key
 from textual.message import Message
 
+from sisyphus.core.tasks import TaskValidator
 from sisyphus.ui.tui.components.chat_log import ChatLog
 from sisyphus.ui.tui.components.input_bar import InputBar
 from sisyphus.ui.tui.components.status_panel import StatusPanel
@@ -115,6 +116,7 @@ class TUI(App[None]):
     BINDINGS = [
         ("ctrl+c", "interrupt", "Interrupt"),
         ("ctrl+d", "quit", "Quit"),
+        ("ctrl+q", "quit", "Quit"),
     ]
 
     def __init__(self) -> None:
@@ -126,26 +128,71 @@ class TUI(App[None]):
         self.ready_event = anyio.Event()
         self._input_ready_event = anyio.Event()
         self._initialized = False
+        self.task_validator: TaskValidator | None = None
+        self._last_total_checkboxes: int = 0
+        self._last_completed_checkboxes: int = 0
 
     def compose(self) -> ComposeResult:
         """레이아웃 구성."""
         yield from compose_main_layout()
+
+    def set_task_validator(self, task_validator: TaskValidator | None) -> None:
+        """Set task validator for checkbox monitoring.
+
+        Args:
+            task_validator: TaskValidator instance to monitor ai-todolist.md
+        """
+        self.task_validator = task_validator
+
+    async def _monitor_todolist(self) -> None:
+        """Background task to monitor ai-todolist.md changes.
+
+        Polls the todolist file every 2 seconds and updates StatusPanel
+        only when checkbox counts change.
+        """
+        if self.task_validator is None:
+            return
+
+        try:
+            content = self.task_validator.read_content()
+            if not content:
+                return
+
+            total = self.task_validator.count_total_checkboxes(content)
+            completed = self.task_validator.count_completed_checkboxes(content)
+
+            if total != self._last_total_checkboxes or completed != self._last_completed_checkboxes:
+                self._last_total_checkboxes = total
+                self._last_completed_checkboxes = completed
+
+                status_panel = self.query_one(StatusPanel)
+                status_panel.show_progress(completed, total)
+
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            self.log.error(f"Error monitoring todolist: {e}")
 
     async def on_mount(self) -> None:
         """초기화."""
         self.title = "Sisyphus - Multi-Agent Execution System"
         self.sub_title = "Execute & Verify"
 
+        if self.task_validator is not None:
+            self.set_interval(2.0, self._monitor_todolist)
+
         self.ready_event.set()
 
     async def on_key(self, event: Key) -> None:
-        """Ctrl+C 2회 처리.
+        """Ctrl+C, Ctrl+D, Ctrl+Q 처리.
 
         Args:
             event: 키 이벤트
         """
         if event.key == "ctrl+c":
             await self._handle_interrupt()
+        elif event.key in ("ctrl+d", "ctrl+q"):
+            await self._safe_shutdown()
 
     async def _handle_interrupt(self) -> None:
         """Ctrl+C 인터럽트 처리."""
@@ -275,7 +322,3 @@ class TUI(App[None]):
             except Exception as e:
                 self.log.error(f"Failed to get input: {e}")
                 return None
-
-    async def close(self) -> None:
-        """UI 종료."""
-        await self._safe_shutdown()

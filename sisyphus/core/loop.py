@@ -69,6 +69,9 @@ class ExecutionLoop:
     ) -> None:
         """Run the execution loop in unified mode.
 
+        ExecutionLoop는 작업 실행만 담당하며, UI 생명주기는 관여하지 않습니다.
+        작업 완료 후 UI는 사용자가 명시적으로 종료할 때까지 계속 실행됩니다.
+
         This method runs a unified execution flow that works for both interactive
         and non-interactive agents:
         - Execute Phase: Agent performs tasks (interactive features handled by agent)
@@ -87,14 +90,13 @@ class ExecutionLoop:
             - Verify agent always starts new session (independent verification)
             - Loop continues until task_validator confirms completion (if provided)
             - Interactive/non-interactive distinction is handled by agent implementation
+            - UI lifecycle is managed independently by the UI itself
         """
         await self.ui.initialize()
 
         actual_execute_prompt = execute_prompt if execute_prompt is not None else DEFAULT_EXECUTE_PROMPT
 
         await self._run_unified_mode(actual_execute_prompt, execute_extra, verify_prompt, verify_extra)
-
-        await self.ui.close()
 
     async def _run_unified_mode(
         self,

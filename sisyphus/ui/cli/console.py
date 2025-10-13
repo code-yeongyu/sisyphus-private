@@ -68,7 +68,3 @@ class CLI:
             None (CLI does not support interactive input)
         """
         return None
-
-    async def close(self) -> None:
-        """Close CLI (no-op for console)."""
-        self._initialized = False

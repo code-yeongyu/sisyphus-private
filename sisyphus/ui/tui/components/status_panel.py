@@ -37,3 +37,26 @@ class StatusPanel(RichLog):
             total: 전체 반복 횟수
         """
         self.write(f"[dim]Iteration {current}/{total}[/dim]")
+
+    def show_progress(self, completed: int, total: int) -> None:
+        """체크박스 진행률을 시각적 진행 바와 함께 표시.
+
+        Args:
+            completed: 완료된 체크박스 개수
+            total: 전체 체크박스 개수
+        """
+        if total == 0:
+            return
+
+        percentage = int((completed / total) * 100)
+        remaining = total - completed
+
+        bar_length = 20
+        filled = int((completed / total) * bar_length)
+        bar = "█" * filled + "░" * (bar_length - filled)
+
+        self.write(
+            f"[cyan]📋 진행률:[/cyan] {bar} "
+            f"[bold]{completed}/{total}[/bold] ({percentage}%) "
+            f"[dim]| 남은 작업: {remaining}개[/dim]"
+        )

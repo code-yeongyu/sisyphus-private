@@ -10,7 +10,11 @@ if TYPE_CHECKING:
 
 @runtime_checkable
 class UIProtocol(Protocol):
-    """UI 구현이 따라야 할 프로토콜."""
+    """UI 구현이 따라야 할 프로토콜.
+
+    UI 생명주기는 UI 자신이 관리합니다. ExecutionLoop는 UI 생명주기에
+    관여하지 않으며, 단지 메시지와 상태를 표시하는 인터페이스만 사용합니다.
+    """
 
     async def initialize(self) -> None:
         """UI 초기화."""
@@ -26,10 +30,6 @@ class UIProtocol(Protocol):
 
     async def get_input(self) -> str | None:
         """사용자 입력 받기 (TUI only, CLI는 None 반환)."""
-        ...
-
-    async def close(self) -> None:
-        """UI 종료."""
         ...
 
 

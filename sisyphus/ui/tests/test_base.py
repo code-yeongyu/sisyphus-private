@@ -17,7 +17,6 @@ class MockUI:
         self.inputs: list[str | None] = ["test_input", None]
         self.input_index: int = 0
         self.initialized: bool = False
-        self.closed: bool = False
 
     async def initialize(self) -> None:
         """UI 초기화."""
@@ -38,10 +37,6 @@ class MockUI:
         result = self.inputs[self.input_index]
         self.input_index += 1
         return result
-
-    async def close(self) -> None:
-        """UI 종료."""
-        self.closed = True
 
 
 class IncompleteUI:
@@ -117,18 +112,6 @@ async def test_mock_ui_get_input() -> None:
     assert result1 == "test_input"
     assert result2 is None
     assert result3 is None
-
-
-async def test_mock_ui_close() -> None:
-    # Given
-    ui = MockUI()
-    assert not ui.closed
-
-    # When
-    await ui.close()
-
-    # Then
-    assert ui.closed
 
 
 async def test_mock_ui_multiple_messages() -> None:

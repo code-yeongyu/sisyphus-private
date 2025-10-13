@@ -535,8 +535,8 @@ Remove DroidAgent support
     - [ ] Resume 실패 후 새 세션으로 fallback하는가?
     - [ ] 새 세션 시작 후 "Updating session ID" 로그가 찍히는가?
 
-- [ ] 6. 커밋
-  - [ ] 6.1 변경사항 확인
+- [x] 6. 커밋
+  - [x] 6.1 변경사항 확인
     ```bash
     git status
     git diff sisyphus/agents/claude.py
@@ -544,7 +544,7 @@ Remove DroidAgent support
     git diff sisyphus/core/loop.py
     git diff sisyphus/agents/base.py  # (선택사항)
     ```
-  - [ ] 6.2 커밋 (프로젝트 컨벤션 준수)
+  - [x] 6.2 커밋 (프로젝트 컨벤션 준수)
     ```bash
     git add sisyphus/agents/claude.py \
             sisyphus/agents/opencode.py \

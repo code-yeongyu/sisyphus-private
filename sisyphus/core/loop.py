@@ -304,8 +304,6 @@ class ExecutionLoop:
         actual_session_id = await self.verify_agent.start_session(None)
         self.verify_logger.info(f"New session started: {actual_session_id}")
 
-        await self.session_store.save_session(agent_type, actual_session_id)
-
         await self.verify_agent.send(final_prompt)
         self.verify_logger.info("Prompt sent")
 
@@ -339,12 +337,6 @@ class ExecutionLoop:
                 await anyio.sleep(3600)
 
             raise
-
-        # stream() 완료 후 실제 session_id 업데이트
-        final_session_id = self.verify_agent.session_id
-        if final_session_id and final_session_id != actual_session_id:
-            self.verify_logger.info(f"Updating session ID: '{actual_session_id}' -> '{final_session_id}'")
-            await self.session_store.save_session(agent_type, final_session_id)
 
         await self.verify_agent.close()
 

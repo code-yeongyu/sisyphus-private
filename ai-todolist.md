@@ -39,7 +39,7 @@
 4. **타임스탬프 부족**: StatusPanel 메시지에 시간 정보 없음
 
 # 작업 시작 여부
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 모든 목표 달성 여부
 is_all_goals_accomplished = FALSE
@@ -48,11 +48,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 작업 시작 전입니다.
-   - 작업을 시작하면 위의 `is_execution_started` 의 값을 TRUE 로 바꾸세요.
-   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
-   - **plan reviewer 에게 OKAY 사인을 받았더라도 절대 시작하지마십시오**
-   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
+- [Phase 1 - Task 3.1] sisyphus/agents/claude.py의 ThinkingBlock 처리 수정 중
 
 # 필요한 사전 지식
 
@@ -184,8 +180,8 @@ sequenceDiagram
 
 ## Phase 1: UI 개선
 
-- [ ] 1. ChatLog 스크롤 개선 및 사용자 메시지 표시 메서드 추가
-   - [ ] 1.1 구현: `sisyphus/ui/tui/components/chat_log.py` 전체 수정
+- [x] 1. ChatLog 스크롤 개선 및 사용자 메시지 표시 메서드 추가
+   - [x] 1.1 구현: `sisyphus/ui/tui/components/chat_log.py` 전체 수정
       ```python
       from datetime import datetime
       from textual.widgets import RichLog
@@ -311,7 +307,7 @@ sequenceDiagram
    - [ ] 2.4 커밋: `add timestamps to status_panel messages`
 
 - [ ] 3. ThinkingBlock 내용 표시
-   - [ ] 3.1 구현: `sisyphus/agents/claude.py` 수정 (line 166-167)
+   - [x] 3.1 구현: `sisyphus/agents/claude.py` 수정 (line 166-167)
       ```python
       case ThinkingBlock():
           thinking_header = "[THINKING]"

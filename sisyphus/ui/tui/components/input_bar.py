@@ -36,16 +36,12 @@ class InputBar(Input):
         Args:
             event: Input.Submitted 이벤트 객체
         """
-        self.log.info(f"[DEBUG] on_input_submitted called with value: {event.value!r}")
         message = event.value.strip()
-        self.log.info(f"[DEBUG] stripped message: {message!r}")
         if message:
             if self._queued_message:
                 self._queued_message += "\n" + message
             else:
                 self._queued_message = message
-
-            self.log.info(f"[DEBUG] queued_message now: {self._queued_message!r}")
 
             try:
                 from sisyphus.ui.tui.components.chat_log import ChatLog
@@ -56,11 +52,8 @@ class InputBar(Input):
                 self.log.error(f"Failed to display user message: {exception}")
 
             self.value = ""
-            self.log.info("[DEBUG] cleared input value")
             self._update_placeholder()
-            self.log.info("[DEBUG] posting InputReadyEvent")
             self.app.post_message(InputReadyEvent())
-            self.log.info("[DEBUG] on_input_submitted completed")
 
             if self._agent_paused:
                 self._agent_paused = False

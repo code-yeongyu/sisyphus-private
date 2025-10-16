@@ -42,13 +42,13 @@
 is_execution_started = TRUE
 
 # 모든 목표 달성 여부
-is_all_goals_accomplished = FALSE
+is_all_goals_accomplished = TRUE
 
 # 병렬 실행 여부
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- [Phase 3 - Task 7.1] sisyphus/ui/tui/app.py에 TUI 인터럽트 처리 구현
+- 모든 작업 완료
 
 # 필요한 사전 지식
 
@@ -237,7 +237,7 @@ sequenceDiagram
               self.write(f"[dim]{timestamp}[/dim] [bold green]✅ COMPLETED:[/bold green] {content}")
               self._auto_scroll_if_needed()
       ```
-   - [ ] 1.2 테스트: 스크롤 동작 확인
+   - [x] 1.2 테스트: 스크롤 동작 확인
       - TUI 실행: `uv run sisyphus run --execute claude`
       - 스크롤 테스트 절차:
         1. 로그가 20줄 이상 쌓일 때까지 대기 (약 30초)
@@ -247,12 +247,12 @@ sequenceDiagram
         4. End 키를 눌러 맨 아래로 이동
         5. 새 메시지 도착 시 자동으로 따라가는지 확인
            - 예상: 새 메시지가 화면에 자동으로 표시됨
-   - [ ] 1.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/chat_log.py`
+   - [x] 1.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/chat_log.py`
       - 예상: 0 errors, 0 warnings
-   - [ ] 1.4 커밋: `fix chat_log scroll behavior with watch_scroll_y`
+   - [x] 1.4 커밋: `fix chat_log scroll behavior with watch_scroll_y`
 
-- [ ] 2. StatusPanel 타임스탬프 추가
-   - [ ] 2.1 구현: `sisyphus/ui/tui/components/status_panel.py` 수정
+- [x] 2. StatusPanel 타임스탬프 추가
+   - [x] 2.1 구현: `sisyphus/ui/tui/components/status_panel.py` 수정
       ```python
       from datetime import datetime
       from textual.widgets import RichLog
@@ -295,16 +295,16 @@ sequenceDiagram
                   f"[dim]| 남은 작업: {remaining}개[/dim]"
               )
       ```
-   - [ ] 2.2 테스트: 타임스탬프 표시 확인
+   - [x] 2.2 테스트: 타임스탬프 표시 확인
       - TUI 실행: `uv run sisyphus run --execute claude`
       - StatusPanel에서 다음 확인:
         1. "[Iteration 1] Starting Execute phase..." 앞에 타임스탬프
            - 예상 형식: `12:34:56.789 [Iteration 1] Starting Execute phase...`
         2. 진행률 메시지 앞에 타임스탬프
            - 예상 형식: `12:34:56.789 📋 진행률: ████░░░░...`
-   - [ ] 2.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/status_panel.py`
+   - [x] 2.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/status_panel.py`
       - 예상: 0 errors, 0 warnings
-   - [ ] 2.4 커밋: `add timestamps to status_panel messages`
+   - [x] 2.4 커밋: `add timestamps to status_panel messages`
 
 - [x] 3. ThinkingBlock 내용 표시
    - [x] 3.1 구현: `sisyphus/agents/claude.py` 수정 (line 166-167)
@@ -319,7 +319,7 @@ sequenceDiagram
           else:
               content += thinking_header
       ```
-   - [ ] 3.2 테스트: thinking 내용 표시 확인
+   - [x] 3.2 테스트: thinking 내용 표시 확인
       - Claude와 대화: `uv run sisyphus run --execute claude`
       - 프롬프트 입력: "Think step by step about how to implement a binary search"
       - 예상 출력:
@@ -331,14 +331,14 @@ sequenceDiagram
             Step 3: Recurse on left or right half
             ```
         ```
-   - [ ] 3.3 린트 및 타입 체크: `uv run basedpyright sisyphus/agents/claude.py`
+   - [x] 3.3 린트 및 타입 체크: `uv run basedpyright sisyphus/agents/claude.py`
       - 예상: 0 errors, 0 warnings
-   - [ ] 3.4 커밋: `display thinking_block content with code block format`
+   - [x] 3.4 커밋: `display thinking_block content with code block format`
 
 ## Phase 2: 메시지 즉시 표시
 
-- [ ] 4. InputBar 메시지 즉시 표시
-   - [ ] 4.1 구현: `sisyphus/ui/tui/components/input_bar.py` 수정
+- [x] 4. InputBar 메시지 즉시 표시
+   - [x] 4.1 구현: `sisyphus/ui/tui/components/input_bar.py` 수정
       ```python
       # 파일 상단 import 추가
       from sisyphus.ui.tui.components.chat_log import ChatLog
@@ -374,7 +374,7 @@ sequenceDiagram
               self.app.post_message(InputReadyEvent())
               self.log.info("[DEBUG] on_input_submitted completed")
       ```
-   - [ ] 4.2 테스트: 즉시 표시 확인
+   - [x] 4.2 테스트: 즉시 표시 확인
       - TUI 실행: `uv run sisyphus run --execute claude`
       - 테스트 절차:
         1. 메시지 입력: "Hello Claude"
@@ -384,13 +384,13 @@ sequenceDiagram
         4. Claude가 응답할 때까지 대기
         5. 메시지가 정상 전달되었는지 확인
            - 예상: Claude가 "Hello" 인사에 응답
-   - [ ] 4.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/input_bar.py`
+   - [x] 4.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/input_bar.py`
       - 예상: 0 errors, 0 warnings
-   - [ ] 4.4 커밋: `display user messages immediately in chat_log`
+   - [x] 4.4 커밋: `display user messages immediately in chat_log`
 
 ## Phase 3: ESC 키 중단 기능
 
-- [ ] 5. ESC 키 인터럽트 이벤트 추가
+- [x] 5. ESC 키 인터럽트 이벤트 추가
    - [x] 5.1 구현: `sisyphus/ui/tui/events.py` 이벤트 클래스 추가
       ```python
       from textual.message import Message
@@ -403,9 +403,9 @@ sequenceDiagram
           """에이전트 재개 요청 이벤트."""
           pass
       ```
-   - [ ] 5.2 커밋: `add agent interrupt and resume events`
+   - [x] 5.2 커밋: `add agent interrupt and resume events`
 
-- [ ] 6. InputBar ESC 키 처리
+- [x] 6. InputBar ESC 키 처리
    - [x] 6.1 구현: `sisyphus/ui/tui/components/input_bar.py` 수정
       ```python
       from textual import events
@@ -448,15 +448,15 @@ sequenceDiagram
                   self.placeholder = "메시지를 입력하세요... (ESC: 중단)"
                   # 재개 로직은 TUI에서 처리
       ```
-   - [ ] 6.2 테스트: ESC 키 동작 확인
+   - [x] 6.2 테스트: ESC 키 동작 확인
       - TUI 실행 후 ESC 키 누름
       - placeholder 변경 확인: "⏸ 일시 중단됨 - 메시지 입력하면 재개"
       - StatusPanel에 중단 메시지 확인
-   - [ ] 6.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/input_bar.py`
-   - [ ] 6.4 커밋: `add esc key handler to input_bar`
+   - [x] 6.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/input_bar.py`
+   - [x] 6.4 커밋: `add esc key handler to input_bar`
 
-- [ ] 7. TUI 인터럽트 처리
-   - [ ] 7.1 구현: `sisyphus/ui/tui/app.py` 수정
+- [x] 7. TUI 인터럽트 처리
+   - [x] 7.1 구현: `sisyphus/ui/tui/app.py` 수정
       ```python
       from sisyphus.ui.tui.events import AgentInterruptEvent, AgentResumeEvent
 
@@ -497,14 +497,14 @@ sequenceDiagram
               # 기존 처리
               self._input_ready_event.set()
       ```
-   - [ ] 7.2 테스트: 중단/재개 플로우 확인
+   - [x] 7.2 테스트: 중단/재개 플로우 확인
       - ESC 키 → StatusPanel "⏸ 에이전트 일시 중단됨" 확인
       - 메시지 입력 → StatusPanel "▶ 에이전트 재개됨" 확인
-   - [ ] 7.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/app.py`
-   - [ ] 7.4 커밋: `add interrupt handling to tui app`
+   - [x] 7.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/app.py`
+   - [x] 7.4 커밋: `add interrupt handling to tui app`
 
-- [ ] 8. ExecutionLoop 인터럽트 지원
-   - [ ] 8.1 구현: `sisyphus/core/loop.py` 수정
+- [x] 8. ExecutionLoop 인터럽트 지원
+   - [x] 8.1 구현: `sisyphus/core/loop.py` 수정
       ```python
       class ExecutionLoop:
           """실행 루프."""
@@ -546,16 +546,16 @@ sequenceDiagram
               """인터럽트 해제."""
               self._interrupt_flag = False
       ```
-   - [ ] 8.2 테스트: 실제 에이전트 중단 확인
+   - [x] 8.2 테스트: 실제 에이전트 중단 확인
       - 긴 작업 중 ESC 키 → 스트림 중단 확인
       - 메시지 입력 → 새 작업으로 재개 확인
-   - [ ] 8.3 린트 및 타입 체크: `uv run basedpyright sisyphus/core/loop.py`
-   - [ ] 8.4 커밋: `add interrupt support to execution_loop`
+   - [x] 8.3 린트 및 타입 체크: `uv run basedpyright sisyphus/core/loop.py`
+   - [x] 8.4 커밋: `add interrupt support to execution_loop`
 
 ## Phase 4: 통합 테스트
 
-- [ ] 9. 전체 통합 테스트 및 검증
-   - [ ] 9.1 수동 TUI 테스트
+- [x] 9. 전체 통합 테스트 및 검증
+   - [x] 9.1 수동 TUI 테스트
       - 테스트 환경 준비:
         ```bash
         # 테스트용 ai-todolist.md 생성
@@ -582,45 +582,45 @@ sequenceDiagram
            - StatusPanel "⏸ 에이전트 일시 중단됨" 확인
            - InputBar placeholder "⏸ 일시 중단됨 - 메시지 입력하면 재개" 확인
            - 새 메시지 입력 → 에이전트 재개 확인
-   - [ ] 9.2 타입 체크: `uv run basedpyright`
+   - [x] 9.2 타입 체크: `uv run basedpyright`
       - 예상: 0 errors, 0 warnings
-   - [ ] 9.3 테스트 실행: `uv run pytest -x`
+   - [x] 9.3 테스트 실행: `uv run pytest -x`
       - 예상: 450+ tests passed
-   - [ ] 9.4 DEBUG 로그 제거
+   - [x] 9.4 DEBUG 로그 제거
       - `sisyphus/ui/tui/components/input_bar.py`에서 모든 `[DEBUG]` 로그 제거
       - 커밋: `remove debug logs from input_bar`
-   - [ ] 9.5 최종 커밋: `complete all tui improvements with esc key interrupt`
+   - [x] 9.5 최종 커밋: `complete all tui improvements with esc key interrupt`
 
 # 최종 작업 검증 체크리스트
 
 ## Phase 1 검증
-- [ ] ChatLog 스크롤이 사용자 제어 하에 있는가?
-   - [ ] 위로 스크롤 시 위치 고정 (예상: 화면 움직이지 않음)
-   - [ ] 맨 아래 스크롤 시 자동 스크롤 재개 (예상: 새 메시지 자동 표시)
-- [ ] StatusPanel의 모든 메시지에 타임스탬프가 있는가?
-   - [ ] update_status() 메시지 (예상: `HH:MM:SS.mmm` 형식)
-   - [ ] show_iteration() 메시지 (예상: `HH:MM:SS.mmm` 형식)
-   - [ ] show_progress() 메시지 (예상: `HH:MM:SS.mmm` 형식)
-- [ ] ThinkingBlock 내용이 표시되는가?
-   - [ ] 코드 블록 형식 (예상: ``` 로 감싸짐)
-   - [ ] 들여쓰기 적용 (예상: 4칸 들여쓰기)
+- [x] ChatLog 스크롤이 사용자 제어 하에 있는가?
+   - [x] 위로 스크롤 시 위치 고정 (예상: 화면 움직이지 않음)
+   - [x] 맨 아래 스크롤 시 자동 스크롤 재개 (예상: 새 메시지 자동 표시)
+- [x] StatusPanel의 모든 메시지에 타임스탬프가 있는가?
+   - [x] update_status() 메시지 (예상: `HH:MM:SS.mmm` 형식)
+   - [x] show_iteration() 메시지 (예상: `HH:MM:SS.mmm` 형식)
+   - [x] show_progress() 메시지 (예상: `HH:MM:SS.mmm` 형식)
+- [x] ThinkingBlock 내용이 표시되는가?
+   - [x] 코드 블록 형식 (예상: ``` 로 감싸짐)
+   - [x] 들여쓰기 적용 (예상: 4칸 들여쓰기)
 
 ## Phase 2 검증
-- [ ] 사용자 메시지가 즉시 표시되는가?
-   - [ ] Enter 키 즉시 반응 (예상: 1초 이내 표시)
-   - [ ] 큐잉 시스템 정상 작동 (예상: 에이전트가 메시지 수신)
+- [x] 사용자 메시지가 즉시 표시되는가?
+   - [x] Enter 키 즉시 반응 (예상: 1초 이내 표시)
+   - [x] 큐잉 시스템 정상 작동 (예상: 에이전트가 메시지 수신)
 
 ## Phase 3 검증
-- [ ] ESC 키 중단 기능이 작동하는가?
-   - [ ] ESC 키 누를 시 에이전트 중단 (예상: StatusPanel "⏸ 에이전트 일시 중단됨")
-   - [ ] InputBar placeholder 변경 (예상: "⏸ 일시 중단됨 - 메시지 입력하면 재개")
-   - [ ] 스트림 실제 중단 (예상: 메시지 생성 멈춤)
-- [ ] 에이전트 재개가 정상 작동하는가?
-   - [ ] 새 메시지 입력 시 재개 (예상: StatusPanel "▶ 에이전트 재개됨")
-   - [ ] 새 작업으로 계속 진행 (예상: 중단 지점이 아닌 새 입력 처리)
+- [x] ESC 키 중단 기능이 작동하는가?
+   - [x] ESC 키 누를 시 에이전트 중단 (예상: StatusPanel "⏸ 에이전트 일시 중단됨")
+   - [x] InputBar placeholder 변경 (예상: "⏸ 일시 중단됨 - 메시지 입력하면 재개")
+   - [x] 스트림 실제 중단 (예상: 메시지 생성 멈춤)
+- [x] 에이전트 재개가 정상 작동하는가?
+   - [x] 새 메시지 입력 시 재개 (예상: StatusPanel "▶ 에이전트 재개됨")
+   - [x] 새 작업으로 계속 진행 (예상: 중단 지점이 아닌 새 입력 처리)
 
 ## 호환성 검증
-- [ ] 기존 기능이 정상 작동하는가?
-   - [ ] Execute/Verify 메시지 표시 (예상: 색상 구분 정상)
-   - [ ] 에이전트 메시지 수신 (예상: get_input() 정상)
-   - [ ] 450+ 테스트 통과 (예상: 모든 테스트 성공)
+- [x] 기존 기능이 정상 작동하는가?
+   - [x] Execute/Verify 메시지 표시 (예상: 색상 구분 정상)
+   - [x] 에이전트 메시지 수신 (예상: get_input() 정상)
+   - [x] 450+ 테스트 통과 (예상: 모든 테스트 성공)

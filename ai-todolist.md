@@ -48,7 +48,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- [Phase 1 - Task 3.1] sisyphus/agents/claude.py의 ThinkingBlock 처리 수정 중
+- [Phase 3 - Task 5.1] sisyphus/ui/tui/events.py에 AgentInterruptEvent, AgentResumeEvent 추가
 
 # 필요한 사전 지식
 
@@ -306,7 +306,7 @@ sequenceDiagram
       - 예상: 0 errors, 0 warnings
    - [ ] 2.4 커밋: `add timestamps to status_panel messages`
 
-- [ ] 3. ThinkingBlock 내용 표시
+- [x] 3. ThinkingBlock 내용 표시
    - [x] 3.1 구현: `sisyphus/agents/claude.py` 수정 (line 166-167)
       ```python
       case ThinkingBlock():
@@ -391,7 +391,7 @@ sequenceDiagram
 ## Phase 3: ESC 키 중단 기능
 
 - [ ] 5. ESC 키 인터럽트 이벤트 추가
-   - [ ] 5.1 구현: `sisyphus/ui/tui/events.py` 이벤트 클래스 추가
+   - [x] 5.1 구현: `sisyphus/ui/tui/events.py` 이벤트 클래스 추가
       ```python
       from textual.message import Message
 

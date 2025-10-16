@@ -1,733 +1,630 @@
 # 사용자의 최초 요청 (기록용)
+현재 프로젝트에는 여러가지 문제가 있습니다.
+1. 로그가 쌓일 때 마다 로그를 보여주는 text area 가 계속 내려갑니다. 이로 인해 실질적으로 로그를 볼 수 없습니다. 이 textual 코드를 수정해야 합니다.
+2. thinking block 안의 내용이 보이지 않습니다. tool use 처럼, thinking block 도 그렇고, 그 안의 최대한 다양한 내용들을 보여줄 수 있어야 합니다. (tool use 처럼 다음줄에, indentation 을 넣어서 보여지도록)
+3. 현재 send message 기능이 이상하게 작동하는것으로 보입니다. message input 안에서 엔터를 누르면 바로 메시지가 보내지고, 이게 로그 영역에 실제로 메시지 내용과 함께 기록이 되어야 합니다.
+4. 로그 영역처럼, status panel 의 한 줄 한 줄 도 시간과 함께 기록이 되어야 합니다.
 
-textual 기본 헤더랑 푸터(^q 알림 뜨는거랑, ^p pallete 안내되고 있는 부분), 없애고 command bar (ctrl p) 도 비활성화 하고 싶어.
-- 다크테마 / 라이트 테마 (catpuccin mocha / catpuccin latte) 정도만 시스템 인식이 가능하다면 시스템걸 따라가도록 하고, 그게 아니라면 typer cli 옵션으로 고를 수 있도록 (enum 으로, boolean 금지)
-- textual 기본 pallete, 상단 바, 하단 바 없애는것도
-- 헤더푸터없애고 커맨드바 비활성화하는거까지 포함해서
+제가 좀 섞어서 말했는데 비슷한것끼리 묶어 순서대로 진행하는 작업 계획서로 작성해주세요. 최대한 많은 코드를 읽고, 미친듯이 깊고, 다양한 범위로 생각하여 계획서를 작성해주세요.
 
 ## 사용자가 이후에 추가 요청한 내용들 (기록용)
+- 메시지 전송 가능 타이밍을 기다리는게 아니라 그냥 바로 메시지가 전송되도록 해주시고
+- input bar 에서 esc 를 누르면 agent 를 멈추도록 해주세요
+- 그리고 다시 메시지를 보내기 전까진 꺼주고, 다시 메시지를 보내면 resume 하고 send message 를 진행하도록 해주세요
+- 이것도 마찬가지로 로그로 남아야합니다
+- 메시지 즉시 전송이 되는 식으로 설계를 변경해도 좋아 그런 방향으로 구상해줘 - 지금 메시지 큐는 사실상 제대로 동작하지 않아서 말이야
 
-- `--theme light|dark|system` 형식으로 CLI 옵션 받기
-- 작업 계획서는 `ai-tasks/enhanced-ui.md`에 작성
-- 영속화 관련 내용은 현재 제외
+# 디테일 레벨: detailed
 
 # 작업 목표
+## Phase 1: UI 개선 (간단한 작업들)
+1. **ChatLog 스크롤 제어 개선**: 사용자가 위로 스크롤하면 자동 스크롤 중지
+2. **ChatLog 사용자 메시지 메서드**: write_user_message() 추가 (Phase 2 준비)
+3. **StatusPanel 타임스탬프 추가**: 모든 상태 메시지에 시간 정보 표시
+4. **ThinkingBlock 완전 표시**: ThinkingBlock.thinking 속성의 내용을 코드 블록으로 표시
 
-1. **Textual TUI 기본 UI 요소 제거**: Header, Footer, Command Palette 완전 비활성화
-2. **Catppuccin 테마 시스템 구현**: Mocha(다크), Latte(라이트) 두 가지 테마 지원
-3. **시스템 테마 자동 감지**: macOS 시스템 테마를 감지하여 자동으로 적절한 테마 적용
-4. **CLI 테마 옵션 추가**: `--theme system|mocha|latte` Enum 기반 옵션 (boolean 금지)
-5. **타입 안전성 유지**: 모든 파라미터에 타입 힌트, Literal/Enum 활용
+## Phase 2: 메시지 즉시 전송 (중간 난이도)
+4. **메시지 즉시 표시 및 큐잉**: 사용자 메시지를 ChatLog에 즉시 표시하고 큐에 저장
+
+## Phase 3: ESC 키 중단 (고급)
+5. **ESC 키로 에이전트 중단**: ESC 키를 누르면 실행 중인 에이전트를 즉시 중단
+6. **메시지 입력 시 재개**: 새 메시지 입력 시 에이전트 자동 재개
 
 # 작업 배경
+현재 TUI 시스템의 문제점들:
 
-## 현재 상황
-- Textual 기본 설정으로 Header(타이틀, 시간), Footer(키 힌트), Command Palette(Ctrl+P)가 활성화됨
-- TUI가 기본 테마만 사용 중, 사용자 정의 테마 없음
-- CLI에 테마 선택 옵션이 없어 사용자가 선호하는 색상 스킴 사용 불가
-
-## 필요성
-- 깔끔한 UI: 불필요한 UI 요소 제거로 콘텐츠에 집중
-- 접근성: 다크/라이트 모드 지원으로 다양한 환경에서 사용 가능
-- 개인화: 시스템 테마 자동 감지로 사용자 편의성 향상
-- 일관성: Catppuccin 색상 팔레트로 통일된 디자인 경험 제공
+1. **로그 스크롤 문제**: `auto_scroll=True`로 인해 이전 로그를 읽을 수 없음
+2. **Thinking Block 누락**: ClaudeAgent가 ThinkingBlock 처리 시 내용 미표시
+3. **메시지 전송 지연**: agent가 get_input() 호출 시까지 대기
+4. **타임스탬프 부족**: StatusPanel 메시지에 시간 정보 없음
 
 # 작업 시작 여부
-is_execution_started = TRUE
+is_execution_started = FALSE
 
 # 모든 목표 달성 여부
-is_all_goals_accomplished = TRUE
+is_all_goals_accomplished = FALSE
 
 # 병렬 실행 여부
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 작업 완료: 모든 TODO 항목 완료, 440개 테스트 모두 통과
+- 작업 시작 전입니다.
+   - 작업을 시작하면 위의 `is_execution_started` 의 값을 TRUE 로 바꾸세요.
+   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
+   - **plan reviewer 에게 OKAY 사인을 받았더라도 절대 시작하지마십시오**
+   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
 
 # 필요한 사전 지식
 
 ## 기술 스택
-- **TUI 프레임워크**: Textual 1.0+ (asyncio 기반)
-- **테마 시스템**: textual.theme.Theme 클래스 사용
-- **색상 팔레트**: catppuccin Python 패키지 (`PALETTE.mocha`, `PALETTE.latte`)
-- **CLI 프레임워크**: Typer (Enum 기반 옵션 파싱)
-- **타입 시스템**: Python 3.12, Literal, Enum 타입 힌트
+- **TUI Framework**: Textual 1.0+ (asyncio 기반)
+- **Logging Widget**: `textual.widgets.RichLog` (자동 스크롤, 리치 마크업 지원)
+- **Agent SDK**: claude-agent-sdk (ThinkingBlock은 `thinking` 속성 보유)
+- **비동기**: anyio (asyncio/trio 호환성)
 
-## Textual 테마 시스템 개요
-- `App.show_header`, `App.show_footer`: boolean 클래스 속성으로 Header/Footer 제어
-- `App.ENABLE_COMMAND_PALETTE`: boolean 클래스 속성으로 Command Palette 제어
-- `App.register_theme()`: Theme 객체 등록
-- `App.theme`: 테마 이름 문자열로 활성 테마 설정
-- CSS 토큰: `$primary`, `$background` 등 테마 색상 자동 적용
-
-## Catppuccin 색상 구조
+## SDK 확인 사항
 ```python
-from catppuccin import PALETTE
-
-# Mocha (다크)
-PALETTE.mocha.colors.base.hex      # #1E1E2E (배경)
-PALETTE.mocha.colors.text.hex      # #CDD6F4 (전경)
-PALETTE.mocha.colors.blue.hex      # #B4BEFE (Primary)
-
-# Latte (라이트)
-PALETTE.latte.colors.base.hex      # #EFF1F5 (배경)
-PALETTE.latte.colors.text.hex      # #4C4F69 (전경)
-PALETTE.latte.colors.blue.hex      # #7287FD (Primary)
+# ThinkingBlock 실제 인터페이스 (확인됨)
+from claude_agent_sdk import ThinkingBlock
+# ThinkingBlock(thinking: str, signature: str)
+# block.thinking - 실제 텍스트 내용
 ```
 
-## macOS 시스템 테마 감지
-```bash
-# 다크 모드 확인 (exitcode 0, stdout "Dark")
-defaults read -g AppleInterfaceStyle
-
-# 라이트 모드 (exitcode 1, 키 없음 에러)
-```
+## Textual 스크롤 이벤트
+- Scroll 이벤트는 없음, MouseScrollUp/Down 이벤트 사용
+- `watch_scroll_y()` 메서드로 스크롤 변경 감지 가능
+- `max_scroll_y`는 픽셀 단위 (줄 단위 아님)
 
 ## 파일 구조 및 역할
-
-```
-sisyphus/
-├── ui/
-│   ├── themes.py              # 신규: Catppuccin 테마 정의
-│   ├── base.py                # 수정: create_ui에 theme 파라미터 추가
-│   └── tui/
-│       └── app.py             # 수정: Header/Footer/Palette 비활성화, 테마 적용
-├── utils/
-│   └── theme.py               # 신규: 시스템 테마 감지 유틸리티
-└── cli.py                     # 수정: --theme 옵션 추가
-```
+- `sisyphus/ui/tui/components/chat_log.py`: 메시지 로그 표시 위젯
+- `sisyphus/ui/tui/components/status_panel.py`: 상태 메시지 표시 위젯
+- `sisyphus/ui/tui/components/input_bar.py`: 사용자 입력 위젯
+- `sisyphus/ui/tui/app.py`: TUI 메인 앱, 메시지 라우팅
+- `sisyphus/agents/claude.py`: Claude 에이전트, ThinkingBlock 처리
 
 ## 맥락 이해를 위해 참고해야 할 파일들
 
-### 1. sisyphus/ui/tui/app.py
-- **역할**: TUI 앱 클래스, Textual App 상속
-- **참고할 부분**:
-  - 클래스 속성: `CSS`, `BINDINGS` (line 80-118)
-  - `__init__()` 메서드 (line 120-128)
-  - `on_mount()` 메서드 (line 134-139)
-- **현재 구조**:
-  ```python
-  class TUI(App[None]):
-      CSS = """..."""  # 기존 CSS
-      BINDINGS = [...]  # 기존 키 바인딩
+### 1. sisyphus/ui/tui/components/chat_log.py
+- **역할**: Execute/Verify 메시지를 색상으로 구분하여 표시
+- **현재 문제**: `auto_scroll=True` (line 23)
+- **기존 메서드**: write_execute_message, write_verify_message, write_completion_message
 
-      def __init__(self) -> None:
-          super().__init__()
-          # 초기화 로직
+### 2. sisyphus/agents/claude.py
+- **역할**: Claude API와 통신, 메시지 블록 처리
+- **현재 문제**: ThinkingBlock 내용 미표시 (line 166-167)
+- **기존 패턴**: ToolUseBlock은 JSON을 코드 블록으로 감싸서 표시
 
-      async def on_mount(self) -> None:
-          self.title = "Sisyphus - Multi-Agent Execution System"
-          self.sub_title = "Execute & Verify"
-          self.ready_event.set()
-  ```
-- **주의사항**: `title`, `sub_title`은 Header가 비활성화되면 무시됨
+### 3. sisyphus/ui/tui/components/status_panel.py
+- **역할**: 상태 메시지 표시
+- **현재 문제**: 타임스탬프 없음
+- **기존 메서드**: update_status, show_iteration, show_progress
 
-### 2. sisyphus/cli.py
-- **역할**: Typer CLI 진입점
-- **참고할 부분**:
-  - `run()` 명령어 시그니처 (line 274-295)
-  - `_main_tui()` 함수 (line 180-272)
-  - `create_ui()` 호출 (line 325)
-- **현재 구조**:
-  ```python
-  @app.command(name="run")
-  def run(
-      agent: str | None = typer.Option(...),
-      execute: str | None = typer.Option(...),
-      # ... 기존 옵션들 ...
-      no_tui: bool = typer.Option(False, "--no-tui", help="..."),
-  ) -> None:
-      # ...
-      ui = create_ui("cli" if no_tui else "tui")
-  ```
-- **주의사항**: `no_tui`는 boolean이지만 UI 모드 선택용이므로 예외, 테마는 Enum 사용 필수
-
-### 3. sisyphus/ui/base.py
-- **역할**: UI 팩토리 함수, UIProtocol 정의
-- **참고할 부분**: `create_ui()` 함수
-- **현재 구조**:
-  ```python
-  def create_ui(ui_type: str) -> UIProtocol:
-      if ui_type == "tui":
-          from sisyphus.ui.tui.app import TUI
-          return TUI()
-      elif ui_type == "cli":
-          from sisyphus.ui.cli.console import CLI
-          return CLI()
-  ```
-- **주의사항**: 함수 시그니처에 `theme` 파라미터 추가 필요
+### 4. sisyphus/ui/tui/components/input_bar.py
+- **역할**: 사용자 입력 처리 및 큐잉
+- **현재 문제**: 메시지가 ChatLog에 즉시 표시 안 됨
 
 # 작업 계획
 
 ## PRDs & Structures
 
-### 테마 시스템 아키텍처
-```mermaid
-graph TB
-    User[사용자] -->|--theme system/mocha/latte| CLI[cli.py]
-    CLI --> Detect{theme == system?}
-
-    Detect -->|Yes| ThemeUtil[utils/theme.py]
-    ThemeUtil -->|macOS defaults read| System[시스템 테마]
-    System -->|Dark| MochaDef[mocha]
-    System -->|Light| LatteDef[latte]
-
-    Detect -->|No| Direct[직접 지정]
-
-    MochaDef --> ResolvedTheme[resolved_theme]
-    LatteDef --> ResolvedTheme
-    Direct --> ResolvedTheme
-
-    ResolvedTheme --> CreateUI[create_ui<br/>theme 전달]
-    CreateUI --> TUI[TUI.__init__<br/>theme 저장]
-
-    TUI --> OnMount[on_mount]
-    OnMount --> LoadThemes[ui/themes.py<br/>THEMES 로드]
-    LoadThemes --> Catppuccin[catppuccin PALETTE]
-
-    Catppuccin --> RegisterMocha[register_theme<br/>mocha]
-    Catppuccin --> RegisterLatte[register_theme<br/>latte]
-
-    RegisterMocha --> SetTheme[self.theme = resolved_theme]
-    RegisterLatte --> SetTheme
-
-    SetTheme --> Render[렌더링<br/>CSS 토큰 적용]
-```
-
-### TUI 클래스 수정 구조
-```mermaid
-classDiagram
-    class TUI {
-        <<Textual App>>
-        +show_header: bool = False
-        +show_footer: bool = False
-        +ENABLE_COMMAND_PALETTE: bool = False
-        +theme_name: ThemeName
-        +CSS: str
-        +BINDINGS: list
-        +__init__(theme: ThemeName)
-        +on_mount() async
-    }
-
-    class Theme {
-        +name: str
-        +primary: str
-        +background: str
-        +foreground: str
-        +dark: bool
-    }
-
-    class THEMES {
-        +mocha: Theme
-        +latte: Theme
-    }
-
-    TUI --> THEMES: loads from
-    THEMES --> Theme: contains
-```
-
-### CLI 옵션 처리 플로우
+### 개선된 메시지 흐름
 ```mermaid
 sequenceDiagram
     participant User
-    participant Typer
-    participant CLI as cli.py
-    participant ThemeUtil as utils/theme.py
-    participant UIFactory as ui/base.py
-    participant TUI as TUI App
+    participant InputBar
+    participant ChatLog
+    participant TUI
+    participant Agent
 
-    User->>Typer: uv run sisyphus run --theme system
-    Typer->>CLI: ThemeOption.SYSTEM
+    User->>InputBar: Type message + Enter
+    InputBar->>InputBar: Queue message first
+    InputBar->>ChatLog: write_user_message() ✨즉시 표시
+    InputBar->>TUI: InputReadyEvent (기존 유지)
 
-    CLI->>CLI: resolve_theme(SYSTEM)
-    CLI->>ThemeUtil: detect_system_theme()
-    ThemeUtil->>System: defaults read -g AppleInterfaceStyle
+    Note over TUI: 기존 큐 시스템 유지
+    Agent->>TUI: get_input()
+    TUI->>InputBar: get_and_clear_queue()
+    TUI->>Agent: Return message
+```
 
-    alt Dark Mode
-        System-->>ThemeUtil: "Dark" (exitcode 0)
-        ThemeUtil-->>CLI: "mocha"
-    else Light Mode
-        System-->>ThemeUtil: Error (exitcode 1)
-        ThemeUtil-->>CLI: "latte"
-    end
+### 스크롤 제어 메커니즘
+```mermaid
+graph TB
+    A[새 메시지 도착] --> B{user_scrolling?}
+    B -->|Yes| C[현재 위치 유지]
+    B -->|No| D[scroll_end() 호출]
 
-    CLI->>UIFactory: create_ui("tui", theme="mocha")
-    UIFactory->>TUI: TUI(theme="mocha")
-    TUI->>TUI: on_mount()
-    TUI->>TUI: register_theme(THEMES["mocha"])
-    TUI->>TUI: self.theme = "mocha"
-    TUI-->>User: 렌더링 (Catppuccin Mocha)
+    E[사용자가 스크롤] --> F[watch_scroll_y 트리거]
+    F --> G{맨 아래 근처?<br/>≥ max_scroll_y - 1px}
+    G -->|Yes| H[user_scrolling = False]
+    G -->|No| I[user_scrolling = True]
+```
+
+### ESC 키 중단 메커니즘
+```mermaid
+sequenceDiagram
+    participant User
+    participant InputBar
+    participant TUI
+    participant StatusPanel
+    participant ExecutionLoop
+    participant Agent
+
+    User->>InputBar: Press ESC
+    InputBar->>TUI: AgentInterruptEvent
+    TUI->>ExecutionLoop: Set interrupt_requested flag
+    TUI->>StatusPanel: "⏸ 에이전트 일시 중단됨"
+    ExecutionLoop->>Agent: Cancel current task
+
+    Note over Agent: anyio.CancelledError raised
+    Agent-->>ExecutionLoop: Stream terminates
+    ExecutionLoop->>TUI: Agent paused
+
+    User->>InputBar: Type new message + Enter
+    InputBar->>TUI: InputReadyEvent
+    TUI->>ExecutionLoop: Clear interrupt flag
+    TUI->>StatusPanel: "▶ 에이전트 재개됨"
+    ExecutionLoop->>Agent: Resume with new input
 ```
 
 ## 구현 세부사항
 
-### Part 1: 시스템 테마 감지 유틸리티 생성
-
-**원칙**: macOS 시스템 테마를 안전하게 감지하고 폴백 제공
-
-**구현 방식**:
-- `subprocess.run()`으로 `defaults read -g AppleInterfaceStyle` 실행
-- 타임아웃 0.5초 설정 (CLI 응답성 유지)
-- 에러 시 안전한 기본값 "latte" 반환
-
-**타입 설계**:
-```python
-ThemeName = Literal["mocha", "latte"]
-```
-
-### Part 2: Catppuccin 테마 정의 모듈 생성
-
-**원칙**: catppuccin 패키지에서 공식 색상 추출, Textual Theme 객체로 변환
-
-**구현 방식**:
-- Factory 함수로 테마 생성: `create_mocha_theme()`, `create_latte_theme()`
-- `THEMES` 딕셔너리로 중앙 관리
-- Textual CSS 토큰 매핑: `primary`, `background`, `foreground` 등
-
-**색상 매핑**:
-```python
-# Mocha
-primary = mocha.blue.hex      # #B4BEFE
-background = mocha.base.hex   # #1E1E2E
-foreground = mocha.text.hex   # #CDD6F4
-
-# Latte
-primary = latte.blue.hex      # #7287FD
-background = latte.base.hex   # #EFF1F5
-foreground = latte.text.hex   # #4C4F69
-```
-
-### Part 3: TUI 앱 수정
-
-**원칙**: Textual 클래스 속성으로 UI 요소 제어, 테마 시스템 통합
-
-**Header/Footer/Palette 비활성화**:
-```python
-class TUI(App[None]):
-    show_header = False
-    show_footer = False
-    ENABLE_COMMAND_PALETTE = False
-```
-
-**테마 적용**:
-- `__init__(theme: ThemeName)`: 테마 이름 저장
-- `on_mount()`: 테마 등록 및 활성화
-
-### Part 4: CLI 옵션 추가
-
-**원칙**: Enum 기반 타입 안전한 옵션, boolean 금지
-
-**Enum 정의**:
-```python
-class ThemeOption(str, Enum):
-    SYSTEM = "system"  # 시스템 테마 자동 감지
-    MOCHA = "mocha"    # 다크 테마 강제
-    LATTE = "latte"    # 라이트 테마 강제
-```
-
-**테마 해결 로직**:
-- `resolve_theme(ThemeOption) -> ThemeName`
-- SYSTEM이면 `detect_system_theme()` 호출
-- 그 외는 직접 매핑
-
-### Part 5: UI 팩토리 수정
-
-**원칙**: 테마 파라미터를 TUI에 전달
-
-**함수 시그니처 변경**:
-```python
-def create_ui(
-    ui_type: str,
-    theme: ThemeName | None = None
-) -> UIProtocol
-```
+### 핵심 설계 원칙
+1. **최소 변경**: 기존 구조 최대한 유지
+2. **기존 패턴 준수**: ToolUseBlock 패턴을 ThinkingBlock에도 적용
+3. **에러 안정성**: 큐잉 우선으로 메시지 손실 방지
+4. **픽셀 단위 인식**: Textual 스크롤은 픽셀 기준
 
 ## 프로젝트 커밋 메시지 스타일
-
-최근 커밋 로그 분석 결과:
-```
-ai reset
-prompt update
-verify first
-change prompt as agentsdk_loop.py one
-verify now works (for sure, i tested)
-```
-
-**패턴**:
-- 소문자로 시작
-- 동사 명령형 (add, remove, fix, update 등)
-- 간결하고 직접적인 설명
-- 특별한 경우 괄호로 추가 설명
-
-**이 작업 적용 예시**:
-- `add catppuccin theme system with system detection`
-- `remove textual header footer and command palette`
-- `add theme cli option with enum`
+- 소문자 시작, 현재형 동사
+- 언더스코어로 단어 구분
+- 예: `fix chat_log scroll behavior with watch_scroll_y`
 
 # TODOs
 
-- [x] 1. 시스템 테마 감지 유틸리티 생성
-  - [x] 1.1 구현: `sisyphus/utils/theme.py` 신규 파일 생성
-    ```python
-    # 구현할 내용:
-    import platform
-    import subprocess
-    from typing import Literal
+## Phase 1: UI 개선
 
-    ThemeName = Literal["mocha", "latte"]
+- [ ] 1. ChatLog 스크롤 개선 및 사용자 메시지 표시 메서드 추가
+   - [ ] 1.1 구현: `sisyphus/ui/tui/components/chat_log.py` 전체 수정
+      ```python
+      from datetime import datetime
+      from textual.widgets import RichLog
 
-    def detect_system_theme() -> ThemeName:
-        """시스템 테마를 감지합니다 (macOS 지원).
+      class ChatLog(RichLog):
+          """채팅/진행상황 로그 위젯."""
 
-        Returns:
-            "mocha" (다크) 또는 "latte" (라이트)
-            감지 실패 시 기본값 "latte" 반환
-        """
-        if platform.system() != "Darwin":
-            return "latte"
+          def __init__(self) -> None:
+              """ChatLog 위젯 초기화."""
+              super().__init__(
+                  id="chat-log",
+                  highlight=True,
+                  markup=True,
+                  auto_scroll=False,  # 자동 스크롤 비활성화
+                  wrap=True,
+              )
+              self._user_scrolling = False
 
-        try:
-            result = subprocess.run(
-                ["defaults", "read", "-g", "AppleInterfaceStyle"],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=0.5,
-            )
+          def watch_scroll_y(self, old_value: float, new_value: float) -> None:
+              """스크롤 Y 위치 변경 감지."""
+              # 맨 아래 근처인지 확인 (1픽셀 여유)
+              if new_value >= self.max_scroll_y - 1:
+                  self._user_scrolling = False
+              else:
+                  self._user_scrolling = True
 
-            if result.returncode == 0 and result.stdout.strip().lower() == "dark":
-                return "mocha"
+          def _auto_scroll_if_needed(self) -> None:
+              """필요시 자동 스크롤."""
+              if not self._user_scrolling:
+                  self.scroll_end()
 
-            return "latte"
+          def write_user_message(self, content: str) -> None:
+              """사용자 메시지 표시."""
+              timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+              self.write(f"[dim]{timestamp}[/dim] [green]👤 USER:[/green] {content}")
+              self._auto_scroll_if_needed()
 
-        except (OSError, subprocess.SubprocessError, subprocess.TimeoutExpired):
-            return "latte"
-    ```
-  - [x] 1.2 타입 체크: `uv run basedpyright sisyphus/utils/theme.py`
-  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 1번 작업 검증 성공 여부
-    - [x] `sisyphus/utils/theme.py` 파일이 생성되었는가?
-    - [x] `ThemeName` Literal 타입이 정의되었는가?
-    - [x] `detect_system_theme()` 함수가 모든 파라미터에 타입 힌트를 가지는가? (ANN001 규칙 준수)
-    - [x] macOS 외 플랫폼에서 "latte" 반환하는가?
-    - [x] subprocess 타임아웃이 0.5초로 설정되었는가?
-    - [x] 모든 예외를 처리하여 안전한 폴백을 제공하는가?
-    - [x] basedpyright 타입 체크가 통과하는가?
+          def write_execute_message(self, content: str) -> None:
+              """Execute 메시지 작성."""
+              timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+              self.write(f"[dim]{timestamp}[/dim] [yellow]▶ EXECUTE:[/yellow] {content}")
+              self._auto_scroll_if_needed()
 
-- [x] 2. Catppuccin 테마 정의 모듈 생성
-  - [x] 2.1 구현: `sisyphus/ui/themes.py` 신규 파일 생성
-    ```python
-    # 구현할 내용:
-    from textual.theme import Theme
-    from catppuccin import PALETTE
+          def write_verify_message(self, content: str) -> None:
+              """Verify 메시지 작성."""
+              timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+              self.write(f"[dim]{timestamp}[/dim] [cyan]✓ VERIFY:[/cyan] {content}")
+              self._auto_scroll_if_needed()
 
-    def create_mocha_theme() -> Theme:
-        """Create Catppuccin Mocha (dark) theme."""
-        mocha = PALETTE.mocha.colors
-        return Theme(
-            name="catppuccin-mocha",
-            primary=mocha.blue.hex,
-            secondary=mocha.surface0.hex,
-            accent=mocha.pink.hex,
-            foreground=mocha.text.hex,
-            background=mocha.base.hex,
-            success=mocha.green.hex,
-            warning=mocha.yellow.hex,
-            error=mocha.red.hex,
-            surface=mocha.surface0.hex,
-            panel=mocha.mantle.hex,
-            dark=True,
-        )
+          def write_completion_message(self, content: str) -> None:
+              """작업 완료 메시지 작성."""
+              timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+              self.write(f"[dim]{timestamp}[/dim] [bold green]✅ COMPLETED:[/bold green] {content}")
+              self._auto_scroll_if_needed()
+      ```
+   - [ ] 1.2 테스트: 스크롤 동작 확인
+      - TUI 실행: `uv run sisyphus run --execute claude`
+      - 스크롤 테스트 절차:
+        1. 로그가 20줄 이상 쌓일 때까지 대기 (약 30초)
+        2. 마우스 휠로 위로 10줄 스크롤
+        3. 새 메시지 도착 시 스크롤 위치가 고정되는지 확인
+           - 예상: 화면이 움직이지 않고 현재 위치 유지
+        4. End 키를 눌러 맨 아래로 이동
+        5. 새 메시지 도착 시 자동으로 따라가는지 확인
+           - 예상: 새 메시지가 화면에 자동으로 표시됨
+   - [ ] 1.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/chat_log.py`
+      - 예상: 0 errors, 0 warnings
+   - [ ] 1.4 커밋: `fix chat_log scroll behavior with watch_scroll_y`
 
-    def create_latte_theme() -> Theme:
-        """Create Catppuccin Latte (light) theme."""
-        latte = PALETTE.latte.colors
-        return Theme(
-            name="catppuccin-latte",
-            primary=latte.blue.hex,
-            secondary=latte.surface0.hex,
-            accent=latte.pink.hex,
-            foreground=latte.text.hex,
-            background=latte.base.hex,
-            success=latte.green.hex,
-            warning=latte.yellow.hex,
-            error=latte.red.hex,
-            surface=latte.surface0.hex,
-            panel=latte.mantle.hex,
-            dark=False,
-        )
+- [ ] 2. StatusPanel 타임스탬프 추가
+   - [ ] 2.1 구현: `sisyphus/ui/tui/components/status_panel.py` 수정
+      ```python
+      from datetime import datetime
+      from textual.widgets import RichLog
 
-    # 테마 이름 → Theme 객체 매핑
-    THEMES = {
-        "mocha": create_mocha_theme(),
-        "latte": create_latte_theme(),
-    }
-    ```
-  - [x] 2.2 의존성 추가: `uv add catppuccin`
-  - [x] 2.3 타입 체크: `uv run basedpyright sisyphus/ui/themes.py`
-  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 2번 작업 검증 성공 여부
-    - [x] `sisyphus/ui/themes.py` 파일이 생성되었는가?
-    - [x] `create_mocha_theme()`, `create_latte_theme()` 함수가 정의되었는가?
-    - [x] 모든 함수 파라미터와 반환값에 타입 힌트가 있는가? (ANN001 규칙 준수)
-    - [x] `THEMES` 딕셔너리가 "mocha", "latte" 키를 가지는가?
-    - [x] catppuccin 패키지가 pyproject.toml에 추가되었는가?
-    - [x] basedpyright 타입 체크가 통과하는가?
-    - [x] Catppuccin 공식 색상을 정확히 사용하는가?
+      class StatusPanel(RichLog):
+          """상태 패널 위젯."""
 
-- [x] 3. TUI 앱에서 Header/Footer/Command Palette 비활성화 및 테마 시스템 추가
-  - [x] 3.1 구현: `sisyphus/ui/tui/app.py` 수정
-    ```python
-    # TUI 클래스 상단에 추가 (line 73 직후):
-    from sisyphus.utils.theme import ThemeName
+          def __init__(self) -> None:
+              """StatusPanel 위젯 초기화."""
+              super().__init__(
+                  id="status-panel",
+                  highlight=True,
+                  markup=True,
+                  auto_scroll=True,
+              )
 
-    class TUI(App[None]):
-        """OpenCode 스타일 TUI (UIProtocol 구현).
+          def update_status(self, status: str) -> None:
+              """상태 업데이트 (타임스탬프 포함)."""
+              timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+              self.write(f"[dim]{timestamp}[/dim] [blue]{status}[/blue]")
 
-        Textual 기반 TUI로 Execute/Verify 진행상황을 실시간 표시하고
-        사용자 입력을 메시지 큐로 관리합니다.
-        """
+          def show_iteration(self, current: int, total: int) -> None:
+              """반복 진행률 표시 (타임스탬프 포함)."""
+              timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+              self.write(f"[dim]{timestamp}[/dim] [dim]Iteration {current}/{total}[/dim]")
 
-        # ✨ 새로 추가: Header/Footer/Command Palette 비활성화
-        show_header = False
-        show_footer = False
-        ENABLE_COMMAND_PALETTE = False
+          def show_progress(self, completed: int, total: int) -> None:
+              """체크박스 진행률 표시 (타임스탬프 포함)."""
+              if total == 0:
+                  return
+              timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+              percentage = int((completed / total) * 100)
+              remaining = total - completed
+              bar_length = 20
+              filled = int((completed / total) * bar_length)
+              bar = "█" * filled + "░" * (bar_length - filled)
+              self.write(
+                  f"[dim]{timestamp}[/dim] [cyan]📋 진행률:[/cyan] {bar} "
+                  f"[bold]{completed}/{total}[/bold] ({percentage}%) "
+                  f"[dim]| 남은 작업: {remaining}개[/dim]"
+              )
+      ```
+   - [ ] 2.2 테스트: 타임스탬프 표시 확인
+      - TUI 실행: `uv run sisyphus run --execute claude`
+      - StatusPanel에서 다음 확인:
+        1. "[Iteration 1] Starting Execute phase..." 앞에 타임스탬프
+           - 예상 형식: `12:34:56.789 [Iteration 1] Starting Execute phase...`
+        2. 진행률 메시지 앞에 타임스탬프
+           - 예상 형식: `12:34:56.789 📋 진행률: ████░░░░...`
+   - [ ] 2.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/status_panel.py`
+      - 예상: 0 errors, 0 warnings
+   - [ ] 2.4 커밋: `add timestamps to status_panel messages`
 
-        CSS = """
-        # ... 기존 CSS 유지 ...
-        """
+- [ ] 3. ThinkingBlock 내용 표시
+   - [ ] 3.1 구현: `sisyphus/agents/claude.py` 수정 (line 166-167)
+      ```python
+      case ThinkingBlock():
+          thinking_header = "[THINKING]"
+          if block.thinking:
+              # 기존 ToolUse 패턴 준수: 코드 블록으로 감싸기
+              thinking_block = f"```\n{block.thinking}\n```"
+              indented_block = "\n".join(f"    {line}" for line in thinking_block.split("\n"))
+              content += f"{thinking_header}\n{indented_block}"
+          else:
+              content += thinking_header
+      ```
+   - [ ] 3.2 테스트: thinking 내용 표시 확인
+      - Claude와 대화: `uv run sisyphus run --execute claude`
+      - 프롬프트 입력: "Think step by step about how to implement a binary search"
+      - 예상 출력:
+        ```
+        [THINKING]
+            ```
+            Step 1: Binary search requires a sorted array
+            Step 2: Compare target with middle element
+            Step 3: Recurse on left or right half
+            ```
+        ```
+   - [ ] 3.3 린트 및 타입 체크: `uv run basedpyright sisyphus/agents/claude.py`
+      - 예상: 0 errors, 0 warnings
+   - [ ] 3.4 커밋: `display thinking_block content with code block format`
 
-        BINDINGS = [
-            # ... 기존 BINDINGS 유지 ...
-        ]
+## Phase 2: 메시지 즉시 표시
 
-        # __init__ 수정 (line 120):
-        def __init__(self, theme: ThemeName = "mocha") -> None:
-            """TUI 앱 초기화.
+- [ ] 4. InputBar 메시지 즉시 표시
+   - [ ] 4.1 구현: `sisyphus/ui/tui/components/input_bar.py` 수정
+      ```python
+      # 파일 상단 import 추가
+      from sisyphus.ui.tui.components.chat_log import ChatLog
 
-            Args:
-                theme: 테마 이름 ("mocha" | "latte")
-            """
-            super().__init__()
-            self.theme_name = theme  # ✨ 새로 추가
-            self.ctrl_c_count = 0
-            # ... 기존 초기화 코드 유지 ...
+      # on_input_submitted 메서드 수정 (line 31-52)
+      def on_input_submitted(self, event: Input.Submitted) -> None:
+          """Enter 키 입력 시 처리."""
+          self.log.info(f"[DEBUG] on_input_submitted called with value: {event.value!r}")
+          message = event.value.strip()
+          self.log.info(f"[DEBUG] stripped message: {message!r}")
 
-        # on_mount 수정 (line 134):
-        async def on_mount(self) -> None:
-            """초기화."""
-            # ✨ 새로 추가: 테마 등록 및 적용
-            from sisyphus.ui.themes import THEMES
+          if message:
+              # 1. 먼저 큐잉 (메시지 보존이 최우선)
+              if self._queued_message:
+                  self._queued_message += "\n" + message
+              else:
+                  self._queued_message = message
 
-            mocha_theme = THEMES["mocha"]
-            latte_theme = THEMES["latte"]
+              self.log.info(f"[DEBUG] queued_message now: {self._queued_message!r}")
 
-            self.register_theme(mocha_theme)
-            self.register_theme(latte_theme)
-            self.theme = self.theme_name  # "mocha" 또는 "latte"
+              # 2. ChatLog에 사용자 메시지 표시 시도
+              try:
+                  chat_log = self.app.query_one(ChatLog)
+                  chat_log.write_user_message(message)
+              except Exception as e:
+                  self.log.error(f"Failed to display user message: {e}")
 
-            self.ready_event.set()
-    ```
-  - [x] 3.2 타입 체크: `uv run basedpyright sisyphus/ui/tui/app.py`
-  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 3번 작업 검증 성공 여부
-    - [x] TUI 클래스에 `show_header = False` 속성이 추가되었는가?
-    - [x] TUI 클래스에 `show_footer = False` 속성이 추가되었는가?
-    - [x] TUI 클래스에 `ENABLE_COMMAND_PALETTE = False` 속성이 추가되었는가?
-    - [x] `__init__()` 메서드가 `theme: ThemeName` 파라미터를 받는가?
-    - [x] `__init__()` 메서드에서 `self.theme_name` 인스턴스 변수를 설정하는가?
-    - [x] `on_mount()`에서 THEMES를 import하고 테마를 등록하는가?
-    - [x] `on_mount()`에서 `self.theme = self.theme_name`으로 테마를 설정하는가?
-    - [x] 모든 파라미터에 타입 힌트가 있는가? (ANN001 규칙 준수)
-    - [x] basedpyright 타입 체크가 통과하는가?
-    - [x] 기존 코드 스타일을 유지하면서 수정되었는가?
+              # 3. UI 업데이트 및 이벤트 발생
+              self.value = ""
+              self.log.info("[DEBUG] cleared input value")
+              self._update_placeholder()
+              self.log.info("[DEBUG] posting InputReadyEvent")
+              self.app.post_message(InputReadyEvent())
+              self.log.info("[DEBUG] on_input_submitted completed")
+      ```
+   - [ ] 4.2 테스트: 즉시 표시 확인
+      - TUI 실행: `uv run sisyphus run --execute claude`
+      - 테스트 절차:
+        1. 메시지 입력: "Hello Claude"
+        2. Enter 키 누름
+        3. ChatLog에 즉시 표시되는지 확인
+           - 예상: `12:34:56.789 👤 USER: Hello Claude` 즉시 표시
+        4. Claude가 응답할 때까지 대기
+        5. 메시지가 정상 전달되었는지 확인
+           - 예상: Claude가 "Hello" 인사에 응답
+   - [ ] 4.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/input_bar.py`
+      - 예상: 0 errors, 0 warnings
+   - [ ] 4.4 커밋: `display user messages immediately in chat_log`
 
-- [x] 4. CLI에 테마 옵션 추가
-  - [x] 4.1 구현: `sisyphus/cli.py` 수정
-    ```python
-    # 파일 상단 import 섹션에 추가 (line 12 근처):
-    from enum import Enum
-    from sisyphus.utils.theme import detect_system_theme, ThemeName
+## Phase 3: ESC 키 중단 기능
 
-    # Enum 정의 추가 (line 32 근처, app 정의 이전):
-    class ThemeOption(str, Enum):
-        """TUI 테마 옵션."""
-        SYSTEM = "system"  # 시스템 테마 자동 감지
-        MOCHA = "mocha"    # 다크 테마 (Catppuccin Mocha)
-        LATTE = "latte"    # 라이트 테마 (Catppuccin Latte)
+- [ ] 5. ESC 키 인터럽트 이벤트 추가
+   - [ ] 5.1 구현: `sisyphus/ui/tui/events.py` 이벤트 클래스 추가
+      ```python
+      from textual.message import Message
 
-    # 테마 해결 함수 추가 (validate_url 함수 다음):
-    def resolve_theme(option: ThemeOption) -> ThemeName:
-        """ThemeOption을 실제 테마 이름으로 변환.
+      class AgentInterruptEvent(Message):
+          """에이전트 중단 요청 이벤트."""
+          pass
 
-        Args:
-            option: CLI에서 받은 테마 옵션
+      class AgentResumeEvent(Message):
+          """에이전트 재개 요청 이벤트."""
+          pass
+      ```
+   - [ ] 5.2 커밋: `add agent interrupt and resume events`
 
-        Returns:
-            "mocha" 또는 "latte"
-        """
-        if option == ThemeOption.SYSTEM:
-            return detect_system_theme()
-        elif option == ThemeOption.MOCHA:
-            return "mocha"
-        else:  # ThemeOption.LATTE
-            return "latte"
+- [ ] 6. InputBar ESC 키 처리
+   - [ ] 6.1 구현: `sisyphus/ui/tui/components/input_bar.py` 수정
+      ```python
+      from textual import events
+      from textual.widgets import Input
+      from sisyphus.ui.tui.events import InputReadyEvent, AgentInterruptEvent
 
-    # run() 명령어 시그니처 수정 (line 274):
-    @app.command(name="run")
-    def run(
-        # ... 기존 파라미터들 ...
-        no_tui: bool = typer.Option(False, "--no-tui", help="Disable TUI, use CLI mode"),
-        theme: ThemeOption = typer.Option(
-            ThemeOption.SYSTEM,
-            "--theme",
-            help="TUI theme (system: auto-detect, mocha: dark, latte: light)",
-            case_sensitive=False,
-        ),
-        log: Path | None = typer.Option(None, "--log", help="Log file path"),
-    ) -> None:
-        """Run Sisyphus multi-agent system."""
-        # ... 기존 로직 유지 ...
+      class InputBar(Input):
+          """입력 바 위젯."""
 
-        # ui 생성 전에 테마 해결 추가 (line 325 근처):
-        resolved_theme = resolve_theme(theme)
-        ui = create_ui("cli" if no_tui else "tui", theme=resolved_theme)
-    ```
-  - [x] 4.2 타입 체크: `uv run basedpyright sisyphus/cli.py`
-  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 4번 작업 검증 성공 여부
-    - [x] `ThemeOption` Enum이 정의되었는가?
-    - [x] Enum이 SYSTEM, MOCHA, LATTE 세 가지 값을 가지는가?
-    - [x] `resolve_theme()` 함수가 정의되었는가?
-    - [x] 모든 함수 파라미터에 타입 힌트가 있는가? (ANN001 규칙 준수)
-    - [x] `run()` 명령어에 `theme: ThemeOption` 파라미터가 추가되었는가?
-    - [x] 기본값이 `ThemeOption.SYSTEM`인가?
-    - [x] `case_sensitive=False` 옵션이 설정되었는가?
-    - [x] `create_ui()` 호출 시 `theme=resolved_theme` 전달하는가?
-    - [x] basedpyright 타입 체크가 통과하는가?
-    - [x] 기존 코드 구조를 방해하지 않으면서 추가되었는가?
+          def __init__(self) -> None:
+              """InputBar 위젯 초기화."""
+              super().__init__(
+                  id="input-bar",
+                  placeholder="메시지를 입력하세요... (ESC: 중단)",
+              )
+              self._queued_message: str | None = None
+              self._agent_paused = False
 
-- [x] 5. UI 팩토리 함수에 테마 파라미터 추가
-  - [x] 5.1 구현: `sisyphus/ui/base.py` 수정
-    ```python
-    # import 섹션에 추가:
-    from sisyphus.utils.theme import ThemeName
+          async def on_key(self, event: events.Key) -> None:
+              """키 이벤트 처리."""
+              if event.key == "escape":
+                  # ESC 키 처리
+                  event.stop()  # 이벤트 전파 중지
+                  if not self._agent_paused:
+                      self._agent_paused = True
+                      self.placeholder = "⏸ 일시 중단됨 - 메시지 입력하면 재개"
+                      self.app.post_message(AgentInterruptEvent())
+                      self.log.info("Agent interrupted by ESC key")
+              else:
+                  # 다른 키는 기본 처리
+                  await super().on_key(event)
 
-    # create_ui 함수 시그니처 수정:
-    def create_ui(
-        ui_type: str,
-        theme: ThemeName | None = None
-    ) -> UIProtocol:
-        """UI 생성 팩토리.
+          def on_input_submitted(self, event: Input.Submitted) -> None:
+              """Enter 키 입력 시 처리."""
+              # ... 기존 코드 ...
 
-        Args:
-            ui_type: "tui" 또는 "cli"
-            theme: TUI 테마 ("mocha" | "latte"), None이면 기본값
+              # 에이전트가 일시 중단된 경우 재개
+              if self._agent_paused:
+                  self._agent_paused = False
+                  self.placeholder = "메시지를 입력하세요... (ESC: 중단)"
+                  # 재개 로직은 TUI에서 처리
+      ```
+   - [ ] 6.2 테스트: ESC 키 동작 확인
+      - TUI 실행 후 ESC 키 누름
+      - placeholder 변경 확인: "⏸ 일시 중단됨 - 메시지 입력하면 재개"
+      - StatusPanel에 중단 메시지 확인
+   - [ ] 6.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/input_bar.py`
+   - [ ] 6.4 커밋: `add esc key handler to input_bar`
 
-        Returns:
-            UIProtocol 구현체
-        """
-        if ui_type == "tui":
-            from sisyphus.ui.tui.app import TUI
-            return TUI(theme=theme or "mocha")  # 기본값 mocha
-        elif ui_type == "cli":
-            from sisyphus.ui.cli.console import CLI
-            return CLI()
-        else:
-            raise ValueError(f"Unknown UI type: {ui_type}")
-    ```
-  - [x] 5.2 타입 체크: `uv run basedpyright sisyphus/ui/base.py`
-  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 5번 작업 검증 성공 여부
-    - [x] `ThemeName` import가 추가되었는가?
-    - [x] `create_ui()` 함수에 `theme: ThemeName | None` 파라미터가 추가되었는가?
-    - [x] 모든 파라미터에 타입 힌트가 있는가? (ANN001 규칙 준수)
-    - [x] TUI 생성 시 `theme=theme or "mocha"`를 전달하는가?
-    - [x] 독스트링이 업데이트되었는가?
-    - [x] basedpyright 타입 체크가 통과하는가?
-    - [x] CLI 생성 로직은 영향받지 않았는가?
+- [ ] 7. TUI 인터럽트 처리
+   - [ ] 7.1 구현: `sisyphus/ui/tui/app.py` 수정
+      ```python
+      from sisyphus.ui.tui.events import AgentInterruptEvent, AgentResumeEvent
 
-- [x] 6. 전체 통합 테스트 및 커밋
-  - [x] 6.1 전체 타입 체크: `uv run basedpyright`
-  - [x] 6.2 린트 체크: `uv run ruff check sisyphus/`
-  - [x] 6.3 포맷 체크: `uv run ruff format --check sisyphus/`
-  - [x] 6.4 수동 TUI 테스트:
-    1. 기본 (시스템 테마): `uv run sisyphus run`
-    2. 다크 테마 강제: `uv run sisyphus run --theme mocha`
-    3. 라이트 테마 강제: `uv run sisyphus run --theme latte`
-    4. 시스템 테마 명시: `uv run sisyphus run --theme system`
-  - [x] 6.5 커밋:
-    ```bash
-    git add sisyphus/utils/theme.py \
-            sisyphus/ui/themes.py \
-            sisyphus/ui/tui/app.py \
-            sisyphus/ui/base.py \
-            sisyphus/cli.py \
-            pyproject.toml
+      class TUI(App[None]):
+          """TUI 앱."""
 
-    git commit -m "add catppuccin theme system with header footer removal
+          def __init__(self, theme: ThemeName = "mocha") -> None:
+              """TUI 초기화."""
+              super().__init__()
+              # ... 기존 코드 ...
+              self.agent_interrupted = False
+              self._current_task: anyio.abc.Task | None = None
 
-    - remove textual header footer and command palette
-    - add catppuccin mocha and latte themes
-    - add system theme detection for macos
-    - add --theme cli option (system/mocha/latte enum)
-    - integrate theme system into tui app
+          async def on_agent_interrupt_event(self, message: AgentInterruptEvent) -> None:
+              """에이전트 중단 이벤트 핸들러."""
+              self.agent_interrupted = True
 
-    TUI now displays with clean interface using catppuccin colors"
-    ```
-  - [x] 아래의 가이드대로 진행했을 때 Orchestrator 6번 작업 검증 성공 여부
-    - [x] basedpyright 타입 체크가 완전히 통과하는가?
-    - [x] ruff lint와 format이 통과하는가?
-    - [x] 시스템 테마 자동 감지가 작동하는가? (macOS에서 테스트)
-    - [x] `--theme mocha` 옵션이 다크 테마를 적용하는가?
-    - [x] `--theme latte` 옵션이 라이트 테마를 적용하는가?
-    - [x] TUI에서 Header가 보이지 않는가?
-    - [x] TUI에서 Footer가 보이지 않는가?
-    - [x] Ctrl+P를 눌렀을 때 Command Palette가 나타나지 않는가?
-    - [x] Catppuccin 색상이 올바르게 적용되었는가?
-    - [x] 커밋 메시지가 프로젝트 스타일을 따르는가? (소문자 시작, 명령형)
-    - [x] 모든 수정된 파일이 커밋에 포함되었는가?
+              # 상태 표시
+              status_panel = self.query_one(StatusPanel)
+              status_panel.update_status("⏸ 에이전트 일시 중단됨 (메시지 입력 시 재개)")
+
+              # 실행 중인 작업 취소
+              if self._current_task and not self._current_task.done():
+                  self._current_task.cancel()
+
+              # ChatLog에 중단 메시지 표시
+              chat_log = self.query_one(ChatLog)
+              chat_log.write("[yellow]⏸ ESC 키로 중단됨. 메시지를 입력하면 재개됩니다.[/yellow]")
+
+          async def on_input_ready_event(self, message: InputReadyEvent) -> None:
+              """입력 준비 이벤트 핸들러."""
+              # 에이전트가 중단된 경우 재개
+              if self.agent_interrupted:
+                  self.agent_interrupted = False
+                  status_panel = self.query_one(StatusPanel)
+                  status_panel.update_status("▶ 에이전트 재개됨")
+
+              # 기존 처리
+              self._input_ready_event.set()
+      ```
+   - [ ] 7.2 테스트: 중단/재개 플로우 확인
+      - ESC 키 → StatusPanel "⏸ 에이전트 일시 중단됨" 확인
+      - 메시지 입력 → StatusPanel "▶ 에이전트 재개됨" 확인
+   - [ ] 7.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/app.py`
+   - [ ] 7.4 커밋: `add interrupt handling to tui app`
+
+- [ ] 8. ExecutionLoop 인터럽트 지원
+   - [ ] 8.1 구현: `sisyphus/core/loop.py` 수정
+      ```python
+      class ExecutionLoop:
+          """실행 루프."""
+
+          def __init__(self, ...):
+              # ... 기존 코드 ...
+              self._interrupt_flag = False
+              self._current_cancel_scope: anyio.CancelScope | None = None
+
+          async def run(self, ...) -> None:
+              """실행 루프 메인."""
+              # ... 기존 코드 ...
+
+              # 인터럽트 체크를 stream 루프에 추가
+              async with anyio.create_cancel_scope() as cancel_scope:
+                  self._current_cancel_scope = cancel_scope
+                  try:
+                      async for message in agent.stream():
+                          # 인터럽트 체크
+                          if self._interrupt_flag:
+                              cancel_scope.cancel()
+                              break
+
+                          # ... 기존 메시지 처리 ...
+                  except anyio.get_cancelled_exc_class():
+                      await self.ui.show_status("⏸ 작업이 중단되었습니다")
+                      # 대기 상태로 전환
+                      while self._interrupt_flag:
+                          await anyio.sleep(0.1)
+                      await self.ui.show_status("▶ 작업을 재개합니다")
+
+          def request_interrupt(self) -> None:
+              """인터럽트 요청."""
+              self._interrupt_flag = True
+              if self._current_cancel_scope:
+                  self._current_cancel_scope.cancel()
+
+          def clear_interrupt(self) -> None:
+              """인터럽트 해제."""
+              self._interrupt_flag = False
+      ```
+   - [ ] 8.2 테스트: 실제 에이전트 중단 확인
+      - 긴 작업 중 ESC 키 → 스트림 중단 확인
+      - 메시지 입력 → 새 작업으로 재개 확인
+   - [ ] 8.3 린트 및 타입 체크: `uv run basedpyright sisyphus/core/loop.py`
+   - [ ] 8.4 커밋: `add interrupt support to execution_loop`
+
+## Phase 4: 통합 테스트
+
+- [ ] 9. 전체 통합 테스트 및 검증
+   - [ ] 9.1 수동 TUI 테스트
+      - 테스트 환경 준비:
+        ```bash
+        # 테스트용 ai-todolist.md 생성
+        echo "- [ ] Test task 1" > ai-todolist.md
+        echo "- [ ] Test task 2" >> ai-todolist.md
+        ```
+      - TUI 실행: `uv run sisyphus run --execute claude --verify opencode`
+      - 각 기능 테스트:
+        1. **스크롤 테스트**
+           - 20개 이상 메시지 생성
+           - 위로 스크롤 → 고정 확인
+           - End 키 → 자동 스크롤 재개 확인
+        2. **타임스탬프 테스트**
+           - ChatLog의 모든 메시지 타임스탬프 확인
+           - StatusPanel의 모든 메시지 타임스탬프 확인
+        3. **ThinkingBlock 테스트**
+           - "Think about X" 프롬프트로 thinking 유도
+           - 코드 블록 형식 확인
+        4. **즉시 표시 테스트**
+           - 여러 메시지 빠르게 입력
+           - 모든 메시지가 즉시 표시되는지 확인
+        5. **ESC 키 중단 테스트**
+           - 긴 작업 실행 중 ESC 키 누름
+           - StatusPanel "⏸ 에이전트 일시 중단됨" 확인
+           - InputBar placeholder "⏸ 일시 중단됨 - 메시지 입력하면 재개" 확인
+           - 새 메시지 입력 → 에이전트 재개 확인
+   - [ ] 9.2 타입 체크: `uv run basedpyright`
+      - 예상: 0 errors, 0 warnings
+   - [ ] 9.3 테스트 실행: `uv run pytest -x`
+      - 예상: 450+ tests passed
+   - [ ] 9.4 DEBUG 로그 제거
+      - `sisyphus/ui/tui/components/input_bar.py`에서 모든 `[DEBUG]` 로그 제거
+      - 커밋: `remove debug logs from input_bar`
+   - [ ] 9.5 최종 커밋: `complete all tui improvements with esc key interrupt`
 
 # 최종 작업 검증 체크리스트
 
-- [x] 1. UI 요소 제거 완료
-  - [x] TUI 실행 시 상단 Header(타이틀, 시간)가 표시되지 않는가?
-  - [x] TUI 실행 시 하단 Footer(키 힌트 ^q, ^p)가 표시되지 않는가?
-  - [x] Ctrl+P를 눌렀을 때 Command Palette가 나타나지 않는가?
+## Phase 1 검증
+- [ ] ChatLog 스크롤이 사용자 제어 하에 있는가?
+   - [ ] 위로 스크롤 시 위치 고정 (예상: 화면 움직이지 않음)
+   - [ ] 맨 아래 스크롤 시 자동 스크롤 재개 (예상: 새 메시지 자동 표시)
+- [ ] StatusPanel의 모든 메시지에 타임스탬프가 있는가?
+   - [ ] update_status() 메시지 (예상: `HH:MM:SS.mmm` 형식)
+   - [ ] show_iteration() 메시지 (예상: `HH:MM:SS.mmm` 형식)
+   - [ ] show_progress() 메시지 (예상: `HH:MM:SS.mmm` 형식)
+- [ ] ThinkingBlock 내용이 표시되는가?
+   - [ ] 코드 블록 형식 (예상: ``` 로 감싸짐)
+   - [ ] 들여쓰기 적용 (예상: 4칸 들여쓰기)
 
-- [x] 2. 테마 시스템 작동
-  - [x] catppuccin 패키지가 설치되었는가?
-  - [x] `sisyphus/ui/themes.py`에 THEMES 딕셔너리가 존재하는가?
-  - [x] Mocha 테마가 다크 색상을 사용하는가?
-  - [x] Latte 테마가 라이트 색상을 사용하는가?
+## Phase 2 검증
+- [ ] 사용자 메시지가 즉시 표시되는가?
+   - [ ] Enter 키 즉시 반응 (예상: 1초 이내 표시)
+   - [ ] 큐잉 시스템 정상 작동 (예상: 에이전트가 메시지 수신)
 
-- [x] 3. 시스템 테마 감지
-  - [x] macOS에서 다크 모드 활성화 시 자동으로 Mocha 적용되는가?
-  - [x] macOS에서 라이트 모드 활성화 시 자동으로 Latte 적용되는가?
-  - [x] 감지 실패 시 안전하게 Latte로 폴백하는가?
+## Phase 3 검증
+- [ ] ESC 키 중단 기능이 작동하는가?
+   - [ ] ESC 키 누를 시 에이전트 중단 (예상: StatusPanel "⏸ 에이전트 일시 중단됨")
+   - [ ] InputBar placeholder 변경 (예상: "⏸ 일시 중단됨 - 메시지 입력하면 재개")
+   - [ ] 스트림 실제 중단 (예상: 메시지 생성 멈춤)
+- [ ] 에이전트 재개가 정상 작동하는가?
+   - [ ] 새 메시지 입력 시 재개 (예상: StatusPanel "▶ 에이전트 재개됨")
+   - [ ] 새 작업으로 계속 진행 (예상: 중단 지점이 아닌 새 입력 처리)
 
-- [x] 4. CLI 옵션 작동
-  - [x] `--theme system` 옵션이 시스템 테마를 감지하는가?
-  - [x] `--theme mocha` 옵션이 다크 테마를 강제하는가?
-  - [x] `--theme latte` 옵션이 라이트 테마를 강제하는가?
-  - [x] 대소문자 구분 없이 작동하는가? (--theme MOCHA 등)
-  - [x] typer --help 출력에 테마 옵션이 표시되는가?
-
-- [x] 5. 코드 품질
-  - [x] 모든 파일에서 basedpyright 타입 체크가 통과하는가?
-  - [x] ruff lint/format이 통과하는가?
-  - [x] 모든 함수 파라미터에 타입 힌트가 있는가? (ANN001 규칙 준수)
-  - [x] Literal과 Enum을 적절히 사용했는가?
-  - [x] boolean 대신 Enum을 사용했는가? (테마 옵션)
-
-- [x] 6. 기존 기능 영향 없음
-  - [x] CLI 모드(--no-tui)가 정상 작동하는가?
-  - [x] Execute-Verify 루프가 정상 작동하는가?
-  - [x] StatusPanel이 정상 표시되는가?
-  - [x] ChatLog가 정상 표시되는가?
-  - [x] InputBar가 정상 작동하는가?
-
-- [x] 7. 사용자 요구사항 완전 충족
-  - [x] Textual 기본 Header가 제거되었는가?
-  - [x] Textual 기본 Footer가 제거되었는가?
-  - [x] Command Palette(Ctrl+P)가 비활성화되었는가?
-  - [x] Catppuccin Mocha(다크) 테마가 구현되었는가?
-  - [x] Catppuccin Latte(라이트) 테마가 구현되었는가?
-  - [x] 시스템 테마 자동 감지가 작동하는가?
-  - [x] CLI에서 Enum 기반 테마 옵션을 제공하는가?
-  - [x] boolean 대신 Enum을 사용했는가?
+## 호환성 검증
+- [ ] 기존 기능이 정상 작동하는가?
+   - [ ] Execute/Verify 메시지 표시 (예상: 색상 구분 정상)
+   - [ ] 에이전트 메시지 수신 (예상: get_input() 정상)
+   - [ ] 450+ 테스트 통과 (예상: 모든 테스트 성공)

@@ -62,6 +62,7 @@ class ExecutionLoop:
 
         self._interrupt_flag = False
         self._current_cancel_scope: anyio.CancelScope | None = None
+        self._resume_event: anyio.Event | None = None
 
     async def run(
         self,
@@ -124,6 +125,7 @@ class ExecutionLoop:
             verify_prompt: Verify phase prompt
             verify_extra: Extra prompt for verify phase
         """
+        self._resume_event = anyio.Event()
         iteration = 0
         verify_feedback_history: list[str] = []
 
@@ -264,6 +266,9 @@ class ExecutionLoop:
                     self.execute_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
         except anyio.get_cancelled_exc_class():
             await self.ui.show_status("⏸ 작업이 중단되었습니다")
+            if hasattr(self, "_resume_event") and self._resume_event is not None:
+                await self._resume_event.wait()
+            await self.ui.show_status("▶ 작업을 재개합니다")
         except SessionLimitError as e:
             self.execute_logger.warning(f"Session limit reached: {e}")
             await self.ui.show_status("⚠️  Session limit reached")
@@ -368,3 +373,5 @@ class ExecutionLoop:
     def clear_interrupt(self) -> None:
         """인터럽트 해제."""
         self._interrupt_flag = False
+        if self._resume_event is not None:
+            self._resume_event.set()

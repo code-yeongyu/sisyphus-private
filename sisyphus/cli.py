@@ -263,6 +263,9 @@ async def _main_tui(
                 task_validator=task_validator,
             )
 
+            if isinstance(ui, TUI):
+                ui.set_execution_loop(loop)
+
             await loop.run(
                 execute_prompt=execute_prompt_spec,
                 execute_extra=execute_extra,

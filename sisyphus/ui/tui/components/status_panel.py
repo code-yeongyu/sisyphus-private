@@ -1,5 +1,7 @@
 """StatusPanel component for TUI."""
 
+from datetime import datetime
+
 from textual.widgets import RichLog
 
 
@@ -22,24 +24,26 @@ class StatusPanel(RichLog):
         )
 
     def update_status(self, status: str) -> None:
-        """상태 업데이트.
+        """상태 업데이트 (타임스탬프 포함).
 
         Args:
             status: 표시할 상태 메시지
         """
-        self.write(f"[blue]{status}[/blue]")
+        timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        self.write(f"[dim]{timestamp}[/dim] [blue]{status}[/blue]")
 
     def show_iteration(self, current: int, total: int) -> None:
-        """반복 진행률 표시.
+        """반복 진행률 표시 (타임스탬프 포함).
 
         Args:
             current: 현재 반복 번호
             total: 전체 반복 횟수
         """
-        self.write(f"[dim]Iteration {current}/{total}[/dim]")
+        timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        self.write(f"[dim]{timestamp}[/dim] [dim]Iteration {current}/{total}[/dim]")
 
     def show_progress(self, completed: int, total: int) -> None:
-        """체크박스 진행률을 시각적 진행 바와 함께 표시.
+        """체크박스 진행률을 시각적 진행 바와 함께 표시 (타임스탬프 포함).
 
         Args:
             completed: 완료된 체크박스 개수
@@ -48,6 +52,7 @@ class StatusPanel(RichLog):
         if total == 0:
             return
 
+        timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         percentage = int((completed / total) * 100)
         remaining = total - completed
 
@@ -56,7 +61,7 @@ class StatusPanel(RichLog):
         bar = "█" * filled + "░" * (bar_length - filled)
 
         self.write(
-            f"[cyan]📋 진행률:[/cyan] {bar} "
+            f"[dim]{timestamp}[/dim] [cyan]📋 진행률:[/cyan] {bar} "
             f"[bold]{completed}/{total}[/bold] ({percentage}%) "
             f"[dim]| 남은 작업: {remaining}개[/dim]"
         )

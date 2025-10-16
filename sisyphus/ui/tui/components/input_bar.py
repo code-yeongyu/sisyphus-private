@@ -44,6 +44,15 @@ class InputBar(Input):
                 self._queued_message = message
 
             self.log.info(f"[DEBUG] queued_message now: {self._queued_message!r}")
+
+            try:
+                from sisyphus.ui.tui.components.chat_log import ChatLog
+
+                chat_log = self.app.query_one(ChatLog)
+                chat_log.write_user_message(message)
+            except Exception as exception:
+                self.log.error(f"Failed to display user message: {exception}")
+
             self.value = ""
             self.log.info("[DEBUG] cleared input value")
             self._update_placeholder()

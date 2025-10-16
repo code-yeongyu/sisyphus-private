@@ -48,7 +48,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- [Phase 3 - Task 6.1] sisyphus/ui/tui/components/input_bar.py에 ESC 키 처리 구현
+- [Phase 3 - Task 7.1] sisyphus/ui/tui/app.py에 TUI 인터럽트 처리 구현
 
 # 필요한 사전 지식
 

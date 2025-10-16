@@ -13,7 +13,7 @@ from sisyphus.ui.themes import THEMES
 from sisyphus.ui.tui.components.chat_log import ChatLog
 from sisyphus.ui.tui.components.input_bar import InputBar
 from sisyphus.ui.tui.components.status_panel import StatusPanel
-from sisyphus.ui.tui.events import InputReadyEvent
+from sisyphus.ui.tui.events import AgentInterruptEvent, InputReadyEvent
 from sisyphus.ui.tui.layouts.main import compose_main_layout
 from sisyphus.utils.theme import ThemeName
 
@@ -142,6 +142,8 @@ class TUI(App[None]):
         self.task_validator: TaskValidator | None = None
         self._last_total_checkboxes: int = 0
         self._last_completed_checkboxes: int = 0
+        self.agent_interrupted = False
+        self._current_task: anyio.abc.Task | None = None
 
     def compose(self) -> ComposeResult:
         """레이아웃 구성."""
@@ -289,8 +291,31 @@ class TUI(App[None]):
 
         return " ".join(parts)
 
+    async def on_agent_interrupt_event(self, message: AgentInterruptEvent) -> None:
+        """에이전트 중단 이벤트 핸들러."""
+        self.agent_interrupted = True
+
+        # 상태 표시
+        status_panel = self.query_one(StatusPanel)
+        status_panel.update_status("⏸ 에이전트 일시 중단됨 (메시지 입력 시 재개)")
+
+        # 실행 중인 작업 취소
+        if self._current_task and not self._current_task.done():
+            self._current_task.cancel()
+
+        # ChatLog에 중단 메시지 표시
+        chat_log = self.query_one(ChatLog)
+        chat_log.write("[yellow]⏸ ESC 키로 중단됨. 메시지를 입력하면 재개됩니다.[/yellow]")
+
     async def on_input_ready_event(self, message: InputReadyEvent) -> None:
         """InputBar에서 Enter 눌렀을 때 get_input() 깨우기."""
+        # 에이전트가 중단된 경우 재개
+        if self.agent_interrupted:
+            self.agent_interrupted = False
+            status_panel = self.query_one(StatusPanel)
+            status_panel.update_status("▶ 에이전트 재개됨")
+
+        # 기존 처리
         self._input_ready_event.set()
 
     # UIProtocol 구현

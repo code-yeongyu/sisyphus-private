@@ -269,6 +269,30 @@ class ExecutionLoop:
             if hasattr(self, "_resume_event") and self._resume_event is not None:
                 await self._resume_event.wait()
             await self.ui.show_status("▶ 작업을 재개합니다")
+
+            resumed_user_message = await self.ui.get_input()
+            if resumed_user_message:
+                self.execute_logger.info(f"Sending new message after resume: {resumed_user_message[:100]}...")
+                await self.execute_agent.send(resumed_user_message)
+
+                resumed_cancel_scope = anyio.CancelScope()
+                self._current_cancel_scope = resumed_cancel_scope
+
+                try:
+                    with resumed_cancel_scope:
+                        resumed_stream = self.execute_agent.stream()
+                        async for message in resumed_stream:
+                            if self._interrupt_flag:
+                                resumed_cancel_scope.cancel()
+                                break
+
+                            await self.ui.show_message(message, source="execute")
+                            self.execute_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
+                except anyio.get_cancelled_exc_class():
+                    await self.ui.show_status("⏸ 작업이 다시 중단되었습니다")
+                    if hasattr(self, "_resume_event") and self._resume_event is not None:
+                        await self._resume_event.wait()
+                    await self.ui.show_status("▶ 작업을 재개합니다")
         except SessionLimitError as e:
             self.execute_logger.warning(f"Session limit reached: {e}")
             await self.ui.show_status("⚠️  Session limit reached")

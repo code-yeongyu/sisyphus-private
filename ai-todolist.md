@@ -48,7 +48,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- [Phase 3 - Task 5.1] sisyphus/ui/tui/events.py에 AgentInterruptEvent, AgentResumeEvent 추가
+- [Phase 3 - Task 6.1] sisyphus/ui/tui/components/input_bar.py에 ESC 키 처리 구현
 
 # 필요한 사전 지식
 
@@ -406,7 +406,7 @@ sequenceDiagram
    - [ ] 5.2 커밋: `add agent interrupt and resume events`
 
 - [ ] 6. InputBar ESC 키 처리
-   - [ ] 6.1 구현: `sisyphus/ui/tui/components/input_bar.py` 수정
+   - [x] 6.1 구현: `sisyphus/ui/tui/components/input_bar.py` 수정
       ```python
       from textual import events
       from textual.widgets import Input

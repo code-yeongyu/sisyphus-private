@@ -83,3 +83,53 @@ Time taken: approximately 2 minutes
 - TUI에서 on_{event_name} 핸들러로 수신
 
 소요 시간: 약 2분
+
+## 2025-10-17 01:59 - InputBar ESC 키 처리 구현
+
+### 작업 내용
+- `sisyphus/ui/tui/components/input_bar.py`에 ESC 키로 에이전트를 중단하는 기능 추가
+- AgentInterruptEvent를 발생시켜 TUI에 중단 요청 전달
+- 메시지 입력 시 자동으로 에이전트 재개
+
+### 구현 세부사항
+1. **Import 추가**: `AgentInterruptEvent`를 import (기존 `InputReadyEvent`와 함께)
+2. **상태 변수**: `_agent_paused = False` 추가로 중단 상태 추적
+3. **Placeholder 변경**: 한글 메시지로 변경 + ESC 안내 추가
+   - 기본: "메시지를 입력하세요... (ESC: 중단)"
+   - 중단 시: "⏸ 일시 중단됨 - 메시지 입력하면 재개"
+4. **on_key 메서드**: ESC 키 처리 추가
+   - `event.stop()`으로 이벤트 전파 방지
+   - `AgentInterruptEvent()` 발생
+   - placeholder 업데이트
+5. **on_input_submitted 메서드**: 재개 로직 추가
+   - `_agent_paused` 플래그 확인 후 False로 변경
+   - placeholder를 원래대로 복원
+
+### 발견한 문제
+- **없음**: 기존 UP 키 처리 로직과 잘 공존함
+
+### 작업 전 가설
+- ESC 키 이벤트는 `event.key == "escape"`로 감지할 수 있을 것
+- `event.stop()`으로 이벤트 전파를 막아야 다른 핸들러와 충돌하지 않을 것
+
+### 가설과 달랐던 부분
+- **없음**: 예상대로 작동함
+
+### 인사이트
+1. **Hook 준수의 중요성**: Import와 사용 코드를 한 번에 추가해야 린트 에러 방지
+2. **코멘트 최소화**: 코드가 self-documenting이면 코멘트 불필요
+3. **기존 패턴 준수**: UP 키 처리와 같은 구조로 ESC 키 처리 추가
+4. **상태 관리**: `_agent_paused` 플래그로 중단/재개 상태를 명확히 관리
+
+### 다음 작업자를 위한 팁
+- InputBar는 UP 키와 ESC 키 두 가지 특수 키를 처리함
+- `on_key` 메서드에서 if-elif로 분기 처리
+- `event.stop()`은 필수 - 이벤트가 상위로 전파되는 것 방지
+- placeholder는 사용자에게 현재 상태를 알려주는 중요한 UI 요소
+
+### 검증 결과
+- **타입 체크**: `uv run basedpyright` - 0 errors, 0 warnings ✅
+- **TUI 테스트**: 30개 테스트 모두 통과 (asyncio + trio) ✅
+
+소요 시간: 약 5분
+

@@ -6,6 +6,8 @@ import logging
 import sys
 from typing import TYPE_CHECKING
 
+import anyio
+
 from sisyphus.core.prompts import DEFAULT_EXECUTE_PROMPT, DEFAULT_VERIFY_PROMPT
 from sisyphus.utils.errors import SessionLimitError, SessionResumeError
 from sisyphus.utils.session_limit import sleep_until_next_hour, sleep_until_reset
@@ -57,6 +59,9 @@ class ExecutionLoop:
 
         self.execute_logger: logging.Logger | None = None
         self.verify_logger: logging.Logger | None = None
+
+        self._interrupt_flag = False
+        self._current_cancel_scope: anyio.CancelScope | None = None
 
     async def run(
         self,
@@ -244,11 +249,21 @@ class ExecutionLoop:
         await self.execute_agent.send(final_prompt)
         self.execute_logger.info("Prompt sent")
 
+        cancel_scope = anyio.CancelScope()
+        self._current_cancel_scope = cancel_scope
+
         try:
-            stream = self.execute_agent.stream()
-            async for message in stream:
-                await self.ui.show_message(message, source="execute")
-                self.execute_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
+            with cancel_scope:
+                stream = self.execute_agent.stream()
+                async for message in stream:
+                    if self._interrupt_flag:
+                        cancel_scope.cancel()
+                        break
+
+                    await self.ui.show_message(message, source="execute")
+                    self.execute_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
+        except anyio.get_cancelled_exc_class():
+            await self.ui.show_status("⏸ 작업이 중단되었습니다")
         except SessionLimitError as e:
             self.execute_logger.warning(f"Session limit reached: {e}")
             await self.ui.show_status("⚠️  Session limit reached")
@@ -343,3 +358,13 @@ class ExecutionLoop:
             f"Verify feedback collected: {len(feedback_messages)} messages, fully_done={fully_done}"
         )
         return (feedback, fully_done)
+
+    def request_interrupt(self) -> None:
+        """인터럽트 요청."""
+        self._interrupt_flag = True
+        if self._current_cancel_scope:
+            self._current_cancel_scope.cancel()
+
+    def clear_interrupt(self) -> None:
+        """인터럽트 해제."""
+        self._interrupt_flag = False

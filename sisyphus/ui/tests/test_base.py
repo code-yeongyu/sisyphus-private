@@ -9,7 +9,7 @@ pytestmark = [pytest.mark.anyio]
 
 
 class MockUI:
-    """완전한 UIProtocol 구현 (테스트용)."""
+    """Complete UIProtocol implementation for testing."""
 
     def __init__(self) -> None:
         self.messages: list[tuple[AgentMessage, str]] = []
@@ -19,19 +19,19 @@ class MockUI:
         self.initialized: bool = False
 
     async def initialize(self) -> None:
-        """UI 초기화."""
+        """Initialize the UI."""
         self.initialized = True
 
     async def show_message(self, message: AgentMessage, source: str) -> None:
-        """메시지 표시."""
+        """Display a message."""
         self.messages.append((message, source))
 
     async def show_status(self, status: str) -> None:
-        """상태 메시지 표시."""
+        """Display a status message."""
         self.statuses.append(status)
 
     async def get_input(self) -> str | None:
-        """사용자 입력 받기."""
+        """Get user input."""
         if self.input_index >= len(self.inputs):
             return None
         result = self.inputs[self.input_index]
@@ -40,7 +40,7 @@ class MockUI:
 
 
 class IncompleteUI:
-    """불완전한 UI 구현 (일부 메서드만 구현)."""
+    """Incomplete UI implementation with only some methods."""
 
     async def initialize(self) -> None:
         pass
@@ -117,8 +117,8 @@ async def test_mock_ui_get_input() -> None:
 async def test_mock_ui_multiple_messages() -> None:
     # Given
     ui = MockUI()
-    msg1 = AgentMessage(role="user", content="첫 메시지")
-    msg2 = AgentMessage(role="assistant", content="두 번째 메시지")
+    msg1 = AgentMessage(role="user", content="First message")
+    msg2 = AgentMessage(role="assistant", content="Second message")
 
     # When
     await ui.show_message(msg1, "execute")
@@ -135,13 +135,13 @@ async def test_mock_ui_multiple_statuses() -> None:
     ui = MockUI()
 
     # When
-    await ui.show_status("상태 1")
-    await ui.show_status("상태 2")
-    await ui.show_status("상태 3")
+    await ui.show_status("Status 1")
+    await ui.show_status("Status 2")
+    await ui.show_status("Status 3")
 
     # Then
     assert len(ui.statuses) == 3
-    assert ui.statuses == ["상태 1", "상태 2", "상태 3"]
+    assert ui.statuses == ["Status 1", "Status 2", "Status 3"]
 
 
 def test_create_ui_factory_signature() -> None:

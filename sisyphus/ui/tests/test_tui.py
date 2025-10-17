@@ -17,7 +17,7 @@ pytestmark = [pytest.mark.anyio()]
 
 
 async def test_tui_protocol_compliance() -> None:
-    """TUI가 UIProtocol을 만족하는지 검증."""
+    """Verifies that TUI satisfies UIProtocol."""
     # given
     tui = TUI()
 
@@ -26,7 +26,7 @@ async def test_tui_protocol_compliance() -> None:
 
 
 async def test_tui_initialize() -> None:
-    """TUI 초기화 테스트."""
+    """Tests TUI initialization."""
     # given
     tui = TUI()
     assert tui._initialized is False
@@ -39,7 +39,7 @@ async def test_tui_initialize() -> None:
 
 
 async def test_tui_show_message_execute() -> None:
-    """Execute 메시지 표시 테스트."""
+    """Tests Execute message display."""
     # given
     tui = TUI()
     tui.ready_event.set()
@@ -58,7 +58,7 @@ async def test_tui_show_message_execute() -> None:
 
 
 async def test_tui_show_message_verify() -> None:
-    """Verify 메시지 표시 테스트."""
+    """Tests Verify message display."""
     # given
     tui = TUI()
     tui.ready_event.set()
@@ -77,7 +77,7 @@ async def test_tui_show_message_verify() -> None:
 
 
 async def test_tui_show_message_with_metadata() -> None:
-    """메타데이터를 포함한 메시지 표시 테스트."""
+    """Tests message display with metadata."""
     # given
     tui = TUI()
     tui.ready_event.set()
@@ -99,7 +99,7 @@ async def test_tui_show_message_with_metadata() -> None:
 
 
 async def test_tui_show_status() -> None:
-    """상태 표시 테스트."""
+    """Tests status display."""
     # given
     tui = TUI()
     tui.ready_event.set()
@@ -118,7 +118,7 @@ async def test_tui_show_status() -> None:
 
 
 async def test_tui_get_input_from_queue() -> None:
-    """메시지 큐에서 입력 가져오기 테스트."""
+    """Tests getting input from message queue."""
     # given
     tui = TUI()
 
@@ -134,7 +134,7 @@ async def test_tui_get_input_from_queue() -> None:
 
 
 async def test_tui_components_separated() -> None:
-    """컴포넌트가 분리되어 있는지 검증."""
+    """Verifies that components are separated."""
     # given
     tui = TUI()
 
@@ -142,12 +142,12 @@ async def test_tui_components_separated() -> None:
     composition = list(tui.compose())
 
     # then
-    # compose()가 레이아웃을 yield하는지 확인
+    # Verify that compose() yields layout
     assert len(composition) > 0
 
 
 async def test_tui_ctrl_c_once() -> None:
-    """Ctrl+C 한 번 누를 시 경고 표시."""
+    """Shows warning when Ctrl+C is pressed once."""
     # given
     tui = TUI()
     mock_status_panel = MagicMock(spec=StatusPanel)
@@ -159,22 +159,22 @@ async def test_tui_ctrl_c_once() -> None:
     # then
     assert tui.ctrl_c_count == 1
     assert tui.last_ctrl_c_time is not None
-    mock_status_panel.update_status.assert_called_once_with("⚠️ Ctrl+C 한 번 더 누르면 종료됩니다")
+    mock_status_panel.update_status.assert_called_once_with("⚠️ Press Ctrl+C once more to exit")
 
 
 async def test_tui_ctrl_c_twice() -> None:
-    """Ctrl+C 2회 (1초 내) 누를 시 종료."""
+    """Exits when Ctrl+C is pressed twice (within 1 second)."""
     # given
     tui = TUI()
     mock_status_panel = MagicMock(spec=StatusPanel)
 
-    # 첫 번째 Ctrl+C
+    # First Ctrl+C
     with patch.object(tui, "query_one", return_value=mock_status_panel):
         await tui._handle_interrupt()
 
     assert tui.ctrl_c_count == 1
 
-    # when: 두 번째 Ctrl+C (1초 내)
+    # when: Second Ctrl+C (within 1 second)
     with patch.object(tui, "query_one", return_value=mock_status_panel):
         with patch.object(tui, "exit") as mock_exit:
             await tui._handle_interrupt()
@@ -186,34 +186,34 @@ async def test_tui_ctrl_c_twice() -> None:
 
 
 async def test_tui_ctrl_c_reset() -> None:
-    """Ctrl+C 후 1초 이상 경과 시 카운터 리셋."""
+    """Resets counter when more than 1 second passes after Ctrl+C."""
     # given
     tui = TUI()
     mock_status_panel = MagicMock(spec=StatusPanel)
 
-    # 첫 번째 Ctrl+C
+    # First Ctrl+C
     with patch.object(tui, "query_one", return_value=mock_status_panel):
         await tui._handle_interrupt()
 
     assert tui.ctrl_c_count == 1
     first_time = tui.last_ctrl_c_time
 
-    # when: 1초 이상 경과 후 Ctrl+C
-    # last_ctrl_c_time을 1초 이상 전으로 설정
+    # when: Ctrl+C after more than 1 second
+    # Set last_ctrl_c_time to more than 1 second ago
     tui.last_ctrl_c_time = datetime.now() - timedelta(seconds=2)
 
     with patch.object(tui, "query_one", return_value=mock_status_panel):
         await tui._handle_interrupt()
 
     # then
-    # 카운터가 리셋되어 1로 돌아감
+    # Counter is reset back to 1
     assert tui.ctrl_c_count == 1
     assert tui.last_ctrl_c_time is not None
     assert tui.last_ctrl_c_time != first_time
 
 
 async def test_tui_safe_shutdown() -> None:
-    """안전한 종료 절차 테스트."""
+    """Tests safe shutdown procedure."""
     # given
     tui = TUI()
     mock_status_panel = MagicMock(spec=StatusPanel)
@@ -226,11 +226,11 @@ async def test_tui_safe_shutdown() -> None:
     # then
     assert tui.shutdown_event.is_set()
     mock_exit.assert_called_once()
-    mock_status_panel.update_status.assert_called_once_with("🔄 종료 중...")
+    mock_status_panel.update_status.assert_called_once_with("🔄 Shutting down...")
 
 
 async def test_tui_full_lifecycle() -> None:
-    """전체 라이프사이클 테스트."""
+    """Tests full lifecycle."""
     # given
     tui = TUI()
 
@@ -262,7 +262,7 @@ async def test_tui_full_lifecycle() -> None:
 
 
 async def test_tui_multiple_messages_sequence() -> None:
-    """여러 메시지 순차 표시 테스트."""
+    """Tests sequential display of multiple messages."""
     # given
     tui = TUI()
     tui.ready_event.set()
@@ -282,7 +282,7 @@ async def test_tui_multiple_messages_sequence() -> None:
 
 
 async def test_tui_empty_message_content() -> None:
-    """빈 메시지 내용 처리 테스트."""
+    """Tests handling of empty message content."""
     # given
     tui = TUI()
     tui.ready_event.set()

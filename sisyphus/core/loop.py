@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 class ExecutionLoop:
-    """메인 실행 루프 (Execute → Verify)."""
+    """Main execution loop (Execute → Verify)."""
 
     def __init__(
         self,
@@ -53,8 +53,7 @@ class ExecutionLoop:
         self.logger_factory = logger_factory
         self.task_validator = task_validator
 
-        # DEBUG: ExecutionLoop 초기화 시 verify_agent 확인
-
+        # DEBUG: Verify verify_agent during ExecutionLoop initialization
         print(f"DEBUG ExecutionLoop.__init__: verify_agent={verify_agent}", file=sys.stderr)
 
         self.execute_logger: logging.Logger | None = None
@@ -74,8 +73,8 @@ class ExecutionLoop:
     ) -> None:
         """Run the execution loop in unified mode.
 
-        ExecutionLoop는 작업 실행만 담당하며, UI 생명주기는 관여하지 않습니다.
-        작업 완료 후 UI는 사용자가 명시적으로 종료할 때까지 계속 실행됩니다.
+        ExecutionLoop only handles task execution and does not interfere with UI lifecycle.
+        After task completion, the UI continues running until the user explicitly terminates it.
 
         This method runs a unified execution flow that works for both interactive
         and non-interactive agents:
@@ -249,35 +248,35 @@ class ExecutionLoop:
 
         await self.session_store.save_session(agent_type, actual_session_id)
 
-        # 초기 프롬프트 전송 (while 루프 밖 - 한 번만)
+        # Send initial prompt (outside while loop - only once)
         await self.execute_agent.send(final_prompt)
         self.execute_logger.info("Prompt sent")
 
         self._resumed_once = False
 
         while True:
-            # 매 루프마다 새로운 CancelScope 생성
+            # Create new CancelScope for each loop iteration
             self._current_cancel_scope = anyio.CancelScope()
             monitor_scope = self._current_cancel_scope
 
             async def consume_stream() -> None:
-                """Stream에서 메시지를 소비하고 UI에 표시"""
+                """Consume messages from stream and display in UI"""
                 assert self.execute_logger is not None
                 stream = self.execute_agent.stream()
                 async for message in stream:
                     if self._interrupt_flag:
-                        # interrupt 발생 - monitor_input 종료 후 루프 탈출
+                        # Interrupt occurred - cancel monitor_input and break loop
                         monitor_scope.cancel()
                         break
 
                     await self.ui.show_message(message, source="execute")
                     self.execute_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
 
-                # stream 정상 종료 - monitor_input을 cancel하여 Task Group 종료
+                # Stream completed normally - cancel monitor_input to terminate Task Group
                 monitor_scope.cancel()
 
             async def monitor_input() -> None:
-                """사용자 입력을 모니터링하고 Agent로 전송"""
+                """Monitor user input and send to Agent"""
                 assert self.execute_logger is not None
                 with monitor_scope:
                     while True:
@@ -286,7 +285,7 @@ class ExecutionLoop:
                             self.execute_logger.info(f"Sending user message: {msg[:100]}...")
                             await self.execute_agent.send(msg)
                         else:
-                            # get_input()이 None 반환 시 짧은 대기 (CPU 100% 방지)
+                            # Short sleep when get_input() returns None (prevents CPU 100%)
                             await anyio.sleep(0.01)
 
             try:
@@ -305,11 +304,11 @@ class ExecutionLoop:
 
                 raise
 
-            # Task Group 정상 종료 - interrupt 여부 확인
+            # Task Group completed normally - check interrupt status
             if self._interrupt_flag:
                 assert self._resume_event is not None
                 assert self.execute_logger is not None
-                await self.ui.show_status("⏸ 작업이 중단되었습니다")
+                await self.ui.show_status("⏸ Work has been interrupted")
                 await self._resume_event.wait()
 
                 resumed_msg: str | None = await self.ui.get_input()
@@ -319,7 +318,7 @@ class ExecutionLoop:
                     self._resumed_once = True
 
                 self._interrupt_flag = False
-                await self.ui.show_status("▶ 작업을 재개합니다")
+                await self.ui.show_status("▶ Resuming work")
             else:
                 if self._resumed_once:
                     self._resumed_once = False
@@ -327,7 +326,7 @@ class ExecutionLoop:
                 else:
                     break
 
-        # stream() 완료 후 실제 session_id 업데이트
+        # Update actual session_id after stream() completes
         final_session_id = self.execute_agent.session_id
         if final_session_id and final_session_id != actual_session_id:
             self.execute_logger.info(f"Updating session ID: '{actual_session_id}' -> '{final_session_id}'")
@@ -374,19 +373,19 @@ class ExecutionLoop:
         self._resumed_once = False
 
         while True:
-            # 매 루프마다 새로운 CancelScope 생성
+            # Create new CancelScope for each loop iteration
             self._current_cancel_scope = anyio.CancelScope()
             monitor_scope = self._current_cancel_scope
 
             async def consume_stream() -> None:
-                """Stream에서 메시지를 소비하고 feedback 수집"""
+                """Consume messages from stream and collect feedback"""
                 assert self.verify_logger is not None
                 assert self.verify_agent is not None
                 nonlocal feedback_messages, fully_done
                 stream = self.verify_agent.stream()
                 async for message in stream:
                     if self._interrupt_flag:
-                        # interrupt 발생 - monitor_input 종료 후 루프 탈출
+                        # Interrupt occurred - cancel monitor_input and break loop
                         monitor_scope.cancel()
                         break
 
@@ -407,11 +406,11 @@ class ExecutionLoop:
                         if not contains_fully_done_false and contains_fully_done_true:
                             fully_done = True
 
-                # stream 정상 종료 - monitor_input을 cancel하여 Task Group 종료
+                # Stream completed normally - cancel monitor_input to terminate Task Group
                 monitor_scope.cancel()
 
             async def monitor_input() -> None:
-                """사용자 입력을 모니터링하고 Verify Agent로 전송"""
+                """Monitor user input and send to Verify Agent"""
                 assert self.verify_logger is not None
                 assert self.verify_agent is not None
                 with monitor_scope:
@@ -421,7 +420,7 @@ class ExecutionLoop:
                             self.verify_logger.info(f"Sending user message: {msg[:100]}...")
                             await self.verify_agent.send(msg)
                         else:
-                            # get_input()이 None 반환 시 짧은 대기 (CPU 100% 방지)
+                            # Short sleep when get_input() returns None (prevents CPU 100%)
                             await anyio.sleep(0.01)
 
             try:
@@ -440,11 +439,11 @@ class ExecutionLoop:
 
                 raise
 
-            # Task Group 정상 종료 - interrupt 여부 확인
+            # Task Group completed normally - check interrupt status
             if self._interrupt_flag:
                 assert self._resume_event is not None
                 assert self.verify_logger is not None
-                await self.ui.show_status("⏸ Verify 작업이 중단되었습니다")
+                await self.ui.show_status("⏸ Verify work has been interrupted")
                 await self._resume_event.wait()
 
                 resumed_msg: str | None = await self.ui.get_input()
@@ -454,7 +453,7 @@ class ExecutionLoop:
                     self._resumed_once = True
 
                 self._interrupt_flag = False
-                await self.ui.show_status("▶ Verify 작업을 재개합니다")
+                await self.ui.show_status("▶ Resuming verify work")
             else:
                 if self._resumed_once:
                     self._resumed_once = False
@@ -471,13 +470,13 @@ class ExecutionLoop:
         return (feedback, fully_done)
 
     def request_interrupt(self) -> None:
-        """인터럽트 요청."""
+        """Request an interrupt."""
         self._interrupt_flag = True
         if self._current_cancel_scope:
             self._current_cancel_scope.cancel()
 
     def clear_interrupt(self) -> None:
-        """인터럽트 해제."""
+        """Clear the interrupt."""
         self._interrupt_flag = False
         if self._resume_event is not None:
             self._resume_event.set()

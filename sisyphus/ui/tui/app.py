@@ -234,12 +234,12 @@ class TUI(App[None]):
             self.ctrl_c_count = 1
             self.last_ctrl_c_time = current_time
             status = self.query_one(StatusPanel)
-            status.update_status("⚠️ Ctrl+C 한 번 더 누르면 종료됩니다")
+            status.update_status("⚠️ Press Ctrl+C once more to exit")
 
     async def _safe_shutdown(self) -> None:
         """안전한 종료 절차."""
         status = self.query_one(StatusPanel)
-        status.update_status("🔄 종료 중...")
+        status.update_status("🔄 Shutting down...")
 
         self.shutdown_event.set()
         self.exit()

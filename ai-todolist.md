@@ -32,8 +32,8 @@ is_all_goals_accomplished = FALSE
 parallel_requested = TRUE
 
 # 현재 진행 중인 작업
-- Phase 2 - Task 4: Translate SessionStore docstrings (sisyphus/core/session.py) - IN PROGRESS ⚙️
-  - 작업 내용: sisyphus/core/session.py의 모든 docstring을 영어로 번역
+- Phase 3 - Task 5: Translate CLI test docstrings (sisyphus/tests/test_cli.py) - IN PROGRESS ⚙️
+  - 작업 내용: sisyphus/tests/test_cli.py의 모든 테스트 docstring을 영어로 번역
 
 # 필요한 사전 지식
 
@@ -314,19 +314,19 @@ graph TB
 
 ## Phase 3: Test Files Translation (Phase 2 완료 후, 그룹 간 병렬 실행)
 
-- [ ] 3 parallel. Translate CLI test docstrings (sisyphus/tests/test_cli.py)
+- [x] 3 parallel. Translate CLI test docstrings (sisyphus/tests/test_cli.py)
    - **※ 병렬 실행 조건**: Phase 2 완료 후, 다른 테스트 파일들과 독립적
-   - [ ] 3.1 구현: sisyphus/tests/test_cli.py의 모든 테스트 docstring 번역 (약 13개 이상)
-   - [ ] 3.2 테스트: 타입 체크 및 lint
-      - [ ] `uv run basedpyright sisyphus/tests/test_cli.py`
-      - [ ] `uv run ruff check sisyphus/tests/test_cli.py`
-   - [ ] 3.3 테스트 실행
-      - [ ] `uv run pytest -xvs sisyphus/tests/test_cli.py`
-   - [ ] 3.4 커밋
+   - [x] 3.1 구현: sisyphus/tests/test_cli.py의 모든 테스트 docstring 번역 (약 13개 이상)
+   - [x] 3.2 테스트: 타입 체크 및 lint
+      - [x] `uv run basedpyright sisyphus/tests/test_cli.py`
+      - [x] `uv run ruff check sisyphus/tests/test_cli.py`
+   - [x] 3.3 테스트 실행
+      - [x] `uv run pytest -xvs sisyphus/tests/test_cli.py`
+   - [x] 3.4 커밋
       - `git add sisyphus/tests/test_cli.py && git commit -m "translate CLI test docstrings to English"`
-   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-      - [ ] 모든 테스트 docstring이 영어로 번역되었는가?
-      - [ ] 테스트가 모두 통과하는가?
+   - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+      - [x] 모든 테스트 docstring이 영어로 번역되었는가?
+      - [x] 테스트가 모두 통과하는가?
 
 - [ ] 3 parallel. Translate Agent test docstrings (sisyphus/agents/tests/)
    - **※ 병렬 실행 조건**: Task 5, 7과 독립적이며 서로 다른 파일들 수정

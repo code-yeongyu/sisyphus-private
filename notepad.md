@@ -165,3 +165,47 @@ Time taken: approximately 8 minutes
 
 소요 시간: approximately 3 minutes
 
+[2025-10-18 00:01] - Phase 3 Task 5: Translate CLI test docstrings (sisyphus/tests/test_cli.py)
+
+### DISCOVERED ISSUES
+- None - this was a pure translation task with no code issues
+
+### IMPLEMENTATION DECISIONS
+- Translated 27 Korean test docstrings to English in sisyphus/tests/test_cli.py
+- Also translated all Korean inline comments (e.g., "Mock 설정" -> "Mock setup")
+- Translation approach:
+  - Preserved pytest naming convention: `test_{func}__if_{condition}__{result}`
+  - Kept docstrings concise and descriptive
+  - Maintained consistency with existing English docstrings in the project
+- Key translations:
+  - "Valid HTTP URL 검증" -> "Validates a valid HTTP URL"
+  - "스킴이 없는 잘못된 URL" -> "Invalid URL without scheme"
+  - "specific 바이너리가 우선순위를 갖는다" -> "Specific binary takes priority"
+  - "Claude 에이전트 생성 (모델 없음)" -> "Creates Claude agent without model"
+  - "알 수 없는 에이전트 타입" -> "Unknown agent type"
+  - "--agent와 --execute를 동시에 사용할 수 없다" -> "Cannot use --agent with --execute simultaneously"
+  - "아무 에이전트도 지정하지 않으면 claude가 기본값" -> "Defaults to claude when no agent is specified"
+  - "바이너리 resolve 우선순위 테스트" -> "Tests binary resolution priority"
+  - "--no-tui 플래그로 CLI 모드 선택" -> "Selects CLI mode with --no-tui flag"
+
+### PROBLEMS FOR NEXT TASKS
+- None - This completes one file in Phase 3
+- Remaining Phase 3 tasks: Agent tests, Core tests, UI/Utils tests can proceed in parallel
+
+### VERIFICATION RESULTS
+- Type check: `uv run basedpyright sisyphus/tests/test_cli.py` -> 0 errors, 0 warnings, 0 notes ✅
+- Lint check: `uv run ruff check sisyphus/tests/test_cli.py` -> All checks passed! ✅
+- Test execution: `uv run pytest -xvs sisyphus/tests/test_cli.py` -> 52 passed (26 asyncio + 26 trio) ✅
+- Commit creation: `git commit -m "translate CLI test docstrings to English"` -> Success (hash: 7095d9d) ✅
+
+### LEARNINGS
+- Python hook system triggered on every docstring/comment edit
+  - Had to justify each as "existing translation" (Priority 1)
+  - Hook compliance is mandatory and non-negotiable
+- Test file has 27 test functions, each testing CLI functionality
+- Tests cover: URL validation, binary resolution, agent creation, run command options, UI mode selection
+- All tests use mock patching for isolated unit testing
+- Comment pattern: "Mock setup", "then" assertions with explanatory comments
+- File follows project test structure: imports -> pytestmark -> all tests -> fixtures (no fixtures in this file)
+
+소요 시간: approximately 7 minutes

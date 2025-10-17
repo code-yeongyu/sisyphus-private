@@ -371,36 +371,96 @@ class ExecutionLoop:
         await self.verify_agent.send(final_prompt)
         self.verify_logger.info("Prompt sent")
 
-        try:
-            stream = self.verify_agent.stream()
-            async for message in stream:
-                await self.ui.show_message(message, source="verify")
-                self.verify_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
+        self._resumed_once = False
 
-                if message.role == "assistant":
-                    feedback_messages.append(message.content)
+        while True:
+            # 매 루프마다 새로운 CancelScope 생성
+            self._current_cancel_scope = anyio.CancelScope()
+            monitor_scope = self._current_cancel_scope
 
-                    content_upper = message.content.upper()
-                    contains_fully_done_false = (
-                        "FULLY_DONE = FALSE" in content_upper or "FULLY_DONE=FALSE" in content_upper
-                    )
-                    contains_fully_done_true = (
-                        "FULLY_DONE = TRUE" in content_upper or "FULLY_DONE=TRUE" in content_upper
-                    )
+            async def consume_stream() -> None:
+                """Stream에서 메시지를 소비하고 feedback 수집"""
+                assert self.verify_logger is not None
+                assert self.verify_agent is not None
+                nonlocal feedback_messages, fully_done
+                stream = self.verify_agent.stream()
+                async for message in stream:
+                    if self._interrupt_flag:
+                        # interrupt 발생 - monitor_input 종료 후 루프 탈출
+                        monitor_scope.cancel()
+                        break
 
-                    if not contains_fully_done_false and contains_fully_done_true:
-                        fully_done = True
-        except SessionLimitError as e:
-            self.verify_logger.warning(f"Session limit reached: {e}")
-            await self.ui.show_status("⚠️  Verify session limit reached")
+                    await self.ui.show_message(message, source="verify")
+                    self.verify_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
 
-            if e.reset_time:
-                await sleep_until_reset(e.reset_time, self.ui)
+                    if message.role == "assistant":
+                        feedback_messages.append(message.content)
+
+                        content_upper = message.content.upper()
+                        contains_fully_done_false = (
+                            "FULLY_DONE = FALSE" in content_upper or "FULLY_DONE=FALSE" in content_upper
+                        )
+                        contains_fully_done_true = (
+                            "FULLY_DONE = TRUE" in content_upper or "FULLY_DONE=TRUE" in content_upper
+                        )
+
+                        if not contains_fully_done_false and contains_fully_done_true:
+                            fully_done = True
+
+                # stream 정상 종료 - monitor_input을 cancel하여 Task Group 종료
+                monitor_scope.cancel()
+
+            async def monitor_input() -> None:
+                """사용자 입력을 모니터링하고 Verify Agent로 전송"""
+                assert self.verify_logger is not None
+                assert self.verify_agent is not None
+                with monitor_scope:
+                    while True:
+                        msg: str | None = await self.ui.get_input()
+                        if msg:
+                            self.verify_logger.info(f"Sending user message: {msg[:100]}...")
+                            await self.verify_agent.send(msg)
+                        else:
+                            # get_input()이 None 반환 시 짧은 대기 (CPU 100% 방지)
+                            await anyio.sleep(0.01)
+
+            try:
+                async with anyio.create_task_group() as tg:
+                    tg.start_soon(consume_stream)
+                    tg.start_soon(monitor_input)
+            except SessionLimitError as e:
+                self.verify_logger.warning(f"Session limit reached: {e}")
+                await self.ui.show_status("⚠️  Verify session limit reached")
+
+                if e.reset_time:
+                    await sleep_until_reset(e.reset_time, self.ui)
+                else:
+                    await self.ui.show_status("Reset time unknown, waiting until next hour...")
+                    await sleep_until_next_hour(self.ui)
+
+                raise
+
+            # Task Group 정상 종료 - interrupt 여부 확인
+            if self._interrupt_flag:
+                assert self._resume_event is not None
+                assert self.verify_logger is not None
+                await self.ui.show_status("⏸ Verify 작업이 중단되었습니다")
+                await self._resume_event.wait()
+
+                resumed_msg: str | None = await self.ui.get_input()
+                if resumed_msg:
+                    self.verify_logger.info(f"Sending resumed message: {resumed_msg[:100]}...")
+                    await self.verify_agent.send(resumed_msg)
+                    self._resumed_once = True
+
+                self._interrupt_flag = False
+                await self.ui.show_status("▶ Verify 작업을 재개합니다")
             else:
-                await self.ui.show_status("Reset time unknown, waiting until next hour...")
-                await sleep_until_next_hour(self.ui)
-
-            raise
+                if self._resumed_once:
+                    self._resumed_once = False
+                    continue
+                else:
+                    break
 
         await self.verify_agent.close()
 

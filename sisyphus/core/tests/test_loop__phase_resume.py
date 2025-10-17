@@ -118,6 +118,73 @@ async def test_execute_phase__multiple_resumes__continues_each_time(
     assert "resume 2" in mock_execute_agent.sent_messages
 
 
+async def test_verify_phase__after_resume__continues_phase(
+    mock_execute_agent: MockAgentWithResume,
+    mock_verify_agent: MockAgentWithResume,
+    mock_ui: MockUIWithInput,
+    mock_session_store: MockSessionStore,
+    mock_prompt_resolver: MockPromptResolver,
+    mock_logger_factory: MockLoggerFactory,
+) -> None:
+    mock_verify_agent.messages_to_return = [
+        AgentMessage(role="assistant", content="Initial response"),
+    ]
+    mock_ui.input_queue = ["resumed message"]
+    mock_ui.should_interrupt = True
+
+    loop = ExecutionLoop(
+        execute_agent=mock_execute_agent,  # type: ignore[arg-type]
+        verify_agent=mock_verify_agent,  # type: ignore[arg-type]
+        ui=mock_ui,  # type: ignore[arg-type]
+        session_store=mock_session_store,  # type: ignore[arg-type]
+        prompt_resolver=mock_prompt_resolver,  # type: ignore[arg-type]
+        logger_factory=mock_logger_factory,  # type: ignore[arg-type]
+    )
+
+    async def simulate_interrupt_and_resume() -> None:
+        await anyio.sleep(0.05)
+        loop.request_interrupt()
+        await anyio.sleep(0.05)
+        loop.clear_interrupt()
+
+    async with anyio.create_task_group() as tg:
+        tg.start_soon(lambda: loop._verify_phase("test prompt", None))
+        tg.start_soon(simulate_interrupt_and_resume)
+
+    assert "resumed message" in mock_verify_agent.sent_messages
+    assert mock_verify_agent.closed
+
+
+async def test_verify_phase__normal_completion__ends_phase(
+    mock_execute_agent: MockAgentWithResume,
+    mock_verify_agent: MockAgentWithResume,
+    mock_ui: MockUIWithInput,
+    mock_session_store: MockSessionStore,
+    mock_prompt_resolver: MockPromptResolver,
+    mock_logger_factory: MockLoggerFactory,
+) -> None:
+    mock_verify_agent.messages_to_return = [
+        AgentMessage(role="assistant", content="Response 1"),
+        AgentMessage(role="assistant", content="Response 2"),
+    ]
+
+    loop = ExecutionLoop(
+        execute_agent=mock_execute_agent,  # type: ignore[arg-type]
+        verify_agent=mock_verify_agent,  # type: ignore[arg-type]
+        ui=mock_ui,  # type: ignore[arg-type]
+        session_store=mock_session_store,  # type: ignore[arg-type]
+        prompt_resolver=mock_prompt_resolver,  # type: ignore[arg-type]
+        logger_factory=mock_logger_factory,  # type: ignore[arg-type]
+    )
+
+    feedback, fully_done = await loop._verify_phase("test prompt", None)
+
+    assert mock_verify_agent.closed
+    assert len(mock_ui.messages) == 2
+    assert "Response 1" in feedback
+    assert "Response 2" in feedback
+
+
 class MockAgentWithResume:
     def __init__(self) -> None:
         self.supports_interactive = True
@@ -231,3 +298,8 @@ def mock_prompt_resolver() -> MockPromptResolver:
 @pytest.fixture()
 def mock_logger_factory() -> MockLoggerFactory:
     return MockLoggerFactory()
+
+
+@pytest.fixture()
+def mock_verify_agent() -> MockAgentWithResume:
+    return MockAgentWithResume()

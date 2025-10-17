@@ -7,34 +7,34 @@ from sisyphus.ui.tui.events import AgentInterruptEvent, InputReadyEvent
 
 
 class InputBar(Input):
-    """메시지 입력창 위젯.
+    """Message input widget.
 
-    Enter 키로 메시지를 큐에 추가하고, Agent가 get_input() 호출하면 전달됩니다.
-    UP 키로 큐잉된 메시지 또는 마지막 전송 메시지를 편집할 수 있습니다.
-    ESC 키로 에이전트를 일시 중단할 수 있습니다.
-    큐 상태는 placeholder에 표시됩니다.
+    Adds messages to queue on Enter key, delivered when Agent calls get_input().
+    UP key allows editing queued message or last sent message.
+    ESC key pauses the agent.
+    Queue status is displayed in placeholder.
     """
 
     def __init__(self) -> None:
-        """InputBar 위젯 초기화."""
+        """Initialize InputBar widget."""
         super().__init__(
-            placeholder="메시지를 입력하세요... (ESC: 중단)",
+            placeholder="Type a message... (ESC: pause)",
             id="input-bar",
         )
         self._queued_message: str = ""
         self._last_sent: str = ""
-        self._original_placeholder = "메시지를 입력하세요... (ESC: 중단)"
+        self._original_placeholder = "Type a message... (ESC: pause)"
         self._agent_paused = False
 
     def on_mount(self) -> None:
-        """위젯이 마운트될 때 focus 설정."""
+        """Set focus when widget is mounted."""
         self.call_after_refresh(self.focus)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        """Enter 키 입력 시 메시지를 큐에 추가.
+        """Add message to queue on Enter key press.
 
         Args:
-            event: Input.Submitted 이벤트 객체
+            event: Input.Submitted event object
         """
         message = event.value.strip()
         if message:
@@ -60,7 +60,7 @@ class InputBar(Input):
                 self.placeholder = self._original_placeholder
 
     def _update_placeholder(self) -> None:
-        """큐 상태를 placeholder에 표시."""
+        """Display queue status in placeholder."""
         if self._queued_message:
             lines = self._queued_message.split("\n")
             preview = lines[0][:50]
@@ -73,16 +73,16 @@ class InputBar(Input):
             self.placeholder = self._original_placeholder
 
     async def on_key(self, event: Key) -> None:
-        """키 이벤트 처리 (UP 키, ESC 키).
+        """Handle key events (UP key, ESC key).
 
         Args:
-            event: Key 이벤트 객체
+            event: Key event object
         """
         if event.key == "escape":
             event.stop()
             if not self._agent_paused:
                 self._agent_paused = True
-                self.placeholder = "⏸ 일시 중단됨 - 메시지 입력하면 재개"
+                self.placeholder = "⏸ Paused - send message to resume"
                 self.app.post_message(AgentInterruptEvent())
                 self.log.info("Agent interrupted by ESC key")
         elif event.key == "up":
@@ -96,10 +96,10 @@ class InputBar(Input):
             event.stop()
 
     def get_and_clear_queue(self) -> str | None:
-        """큐잉된 메시지를 반환하고 큐를 비움.
+        """Return queued message and clear queue.
 
         Returns:
-            큐잉된 메시지 또는 None (큐 비어있을 때)
+            Queued message or None (when queue is empty)
         """
         if self._queued_message:
             msg = self._queued_message

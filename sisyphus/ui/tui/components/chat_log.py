@@ -6,60 +6,60 @@ from textual.widgets import RichLog
 
 
 class ChatLog(RichLog):
-    """채팅/진행상황 로그 위젯.
+    """Chat/progress log widget.
 
-    RichLog 위젯을 상속하여 Execute/Verify 메시지를 색상으로 구분하여 표시합니다.
-    사용자가 스크롤을 올리면 자동 스크롤을 중지하고, 맨 아래로 내리면 다시 자동 스크롤을 활성화합니다.
+    Inherits from RichLog widget to display Execute/Verify messages with color distinction.
+    Stops auto-scrolling when user scrolls up, resumes auto-scrolling when scrolled to bottom.
     """
 
     def __init__(self) -> None:
-        """ChatLog 위젯 초기화.
+        """Initialize ChatLog widget.
 
-        Rich 마크업, 구문 강조 기능을 활성화하고, 자동 스크롤은 항상 활성화합니다.
+        Enables Rich markup, syntax highlighting, and auto-scrolling.
         """
         super().__init__(
             id="chat-log",
             highlight=True,
             markup=True,
-            auto_scroll=True,  # 자동 스크롤 활성화
+            auto_scroll=True,
             wrap=True,
         )
 
     def write_user_message(self, content: str) -> None:
-        """사용자 메시지 표시.
+        """Display user message.
 
         Args:
-            content: 표시할 사용자 메시지 내용
+            content: User message content to display
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [green]👤 USER:[/green] {content}")
         self.scroll_end()
 
     def write_execute_message(self, content: str) -> None:
-        """Execute 메시지 작성.
+        """Write Execute message.
 
         Args:
-            content: 표시할 메시지 내용
+            content: Message content to display
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [yellow]▶ EXECUTE:[/yellow] {content}")
         self.scroll_end()
 
     def write_verify_message(self, content: str) -> None:
-        """Verify 메시지 작성.
+        """Write Verify message.
 
         Args:
-            content: 표시할 메시지 내용
+            content: Message content to display
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [cyan]✓ VERIFY:[/cyan] {content}")
         self.scroll_end()
 
     def write_completion_message(self, content: str) -> None:
-        """작업 완료 메시지 작성.
+        """Write task completion message.
 
         Args:
-            content: 표시할 완료 메시지 내용
+            content: Completion message content to display
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [bold green]✅ COMPLETED:[/bold green] {content}")

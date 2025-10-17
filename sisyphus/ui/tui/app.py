@@ -23,27 +23,27 @@ if TYPE_CHECKING:
 
 
 class UpdateStatusMessage(Message):
-    """상태 업데이트 메시지."""
+    """Status update message."""
 
     def __init__(self, status: str) -> None:
         """Initialize UpdateStatusMessage.
 
         Args:
-            status: 상태 메시지
+            status: Status message
         """
         super().__init__()
         self.status = status
 
 
 class ShowAgentMessage(Message):
-    """에이전트 메시지 표시."""
+    """Display agent message."""
 
     def __init__(self, message: "AgentMessage", source: str) -> None:
         """Initialize ShowAgentMessage.
 
         Args:
-            message: 에이전트 메시지
-            source: 메시지 소스 ('execute' or 'verify')
+            message: Agent message
+            source: Message source ('execute' or 'verify')
         """
         super().__init__()
         self.message = message
@@ -51,23 +51,23 @@ class ShowAgentMessage(Message):
 
 
 class ShutdownRequestMessage(Message):
-    """종료 요청 메시지 (ExecutionLoop → TUI)."""
+    """Shutdown request message (ExecutionLoop → TUI)."""
 
     pass
 
 
 class CompletionMessage(Message):
-    """작업 완료 메시지 (ExecutionLoop → TUI).
+    """Task completion message (ExecutionLoop → TUI).
 
-    화면을 닫지 않고 완료 메시지만 표시합니다.
+    Displays completion message without closing the screen.
     """
 
     def __init__(self, message: str, elapsed_seconds: float | None = None) -> None:
         """Initialize CompletionMessage.
 
         Args:
-            message: 완료 메시지
-            elapsed_seconds: 작업 소요 시간 (초)
+            message: Completion message
+            elapsed_seconds: Task elapsed time (seconds)
         """
         super().__init__()
         self.message = message
@@ -75,10 +75,10 @@ class CompletionMessage(Message):
 
 
 class TUI(App[None]):
-    """OpenCode 스타일 TUI (UIProtocol 구현).
+    """OpenCode-style TUI (UIProtocol implementation).
 
-    Textual 기반 TUI로 Execute/Verify 진행상황을 실시간 표시하고
-    사용자 입력을 메시지 큐로 관리합니다.
+    Textual-based TUI that displays Execute/Verify progress in real-time
+    and manages user input via message queue.
     """
 
     show_header = False
@@ -127,10 +127,10 @@ class TUI(App[None]):
     ]
 
     def __init__(self, theme: ThemeName = "mocha") -> None:
-        """TUI 앱 초기화.
+        """Initialize TUI app.
 
         Args:
-            theme: 테마 이름 ("mocha" | "latte")
+            theme: Theme name ("mocha" | "latte")
         """
         super().__init__()
         self.theme_name = theme
@@ -147,7 +147,7 @@ class TUI(App[None]):
         self._execution_loop: ExecutionLoop | None = None
 
     def compose(self) -> ComposeResult:
-        """레이아웃 구성."""
+        """Compose layout."""
         yield from compose_main_layout()
 
     def set_task_validator(self, task_validator: TaskValidator | None) -> None:
@@ -196,7 +196,7 @@ class TUI(App[None]):
             self.log.error(f"Error monitoring todolist: {e}")
 
     async def on_mount(self) -> None:
-        """초기화."""
+        """Initialize."""
 
         mocha_theme = THEMES["mocha"]
         latte_theme = THEMES["latte"]
@@ -211,10 +211,10 @@ class TUI(App[None]):
         self.ready_event.set()
 
     async def on_key(self, event: Key) -> None:
-        """Ctrl+C, Ctrl+D, Ctrl+Q 처리.
+        """Handle Ctrl+C, Ctrl+D, Ctrl+Q.
 
         Args:
-            event: 키 이벤트
+            event: Key event
         """
         if event.key == "ctrl+c":
             await self._handle_interrupt()
@@ -222,7 +222,7 @@ class TUI(App[None]):
             await self._safe_shutdown()
 
     async def _handle_interrupt(self) -> None:
-        """Ctrl+C 인터럽트 처리."""
+        """Handle Ctrl+C interrupt."""
         current_time = datetime.now()
 
         if self.last_ctrl_c_time and (current_time - self.last_ctrl_c_time).total_seconds() < 1.0:
@@ -237,7 +237,7 @@ class TUI(App[None]):
             status.update_status("⚠️ Press Ctrl+C once more to exit")
 
     async def _safe_shutdown(self) -> None:
-        """안전한 종료 절차."""
+        """Safe shutdown procedure."""
         status = self.query_one(StatusPanel)
         status.update_status("🔄 Shutting down...")
 
@@ -245,7 +245,7 @@ class TUI(App[None]):
         self.exit()
 
     async def on_update_status_message(self, message: UpdateStatusMessage) -> None:
-        """상태 업데이트 핸들러."""
+        """Status update handler."""
         try:
             status_panel = self.query_one(StatusPanel)
             status_panel.update_status(message.status)
@@ -253,7 +253,7 @@ class TUI(App[None]):
             self.log.error(f"Failed to update status: {e}")
 
     async def on_show_agent_message(self, message: ShowAgentMessage) -> None:
-        """에이전트 메시지 표시 핸들러."""
+        """Agent message display handler."""
         try:
             chat_log = self.query_one(ChatLog)
             match message.source:
@@ -265,98 +265,98 @@ class TUI(App[None]):
             self.log.error(f"Failed to show message: {e}")
 
     async def on_shutdown_request_message(self, message: ShutdownRequestMessage) -> None:
-        """종료 요청 핸들러."""
+        """Shutdown request handler."""
         await self._safe_shutdown()
 
     async def on_completion_message(self, message: CompletionMessage) -> None:
-        """작업 완료 메시지 핸들러."""
+        """Task completion message handler."""
         try:
             chat_log = self.query_one(ChatLog)
 
             completion_text = message.message
             if message.elapsed_seconds is not None:
                 elapsed_str = self._format_elapsed_time(message.elapsed_seconds)
-                completion_text = f"{message.message} (소요 시간: {elapsed_str})"
+                completion_text = f"{message.message} (Elapsed time: {elapsed_str})"
 
             chat_log.write_completion_message(completion_text)
             status_panel = self.query_one(StatusPanel)
-            status_panel.update_status("✅ 모든 작업이 완료되었습니다. Ctrl+C 두 번으로 종료할 수 있습니다.")
+            status_panel.update_status("✅ All tasks completed. Press Ctrl+C twice to exit.")
         except Exception as e:
             self.log.error(f"Failed to show completion message: {e}")
 
     def _format_elapsed_time(self, seconds: float) -> str:
-        """Format elapsed time in human-readable Korean format."""
+        """Format elapsed time in human-readable format."""
         hours = int(seconds // 3600)
         minutes = int((seconds % 3600) // 60)
         secs = int(seconds % 60)
 
         parts = []
         if hours > 0:
-            parts.append(f"{hours}시간")
+            parts.append(f"{hours} hour(s)")
         if minutes > 0:
-            parts.append(f"{minutes}분")
+            parts.append(f"{minutes} minute(s)")
         if secs > 0 or not parts:
-            parts.append(f"{secs}초")
+            parts.append(f"{secs} second(s)")
 
         return " ".join(parts)
 
     async def on_agent_interrupt_event(self, message: AgentInterruptEvent) -> None:
-        """에이전트 중단 이벤트 핸들러."""
+        """Agent interrupt event handler."""
         self.agent_interrupted = True
 
         status_panel = self.query_one(StatusPanel)
-        status_panel.update_status("⏸ 에이전트 일시 중단됨 (메시지 입력 시 재개)")
+        status_panel.update_status("⏸ Agent paused (resume by sending message)")
 
         if self._execution_loop is not None:
             self._execution_loop.request_interrupt()
 
         chat_log = self.query_one(ChatLog)
-        chat_log.write("[yellow]⏸ ESC 키로 중단됨. 메시지를 입력하면 재개됩니다.[/yellow]")
+        chat_log.write("[yellow]⏸ Paused by ESC key. Send a message to resume.[/yellow]")
 
     async def on_input_ready_event(self, message: InputReadyEvent) -> None:
-        """InputBar에서 Enter 눌렀을 때 get_input() 깨우기."""
+        """Wake up get_input() when Enter is pressed in InputBar."""
         if self.agent_interrupted:
             self.agent_interrupted = False
             status_panel = self.query_one(StatusPanel)
-            status_panel.update_status("▶ 에이전트 재개됨")
+            status_panel.update_status("▶ Agent resumed")
 
             if self._execution_loop is not None:
                 self._execution_loop.clear_interrupt()
 
         self._input_ready_event.set()
 
-    # UIProtocol 구현
+    # UIProtocol implementation
     async def initialize(self) -> None:
-        """UI 초기화."""
+        """Initialize UI."""
         self._initialized = True
 
     async def show_message(self, message: "AgentMessage", source: str) -> None:
-        """메시지 표시 (Thread-Safe).
+        """Display message (Thread-Safe).
 
         Args:
-            message: 표시할 에이전트 메시지
-            source: 메시지 소스 ('execute' or 'verify')
+            message: Agent message to display
+            source: Message source ('execute' or 'verify')
         """
         await self.ready_event.wait()
         self.post_message(ShowAgentMessage(message, source))
 
     async def show_status(self, status: str) -> None:
-        """상태 표시 (Thread-Safe).
+        """Display status (Thread-Safe).
 
         Args:
-            status: 표시할 상태 메시지
+            status: Status message to display
         """
         await self.ready_event.wait()
         self.post_message(UpdateStatusMessage(status))
 
     async def get_input(self) -> str | None:
-        """InputBar 큐에서 메시지를 가져옴.
+        """Get message from InputBar queue.
 
-        큐가 비어있으면 다음 Enter를 대기합니다.
-        Agent가 이 메서드를 호출하면 자동으로 큐잉된 메시지를 전송합니다.
+        Waits for next Enter if queue is empty.
+        Automatically sends queued message when Agent calls this method.
 
         Returns:
-            큐잉된 메시지 또는 None (종료 시)
+            Queued message or None (on shutdown)
         """
         while True:
             try:

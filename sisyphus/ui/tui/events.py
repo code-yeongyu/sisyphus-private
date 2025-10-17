@@ -4,12 +4,12 @@ from textual.message import Message
 
 
 class InputReadyEvent(Message):
-    """사용자가 Enter를 눌러 입력이 준비되었음을 알림."""
+    """Notifies that user input is ready (Enter key pressed)."""
 
 
 class AgentInterruptEvent(Message):
-    """에이전트 중단 요청 이벤트."""
+    """Agent interrupt request event."""
 
 
 class AgentResumeEvent(Message):
-    """에이전트 재개 요청 이벤트."""
+    """Agent resume request event."""

@@ -9,7 +9,7 @@ from sisyphus.ui.tui.components.status_panel import StatusPanel
 
 
 def compose_main_layout() -> ComposeResult:
-    """메인 레이아웃 구성."""
+    """Compose the main layout."""
     yield Container(
         VerticalScroll(
             ChatLog(),

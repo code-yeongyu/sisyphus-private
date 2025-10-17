@@ -32,8 +32,8 @@ is_all_goals_accomplished = FALSE
 parallel_requested = TRUE
 
 # 현재 진행 중인 작업
-- Phase 2 - Task 2: Translate CLI module docstrings and comments (sisyphus/cli.py) - IN PROGRESS ⚙️
-  - 작업 내용: sisyphus/cli.py의 모든 docstring과 주석을 영어로 번역 (UI 메시지 제외)
+- Phase 2 - Task 3: Translate ExecutionLoop docstrings (sisyphus/core/loop.py) - IN PROGRESS ⚙️
+  - 작업 내용: sisyphus/core/loop.py의 모든 docstring과 주석을 영어로 번역
 
 # 필요한 사전 지식
 

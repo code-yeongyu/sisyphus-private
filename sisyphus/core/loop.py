@@ -248,62 +248,77 @@ class ExecutionLoop:
 
         await self.session_store.save_session(agent_type, actual_session_id)
 
+        # 초기 프롬프트 전송 (while 루프 밖 - 한 번만)
         await self.execute_agent.send(final_prompt)
         self.execute_logger.info("Prompt sent")
 
-        cancel_scope = anyio.CancelScope()
-        self._current_cancel_scope = cancel_scope
+        # 무한 resume 지원 루프
+        while True:
+            # 매 루프마다 새로운 CancelScope 생성
+            self._current_cancel_scope = anyio.CancelScope()
+            monitor_scope = self._current_cancel_scope
 
-        try:
-            with cancel_scope:
+            async def consume_stream() -> None:
+                """Stream에서 메시지를 소비하고 UI에 표시"""
+                assert self.execute_logger is not None
                 stream = self.execute_agent.stream()
                 async for message in stream:
                     if self._interrupt_flag:
-                        cancel_scope.cancel()
+                        # interrupt 발생 - monitor_input 종료 후 루프 탈출
+                        monitor_scope.cancel()
                         break
 
                     await self.ui.show_message(message, source="execute")
                     self.execute_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
-        except anyio.get_cancelled_exc_class():
-            await self.ui.show_status("⏸ 작업이 중단되었습니다")
-            if hasattr(self, "_resume_event") and self._resume_event is not None:
+
+                # stream 정상 종료 - monitor_input을 cancel하여 Task Group 종료
+                monitor_scope.cancel()
+
+            async def monitor_input() -> None:
+                """사용자 입력을 모니터링하고 Agent로 전송"""
+                assert self.execute_logger is not None
+                with monitor_scope:
+                    while True:
+                        msg: str | None = await self.ui.get_input()
+                        if msg:
+                            self.execute_logger.info(f"Sending user message: {msg[:100]}...")
+                            await self.execute_agent.send(msg)
+
+            try:
+                async with anyio.create_task_group() as tg:
+                    tg.start_soon(consume_stream)
+                    tg.start_soon(monitor_input)
+            except SessionLimitError as e:
+                self.execute_logger.warning(f"Session limit reached: {e}")
+                await self.ui.show_status("⚠️  Session limit reached")
+
+                if e.reset_time:
+                    await sleep_until_reset(e.reset_time, self.ui)
+                else:
+                    await self.ui.show_status("Reset time unknown, waiting until next hour...")
+                    await sleep_until_next_hour(self.ui)
+
+                raise
+
+            # Task Group 정상 종료 - interrupt 여부 확인
+            if self._interrupt_flag:
+                # Interrupt 처리
+                assert self._resume_event is not None
+                assert self.execute_logger is not None
+                await self.ui.show_status("⏸ 작업이 중단되었습니다")
                 await self._resume_event.wait()
-            await self.ui.show_status("▶ 작업을 재개합니다")
 
-            resumed_user_message = await self.ui.get_input()
-            if resumed_user_message:
-                self.execute_logger.info(f"Sending new message after resume: {resumed_user_message[:100]}...")
-                await self.execute_agent.send(resumed_user_message)
+                resumed_msg: str | None = await self.ui.get_input()
+                if resumed_msg:
+                    self.execute_logger.info(f"Sending resumed message: {resumed_msg[:100]}...")
+                    await self.execute_agent.send(resumed_msg)
 
-                resumed_cancel_scope = anyio.CancelScope()
-                self._current_cancel_scope = resumed_cancel_scope
-
-                try:
-                    with resumed_cancel_scope:
-                        resumed_stream = self.execute_agent.stream()
-                        async for message in resumed_stream:
-                            if self._interrupt_flag:
-                                resumed_cancel_scope.cancel()
-                                break
-
-                            await self.ui.show_message(message, source="execute")
-                            self.execute_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
-                except anyio.get_cancelled_exc_class():
-                    await self.ui.show_status("⏸ 작업이 다시 중단되었습니다")
-                    if hasattr(self, "_resume_event") and self._resume_event is not None:
-                        await self._resume_event.wait()
-                    await self.ui.show_status("▶ 작업을 재개합니다")
-        except SessionLimitError as e:
-            self.execute_logger.warning(f"Session limit reached: {e}")
-            await self.ui.show_status("⚠️  Session limit reached")
-
-            if e.reset_time:
-                await sleep_until_reset(e.reset_time, self.ui)
+                self._interrupt_flag = False
+                await self.ui.show_status("▶ 작업을 재개합니다")
+                # while 루프 재시작
             else:
-                await self.ui.show_status("Reset time unknown, waiting until next hour...")
-                await sleep_until_next_hour(self.ui)
-
-            raise
+                # 정상 종료 - while 루프 탈출
+                break
 
         # stream() 완료 후 실제 session_id 업데이트
         final_session_id = self.execute_agent.session_id

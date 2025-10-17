@@ -82,7 +82,7 @@ wrap=True,  # 줄바꿈, 좌우 스크롤 없음
 - **수정 불필요** ✅
 
 # 작업 시작 여부
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 모든 목표 달성 여부
 is_all_goals_accomplished = FALSE
@@ -91,11 +91,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 작업 시작 전입니다.
-   - 작업을 시작하면 위의 `is_execution_started` 의 값을 TRUE 로 바꾸세요.
-   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
-   - **plan reviewer 에게 OKAY 사인을 받았더라도 절대 시작하지마십시오**
-   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
+- Task 1: ExecutionLoop 메시지 전송 개선 (1.1 ~ 1.8)
 
 # 필요한 사전 지식
 

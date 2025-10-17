@@ -1,277 +1,245 @@
-# 사용자의 최초 요청 (기록용)
-스크롤 문제와 Execute/Verify phase 전환 버그를 수정하는 작업계획서 작성
-
-## 사용자가 이후에 추가 요청한 내용들 (기록용)
-- 스크롤 여전히 이상함 (화면 바는 계속 내려가는데 스크롤바가 맨 위에있고 조정도 안됨)
-- 메시지를 다시 보내어 재개하는 시점에 execute 에서 verify 로 넘어가버림 (조건이 충족되면)
-    - 이것은 옳지않음: 재개할 경우 원래 작업하던 execute 로 resume 되는게 맞음
-    - 마찬가지로 verify 시점에 메시지 보내면 걔한테 보내주고, esc 해서 멈췄으면 걔한테 resume 되는게 맞음
-
-# 디테일 레벨: balanced
-
 # 작업 목표
 
-1. **ChatLog 스크롤바 동기화 문제 수정**: 스크롤바가 콘텐츠와 동기화되지 않는 문제 해결
-2. **Phase 전환 버그 수정**: Execute phase가 interrupt된 후 resume 시에도 execute phase를 유지하도록 수정
-
-# 작업 배경
-
-## 현재 문제 분석
-
-### 1. 스크롤바 동기화 문제
-- **현상**: 화면 콘텐츠는 아래로 이동하지만 스크롤바는 맨 위에 고정되고 조작 불가
-- **원인**: Textual RichLog의 `auto_scroll=True`만으로는 스크롤바 UI와 콘텐츠 위치가 완전히 동기화되지 않음
-- **가설**: 메시지 추가 후 명시적인 스크롤 위치 조정이 필요할 수 있음
-
-### 2. Phase 전환 버그의 실제 원인
-**코드 분석 결과 (loop.py:256-324):**
-```python
-# _execute_phase 내부
-while True:  # line 256
-    # Task Group으로 stream 소비와 input 모니터링
-    async with anyio.create_task_group() as tg:
-        tg.start_soon(consume_stream)
-        tg.start_soon(monitor_input)
-
-    if self._interrupt_flag:  # line 307
-        # interrupt 처리
-        await self._resume_event.wait()  # line 312
-        resumed_msg = await self.ui.get_input()  # line 314
-        if resumed_msg:
-            await self.execute_agent.send(resumed_msg)  # line 317
-        # while 루프 재시작 - stream 다시 소비
-    else:
-        break  # line 324 - 정상 종료 시만 탈출
-```
-
-**핵심 문제:**
-- Interrupt 시: while 루프가 계속 실행되며 resume을 기다림 ✓
-- Resume 시: 사용자 메시지를 에이전트에 전송 → 에이전트 응답 → **stream 종료**
-- Stream 종료 시: `monitor_scope.cancel()` (line 275) → Task Group 종료 → `else` 분기로 → **break** (line 324)
-- **문제: Resume 후 에이전트 응답이 끝나면 stream이 정상 종료로 처리되어 phase가 완료됨**
-- 결과: `_execute_phase()` 함수 종료 → verify 조건 체크 → 의도치 않은 phase 전환
+CLI 구조 변경을 통한 명령어 체계 개선:
+1. `sisyphus run` → `sisyphus work`로 커맨드 이름 변경
+2. `sisyphus reset` 커맨드 추가 (생성 파일 정리)
+   - 기본: `sessions/`, `logs/` 삭제
+   - 옵션: `ai-todolist.md`, `notepad.md` 추가 삭제
 
 # 작업 시작 여부
-is_execution_started = TRUE
+is_execution_started = FALSE
 
 # 모든 목표 달성 여부
-is_all_goals_accomplished = TRUE
+is_all_goals_accomplished = FALSE
 
 # 병렬 실행 여부
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-Adding Verify phase resume tests to test_loop__phase_resume.py
-
-# 필요한 사전 지식
-
-## 기술 스택
-- **TUI Framework**: Textual 1.0+ (asyncio 기반)
-- **Widget**: RichLog를 상속받은 ChatLog 위젯
-- **비동기**: anyio 4.11+ (task group, cancel scope)
-- **테스트**: pytest 8.3+ (현재 454개 테스트 통과)
-
-## Textual RichLog 스크롤 메서드
-- `write()`: 콘텐츠 추가
-- `scroll_to()`: 특정 위치로 스크롤
-- `scroll_home()`: 맨 위로
-- `scroll_end()`: 맨 아래로 (이 메서드의 존재 여부는 확인 필요)
-
-## 파일 구조 및 역할
-- `sisyphus/ui/tui/components/chat_log.py`: 메시지 로그 표시 위젯
-- `sisyphus/core/loop.py`: ExecutionLoop, phase 전환 로직
-- `sisyphus/core/tests/`: 기존 테스트 파일들 (454개 테스트)
-
-## 맥락 이해를 위해 참고해야 할 파일들
-
-### 1. sisyphus/core/loop.py (_execute_phase 메서드)
-- **역할**: Execute phase 실행 및 interrupt/resume 처리
-- **참고할 부분**: line 203-332 (_execute_phase 전체)
-- **실제 코드 구조**:
-  ```python
-  async def _execute_phase(self, prompt: str, extra: str | None = None) -> None:
-      # ... 초기화 ...
-      await self.execute_agent.send(final_prompt)  # line 252
-
-      # 무한 resume 지원 루프
-      while True:  # line 256
-          async with anyio.create_task_group() as tg:
-              # stream 소비와 input 모니터링
-
-          if self._interrupt_flag:  # line 307
-              # interrupt 처리 후 while 루프 재시작
-          else:
-              break  # line 324 - 정상 종료 시 함수 종료
-
-      # 함수 종료 (line 332)
-  ```
-
-### 2. sisyphus/core/loop.py (_run_unified_mode 메서드)
-- **역할**: Execute → Verify phase 전환 로직
-- **주의사항**: line 154에서 _execute_phase 호출 후 바로 verify 조건 체크 (line 159-164)
+- 작업 시작 전입니다.
+   - 작업을 시작하면 위의 `is_execution_started` 의 값을 TRUE 로 바꾸세요.
+   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
+   - **plan reviewer 에게 OKAY 사인을 받았더라도 절대 시작하지마십시오**
+   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
 
 # 작업 계획
 
-## PRDs & Structures
+## 파일: `/Users/yeongyu/local-workspaces/sisyphus/sisyphus/cli.py`
 
-### Phase 완료 상태 추적 메커니즘
-```mermaid
-stateDiagram-v2
-    [*] --> ExecutePhase
-    ExecutePhase --> Interrupt: ESC key
-    Interrupt --> Resume: User input
-    Resume --> ExecutePhase: Continue (NOT completed)
-    ExecutePhase --> PhaseCompleted: Normal stream end
-    PhaseCompleted --> CheckVerify: Task validator check
-    CheckVerify --> VerifyPhase: Conditions met
-    CheckVerify --> End: No verify needed
+**현재 파일 구조 (414줄)**:
+- line 1-11: import stdlib
+- line 13-26: import 3rd-party & internal
+- line 28-34: constants (app, console, error_console)
+- line 314-409: run 커맨드 정의
+- line 412-413: `if __name__ == "__main__":`
+
+### 변경 1: import 섹션에 shutil 추가
+
+**위치**: line 5와 line 6 사이
+**현재 (line 5-6)**:
+```python
+import json
+import time
 ```
 
-### 스크롤 동기화 플로우
-```mermaid
-sequenceDiagram
-    participant User
-    participant ChatLog
-    participant RichLog
-    participant ScrollBar
-
-    User->>ChatLog: write_message()
-    ChatLog->>RichLog: write(content)
-    ChatLog->>RichLog: scroll_to(max_y)
-    RichLog->>ScrollBar: update position
-    ScrollBar-->>User: visual sync
+**변경 후**:
+```python
+import json
+import shutil
+import time
 ```
 
-## 구현 세부사항
+**이유**: reset 커맨드에서 `shutil.rmtree()` 사용
 
-1. **Resume 상태 추적**: Resume 후 stream 종료를 정상 완료와 구분하기 위한 플래그 추가
-   - `_resumed_once`: Resume이 발생했는지 추적
-   - Resume 후 첫 번째 stream 종료는 phase 완료로 처리하지 않음
-   - 두 번째 이후부터는 정상 완료로 처리
+### 변경 2: run 커맨드 이름을 work로 변경
 
-2. **스크롤 동기화**: 각 write 후 `scroll_end()` 메서드 호출
-3. **테스트 전략**: Mock 기반 단위 테스트 + 수동 통합 테스트
+**위치**: line 314
+**현재**:
+```python
+@app.command(name="run")
+```
 
-## 프로젝트 커밋 메시지 스타일
-- 소문자 시작, 명령형 동사
-- 예: `fix scroll bar sync issue with explicit positioning`
-- 예: `fix phase transition bug by tracking completion status`
+**변경 후**:
+```python
+@app.command(name="work")
+```
+
+**주의**: 함수명은 `def run(` 그대로 유지 (Typer는 decorator의 name 파라미터 사용)
+
+### 변경 3: docstring 업데이트
+
+**위치**: line 342
+**현재**:
+```python
+    """Run Sisyphus multi-agent system."""
+```
+
+**변경 후**:
+```python
+    """Work with Sisyphus multi-agent system."""
+```
+
+### 변경 4: reset 커맨드 추가
+
+**위치**: line 411과 line 412 사이 (run 함수 끝과 `if __name__` 사이)
+**추가할 코드 (완전한 함수)**:
+```python
+
+
+@app.command(name="reset")
+def reset(
+    include_task_specs: bool = typer.Option(
+        False,
+        "--include-task-specs",
+        help="Also delete ai-todolist.md and notepad.md"
+    ),
+) -> None:
+    """Clean up generated files (sessions/, logs/, optionally docs)."""
+    base_targets = [Path("sessions"), Path("logs")]
+    doc_targets = [Path("ai-todolist.md"), Path("notepad.md")]
+    targets = base_targets + (doc_targets if include_task_specs else [])
+
+    for target in targets:
+        try:
+            if target.is_dir():
+                shutil.rmtree(target)
+                console.print(f"[green]✓[/green] Deleted directory: {target}")
+            elif target.is_file():
+                target.unlink()
+                console.print(f"[green]✓[/green] Deleted file: {target}")
+            else:
+                console.print(f"[yellow]⊘[/yellow] Not found: {target}")
+        except (PermissionError, OSError) as e:
+            error_console.print(f"[red]✗[/red] Failed to delete {target}: {e}")
+
+    console.print("\n[bold green]Reset complete![/bold green]")
+
+```
+
+**참고**:
+- `Path`: line 9에서 이미 import됨
+- `console`, `error_console`: line 33-34에서 이미 정의됨
+- `shutil`: 변경 1에서 추가함
+- 함수는 2줄 공백 후 추가 (PEP 8)
+
+## 예상 결과
+
+### sisyphus --help 출력
+```
+Usage: sisyphus [OPTIONS] COMMAND [ARGS]...
+
+  Sisyphus Multi-Agent System
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  work   Work with Sisyphus multi-agent system.
+  reset  Clean up generated files (sessions/, logs/, optionally docs).
+```
+
+### sisyphus reset 출력 (파일 존재 시)
+```
+✓ Deleted directory: sessions
+✓ Deleted directory: logs
+
+Reset complete!
+```
+
+### sisyphus reset --include-task-specs 출력 (모든 파일 존재 시)
+```
+✓ Deleted directory: sessions
+✓ Deleted directory: logs
+✓ Deleted file: ai-todolist.md
+✓ Deleted file: notepad.md
+
+Reset complete!
+```
+
+### sisyphus reset 출력 (파일 없을 시)
+```
+⊘ Not found: sessions
+⊘ Not found: logs
+
+Reset complete!
+```
 
 # TODOs
 
-- [x] 1. ChatLog 스크롤바 동기화 문제 수정 및 테스트
-   - [x] 1.1 구현: `sisyphus/ui/tui/components/chat_log.py` 수정
-      ```python
-      def write_user_message(self, content: str) -> None:
-          timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-          self.write(f"[dim]{timestamp}[/dim] [green]👤 USER:[/green] {content}")
-          self.scroll_end()  # scroll_end 메서드 사용 (이미 확인됨)
+- [ ] 1. CLI 구조 변경 및 reset 커맨드 구현
+   - [ ] 1.1 구현: `sisyphus/cli.py` 수정
+      - [ ] line 5-6 사이에 `import shutil` 추가
+      - [ ] line 314: `@app.command(name="run")` → `@app.command(name="work")`
+      - [ ] line 342: `"""Run Sisyphus multi-agent system."""` → `"""Work with Sisyphus multi-agent system."""`
+      - [ ] line 411-412 사이에 reset 커맨드 전체 추가 (위 코드 참조)
+   - [ ] 1.2 수동 테스트: 더미 파일 생성 및 CLI 테스트
+      ```bash
+      # 테스트 준비: 더미 파일 생성
+      mkdir -p sessions logs
+      echo '{"test": "data"}' > sessions/test.json
+      echo 'log content' > logs/test.log
+      touch ai-todolist.md notepad.md
+
+      # 테스트 1: help 확인
+      uv run sisyphus --help
+      # 예상: "work", "reset" 커맨드 표시
+
+      # 테스트 2: work help 확인
+      uv run sisyphus work --help
+      # 예상: 기존 run 옵션들 전부 표시
+
+      # 테스트 3: reset (기본)
+      uv run sisyphus reset
+      # 예상: sessions/, logs/ 삭제 메시지
+
+      # 테스트 4: reset --include-task-specs (더미 재생성 후)
+      mkdir -p sessions logs && touch ai-todolist.md notepad.md
+      uv run sisyphus reset --include-task-specs
+      # 예상: 모든 파일 삭제 메시지
+
+      # 테스트 5: reset (파일 없을 때)
+      uv run sisyphus reset
+      # 예상: "Not found" 메시지
       ```
-   - [x] 1.2 나머지 write 메서드들도 동일하게 수정
-      - write_execute_message에 `self.scroll_end()` 추가
-      - write_verify_message에 `self.scroll_end()` 추가
-      - write_completion_message에 `self.scroll_end()` 추가
-   - [x] 1.3 수동 테스트: `uv run sisyphus run --execute claude`
-      - 메시지 입력 → 스크롤바가 아래로 이동 확인
-      - 스크롤바 수동 조작 → 위치 유지 확인
-      - 새 메시지 입력 → 다시 아래로 이동 확인
-   - [x] 1.4 린트 및 타입 체크
-      - [x] `uv run ruff check sisyphus/ui/tui/components/chat_log.py`
-      - [x] `uv run basedpyright sisyphus/ui/tui/components/chat_log.py`
-   - [x] 1.5 커밋
-      - `git add sisyphus/ui/tui/components/chat_log.py`
-      - `git commit -m "fix scroll bar sync issue with explicit scroll_end calls"`
+   - [ ] 1.3 린트 및 타입 체크
+      ```bash
+      uv run ruff check sisyphus/cli.py
+      # 예상: 에러 없음
 
-- [x] 2. Execute/Verify Phase 전환 버그 수정 및 테스트
-   - [x] 2.1 ExecutionLoop에 resume 추적 플래그 추가 (loop.py:63 근처)
-      ```python
-      self._resumed_once = False  # Resume 발생 여부 추적
+      uv run basedpyright sisyphus/cli.py
+      # 예상: 타입 에러 없음
       ```
-   - [x] 2.2 _execute_phase 내부 수정 (loop.py:256-324)
-      ```python
-      # while True 루프 시작 전에 초기화
-      self._resumed_once = False
-
-      while True:  # line 256
-          # Task Group으로 stream 처리
-          async with anyio.create_task_group() as tg:
-              tg.start_soon(consume_stream)
-              tg.start_soon(monitor_input)
-
-          if self._interrupt_flag:  # line 307
-              # interrupt 처리
-              await self._resume_event.wait()
-              resumed_msg = await self.ui.get_input()
-              if resumed_msg:
-                  await self.execute_agent.send(resumed_msg)
-                  self._resumed_once = True  # Resume 발생 표시
-              self._interrupt_flag = False
-              # while 루프 재시작
-          else:
-              # Resume 후 첫 stream 종료는 phase 완료가 아님
-              if self._resumed_once:
-                  self._resumed_once = False  # 플래그 리셋
-                  # while 루프 재시작하여 다음 응답 대기
-                  continue
-              else:
-                  # 진짜 phase 완료
-                  break  # line 324
+   - [ ] 1.4 기존 테스트 통과 확인
+      ```bash
+      uv run pytest -x
+      # 예상: 모든 테스트 통과
       ```
-   - [x] 2.3 _verify_phase에도 동일한 로직 적용 (loop.py:339-471)
-      ```python
-      # _execute_phase와 동일한 패턴으로 resume 로직 구현 완료
-      # - self._resumed_once 플래그 사용 (line 374)
-      # - while True 무한 resume 루프 (line 376)
-      # - Task Group으로 consume_stream + monitor_input 동시 실행 (line 428-430)
-      # - interrupt/resume 처리 (line 444-457)
-      # - _resumed_once 로직으로 resume 후 첫 stream 종료 처리 (line 459-463)
+   - [ ] 1.5 커밋
+      ```bash
+      git add sisyphus/cli.py
+      git commit -m "refactor cli to use work and reset subcommands"
       ```
-   - [x] 2.4 테스트 작성: `sisyphus/core/tests/test_loop__phase_resume.py`
-      ```python
-      import pytest
-      from unittest.mock import AsyncMock, Mock, MagicMock
-      import anyio
-
-      pytestmark = [pytest.mark.anyio]
-
-      async def test_execute_phase__after_resume__continues_phase():
-          """Resume 후 stream 종료 시 phase가 계속되는지 테스트"""
-          # Mock 설정
-          # Resume 시뮬레이션
-          # phase가 종료되지 않았음을 확인
-          pass
-
-      async def test_execute_phase__normal_completion__ends_phase():
-          """정상 stream 종료 시 phase가 종료되는지 테스트"""
-          pass
-      ```
-   - [x] 2.5 통합 테스트
-      - [x] `uv run pytest sisyphus/core/tests/test_loop__phase_resume.py -xvs`
-      - [x] `uv run pytest -x` (전체 460개 테스트 통과 확인)
-   - [x] 2.6 린트 및 타입 체크
-      - [x] `uv run ruff check sisyphus/core/loop.py`
-      - [x] `uv run basedpyright sisyphus/core/loop.py`
-   - [x] 2.7 커밋
-      - `git add sisyphus/core/loop.py sisyphus/core/tests/test_loop__phase_resume.py`
-      - `git commit -m "fix phase transition bug on resume by tracking resume state"`
 
 # 최종 작업 검증 체크리스트
-- [x] 1. 스크롤바 동기화 문제 해결
-   - TUI 실행 시 스크롤바가 콘텐츠와 동기화
-   - 스크롤바 수동 조작 가능
-   - 새 메시지 입력 시 자동 스크롤
-- [x] 2. Phase 전환 버그 해결
-   - ESC 후 resume 시 execute phase 유지
-   - 정상 완료 시에만 verify phase 전환
-   - Resume 후 첫 stream 종료가 phase 전환 트리거하지 않음
-- [x] 3. 기존 기능 정상 작동
-   - 메시지 전송 기능
-   - ESC interrupt 기능
-   - 정상적인 Execute → Verify 플로우
-- [x] 4. 테스트 통과
-   - 기존 454개 테스트 모두 통과 (현재 460개)
-   - 새로 추가한 테스트 통과 (6개 추가)
-- [x] 5. 코드 품질
-   - 타입 체크 통과
-   - 린트 규칙 준수
-   - 프로젝트 컨벤션 준수
+
+- [ ] 1. CLI 명령어 구조 변경
+   - [ ] `sisyphus work` 명령어로 기존 run 기능 실행 가능
+   - [ ] `sisyphus reset` 명령어로 파일 정리 가능
+   - [ ] `sisyphus --help`에 두 커맨드 모두 표시됨
+- [ ] 2. reset 커맨드 기능
+   - [ ] 기본 실행 시 `sessions/`, `logs/` 디렉토리 삭제
+   - [ ] `--include-task-specs` 옵션 사용 시 `ai-todolist.md`, `notepad.md` 추가 삭제
+   - [ ] 존재하지 않는 파일/디렉토리에 대해 "Not found" 메시지 표시
+   - [ ] 삭제 실패 시 에러 메시지 출력 후 계속 진행
+- [ ] 3. 기존 기능 유지
+   - [ ] `work` 커맨드가 기존 `run` 커맨드와 동일하게 작동
+   - [ ] 모든 옵션 파라미터 정상 작동
+   - [ ] TUI/CLI 모드 선택 정상 작동
+- [ ] 4. 코드 품질
+   - [ ] 타입 체크 통과 (basedpyright)
+   - [ ] 린트 규칙 준수 (ruff)
+   - [ ] nested import 사용 안 함 (프로젝트 컨벤션)
+- [ ] 5. 과도한 구현 방지
+   - [ ] 요청하지 않은 기능 추가 없음
+   - [ ] 기존 로직 불필요한 리팩토링 없음
+   - [ ] 최소한의 변경으로 요구사항 충족

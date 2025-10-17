@@ -49,36 +49,33 @@ class InputBar(TextArea):
         """Handle key events (Enter, Shift+Enter, UP, ESC).
 
         Args:
-            event: Key event object with .key and .shift attributes
+            event: Key event object with .key attribute
         """
         if event.key == "enter":
-            if event.shift:
-                return
-            else:
-                message = self.text.strip()
-                if message:
-                    if self._queued_message:
-                        self._queued_message += "\n" + message
-                    else:
-                        self._queued_message = message
+            message = self.text.strip()
+            if message:
+                if self._queued_message:
+                    self._queued_message += "\n" + message
+                else:
+                    self._queued_message = message
 
-                    try:
-                        chat_log = self.app.query_one(ChatLog)
-                        chat_log.write_user_message(message)
-                    except Exception as exception:
-                        self.log.error(f"Failed to display user message: {exception}")
+                try:
+                    chat_log = self.app.query_one(ChatLog)
+                    chat_log.write_user_message(message)
+                except Exception as exception:
+                    self.log.error(f"Failed to display user message: {exception}")
 
-                    self.text = ""
-                    self._update_suggestion()
-                    self.app.post_message(InputReadyEvent())
+                self.text = ""
+                self._update_suggestion()
+                self.app.post_message(InputReadyEvent())
 
-                    if self._agent_paused:
-                        self._agent_paused = False
-                        self.suggestion = self._original_suggestion
+                if self._agent_paused:
+                    self._agent_paused = False
+                    self.suggestion = self._original_suggestion
 
-                event.prevent_default()
-                event.stop()
-                return
+            event.prevent_default()
+            event.stop()
+            return
 
         elif event.key == "escape":
             event.stop()

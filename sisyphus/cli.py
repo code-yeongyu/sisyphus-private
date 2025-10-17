@@ -187,15 +187,15 @@ async def _main_cli(
 
     time_parts = []
     if hours > 0:
-        time_parts.append(f"{hours}시간")
+        time_parts.append(f"{hours} hour(s)")
     if minutes > 0:
-        time_parts.append(f"{minutes}분")
+        time_parts.append(f"{minutes} minute(s)")
     if secs > 0 or not time_parts:
-        time_parts.append(f"{secs}초")
+        time_parts.append(f"{secs} second(s)")
 
     elapsed_str = " ".join(time_parts)
-    await ui.show_status(f"✅ 모든 작업이 완료되었습니다. (소요 시간: {elapsed_str})")
-    await ui.show_status("Ctrl+C를 눌러 종료하세요.")
+    await ui.show_status(f"✅ All tasks completed. (Elapsed time: {elapsed_str})")
+    await ui.show_status("Press Ctrl+C to exit.")
 
     try:
         shutdown_event = anyio.Event()
@@ -275,7 +275,7 @@ async def _main_tui(
             )
 
             elapsed_seconds = time.time() - start_time
-            ui.post_message(CompletionMessage("모든 작업이 완료되었습니다.", elapsed_seconds=elapsed_seconds))
+            ui.post_message(CompletionMessage("All tasks completed.", elapsed_seconds=elapsed_seconds))
 
             try:
                 completion_event = anyio.Event()

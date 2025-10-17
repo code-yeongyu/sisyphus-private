@@ -37,7 +37,7 @@ class MockLoggerFactory:
 
 
 async def test_execute_phase__if_user_sends_message_during_agent_response__message_forwarded_immediately() -> None:
-    """Test 3.1.1: Agent 응답 중 사용자 메시지 입력 → 즉시 Agent로 전달."""
+    """Test 3.1.1: User message input during Agent response → Immediately forwarded to Agent."""
 
     # given
     class MockAgent:
@@ -127,14 +127,14 @@ async def test_execute_phase__if_user_sends_message_during_agent_response__messa
     await loop.run(execute_prompt="Test prompt", verify_prompt="Verify")
 
     # then
-    # 초기 프롬프트 + 사용자 메시지가 모두 전달되어야 함
+    # Both initial prompt and user message should be forwarded
     assert len(execute_agent.sent_messages) == 2
     assert execute_agent.sent_messages[0] == "Test prompt"
     assert execute_agent.sent_messages[1] == "User message during response"
 
 
 async def test_execute_phase__if_multiple_user_messages_sent__all_forwarded_in_order() -> None:
-    """Test 3.1.2: 여러 메시지 연속 전송 → 순서대로 전달."""
+    """Test 3.1.2: Multiple messages sent consecutively → All forwarded in order."""
 
     # given
     class MockAgent:
@@ -224,5 +224,3 @@ async def test_execute_phase__if_multiple_user_messages_sent__all_forwarded_in_o
     assert execute_agent.sent_messages[1] == "First"
     assert execute_agent.sent_messages[2] == "Second"
     assert execute_agent.sent_messages[3] == "Third"
-
-

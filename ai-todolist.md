@@ -7,20 +7,16 @@ CLI 구조 변경을 통한 명령어 체계 개선:
    - 옵션: `ai-todolist.md`, `notepad.md` 추가 삭제
 
 # 작업 시작 여부
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 모든 목표 달성 여부
-is_all_goals_accomplished = FALSE
+is_all_goals_accomplished = TRUE
 
 # 병렬 실행 여부
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 작업 시작 전입니다.
-   - 작업을 시작하면 위의 `is_execution_started` 의 값을 TRUE 로 바꾸세요.
-   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
-   - **plan reviewer 에게 OKAY 사인을 받았더라도 절대 시작하지마십시오**
-   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
+- [ ] 1. CLI 구조 변경 및 reset 커맨드 구현
 
 # 작업 계획
 
@@ -166,13 +162,13 @@ Reset complete!
 
 # TODOs
 
-- [ ] 1. CLI 구조 변경 및 reset 커맨드 구현
-   - [ ] 1.1 구현: `sisyphus/cli.py` 수정
-      - [ ] line 5-6 사이에 `import shutil` 추가
-      - [ ] line 314: `@app.command(name="run")` → `@app.command(name="work")`
-      - [ ] line 342: `"""Run Sisyphus multi-agent system."""` → `"""Work with Sisyphus multi-agent system."""`
-      - [ ] line 411-412 사이에 reset 커맨드 전체 추가 (위 코드 참조)
-   - [ ] 1.2 수동 테스트: 더미 파일 생성 및 CLI 테스트
+- [x] 1. CLI 구조 변경 및 reset 커맨드 구현
+   - [x] 1.1 구현: `sisyphus/cli.py` 수정
+      - [x] line 5-6 사이에 `import shutil` 추가
+      - [x] line 314: `@app.command(name="run")` → `@app.command(name="work")`
+      - [x] line 342: `"""Run Sisyphus multi-agent system."""` → `"""Work with Sisyphus multi-agent system."""`
+      - [x] line 411-412 사이에 reset 커맨드 전체 추가 (위 코드 참조)
+   - [x] 1.2 수동 테스트: 더미 파일 생성 및 CLI 테스트
       ```bash
       # 테스트 준비: 더미 파일 생성
       mkdir -p sessions logs
@@ -201,7 +197,7 @@ Reset complete!
       uv run sisyphus reset
       # 예상: "Not found" 메시지
       ```
-   - [ ] 1.3 린트 및 타입 체크
+   - [x] 1.3 린트 및 타입 체크
       ```bash
       uv run ruff check sisyphus/cli.py
       # 예상: 에러 없음
@@ -209,12 +205,12 @@ Reset complete!
       uv run basedpyright sisyphus/cli.py
       # 예상: 타입 에러 없음
       ```
-   - [ ] 1.4 기존 테스트 통과 확인
+   - [x] 1.4 기존 테스트 통과 확인
       ```bash
       uv run pytest -x
       # 예상: 모든 테스트 통과
       ```
-   - [ ] 1.5 커밋
+   - [x] 1.5 커밋
       ```bash
       git add sisyphus/cli.py
       git commit -m "refactor cli to use work and reset subcommands"
@@ -222,24 +218,24 @@ Reset complete!
 
 # 최종 작업 검증 체크리스트
 
-- [ ] 1. CLI 명령어 구조 변경
-   - [ ] `sisyphus work` 명령어로 기존 run 기능 실행 가능
-   - [ ] `sisyphus reset` 명령어로 파일 정리 가능
-   - [ ] `sisyphus --help`에 두 커맨드 모두 표시됨
-- [ ] 2. reset 커맨드 기능
-   - [ ] 기본 실행 시 `sessions/`, `logs/` 디렉토리 삭제
-   - [ ] `--include-task-specs` 옵션 사용 시 `ai-todolist.md`, `notepad.md` 추가 삭제
-   - [ ] 존재하지 않는 파일/디렉토리에 대해 "Not found" 메시지 표시
-   - [ ] 삭제 실패 시 에러 메시지 출력 후 계속 진행
-- [ ] 3. 기존 기능 유지
-   - [ ] `work` 커맨드가 기존 `run` 커맨드와 동일하게 작동
-   - [ ] 모든 옵션 파라미터 정상 작동
-   - [ ] TUI/CLI 모드 선택 정상 작동
-- [ ] 4. 코드 품질
-   - [ ] 타입 체크 통과 (basedpyright)
-   - [ ] 린트 규칙 준수 (ruff)
-   - [ ] nested import 사용 안 함 (프로젝트 컨벤션)
-- [ ] 5. 과도한 구현 방지
-   - [ ] 요청하지 않은 기능 추가 없음
-   - [ ] 기존 로직 불필요한 리팩토링 없음
-   - [ ] 최소한의 변경으로 요구사항 충족
+- [x] 1. CLI 명령어 구조 변경
+   - [x] `sisyphus work` 명령어로 기존 run 기능 실행 가능
+   - [x] `sisyphus reset` 명령어로 파일 정리 가능
+   - [x] `sisyphus --help`에 두 커맨드 모두 표시됨
+- [x] 2. reset 커맨드 기능
+   - [x] 기본 실행 시 `sessions/`, `logs/` 디렉토리 삭제
+   - [x] `--include-task-specs` 옵션 사용 시 `ai-todolist.md`, `notepad.md` 추가 삭제
+   - [x] 존재하지 않는 파일/디렉토리에 대해 "Not found" 메시지 표시
+   - [x] 삭제 실패 시 에러 메시지 출력 후 계속 진행
+- [x] 3. 기존 기능 유지
+   - [x] `work` 커맨드가 기존 `run` 커맨드와 동일하게 작동
+   - [x] 모든 옵션 파라미터 정상 작동
+   - [x] TUI/CLI 모드 선택 정상 작동
+- [x] 4. 코드 품질
+   - [x] 타입 체크 통과 (basedpyright)
+   - [x] 린트 규칙 준수 (ruff)
+   - [x] nested import 사용 안 함 (프로젝트 컨벤션)
+- [x] 5. 과도한 구현 방지
+   - [x] 요청하지 않은 기능 추가 없음
+   - [x] 기존 로직 불필요한 리팩토링 없음
+   - [x] 최소한의 변경으로 요구사항 충족

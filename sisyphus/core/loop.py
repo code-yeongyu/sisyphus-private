@@ -63,6 +63,7 @@ class ExecutionLoop:
         self._interrupt_flag = False
         self._current_cancel_scope: anyio.CancelScope | None = None
         self._resume_event: anyio.Event | None = None
+        self._resumed_once = False
 
     async def run(
         self,
@@ -252,7 +253,8 @@ class ExecutionLoop:
         await self.execute_agent.send(final_prompt)
         self.execute_logger.info("Prompt sent")
 
-        # 무한 resume 지원 루프
+        self._resumed_once = False
+
         while True:
             # 매 루프마다 새로운 CancelScope 생성
             self._current_cancel_scope = anyio.CancelScope()
@@ -305,7 +307,6 @@ class ExecutionLoop:
 
             # Task Group 정상 종료 - interrupt 여부 확인
             if self._interrupt_flag:
-                # Interrupt 처리
                 assert self._resume_event is not None
                 assert self.execute_logger is not None
                 await self.ui.show_status("⏸ 작업이 중단되었습니다")
@@ -315,13 +316,16 @@ class ExecutionLoop:
                 if resumed_msg:
                     self.execute_logger.info(f"Sending resumed message: {resumed_msg[:100]}...")
                     await self.execute_agent.send(resumed_msg)
+                    self._resumed_once = True
 
                 self._interrupt_flag = False
                 await self.ui.show_status("▶ 작업을 재개합니다")
-                # while 루프 재시작
             else:
-                # 정상 종료 - while 루프 탈출
-                break
+                if self._resumed_once:
+                    self._resumed_once = False
+                    continue
+                else:
+                    break
 
         # stream() 완료 후 실제 session_id 업데이트
         final_session_id = self.execute_agent.session_id

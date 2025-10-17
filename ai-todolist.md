@@ -91,7 +91,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- Task 1: ExecutionLoop 메시지 전송 개선 (1.1 ~ 1.8)
+- Task 2: ChatLog 스크롤 타이밍 수정 (2.1 ~ 2.4)
 
 # 필요한 사전 지식
 
@@ -420,8 +420,8 @@ while True:
 
 ## Task 2: ChatLog 스크롤 타이밍 수정
 
-- [ ] 2. ChatLog 메시지 작성 메서드 수정
-   - [ ] 2.1 4개 메서드의 스크롤 호출 방식 변경
+- [x] 2. ChatLog 메시지 작성 메서드 수정
+   - [x] 2.1 4개 메서드의 스크롤 호출 방식 변경
       - **대상 메서드**: write_user_message, write_execute_message, write_verify_message, write_completion_message
       - **위치**: sisyphus/ui/tui/components/chat_log.py (line 50-88)
       - **변경 패턴**:

@@ -55,7 +55,7 @@ class ChatLog(RichLog):
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [green]👤 USER:[/green] {content}")
-        self._auto_scroll_if_needed()
+        self.call_after_refresh(self._auto_scroll_if_needed)
 
     def write_execute_message(self, content: str) -> None:
         """Execute 메시지 작성.
@@ -65,7 +65,7 @@ class ChatLog(RichLog):
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [yellow]▶ EXECUTE:[/yellow] {content}")
-        self._auto_scroll_if_needed()
+        self.call_after_refresh(self._auto_scroll_if_needed)
 
     def write_verify_message(self, content: str) -> None:
         """Verify 메시지 작성.
@@ -75,7 +75,7 @@ class ChatLog(RichLog):
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [cyan]✓ VERIFY:[/cyan] {content}")
-        self._auto_scroll_if_needed()
+        self.call_after_refresh(self._auto_scroll_if_needed)
 
     def write_completion_message(self, content: str) -> None:
         """작업 완료 메시지 작성.
@@ -85,4 +85,4 @@ class ChatLog(RichLog):
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [bold green]✅ COMPLETED:[/bold green] {content}")
-        self._auto_scroll_if_needed()
+        self.call_after_refresh(self._auto_scroll_if_needed)

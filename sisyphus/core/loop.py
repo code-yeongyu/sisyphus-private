@@ -283,6 +283,9 @@ class ExecutionLoop:
                         if msg:
                             self.execute_logger.info(f"Sending user message: {msg[:100]}...")
                             await self.execute_agent.send(msg)
+                        else:
+                            # get_input()이 None 반환 시 짧은 대기 (CPU 100% 방지)
+                            await anyio.sleep(0.01)
 
             try:
                 async with anyio.create_task_group() as tg:

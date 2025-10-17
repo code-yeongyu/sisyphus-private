@@ -35,3 +35,28 @@
 - 동기 호출의 문제: _auto_scroll_if_needed()를 즉시 호출하면 이전 max_scroll_y 값으로 계산됨
 
 소요 시간: 약 3분 (16:53 - 16:56)
+[2025-10-17 17:22] - 통합 테스트 및 검증 (Task 3.4~3.6)
+
+### DISCOVERED ISSUES
+- monitor_input() 무한루프 문제: MockUI.get_input()이 즉시 None 반환 → CPU 100% 사용
+- 테스트 환경에서 get_input()은 이벤트 기반이 아니므로 blocking 없이 반복 호출됨
+
+### IMPLEMENTATION DECISIONS
+- await anyio.sleep(0.01) 추가: get_input()이 None 반환 시 짧은 대기로 CPU 과사용 방지
+- 주석 추가: 매직 넘버의 목적 명시 (성능 최적화, 나중에 "불필요한 delay"로 오해받아 제거되는 것 방지)
+- pyproject.toml 임시 수정 후 원복: basedpyright exclude 설정 테스트 (실제로는 sisyphus/ 디렉토리만 체크)
+
+### VERIFICATION RESULTS
+- 타입 체크: `uv run basedpyright sisyphus/` → 0 errors, 25 warnings (anyio 관련 기존 warnings) ✅
+- 전체 테스트: `uv run pytest -x` → 450 passed in 1.93s ✅
+- 버그 재현 및 수정 확인: test_execution_loop_execute_only 테스트가 통과함
+
+### PROBLEMS FOR NEXT TASKS
+- 없음 (모든 작업 완료)
+
+### LEARNINGS
+- MockUI vs TUI 차이: TUI는 이벤트 기반 get_input() (blocking), MockUI는 즉시 반환
+- anyio.sleep(0)의 중요성: 다른 태스크에게 실행 기회를 주지 않으면 무한 루프 발생
+- 테스트 환경 고려: 프로덕션 코드가 테스트에서도 올바르게 동작하도록 방어 코드 필요
+
+소요 시간: 약 26분 (16:56 - 17:22)

@@ -32,8 +32,8 @@ is_all_goals_accomplished = FALSE
 parallel_requested = TRUE
 
 # 현재 진행 중인 작업
-- Phase 2 - Task 3: Translate ExecutionLoop docstrings (sisyphus/core/loop.py) - IN PROGRESS ⚙️
-  - 작업 내용: sisyphus/core/loop.py의 모든 docstring과 주석을 영어로 번역
+- Phase 2 - Task 4: Translate SessionStore docstrings (sisyphus/core/session.py) - IN PROGRESS ⚙️
+  - 작업 내용: sisyphus/core/session.py의 모든 docstring을 영어로 번역
 
 # 필요한 사전 지식
 
@@ -271,46 +271,46 @@ graph TB
       - [x] 타입 체크와 lint가 통과하는가?
       - [x] 테스트가 모두 통과하는가?
 
-- [ ] 2 parallel. Translate ExecutionLoop docstrings (sisyphus/core/loop.py)
+- [x] 2 parallel. Translate ExecutionLoop docstrings (sisyphus/core/loop.py)
    - **※ 병렬 실행 조건**: Task 2, 4와 독립적이며 서로 다른 파일 수정
-   - [ ] 2.1 구현: sisyphus/core/loop.py의 모든 docstring과 주석 번역
+   - [x] 2.1 구현: sisyphus/core/loop.py의 모든 docstring과 주석 번역
       - 번역할 항목들:
         1. ExecutionLoop 클래스 docstring
         2. `__init__` 메서드 docstring
         3. `run` 메서드 docstring (매우 상세함)
         4. 모든 주석들
-   - [ ] 2.2 테스트: 변경 후 타입 체크 및 lint 확인
-      - [ ] `uv run basedpyright sisyphus/core/loop.py`
-      - [ ] `uv run ruff check sisyphus/core/loop.py`
-   - [ ] 2.3 관련 테스트 실행
-      - [ ] `uv run pytest -xvs sisyphus/core/tests/test_loop.py`
-      - [ ] `uv run pytest -xvs sisyphus/core/tests/test_loop__*.py`
-   - [ ] 2.4 커밋
+   - [x] 2.2 테스트: 변경 후 타입 체크 및 lint 확인
+      - [x] `uv run basedpyright sisyphus/core/loop.py`
+      - [x] `uv run ruff check sisyphus/core/loop.py`
+   - [x] 2.3 관련 테스트 실행
+      - [x] `uv run pytest -xvs sisyphus/core/tests/test_loop.py`
+      - [x] `uv run pytest -xvs sisyphus/core/tests/test_loop__*.py`
+   - [x] 2.4 커밋
       - `git add sisyphus/core/loop.py && git commit -m "translate ExecutionLoop docstrings to English"`
-   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-      - [ ] 모든 docstring이 영어로 번역되었는가?
-      - [ ] ExecutionLoop의 복잡한 로직 설명이 정확히 번역되었는가?
-      - [ ] 타입 체크와 lint가 통과하는가?
-      - [ ] 모든 loop 관련 테스트가 통과하는가?
+   - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+      - [x] 모든 docstring이 영어로 번역되었는가?
+      - [x] ExecutionLoop의 복잡한 로직 설명이 정확히 번역되었는가?
+      - [x] 타입 체크와 lint가 통과하는가?
+      - [x] 모든 loop 관련 테스트가 통과하는가?
 
-- [ ] 2 parallel. Translate SessionStore docstrings (sisyphus/core/session.py)
+- [x] 2 parallel. Translate SessionStore docstrings (sisyphus/core/session.py)
    - **※ 병렬 실행 조건**: Task 2, 3과 독립적이며 서로 다른 파일 수정
-   - [ ] 2.1 구현: sisyphus/core/session.py의 모든 docstring 번역
+   - [x] 2.1 구현: sisyphus/core/session.py의 모든 docstring 번역
       - 번역할 항목들:
         1. SessionStore 클래스 docstring
         2. `_save_sessions_atomic` 메서드 docstring
         3. 기타 메서드 docstrings
-   - [ ] 2.2 테스트: 변경 후 타입 체크 및 lint 확인
-      - [ ] `uv run basedpyright sisyphus/core/session.py`
-      - [ ] `uv run ruff check sisyphus/core/session.py`
-   - [ ] 2.3 관련 테스트 실행
-      - [ ] `uv run pytest -xvs sisyphus/core/tests/test_session.py`
-   - [ ] 2.4 커밋
+   - [x] 2.2 테스트: 변경 후 타입 체크 및 lint 확인
+      - [x] `uv run basedpyright sisyphus/core/session.py`
+      - [x] `uv run ruff check sisyphus/core/session.py`
+   - [x] 2.3 관련 테스트 실행
+      - [x] `uv run pytest -xvs sisyphus/core/tests/test_session.py`
+   - [x] 2.4 커밋
       - `git add sisyphus/core/session.py && git commit -m "translate SessionStore docstrings to English"`
-   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-      - [ ] 모든 docstring이 영어로 번역되었는가?
-      - [ ] 타입 체크와 lint가 통과하는가?
-      - [ ] 세션 관련 테스트가 모두 통과하는가?
+   - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+      - [x] 모든 docstring이 영어로 번역되었는가?
+      - [x] 타입 체크와 lint가 통과하는가?
+      - [x] 세션 관련 테스트가 모두 통과하는가?
 
 ## Phase 3: Test Files Translation (Phase 2 완료 후, 그룹 간 병렬 실행)
 

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 @runtime_checkable
 class Agent(Protocol):
-    """모든 에이전트가 구현해야 하는 프로토콜."""
+    """Protocol that all agents must implement."""
 
     supports_interactive: bool
 
@@ -25,24 +25,24 @@ class Agent(Protocol):
         ...
 
     async def initialize(self) -> None:
-        """에이전트 초기화."""
+        """Initialize the agent."""
         ...
 
     async def start_session(self, session_id: str | None = None) -> str:
-        """세션 시작 또는 재개, 실제 세션 ID 반환."""
+        """Start or resume a session, returning the actual session ID."""
         ...
 
     async def send(self, message: str) -> None:
-        """메시지 전송."""
+        """Send a message."""
         ...
 
     def stream(self) -> AsyncIterator[AgentMessage]:
-        """응답 스트리밍.
+        """Stream responses.
 
-        Note: 구현체에서는 async generator function (async def + yield)로 구현할 수 있습니다.
+        Note: Implementations can use async generator functions (async def + yield).
         """
         ...
 
     async def close(self) -> None:
-        """정리."""
+        """Cleanup resources."""
         ...

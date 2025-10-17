@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import time
 import traceback
 from enum import Enum
@@ -311,7 +312,7 @@ async def _main_tui(
         raise typer.Exit(1)
 
 
-@app.command(name="run")
+@app.command(name="work")
 def run(
     agent: str | None = typer.Option(None, "--agent", "-a", help="Agent type (claude|opencode)"),
     execute: str | None = typer.Option(None, "--execute", help="Execute agent (AGENT[:MODEL])"),
@@ -339,7 +340,7 @@ def run(
     ),
     log: Path | None = typer.Option(None, "--log", help="Log file path"),
 ) -> None:
-    """Run Sisyphus multi-agent system."""
+    """Work with Sisyphus multi-agent system."""
     if agent and (execute or verify):
         raise typer.BadParameter("Cannot use --agent with --execute or --verify")
 
@@ -407,6 +408,33 @@ def run(
     except Exception as e:
         error_console.print(f"[bold red]Error: {e}[/bold red]")
         raise typer.Exit(1)
+
+
+@app.command(name="reset")
+def reset(
+    include_task_specs: bool = typer.Option(
+        False, "--include-task-specs", help="Also delete ai-todolist.md and notepad.md"
+    ),
+) -> None:
+    """Clean up generated files (sessions/, logs/, optionally docs)."""
+    base_targets = [Path("sessions"), Path("logs")]
+    doc_targets = [Path("ai-todolist.md"), Path("notepad.md")]
+    targets = base_targets + (doc_targets if include_task_specs else [])
+
+    for target in targets:
+        try:
+            if target.is_dir():
+                shutil.rmtree(target)
+                console.print(f"[green]✓[/green] Deleted directory: {target}")
+            elif target.is_file():
+                target.unlink()
+                console.print(f"[green]✓[/green] Deleted file: {target}")
+            else:
+                console.print(f"[yellow]⊘[/yellow] Not found: {target}")
+        except (PermissionError, OSError) as e:
+            error_console.print(f"[red]✗[/red] Failed to delete {target}: {e}")
+
+    console.print("\n[bold green]Reset complete![/bold green]")
 
 
 if __name__ == "__main__":

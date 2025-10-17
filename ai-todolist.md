@@ -1,626 +1,494 @@
 # 사용자의 최초 요청 (기록용)
-현재 프로젝트에는 여러가지 문제가 있습니다.
-1. 로그가 쌓일 때 마다 로그를 보여주는 text area 가 계속 내려갑니다. 이로 인해 실질적으로 로그를 볼 수 없습니다. 이 textual 코드를 수정해야 합니다.
-2. thinking block 안의 내용이 보이지 않습니다. tool use 처럼, thinking block 도 그렇고, 그 안의 최대한 다양한 내용들을 보여줄 수 있어야 합니다. (tool use 처럼 다음줄에, indentation 을 넣어서 보여지도록)
-3. 현재 send message 기능이 이상하게 작동하는것으로 보입니다. message input 안에서 엔터를 누르면 바로 메시지가 보내지고, 이게 로그 영역에 실제로 메시지 내용과 함께 기록이 되어야 합니다.
-4. 로그 영역처럼, status panel 의 한 줄 한 줄 도 시간과 함께 기록이 되어야 합니다.
+현재 이렇게 작업을 했는데
+inputbar:
+1. 메시지 전송은 실제로 전달이 되는거 같지 않습니다 (보내면 바로 sdk / http 요청을 통해 전달 로직이 작동해야 합니다)
+2. 왜인지 메시지 전송 동작 로깅은 되는데 input bar 에 큐에 메시지가 쌓였다고 찍힙니다.
 
-제가 좀 섞어서 말했는데 비슷한것끼리 묶어 순서대로 진행하는 작업 계획서로 작성해주세요. 최대한 많은 코드를 읽고, 미친듯이 깊고, 다양한 범위로 생각하여 계획서를 작성해주세요.
+textlog:
+1. 스크롤 자체가 망가졌습니다. (맨 밑에 스크롤이 내려가있다면 다시 새 메시지가 내려오면서 자동으로 내려가도록 해야하고 그게 아니라면 거기에서 멈춰있는 상식적으로 동작하기를 기대합니다)
+2. 좌우 스크롤 비활성화 했었는데 다시 켜졌습니다.
+
+이 버그의 원인을 찾고 고칠 계획서를 새로 작성해주세요.
 
 ## 사용자가 이후에 추가 요청한 내용들 (기록용)
-- 메시지 전송 가능 타이밍을 기다리는게 아니라 그냥 바로 메시지가 전송되도록 해주시고
-- input bar 에서 esc 를 누르면 agent 를 멈추도록 해주세요
-- 그리고 다시 메시지를 보내기 전까진 꺼주고, 다시 메시지를 보내면 resume 하고 send message 를 진행하도록 해주세요
-- 이것도 마찬가지로 로그로 남아야합니다
-- 메시지 즉시 전송이 되는 식으로 설계를 변경해도 좋아 그런 방향으로 구상해줘 - 지금 메시지 큐는 사실상 제대로 동작하지 않아서 말이야
+- 좌우스크롤 비활성화. 줄바꿈
+- 1.메시지를 보내면 바로 sdk 의 메시지 전송 로직 작동
+- 2. esc 눌러서 중단 가능
+- 3. 중단됐을 경우 메시지를 다시 보내면 다시 resume
 
 # 디테일 레벨: detailed
 
 # 작업 목표
-## Phase 1: UI 개선 (간단한 작업들)
-1. **ChatLog 스크롤 제어 개선**: 사용자가 위로 스크롤하면 자동 스크롤 중지
-2. **ChatLog 사용자 메시지 메서드**: write_user_message() 추가 (Phase 2 준비)
-3. **StatusPanel 타임스탬프 추가**: 모든 상태 메시지에 시간 정보 표시
-4. **ThinkingBlock 완전 표시**: ThinkingBlock.thinking 속성의 내용을 코드 블록으로 표시
 
-## Phase 2: 메시지 즉시 전송 (중간 난이도)
-4. **메시지 즉시 표시 및 큐잉**: 사용자 메시지를 ChatLog에 즉시 표시하고 큐에 저장
-
-## Phase 3: ESC 키 중단 (고급)
-5. **ESC 키로 에이전트 중단**: ESC 키를 누르면 실행 중인 에이전트를 즉시 중단
-6. **메시지 입력 시 재개**: 새 메시지 입력 시 에이전트 자동 재개
+1. **ExecutionLoop 메시지 전송 아키텍처 개선**: stream 소비와 input 모니터링을 동시에 실행하여 실시간 메시지 전송 구현
+2. **ChatLog 스크롤 자동 추적 수정**: `call_after_refresh()` 사용으로 타이밍 문제 해결
 
 # 작업 배경
-현재 TUI 시스템의 문제점들:
 
-1. **로그 스크롤 문제**: `auto_scroll=True`로 인해 이전 로그를 읽을 수 없음
-2. **Thinking Block 누락**: ClaudeAgent가 ThinkingBlock 처리 시 내용 미표시
-3. **메시지 전송 지연**: agent가 get_input() 호출 시까지 대기
-4. **타임스탬프 부족**: StatusPanel 메시지에 시간 정보 없음
+## 현재 문제 분석
+
+### 1. InputBar 메시지가 Agent로 전달되지 않는 근본 원인
+
+**현재 아키텍처 (loop.py:251-266):**
+```python
+await self.execute_agent.send(final_prompt)  # 초기 프롬프트만 전송
+stream = self.execute_agent.stream()
+async for message in stream:  # 블로킹 - stream이 끝날 때까지 대기
+    await self.ui.show_message(message, source="execute")
+```
+
+**문제:**
+- `async for message in stream`은 블로킹되어 stream이 끝날 때까지 다른 코드 실행 불가
+- `ui.get_input()`은 오직 ESC interrupt 후 재개 시에만 호출됨 (loop.py:273)
+- **사용자가 메시지를 입력해도 Agent로 전달할 방법이 없음**
+
+**해결책:**
+- 외부 while 루프로 무한 resume 지원 (현재는 한 번만 resume)
+- `anyio.create_task_group()` 내부에서 두 태스크 동시 실행:
+  - Task 1: stream 소비 (stream 끝나면 cancel → task group 종료)
+  - Task 2: input 모니터링 (get_input() 이벤트 대기 → agent.send())
+
+### 2. ChatLog 스크롤 타이밍 문제
+
+**현재 코드 (chat_log.py:50-88):**
+```python
+def write_user_message(self, content: str) -> None:
+    self.write(f"...")  # 콘텐츠 추가
+    self._auto_scroll_if_needed()  # 동기적으로 즉시 호출
+```
+
+**타이밍 문제:**
+1. `write()` 호출 → 콘텐츠 추가
+2. `_auto_scroll_if_needed()` 호출 → `max_scroll_y`는 아직 업데이트 안 됨
+3. Textual 렌더링 사이클 → `max_scroll_y` 업데이트
+4. 결과: 스크롤이 제대로 동작하지 않음
+
+**해결책:**
+- `call_after_refresh(self._auto_scroll_if_needed)` 사용
+- 렌더링 완료 후 `_auto_scroll_if_needed()` 호출되어 정확한 `max_scroll_y` 사용
+
+### 3. 좌우 스크롤 (수정 불필요)
+
+**현재 상태:**
+```python
+wrap=True,  # 줄바꿈, 좌우 스크롤 없음
+```
+
+**사용자 요구사항:**
+- "좌우 스크롤 비활성화. 줄바꿈"
+
+**결론:**
+- 현재 코드가 이미 요구사항을 충족함
+- **수정 불필요** ✅
 
 # 작업 시작 여부
-is_execution_started = TRUE
+is_execution_started = FALSE
 
 # 모든 목표 달성 여부
-is_all_goals_accomplished = TRUE
+is_all_goals_accomplished = FALSE
 
 # 병렬 실행 여부
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 모든 작업 완료
+- 작업 시작 전입니다.
+   - 작업을 시작하면 위의 `is_execution_started` 의 값을 TRUE 로 바꾸세요.
+   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
+   - **plan reviewer 에게 OKAY 사인을 받았더라도 절대 시작하지마십시오**
+   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
 
 # 필요한 사전 지식
 
 ## 기술 스택
 - **TUI Framework**: Textual 1.0+ (asyncio 기반)
-- **Logging Widget**: `textual.widgets.RichLog` (자동 스크롤, 리치 마크업 지원)
-- **Agent SDK**: claude-agent-sdk (ThinkingBlock은 `thinking` 속성 보유)
-- **비동기**: anyio (asyncio/trio 호환성)
+- **비동기**: anyio 4.11+ (task group, cancel scope 등)
+- **Agent SDK**: claude-agent-sdk (stream(), send() 메서드)
 
-## SDK 확인 사항
+## anyio Task Group 패턴
 ```python
-# ThinkingBlock 실제 인터페이스 (확인됨)
-from claude_agent_sdk import ThinkingBlock
-# ThinkingBlock(thinking: str, signature: str)
-# block.thinking - 실제 텍스트 내용
+async with anyio.create_task_group() as tg:
+    tg.start_soon(task1)
+    tg.start_soon(task2)
+    # 모든 태스크가 완료될 때까지 대기
 ```
 
-## Textual 스크롤 이벤트
-- Scroll 이벤트는 없음, MouseScrollUp/Down 이벤트 사용
-- `watch_scroll_y()` 메서드로 스크롤 변경 감지 가능
-- `max_scroll_y`는 픽셀 단위 (줄 단위 아님)
+## Textual 렌더링 사이클
+- `call_after_refresh(callback)`: 다음 렌더링 완료 후 callback 호출
+- `max_scroll_y`: 렌더링 사이클에서 업데이트됨
+
+## 프로젝트 컨벤션
+- **타입 힌트**: 모든 함수 파라미터 필수 (ANN001 rule) - 중첩 함수도 예외 없음
+- **anyio 사용**: `anyio.CancelScope()`, `anyio.create_task_group()` 사용 (asyncio 직접 사용 금지)
+- **중첩 함수**: Python 클로저로 외부 변수(self.ui, self.execute_agent 등) 접근 가능
+- **커밋 메시지**: 소문자 시작, 명령형 동사 (예: "add", "fix", "update")
+
+## 코드 조사 결과
+
+### app.py:352-372 - get_input() 구현
+```python
+async def get_input(self) -> str | None:
+    while True:
+        input_bar = self.query_one(InputBar)
+        queued = input_bar.get_and_clear_queue()
+        if queued:
+            return queued
+
+        await self._input_ready_event.wait()  # ← 이벤트 기반 블로킹
+        self._input_ready_event = anyio.Event()
+```
+**핵심:** get_input()은 InputReadyEvent를 기다림 (이벤트 기반)
+
+### loop.py:267-295 - 현재 interrupt 처리
+```python
+except anyio.get_cancelled_exc_class():
+    await self.ui.show_status("⏸ 작업이 중단되었습니다")
+    await self._resume_event.wait()
+
+    resumed_user_message = await self.ui.get_input()
+    await self.execute_agent.send(resumed_user_message)
+
+    # 새 스트림 인라인 생성 (재귀 X)
+    resumed_stream = self.execute_agent.stream()
+    async for message in resumed_stream:
+        ...
+```
+**핵심:** 재귀 사용 안 함, 인라인으로 새 스트림 생성
+
+### claude.py:132-210 - Agent.stream() 구현
+```python
+async def stream(self) -> AsyncIterator[AgentMessage]:
+    async for message in self._client.receive_response():
+        # 메시지 yield
+```
+**핵심:** 단순 메시지 yield, 특별한 input request 메커니즘 없음
 
 ## 파일 구조 및 역할
+- `sisyphus/core/loop.py`: ExecutionLoop, Agent 실행 및 스트림 처리
 - `sisyphus/ui/tui/components/chat_log.py`: 메시지 로그 표시 위젯
-- `sisyphus/ui/tui/components/status_panel.py`: 상태 메시지 표시 위젯
-- `sisyphus/ui/tui/components/input_bar.py`: 사용자 입력 위젯
-- `sisyphus/ui/tui/app.py`: TUI 메인 앱, 메시지 라우팅
-- `sisyphus/agents/claude.py`: Claude 에이전트, ThinkingBlock 처리
-
-## 맥락 이해를 위해 참고해야 할 파일들
-
-### 1. sisyphus/ui/tui/components/chat_log.py
-- **역할**: Execute/Verify 메시지를 색상으로 구분하여 표시
-- **현재 문제**: `auto_scroll=True` (line 23)
-- **기존 메서드**: write_execute_message, write_verify_message, write_completion_message
-
-### 2. sisyphus/agents/claude.py
-- **역할**: Claude API와 통신, 메시지 블록 처리
-- **현재 문제**: ThinkingBlock 내용 미표시 (line 166-167)
-- **기존 패턴**: ToolUseBlock은 JSON을 코드 블록으로 감싸서 표시
-
-### 3. sisyphus/ui/tui/components/status_panel.py
-- **역할**: 상태 메시지 표시
-- **현재 문제**: 타임스탬프 없음
-- **기존 메서드**: update_status, show_iteration, show_progress
-
-### 4. sisyphus/ui/tui/components/input_bar.py
-- **역할**: 사용자 입력 처리 및 큐잉
-- **현재 문제**: 메시지가 ChatLog에 즉시 표시 안 됨
+- `sisyphus/ui/tui/app.py`: TUI 메인 앱, `get_input()` 구현
 
 # 작업 계획
 
 ## PRDs & Structures
 
-### 개선된 메시지 흐름
-```mermaid
-sequenceDiagram
-    participant User
-    participant InputBar
-    participant ChatLog
-    participant TUI
-    participant Agent
+### 개선된 메시지 전송 아키텍처
 
-    User->>InputBar: Type message + Enter
-    InputBar->>InputBar: Queue message first
-    InputBar->>ChatLog: write_user_message() ✨즉시 표시
-    InputBar->>TUI: InputReadyEvent (기존 유지)
-
-    Note over TUI: 기존 큐 시스템 유지
-    Agent->>TUI: get_input()
-    TUI->>InputBar: get_and_clear_queue()
-    TUI->>Agent: Return message
+**핵심 패턴:**
+```
+초기 프롬프트 전송 (while 루프 밖)
+└── while True (무한 resume)
+    └── try-except (interrupt 처리)
+        ├── Task Group
+        │   ├── monitor_scope (CancelScope)
+        │   ├── consume_stream: stream 소비 → 메시지 표시
+        │   │   ├── 정상 종료: monitor_scope.cancel() 호출
+        │   │   └── interrupt: tg.cancel_scope.cancel() 호출
+        │   └── monitor_input: while True → get_input() → agent.send()
+        │       └── except CancelledError로 종료
+        ├── Task Group 정상 종료 → break (while 탈출)
+        └── except: resume 처리 → while 재시작
 ```
 
-### 스크롤 제어 메커니즘
-```mermaid
-graph TB
-    A[새 메시지 도착] --> B{user_scrolling?}
-    B -->|Yes| C[현재 위치 유지]
-    B -->|No| D[scroll_end() 호출]
+**Task Group 종료 조건:**
+- **정상 종료**: consume_stream이 stream 끝에서 `monitor_scope.cancel()` 호출 → monitor_input이 CancelledError로 종료 → Task Group 종료 → `break`로 while 탈출
+- **Interrupt 종료**: `_interrupt_flag=True` → consume_stream이 `monitor_scope.cancel()` + `break` → Task Group 종료 → `if _interrupt_flag:` 체크 → except 블록
 
-    E[사용자가 스크롤] --> F[watch_scroll_y 트리거]
-    F --> G{맨 아래 근처?<br/>≥ max_scroll_y - 1px}
-    G -->|Yes| H[user_scrolling = False]
-    G -->|No| I[user_scrolling = True]
+**핵심 차이점:**
+- ❌ **잘못된 방식**: stream_done Event로 monitor_input 종료 시도 → get_input() 블로킹 중이라 while 조건 체크 불가 → 데드락!
+- ✅ **올바른 방식**: monitor_scope.cancel()로 monitor_input 강제 종료 → get_input() 블로킹 중이어도 CancelledError 발생 → 정상 종료
+
+**Interrupt 메커니즘 플로우:**
+```
+ESC 키 입력
+→ TUI.request_interrupt() 호출
+→ ExecutionLoop._interrupt_flag = True
+→ consume_stream: if _interrupt_flag → monitor_scope.cancel() + break
+→ Task Group 정상 종료 (exception 없음)
+→ if _interrupt_flag 체크:
+  1. 중단 메시지 표시
+  2. resume_event.wait()
+  3. InputReadyEvent 발생 (사용자 메시지 입력)
+  4. TUI.clear_interrupt() → resume_event.set()
+  5. resumed_msg = await self.ui.get_input()
+  6. await self.execute_agent.send(resumed_msg)
+  7. _interrupt_flag = False
+  8. while 루프 재시작 → 새 task group 생성
 ```
 
-### ESC 키 중단 메커니즘
-```mermaid
-sequenceDiagram
-    participant User
-    participant InputBar
-    participant TUI
-    participant StatusPanel
-    participant ExecutionLoop
-    participant Agent
+### 스크롤 타이밍 개선
 
-    User->>InputBar: Press ESC
-    InputBar->>TUI: AgentInterruptEvent
-    TUI->>ExecutionLoop: Set interrupt_requested flag
-    TUI->>StatusPanel: "⏸ 에이전트 일시 중단됨"
-    ExecutionLoop->>Agent: Cancel current task
-
-    Note over Agent: anyio.CancelledError raised
-    Agent-->>ExecutionLoop: Stream terminates
-    ExecutionLoop->>TUI: Agent paused
-
-    User->>InputBar: Type new message + Enter
-    InputBar->>TUI: InputReadyEvent
-    TUI->>ExecutionLoop: Clear interrupt flag
-    TUI->>StatusPanel: "▶ 에이전트 재개됨"
-    ExecutionLoop->>Agent: Resume with new input
+**패턴:**
+```python
+def write_user_message(self, content: str) -> None:
+    self.write(content)
+    self.call_after_refresh(self._auto_scroll_if_needed)  # 지연 호출
 ```
-
-## 구현 세부사항
-
-### 핵심 설계 원칙
-1. **최소 변경**: 기존 구조 최대한 유지
-2. **기존 패턴 준수**: ToolUseBlock 패턴을 ThinkingBlock에도 적용
-3. **에러 안정성**: 큐잉 우선으로 메시지 손실 방지
-4. **픽셀 단위 인식**: Textual 스크롤은 픽셀 기준
 
 ## 프로젝트 커밋 메시지 스타일
-- 소문자 시작, 현재형 동사
-- 언더스코어로 단어 구분
-- 예: `fix chat_log scroll behavior with watch_scroll_y`
+```
+add concurrent input monitoring to execution loop
+fix chat_log scroll timing with call_after_refresh
+```
 
 # TODOs
 
-## Phase 1: UI 개선
+## Task 1: ExecutionLoop 메시지 전송 개선
 
-- [x] 1. ChatLog 스크롤 개선 및 사용자 메시지 표시 메서드 추가
-   - [x] 1.1 구현: `sisyphus/ui/tui/components/chat_log.py` 전체 수정
-      ```python
-      from datetime import datetime
-      from textual.widgets import RichLog
+### 전체 구조 변경 개요 (Before/After)
 
-      class ChatLog(RichLog):
-          """채팅/진행상황 로그 위젯."""
+**Before (현재 구조, loop.py:251-295):**
+```python
+# line 251: 초기 프롬프트 전송
+await self.execute_agent.send(final_prompt)
 
-          def __init__(self) -> None:
-              """ChatLog 위젯 초기화."""
-              super().__init__(
-                  id="chat-log",
-                  highlight=True,
-                  markup=True,
-                  auto_scroll=False,  # 자동 스크롤 비활성화
-                  wrap=True,
-              )
-              self._user_scrolling = False
+# line 254-255: CancelScope 생성
+cancel_scope = anyio.CancelScope()
+self._current_cancel_scope = cancel_scope
 
-          def watch_scroll_y(self, old_value: float, new_value: float) -> None:
-              """스크롤 Y 위치 변경 감지."""
-              # 맨 아래 근처인지 확인 (1픽셀 여유)
-              if new_value >= self.max_scroll_y - 1:
-                  self._user_scrolling = False
-              else:
-                  self._user_scrolling = True
+# line 257-266: stream 소비 (블로킹 - 다른 작업 불가)
+try:
+    with cancel_scope:
+        stream = self.execute_agent.stream()
+        async for message in stream:
+            if self._interrupt_flag:
+                cancel_scope.cancel()
+                break
+            await self.ui.show_message(message, source="execute")
 
-          def _auto_scroll_if_needed(self) -> None:
-              """필요시 자동 스크롤."""
-              if not self._user_scrolling:
-                  self.scroll_end()
+# line 267-295: inline resume 로직 (한 번만 resume 가능)
+except anyio.get_cancelled_exc_class():
+    # resume 처리...
+    # 새 스트림 인라인 생성
+```
 
-          def write_user_message(self, content: str) -> None:
-              """사용자 메시지 표시."""
-              timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-              self.write(f"[dim]{timestamp}[/dim] [green]👤 USER:[/green] {content}")
-              self._auto_scroll_if_needed()
+**After (새로운 구조):**
+```python
+# line 251: 초기 프롬프트 전송 (while 루프 밖)
+await self.execute_agent.send(final_prompt)
 
-          def write_execute_message(self, content: str) -> None:
-              """Execute 메시지 작성."""
-              timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-              self.write(f"[dim]{timestamp}[/dim] [yellow]▶ EXECUTE:[/yellow] {content}")
-              self._auto_scroll_if_needed()
+# while 루프 (무한 resume 지원)
+while True:
+    # monitor_scope는 while 루프 내부에서 매번 새로 생성
+    # 인스턴스 변수에도 저장 (request_interrupt()에서 접근 가능하도록)
+    self._current_cancel_scope = anyio.CancelScope()
+    monitor_scope = self._current_cancel_scope
 
-          def write_verify_message(self, content: str) -> None:
-              """Verify 메시지 작성."""
-              timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-              self.write(f"[dim]{timestamp}[/dim] [cyan]✓ VERIFY:[/cyan] {content}")
-              self._auto_scroll_if_needed()
+    async def consume_stream() -> None:
+        stream = self.execute_agent.stream()
+        async for message in stream:
+            if self._interrupt_flag:
+                # monitor_input을 cancel하고 loop 종료
+                monitor_scope.cancel()
+                break
+            await self.ui.show_message(message, source="execute")
+        # stream 정상 종료 - monitor_input을 cancel하여 Task Group 정상 종료
+        monitor_scope.cancel()
 
-          def write_completion_message(self, content: str) -> None:
-              """작업 완료 메시지 작성."""
-              timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-              self.write(f"[dim]{timestamp}[/dim] [bold green]✅ COMPLETED:[/bold green] {content}")
-              self._auto_scroll_if_needed()
-      ```
-   - [x] 1.2 테스트: 스크롤 동작 확인
-      - TUI 실행: `uv run sisyphus run --execute claude`
-      - 스크롤 테스트 절차:
-        1. 로그가 20줄 이상 쌓일 때까지 대기 (약 30초)
-        2. 마우스 휠로 위로 10줄 스크롤
-        3. 새 메시지 도착 시 스크롤 위치가 고정되는지 확인
-           - 예상: 화면이 움직이지 않고 현재 위치 유지
-        4. End 키를 눌러 맨 아래로 이동
-        5. 새 메시지 도착 시 자동으로 따라가는지 확인
-           - 예상: 새 메시지가 화면에 자동으로 표시됨
-   - [x] 1.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/chat_log.py`
-      - 예상: 0 errors, 0 warnings
-   - [x] 1.4 커밋: `fix chat_log scroll behavior with watch_scroll_y`
+    async def monitor_input() -> None:
+        with monitor_scope:
+            while True:
+                msg = await self.ui.get_input()  # monitor_scope.cancel() 호출 시 CancelledError
+                if msg:
+                    await self.execute_agent.send(msg)
+        # CancelledError는 catch되지 않고 task 종료 → Task Group 정상 종료
 
-- [x] 2. StatusPanel 타임스탬프 추가
-   - [x] 2.1 구현: `sisyphus/ui/tui/components/status_panel.py` 수정
-      ```python
-      from datetime import datetime
-      from textual.widgets import RichLog
+    async with anyio.create_task_group() as tg:
+        tg.start_soon(consume_stream)
+        tg.start_soon(monitor_input)
 
-      class StatusPanel(RichLog):
-          """상태 패널 위젯."""
+    # Task Group 정상 종료 - interrupt 여부 체크
+    if self._interrupt_flag:
+        # interrupt 처리
+        await self.ui.show_status("⏸ 작업이 중단되었습니다")
+        await self._resume_event.wait()
+        resumed_msg = await self.ui.get_input()
+        if resumed_msg:
+            await self.execute_agent.send(resumed_msg)
+        self._interrupt_flag = False
+        await self.ui.show_status("▶ 작업을 재개합니다")
+        # while 루프 재시작
+    else:
+        break  # 정상 종료
+```
 
-          def __init__(self) -> None:
-              """StatusPanel 위젯 초기화."""
-              super().__init__(
-                  id="status-panel",
-                  highlight=True,
-                  markup=True,
-                  auto_scroll=True,
-              )
+### 세부 작업 단계
 
-          def update_status(self, status: str) -> None:
-              """상태 업데이트 (타임스탬프 포함)."""
-              timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-              self.write(f"[dim]{timestamp}[/dim] [blue]{status}[/blue]")
-
-          def show_iteration(self, current: int, total: int) -> None:
-              """반복 진행률 표시 (타임스탬프 포함)."""
-              timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-              self.write(f"[dim]{timestamp}[/dim] [dim]Iteration {current}/{total}[/dim]")
-
-          def show_progress(self, completed: int, total: int) -> None:
-              """체크박스 진행률 표시 (타임스탬프 포함)."""
-              if total == 0:
-                  return
-              timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-              percentage = int((completed / total) * 100)
-              remaining = total - completed
-              bar_length = 20
-              filled = int((completed / total) * bar_length)
-              bar = "█" * filled + "░" * (bar_length - filled)
-              self.write(
-                  f"[dim]{timestamp}[/dim] [cyan]📋 진행률:[/cyan] {bar} "
-                  f"[bold]{completed}/{total}[/bold] ({percentage}%) "
-                  f"[dim]| 남은 작업: {remaining}개[/dim]"
-              )
-      ```
-   - [x] 2.2 테스트: 타임스탬프 표시 확인
-      - TUI 실행: `uv run sisyphus run --execute claude`
-      - StatusPanel에서 다음 확인:
-        1. "[Iteration 1] Starting Execute phase..." 앞에 타임스탬프
-           - 예상 형식: `12:34:56.789 [Iteration 1] Starting Execute phase...`
-        2. 진행률 메시지 앞에 타임스탬프
-           - 예상 형식: `12:34:56.789 📋 진행률: ████░░░░...`
-   - [x] 2.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/status_panel.py`
-      - 예상: 0 errors, 0 warnings
-   - [x] 2.4 커밋: `add timestamps to status_panel messages`
-
-- [x] 3. ThinkingBlock 내용 표시
-   - [x] 3.1 구현: `sisyphus/agents/claude.py` 수정 (line 166-167)
-      ```python
-      case ThinkingBlock():
-          thinking_header = "[THINKING]"
-          if block.thinking:
-              # 기존 ToolUse 패턴 준수: 코드 블록으로 감싸기
-              thinking_block = f"```\n{block.thinking}\n```"
-              indented_block = "\n".join(f"    {line}" for line in thinking_block.split("\n"))
-              content += f"{thinking_header}\n{indented_block}"
-          else:
-              content += thinking_header
-      ```
-   - [x] 3.2 테스트: thinking 내용 표시 확인
-      - Claude와 대화: `uv run sisyphus run --execute claude`
-      - 프롬프트 입력: "Think step by step about how to implement a binary search"
-      - 예상 출력:
+- [ ] 1. ExecutionLoop._execute_phase() 메서드 재구조화
+   - [ ] 1.1 초기 프롬프트 전송을 while 루프 밖으로 이동
+      - **현재 위치**: `await self.execute_agent.send(final_prompt)` (line 251)
+      - **새 위치**: line 250 근처, while 루프 시작 직전 (기존 cancel_scope 선언 제거 후)
+      - **이유**: 초기 프롬프트는 한 번만 전송, resume 시에는 사용자 메시지만 전송
+   - [ ] 1.2 외부 while 루프 추가로 무한 resume 지원
+      - **패턴**: `while True` 루프
+      - **위치**: 초기 send() 이후, 기존 cancel_scope 제거
+      - **종료**: Task Group 정상 종료 후 `break` 문
+   - [ ] 1.3 중첩 함수 및 Task Group 구현
+      - [ ] 1.3.1 monitor_scope 변수 선언 및 인스턴스 변수 연결
+         - **위치**: while True 루프 직후 (while 루프 내부, Task Group 생성 직전)
+         - **코드**:
+           ```python
+           self._current_cancel_scope = anyio.CancelScope()
+           monitor_scope = self._current_cancel_scope  # 지역 변수로 별칭
+           ```
+         - **이유 1**: 매 resume마다 새로운 CancelScope 필요 (while 루프 밖에 있으면 재사용되어 문제 발생)
+         - **이유 2**: request_interrupt()에서 self._current_cancel_scope.cancel() 호출 가능해야 함 (loop.py:395)
+         - **주의**: monitor_scope는 지역 변수지만, 인스턴스 변수와 동일한 객체를 참조함
+      - [ ] 1.3.2 consume_stream 중첩 함수 정의
+         - **위치**: monitor_scope 선언 직후
+         - **구현 내용**:
+           - stream = self.execute_agent.stream() 호출
+           - async for 루프로 메시지 소비
+           - interrupt 체크: self._interrupt_flag → `monitor_scope.cancel()` + `break`
+             - **주의**: async for 루프가 블로킹 중일 때는 다음 메시지 도착 시점에 interrupt 감지됨
+             - **현재 허용 범위**: Agent 응답이 streaming되는 동안 메시지 단위로 interrupt 체크 (현재 코드 패턴과 동일)
+             - **중요**: `raise anyio.get_cancelled_exc_class()()`는 사용하지 않음 - 이는 현재 task만 종료시키고 Task Group은 종료시키지 않음
+           - stream 정상 종료: monitor_scope.cancel() 후 return
+             - **왜 consume_stream은 cancel되지 않는가?**
+               - monitor_scope.cancel()은 monitor_input 함수 내부의 `with monitor_scope:` 블록만 취소
+               - consume_stream은 monitor_scope 밖에 있으므로 영향받지 않음
+             - **Task Group 정상 종료 메커니즘:**
+               - monitor_scope.cancel() → monitor_input의 다음 await(get_input)에서 CancelledError 발생
+               - monitor_input은 CancelledError를 catch하지 않으므로 task 종료
+               - consume_stream도 return으로 정상 종료
+               - 두 task 모두 종료 → Task Group 정상 종료
+      - [ ] 1.3.3 monitor_input 중첩 함수 정의
+         - **위치**: consume_stream 정의 직후
+         - **구현 내용**:
+           - `with monitor_scope:` 블록 사용 (anyio.CancelScope는 컨텍스트 매니저)
+           - while True 무한 루프
+           - await self.ui.get_input()으로 메시지 대기
+           - 메시지 수신 시 self.execute_agent.send() 호출
+         - **타입 힌트**:
+           ```python
+           async def monitor_input() -> None:
+               with monitor_scope:
+                   while True:
+                       msg: str | None = await self.ui.get_input()
+                       if msg:
+                           await self.execute_agent.send(msg)
+           ```
+         - **주의사항**:
+           - `if msg:` 조건은 `None`과 빈 문자열 `""` 모두 걸러냄
+           - 빈 메시지를 Agent로 전송하지 않는 것이 의도된 동작
+      - [ ] 1.3.4 Task Group 블록 생성
+         - **위치**: 중첩 함수 정의 직후
+         - **코드**:
+           ```python
+           async with anyio.create_task_group() as tg:
+               tg.start_soon(consume_stream)
+               tg.start_soon(monitor_input)
+           ```
+   - [ ] 1.4 Task Group 종료 후 interrupt 플래그 체크
+      - **위치**: Task Group 블록 직후
+      - **코드**:
+        ```python
+        # Task Group 정상 종료
+        if self._interrupt_flag:
+            # interrupt 처리 (다음 단계로)
+            pass
+        else:
+            break  # 정상 종료 - while 루프 탈출
         ```
-        [THINKING]
-            ```
-            Step 1: Binary search requires a sorted array
-            Step 2: Compare target with middle element
-            Step 3: Recurse on left or right half
-            ```
+      - **이유**: interrupt 시에도 Task Group은 정상 종료되므로 exception이 발생하지 않음. 플래그로 구분 필요
+   - [ ] 1.5 Interrupt 처리 (if 블록 내부)
+      - 중단 메시지 표시: `await self.ui.show_status("⏸ 작업이 중단되었습니다")`
+      - **resume 대기 및 메시지 전송 플로우 (이벤트 순서 중요)**:
+        1. `await self._resume_event.wait()` - InputReadyEvent 대기
+        2. 사용자가 InputBar에 메시지 입력 후 Enter
+        3. InputBar.on_input_submitted() → 메시지를 큐에 저장
+        4. InputReadyEvent 발생 → app.py:316 on_input_ready_event() 실행:
+           - app.py:324 clear_interrupt() → self._resume_event.set() (resume_event.wait() 깨어남)
+           - app.py:326 self._input_ready_event.set()
+        5. resume_event.wait() 반환 (step 1 완료)
+        6. `resumed_msg = await self.ui.get_input()` 호출
+           - input_bar.get_and_clear_queue() → 큐에 이미 저장된 메시지 반환
+           - 큐가 비어있으면 _input_ready_event.wait()하지만, 이미 set되어 있으므로 즉시 반환
+        7. `if resumed_msg: await self.execute_agent.send(resumed_msg)` - Agent로 새 메시지 전송
+      - `self._interrupt_flag = False` (재설정 - 다음 interrupt를 위해)
+      - 재개 메시지 표시: `await self.ui.show_status("▶ 작업을 재개합니다")`
+      - while 루프 재시작:
+        - if 블록 종료 → while True로 돌아감
+        - consume_stream()에서 새로운 stream() 호출 (send() 후 새 스트림 생성)
+        - monitor_input()도 재시작 (새 메시지 대기)
+   - [ ] 1.6 기존 try-except 블록 제거 및 새 구조 적용
+      - **위치**: sisyphus/core/loop.py:254-295
+      - **작업 순서**:
+        1. line 254-255 (cancel_scope 선언) 삭제
+        2. line 257-266 (try-with cancel_scope 블록) 삭제
+        3. line 267-295 (except 블록 전체) 삭제
+        4. line 296-306 (SessionLimitError except 블록)은 **유지** - while 루프 밖에서 처리
+      - **결과**: 기존 try-except 구조 완전 제거, 새로운 while + Task Group 구조로 대체
+      - **주의**: SessionLimitError는 while 루프 외부에서 발생할 수 있으므로 해당 except 블록은 유지 필요
+   - [ ] 1.7 타입 체크: `uv run basedpyright sisyphus/core/loop.py`
+   - [ ] 1.8 커밋: `add concurrent input monitoring to execution loop`
+
+## Task 2: ChatLog 스크롤 타이밍 수정
+
+- [ ] 2. ChatLog 메시지 작성 메서드 수정
+   - [ ] 2.1 4개 메서드의 스크롤 호출 방식 변경
+      - **대상 메서드**: write_user_message, write_execute_message, write_verify_message, write_completion_message
+      - **위치**: sisyphus/ui/tui/components/chat_log.py (line 50-88)
+      - **변경 패턴**:
+        - Before: `self._auto_scroll_if_needed()`  # 동기 호출 - max_scroll_y가 아직 업데이트 안 됨
+        - After: `self.call_after_refresh(self._auto_scroll_if_needed)`  # 괄호 없이 함수 자체 전달
+      - **예시 (write_user_message 기준)**:
+        ```python
+        # Before (line 58)
+        self.write(f"[dim]{timestamp}[/dim] [green]👤 USER:[/green] {content}")
+        self._auto_scroll_if_needed()  # ← 제거
+
+        # After
+        self.write(f"[dim]{timestamp}[/dim] [green]👤 USER:[/green] {content}")
+        self.call_after_refresh(self._auto_scroll_if_needed)  # ← 추가 (괄호 X)
         ```
-   - [x] 3.3 린트 및 타입 체크: `uv run basedpyright sisyphus/agents/claude.py`
-      - 예상: 0 errors, 0 warnings
-   - [x] 3.4 커밋: `display thinking_block content with code block format`
+      - **이유**: write() 호출 직후 Textual 렌더링 사이클이 완료되지 않아 max_scroll_y가 업데이트 안 됨. call_after_refresh()로 렌더링 완료 후 스크롤하도록 지연 호출
+      - **주의**: 함수 이름만 전달하고 괄호 `()` 붙이지 않음 (콜백 전달 방식)
+   - [ ] 2.2 수동 테스트 (TUI 실행)
+      - `uv run sisyphus run --execute claude`
+      - 맨 아래에서 새 메시지 도착 → 자동 스크롤 확인
+      - 중간 위치에서 새 메시지 도착 → 위치 유지 확인
+      - End 키로 맨 아래 이동 → 자동 스크롤 재개 확인
+   - [ ] 2.3 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/chat_log.py`
+   - [ ] 2.4 커밋: `fix chat_log scroll timing with call_after_refresh`
 
-## Phase 2: 메시지 즉시 표시
+## Task 3: 통합 테스트 및 검증
 
-- [x] 4. InputBar 메시지 즉시 표시
-   - [x] 4.1 구현: `sisyphus/ui/tui/components/input_bar.py` 수정
-      ```python
-      # 파일 상단 import 추가
-      from sisyphus.ui.tui.components.chat_log import ChatLog
-
-      # on_input_submitted 메서드 수정 (line 31-52)
-      def on_input_submitted(self, event: Input.Submitted) -> None:
-          """Enter 키 입력 시 처리."""
-          self.log.info(f"[DEBUG] on_input_submitted called with value: {event.value!r}")
-          message = event.value.strip()
-          self.log.info(f"[DEBUG] stripped message: {message!r}")
-
-          if message:
-              # 1. 먼저 큐잉 (메시지 보존이 최우선)
-              if self._queued_message:
-                  self._queued_message += "\n" + message
-              else:
-                  self._queued_message = message
-
-              self.log.info(f"[DEBUG] queued_message now: {self._queued_message!r}")
-
-              # 2. ChatLog에 사용자 메시지 표시 시도
-              try:
-                  chat_log = self.app.query_one(ChatLog)
-                  chat_log.write_user_message(message)
-              except Exception as e:
-                  self.log.error(f"Failed to display user message: {e}")
-
-              # 3. UI 업데이트 및 이벤트 발생
-              self.value = ""
-              self.log.info("[DEBUG] cleared input value")
-              self._update_placeholder()
-              self.log.info("[DEBUG] posting InputReadyEvent")
-              self.app.post_message(InputReadyEvent())
-              self.log.info("[DEBUG] on_input_submitted completed")
-      ```
-   - [x] 4.2 테스트: 즉시 표시 확인
-      - TUI 실행: `uv run sisyphus run --execute claude`
-      - 테스트 절차:
-        1. 메시지 입력: "Hello Claude"
-        2. Enter 키 누름
-        3. ChatLog에 즉시 표시되는지 확인
-           - 예상: `12:34:56.789 👤 USER: Hello Claude` 즉시 표시
-        4. Claude가 응답할 때까지 대기
-        5. 메시지가 정상 전달되었는지 확인
-           - 예상: Claude가 "Hello" 인사에 응답
-   - [x] 4.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/input_bar.py`
-      - 예상: 0 errors, 0 warnings
-   - [x] 4.4 커밋: `display user messages immediately in chat_log`
-
-## Phase 3: ESC 키 중단 기능
-
-- [x] 5. ESC 키 인터럽트 이벤트 추가
-   - [x] 5.1 구현: `sisyphus/ui/tui/events.py` 이벤트 클래스 추가
-      ```python
-      from textual.message import Message
-
-      class AgentInterruptEvent(Message):
-          """에이전트 중단 요청 이벤트."""
-          pass
-
-      class AgentResumeEvent(Message):
-          """에이전트 재개 요청 이벤트."""
-          pass
-      ```
-   - [x] 5.2 커밋: `add agent interrupt and resume events`
-
-- [x] 6. InputBar ESC 키 처리
-   - [x] 6.1 구현: `sisyphus/ui/tui/components/input_bar.py` 수정
-      ```python
-      from textual import events
-      from textual.widgets import Input
-      from sisyphus.ui.tui.events import InputReadyEvent, AgentInterruptEvent
-
-      class InputBar(Input):
-          """입력 바 위젯."""
-
-          def __init__(self) -> None:
-              """InputBar 위젯 초기화."""
-              super().__init__(
-                  id="input-bar",
-                  placeholder="메시지를 입력하세요... (ESC: 중단)",
-              )
-              self._queued_message: str | None = None
-              self._agent_paused = False
-
-          async def on_key(self, event: events.Key) -> None:
-              """키 이벤트 처리."""
-              if event.key == "escape":
-                  # ESC 키 처리
-                  event.stop()  # 이벤트 전파 중지
-                  if not self._agent_paused:
-                      self._agent_paused = True
-                      self.placeholder = "⏸ 일시 중단됨 - 메시지 입력하면 재개"
-                      self.app.post_message(AgentInterruptEvent())
-                      self.log.info("Agent interrupted by ESC key")
-              else:
-                  # 다른 키는 기본 처리
-                  await super().on_key(event)
-
-          def on_input_submitted(self, event: Input.Submitted) -> None:
-              """Enter 키 입력 시 처리."""
-              # ... 기존 코드 ...
-
-              # 에이전트가 일시 중단된 경우 재개
-              if self._agent_paused:
-                  self._agent_paused = False
-                  self.placeholder = "메시지를 입력하세요... (ESC: 중단)"
-                  # 재개 로직은 TUI에서 처리
-      ```
-   - [x] 6.2 테스트: ESC 키 동작 확인
-      - TUI 실행 후 ESC 키 누름
-      - placeholder 변경 확인: "⏸ 일시 중단됨 - 메시지 입력하면 재개"
-      - StatusPanel에 중단 메시지 확인
-   - [x] 6.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/components/input_bar.py`
-   - [x] 6.4 커밋: `add esc key handler to input_bar`
-
-- [x] 7. TUI 인터럽트 처리
-   - [x] 7.1 구현: `sisyphus/ui/tui/app.py` 수정
-      ```python
-      from sisyphus.ui.tui.events import AgentInterruptEvent, AgentResumeEvent
-
-      class TUI(App[None]):
-          """TUI 앱."""
-
-          def __init__(self, theme: ThemeName = "mocha") -> None:
-              """TUI 초기화."""
-              super().__init__()
-              # ... 기존 코드 ...
-              self.agent_interrupted = False
-              self._current_task: anyio.abc.Task | None = None
-
-          async def on_agent_interrupt_event(self, message: AgentInterruptEvent) -> None:
-              """에이전트 중단 이벤트 핸들러."""
-              self.agent_interrupted = True
-
-              # 상태 표시
-              status_panel = self.query_one(StatusPanel)
-              status_panel.update_status("⏸ 에이전트 일시 중단됨 (메시지 입력 시 재개)")
-
-              # 실행 중인 작업 취소
-              if self._current_task and not self._current_task.done():
-                  self._current_task.cancel()
-
-              # ChatLog에 중단 메시지 표시
-              chat_log = self.query_one(ChatLog)
-              chat_log.write("[yellow]⏸ ESC 키로 중단됨. 메시지를 입력하면 재개됩니다.[/yellow]")
-
-          async def on_input_ready_event(self, message: InputReadyEvent) -> None:
-              """입력 준비 이벤트 핸들러."""
-              # 에이전트가 중단된 경우 재개
-              if self.agent_interrupted:
-                  self.agent_interrupted = False
-                  status_panel = self.query_one(StatusPanel)
-                  status_panel.update_status("▶ 에이전트 재개됨")
-
-              # 기존 처리
-              self._input_ready_event.set()
-      ```
-   - [x] 7.2 테스트: 중단/재개 플로우 확인
-      - ESC 키 → StatusPanel "⏸ 에이전트 일시 중단됨" 확인
-      - 메시지 입력 → StatusPanel "▶ 에이전트 재개됨" 확인
-   - [x] 7.3 린트 및 타입 체크: `uv run basedpyright sisyphus/ui/tui/app.py`
-   - [x] 7.4 커밋: `add interrupt handling to tui app`
-
-- [x] 8. ExecutionLoop 인터럽트 지원
-   - [x] 8.1 구현: `sisyphus/core/loop.py` 수정
-      ```python
-      class ExecutionLoop:
-          """실행 루프."""
-
-          def __init__(self, ...):
-              # ... 기존 코드 ...
-              self._interrupt_flag = False
-              self._current_cancel_scope: anyio.CancelScope | None = None
-
-          async def run(self, ...) -> None:
-              """실행 루프 메인."""
-              # ... 기존 코드 ...
-
-              # 인터럽트 체크를 stream 루프에 추가
-              async with anyio.create_cancel_scope() as cancel_scope:
-                  self._current_cancel_scope = cancel_scope
-                  try:
-                      async for message in agent.stream():
-                          # 인터럽트 체크
-                          if self._interrupt_flag:
-                              cancel_scope.cancel()
-                              break
-
-                          # ... 기존 메시지 처리 ...
-                  except anyio.get_cancelled_exc_class():
-                      await self.ui.show_status("⏸ 작업이 중단되었습니다")
-                      # 대기 상태로 전환
-                      while self._interrupt_flag:
-                          await anyio.sleep(0.1)
-                      await self.ui.show_status("▶ 작업을 재개합니다")
-
-          def request_interrupt(self) -> None:
-              """인터럽트 요청."""
-              self._interrupt_flag = True
-              if self._current_cancel_scope:
-                  self._current_cancel_scope.cancel()
-
-          def clear_interrupt(self) -> None:
-              """인터럽트 해제."""
-              self._interrupt_flag = False
-      ```
-   - [x] 8.2 테스트: 실제 에이전트 중단 확인
-      - 긴 작업 중 ESC 키 → 스트림 중단 확인
-      - 메시지 입력 → 새 작업으로 재개 확인
-   - [x] 8.3 린트 및 타입 체크: `uv run basedpyright sisyphus/core/loop.py`
-   - [x] 8.4 커밋: `add interrupt support to execution_loop`
-
-## Phase 4: 통합 테스트
-
-- [x] 9. 전체 통합 테스트 및 검증
-   - [x] 9.1 수동 TUI 테스트
-      - 테스트 환경 준비:
-        ```bash
-        # 테스트용 ai-todolist.md 생성
-        echo "- [ ] Test task 1" > ai-todolist.md
-        echo "- [ ] Test task 2" >> ai-todolist.md
-        ```
-      - TUI 실행: `uv run sisyphus run --execute claude --verify opencode`
-      - 각 기능 테스트:
-        1. **스크롤 테스트**
-           - 20개 이상 메시지 생성
-           - 위로 스크롤 → 고정 확인
-           - End 키 → 자동 스크롤 재개 확인
-        2. **타임스탬프 테스트**
-           - ChatLog의 모든 메시지 타임스탬프 확인
-           - StatusPanel의 모든 메시지 타임스탬프 확인
-        3. **ThinkingBlock 테스트**
-           - "Think about X" 프롬프트로 thinking 유도
-           - 코드 블록 형식 확인
-        4. **즉시 표시 테스트**
-           - 여러 메시지 빠르게 입력
-           - 모든 메시지가 즉시 표시되는지 확인
-        5. **ESC 키 중단 테스트**
-           - 긴 작업 실행 중 ESC 키 누름
-           - StatusPanel "⏸ 에이전트 일시 중단됨" 확인
-           - InputBar placeholder "⏸ 일시 중단됨 - 메시지 입력하면 재개" 확인
-           - 새 메시지 입력 → 에이전트 재개 확인
-   - [x] 9.2 타입 체크: `uv run basedpyright`
-      - 예상: 0 errors, 0 warnings
-   - [x] 9.3 테스트 실행: `uv run pytest -x`
-      - 예상: 450+ tests passed
-   - [x] 9.4 DEBUG 로그 제거
-      - `sisyphus/ui/tui/components/input_bar.py`에서 모든 `[DEBUG]` 로그 제거
-      - 커밋: `remove debug logs from input_bar`
-   - [x] 9.5 최종 커밋: `complete all tui improvements with esc key interrupt`
+- [ ] 3. 전체 기능 통합 테스트
+   - [ ] 3.1 메시지 전송 테스트
+      - Agent 응답 중 새 메시지 입력 → 즉시 전달 확인
+      - 여러 메시지 연속 전송 → 순서대로 전달 확인
+   - [ ] 3.2 ESC interrupt 테스트
+      - ESC 키 → 중단 메시지 확인
+      - 새 메시지 입력 → 재개 확인
+      - 여러 번 interrupt/resume 반복 테스트
+   - [ ] 3.3 스크롤 동작 재확인
+   - [ ] 3.4 전체 타입 체크: `uv run basedpyright`
+      - **성공**: 다음 단계 진행
+      - **실패 시**: 타입 힌트 누락 (ANN001) 확인 - 중첩 함수 파라미터도 타입 필수
+   - [ ] 3.5 전체 테스트 실행: `uv run pytest -x`
+      - **성공**: 다음 단계 진행
+      - **실패 시 디버깅**:
+        - monitor_input이 종료되지 않는 경우: consume_stream에서 `monitor_scope.cancel()` 후 `return` 호출 확인
+        - Task Group이 무한 대기하는 경우: Task Group 블록 직후 `break` 문 존재 확인
+        - resume이 작동하지 않는 경우: except 블록에서 `get_input()` → `send()` 흐름 확인
+        - 로그 확인: `logs/` 디렉토리의 최신 로그 파일
+   - [ ] 3.6 최종 커밋: `fix all tui message delivery and scroll issues`
 
 # 최종 작업 검증 체크리스트
 
-## Phase 1 검증
-- [x] ChatLog 스크롤이 사용자 제어 하에 있는가?
-   - [x] 위로 스크롤 시 위치 고정 (예상: 화면 움직이지 않음)
-   - [x] 맨 아래 스크롤 시 자동 스크롤 재개 (예상: 새 메시지 자동 표시)
-- [x] StatusPanel의 모든 메시지에 타임스탬프가 있는가?
-   - [x] update_status() 메시지 (예상: `HH:MM:SS.mmm` 형식)
-   - [x] show_iteration() 메시지 (예상: `HH:MM:SS.mmm` 형식)
-   - [x] show_progress() 메시지 (예상: `HH:MM:SS.mmm` 형식)
-- [x] ThinkingBlock 내용이 표시되는가?
-   - [x] 코드 블록 형식 (예상: ``` 로 감싸짐)
-   - [x] 들여쓰기 적용 (예상: 4칸 들여쓰기)
+## 핵심 아키텍처 검증
+- [ ] 1. consume_stream 정상 종료 시 `monitor_scope.cancel()` 호출 후 `return` 존재
+- [ ] 2. monitor_input이 `with monitor_scope:` 블록으로 감싸져 있음
+- [ ] 3. monitor_input이 `while True` 무한 루프 사용 (Event 기반 종료 조건 없음)
+- [ ] 4. Task Group 정상 종료 후 `break` 문 존재
+- [ ] 5. 초기 프롬프트 전송이 while 루프 밖에 있음
+- [ ] 6. except 블록에서 resume 메시지 전달 (`get_input()` → `send()`)
 
-## Phase 2 검증
-- [x] 사용자 메시지가 즉시 표시되는가?
-   - [x] Enter 키 즉시 반응 (예상: 1초 이내 표시)
-   - [x] 큐잉 시스템 정상 작동 (예상: 에이전트가 메시지 수신)
-
-## Phase 3 검증
-- [x] ESC 키 중단 기능이 작동하는가?
-   - [x] ESC 키 누를 시 에이전트 중단 (예상: StatusPanel "⏸ 에이전트 일시 중단됨")
-   - [x] InputBar placeholder 변경 (예상: "⏸ 일시 중단됨 - 메시지 입력하면 재개")
-   - [x] 스트림 실제 중단 (예상: 메시지 생성 멈춤)
-- [x] 에이전트 재개가 정상 작동하는가?
-   - [x] 새 메시지 입력 시 재개 (예상: StatusPanel "▶ 에이전트 재개됨")
-   - [x] 새 작업으로 계속 진행 (예상: 중단 지점이 아닌 새 입력 처리)
-
-## 호환성 검증
-- [x] 기존 기능이 정상 작동하는가?
-   - [x] Execute/Verify 메시지 표시 (예상: 색상 구분 정상)
-   - [x] 에이전트 메시지 수신 (예상: get_input() 정상)
-   - [x] 450+ 테스트 통과 (예상: 모든 테스트 성공)
+## 기능 검증
+- [ ] 7. Agent 응답 중 사용자 메시지 입력 → 즉시 Agent로 전달됨
+- [ ] 8. ESC 키로 중단 → 새 메시지로 재개 → 여러 번 반복 가능
+- [ ] 9. 맨 아래에서 새 메시지 도착 시 자동 스크롤
+- [ ] 10. 중간 위치에서 새 메시지 도착 시 위치 유지
+- [ ] 11. 기존 Execute/Verify 기능 정상 작동
+- [ ] 12. 타입 체크 통과 (`uv run basedpyright`)
+- [ ] 13. 전체 테스트 통과 (`uv run pytest -x`)

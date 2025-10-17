@@ -23,8 +23,8 @@ def simulate_input_submitted(input_bar: InputBar, message: str) -> None:
         else:
             input_bar._queued_message = message
 
-        input_bar.value = ""
-        input_bar._update_placeholder()
+        input_bar.text = ""
+        input_bar._update_suggestion()
 
 
 def simulate_up_key(input_bar: InputBar) -> str:
@@ -32,7 +32,7 @@ def simulate_up_key(input_bar: InputBar) -> str:
     if input_bar._queued_message:
         loaded_value = input_bar._queued_message
         input_bar._queued_message = ""
-        input_bar._update_placeholder()
+        input_bar._update_suggestion()
         return loaded_value
     elif input_bar._last_sent:
         return input_bar._last_sent
@@ -52,11 +52,11 @@ async def test_scenario_4_2_1_basic_queuing() -> bool:
     print(f"Queued message: {input_bar._queued_message!r}")
 
     checkpoint_1 = input_bar._queued_message == "Hello"
-    checkpoint_2 = input_bar.value == ""
+    checkpoint_2 = input_bar.text == ""
 
     print("\nCheckpoint verification:")
     print("✅ PASS - Message queued" if checkpoint_1 else "❌ FAIL")
-    print("✅ PASS - Input cleared" if checkpoint_2 else f"❌ FAIL - Input value: {input_bar.value!r}")
+    print("✅ PASS - Input cleared" if checkpoint_2 else f"❌ FAIL - Input text: {input_bar.text!r}")
 
     overall = checkpoint_1 and checkpoint_2
     print(f"\nOverall: {'✅ ALL CHECKPOINTS PASSED' if overall else '❌ SOME FAILED'}")

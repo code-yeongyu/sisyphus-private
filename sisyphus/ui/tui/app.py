@@ -115,8 +115,8 @@ class TUI(App[None]):
     }
 
     #input-bar {
-        height: auto;
-        min-height: 1;
+        min-height: 3;
+        max-height: 10;
     }
     """
 

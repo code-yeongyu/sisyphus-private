@@ -12,38 +12,38 @@ if TYPE_CHECKING:
 
 @runtime_checkable
 class UIProtocol(Protocol):
-    """UI 구현이 따라야 할 프로토콜.
+    """Protocol that UI implementations must follow.
 
-    UI 생명주기는 UI 자신이 관리합니다. ExecutionLoop는 UI 생명주기에
-    관여하지 않으며, 단지 메시지와 상태를 표시하는 인터페이스만 사용합니다.
+    The UI manages its own lifecycle. ExecutionLoop does not
+    interfere with the UI lifecycle, it only uses the interface to display messages and status.
     """
 
     async def initialize(self) -> None:
-        """UI 초기화."""
+        """Initialize the UI."""
         ...
 
     async def show_message(self, message: AgentMessage, source: str) -> None:
-        """메시지 표시 (source: 'execute' or 'verify')."""
+        """Display a message (source: 'execute' or 'verify')."""
         ...
 
     async def show_status(self, status: str) -> None:
-        """상태 메시지 표시."""
+        """Display a status message."""
         ...
 
     async def get_input(self) -> str | None:
-        """사용자 입력 받기 (TUI only, CLI는 None 반환)."""
+        """Get user input (TUI only, CLI returns None)."""
         ...
 
 
 def create_ui(mode: str, theme: ThemeName | None = None) -> UIProtocol:
-    """UI 팩토리.
+    """UI factory.
 
     Args:
-        mode: UI 모드 ('tui' 또는 'cli')
-        theme: TUI 테마 ("mocha" | "latte"), None이면 기본값
+        mode: UI mode ('tui' or 'cli')
+        theme: TUI theme ("mocha" | "latte"), defaults if None
 
     Returns:
-        UIProtocol을 구현하는 UI 인스턴스
+        UI instance implementing UIProtocol
     """
     if mode == "tui":
         from sisyphus.ui.tui import TUI

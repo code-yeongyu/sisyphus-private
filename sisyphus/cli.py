@@ -36,7 +36,7 @@ error_console = Console(stderr=True)
 
 
 class ThemeOption(str, Enum):
-    """TUI 테마 옵션."""
+    """TUI theme options."""
 
     SYSTEM = "system"
     MOCHA = "mocha"
@@ -44,16 +44,16 @@ class ThemeOption(str, Enum):
 
 
 def validate_url(url: str) -> str:
-    """URL 형식 검증.
+    """Validate URL format.
 
     Args:
-        url: 검증할 URL
+        url: URL to validate
 
     Returns:
-        검증된 URL
+        Validated URL
 
     Raises:
-        typer.BadParameter: URL 형식이 올바르지 않으면
+        typer.BadParameter: If URL format is invalid
     """
     parsed = urlparse(url)
     if not parsed.scheme or not parsed.netloc:
@@ -62,13 +62,13 @@ def validate_url(url: str) -> str:
 
 
 def resolve_theme(option: ThemeOption) -> ThemeName:
-    """ThemeOption을 실제 테마 이름으로 변환.
+    """Convert ThemeOption to actual theme name.
 
     Args:
-        option: CLI에서 받은 테마 옵션
+        option: Theme option from CLI
 
     Returns:
-        "mocha" 또는 "latte"
+        "mocha" or "latte"
     """
     match option:
         case ThemeOption.SYSTEM:
@@ -80,14 +80,14 @@ def resolve_theme(option: ThemeOption) -> ThemeName:
 
 
 def resolve_binary(common: Path | None, specific: Path | None) -> Path | None:
-    """바이너리 경로 resolve (specific > common > None).
+    """Resolve binary path (specific > common > None).
 
     Args:
-        common: 공통 바이너리 경로
-        specific: 특정 바이너리 경로
+        common: Common binary path
+        specific: Specific binary path
 
     Returns:
-        Resolved 바이너리 경로 (specific 우선, 없으면 common)
+        Resolved binary path (specific takes priority, fallback to common)
     """
     return specific if specific is not None else common
 
@@ -98,19 +98,19 @@ def create_agent(
     binary_path: Path | None,
     opencode_url: str | None,
 ) -> Agent:
-    """에이전트 spec에서 에이전트 생성.
+    """Create agent from agent spec.
 
     Args:
         agent_spec: "claude" | "claude:sonnet" | "opencode"
-        sdk_options_json: JSON 문자열 (SDK 옵션)
-        binary_path: 바이너리 경로 (None이면 auto-detect)
-        opencode_url: OpenCode 서버 URL (None이면 auto-start)
+        sdk_options_json: JSON string (SDK options)
+        binary_path: Binary path (auto-detect if None)
+        opencode_url: OpenCode server URL (auto-start if None)
 
     Returns:
-        Agent 인스턴스
+        Agent instance
 
     Raises:
-        typer.BadParameter: 에이전트 타입이 알 수 없거나 JSON이 잘못되었으면
+        typer.BadParameter: If agent type is unknown or JSON is invalid
     """
     if ":" in agent_spec:
         agent_type, model = agent_spec.split(":", 1)
@@ -144,17 +144,17 @@ async def _main_cli(
     ui: UIProtocol,
     session_store: SessionStore,
 ) -> None:
-    """CLI 모드 메인 함수 (기존 로직).
+    """CLI mode main function (original logic).
 
     Args:
-        execute_agent: Execute 에이전트
-        verify_agent: Verify 에이전트 (Optional)
-        execute_prompt_spec: Execute 프롬프트 spec (None이면 built-in 사용)
-        verify_prompt_spec: Verify 프롬프트 spec (None이면 built-in 사용)
-        execute_extra: Execute 추가 프롬프트
-        verify_extra: Verify 추가 프롬프트
-        ui: UI Protocol 구현
-        session_store: SessionStore 인스턴스
+        execute_agent: Execute agent
+        verify_agent: Verify agent (Optional)
+        execute_prompt_spec: Execute prompt spec (uses built-in if None)
+        verify_prompt_spec: Verify prompt spec (uses built-in if None)
+        execute_extra: Additional execute prompt
+        verify_extra: Additional verify prompt
+        ui: UI Protocol implementation
+        session_store: SessionStore instance
     """
     start_time = time.time()
 
@@ -214,33 +214,33 @@ async def _main_tui(
     ui: UIProtocol,
     session_store: SessionStore,
 ) -> None:
-    """TUI 모드 메인 함수 (TUI와 ExecutionLoop 병렬 실행).
+    """TUI mode main function (parallel execution of TUI and ExecutionLoop).
 
     Args:
-        execute_agent: Execute 에이전트
-        verify_agent: Verify 에이전트 (Optional)
-        execute_prompt_spec: Execute 프롬프트 spec (None이면 built-in 사용)
-        verify_prompt_spec: Verify 프롬프트 spec (None이면 built-in 사용)
-        execute_extra: Execute 추가 프롬프트
-        verify_extra: Verify 추가 프롬프트
-        ui: UI Protocol 구현
-        session_store: SessionStore 인스턴스
+        execute_agent: Execute agent
+        verify_agent: Verify agent (Optional)
+        execute_prompt_spec: Execute prompt spec (uses built-in if None)
+        verify_prompt_spec: Verify prompt spec (uses built-in if None)
+        execute_extra: Additional execute prompt
+        verify_extra: Additional verify prompt
+        ui: UI Protocol implementation
+        session_store: SessionStore instance
     """
     if not isinstance(ui, TUI):
         raise TypeError("ui must be TUI instance for TUI mode")
 
     async def monitor_shutdown(tg: anyio.abc.TaskGroup) -> None:
-        """Shutdown 이벤트 모니터링 (TUI → ExecutionLoop 종료)."""
+        """Monitor shutdown event (TUI → ExecutionLoop termination)."""
         await ui.shutdown_event.wait()
         tg.cancel_scope.cancel()
 
     async def run_execution_loop() -> None:
-        """ExecutionLoop 실행 (TUI 준비 완료 후)."""
+        """Run ExecutionLoop (after TUI is ready)."""
 
         start_time = time.time()
 
         try:
-            # TUI 준비 대기 (타임아웃 10초)
+            # Wait for TUI readiness (10 second timeout)
             with anyio.move_on_after(10.0) as cancel_scope:
                 await ui.ready_event.wait()
 
@@ -283,24 +283,24 @@ async def _main_tui(
             except (KeyboardInterrupt, anyio.get_cancelled_exc_class()):
                 pass
         except Exception as e:
-            # 에러를 UI에 표시하고 종료 요청
+            # Display error in UI and request shutdown
             try:
                 await ui.show_status(f"[bold red]Error: {e}[/bold red]")
             except Exception:
                 pass
             ui.post_message(ShutdownRequestMessage())
-            raise  # TaskGroup이 다른 task도 취소하도록 재발생
+            raise  # Re-raise to cancel other tasks in TaskGroup
 
     try:
         async with anyio.create_task_group() as tg:
-            # TUI 시작 (백그라운드)
+            # Start TUI (background)
             tg.start_soon(ui.run_async)
-            # ExecutionLoop 시작 (TUI 준비 후)
+            # Start ExecutionLoop (after TUI ready)
             tg.start_soon(run_execution_loop)
-            # Shutdown 모니터링 (별도 task)
+            # Monitor shutdown (separate task)
             tg.start_soon(monitor_shutdown, tg)
     except* (SystemExit, KeyboardInterrupt):
-        # 정상 종료 (Ctrl+C 등) - ExceptionGroup 처리
+        # Normal termination (Ctrl+C etc) - ExceptionGroup handling
         pass
     except* Exception as eg:
         for e in eg.exceptions:
@@ -366,7 +366,7 @@ def run(
     execute_agent = create_agent(execute_spec, execute_sdk_options, exec_bin, opencode_server_url)
     verify_agent = create_agent(verify_spec, verify_sdk_options, ver_bin, opencode_server_url) if verify_spec else None
 
-    # DEBUG: verify_agent 생성 확인
+    # DEBUG: Confirm verify_agent creation
     console.print(f"[yellow]DEBUG: verify_spec={verify_spec}, verify_agent={verify_agent}[/yellow]")
 
     resolved_theme = resolve_theme(theme)
@@ -376,7 +376,7 @@ def run(
 
     try:
         if no_tui:
-            # CLI 모드 (trio/asyncio 자동 선택 - backend 미지정)
+            # CLI mode (trio/asyncio auto-select - no backend specified)
             anyio.run(
                 _main_cli,
                 execute_agent,
@@ -389,7 +389,7 @@ def run(
                 session_store,
             )
         else:
-            # TUI 모드 (Textual은 asyncio만 지원)
+            # TUI mode (Textual supports asyncio only)
             anyio.run(
                 _main_tui,
                 execute_agent,

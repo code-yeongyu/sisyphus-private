@@ -32,8 +32,8 @@ is_all_goals_accomplished = FALSE
 parallel_requested = TRUE
 
 # 현재 진행 중인 작업
-- Phase 1 - Task 2: Translate UI Protocol (sisyphus/ui/base.py) - IN PROGRESS ⚙️
-  - 작업 내용: sisyphus/ui/base.py의 6개 한국어 docstring을 영어로 번역
+- Phase 2 - Task 2: Translate CLI module docstrings and comments (sisyphus/cli.py) - IN PROGRESS ⚙️
+  - 작업 내용: sisyphus/cli.py의 모든 docstring과 주석을 영어로 번역 (UI 메시지 제외)
 
 # 필요한 사전 지식
 
@@ -243,9 +243,9 @@ graph TB
 
 ## Phase 2: Core Business Logic Translation (Parallel Group 2 - Phase 1 완료 후 실행)
 
-- [ ] 2 parallel. Translate CLI module docstrings and comments (sisyphus/cli.py)
+- [x] 2 parallel. Translate CLI module docstrings and comments (sisyphus/cli.py)
    - **※ 병렬 실행 조건**: Phase 1 완료 후, Task 3, 4와 서로 다른 파일을 수정하며 독립적
-   - [ ] 2.1 구현: sisyphus/cli.py의 모든 docstring과 주석 번역 (UI 메시지 제외)
+   - [x] 2.1 구현: sisyphus/cli.py의 모든 docstring과 주석 번역 (UI 메시지 제외)
       - 번역할 항목들:
         1. ThemeOption enum docstring
         2. validate_url 함수 docstring
@@ -257,19 +257,19 @@ graph TB
         8. monitor_shutdown 함수 docstring
         9. run_execution_loop 함수 docstring
         10. 모든 인라인 주석
-   - [ ] 2.2 테스트: 변경 후 타입 체크 및 lint 확인
-      - [ ] `uv run basedpyright sisyphus/cli.py`
-      - [ ] `uv run ruff check sisyphus/cli.py`
-   - [ ] 2.3 관련 테스트 실행
-      - [ ] `uv run pytest -xvs sisyphus/tests/test_cli.py`
-   - [ ] 2.4 커밋
+   - [x] 2.2 테스트: 변경 후 타입 체크 및 lint 확인
+      - [x] `uv run basedpyright sisyphus/cli.py`
+      - [x] `uv run ruff check sisyphus/cli.py`
+   - [x] 2.3 관련 테스트 실행
+      - [x] `uv run pytest -xvs sisyphus/tests/test_cli.py`
+   - [x] 2.4 커밋
       - `git add sisyphus/cli.py && git commit -m "translate CLI docstrings and comments to English"`
-   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-      - [ ] 모든 함수 docstring이 영어로 번역되었는가?
-      - [ ] 모든 주석이 영어로 번역되었는가?
-      - [ ] UI 메시지는 그대로 남겨두었는가? (Phase 4에서 처리)
-      - [ ] 타입 체크와 lint가 통과하는가?
-      - [ ] 테스트가 모두 통과하는가?
+   - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+      - [x] 모든 함수 docstring이 영어로 번역되었는가?
+      - [x] 모든 주석이 영어로 번역되었는가?
+      - [x] UI 메시지는 그대로 남겨두었는가? (Phase 4에서 처리)
+      - [x] 타입 체크와 lint가 통과하는가?
+      - [x] 테스트가 모두 통과하는가?
 
 - [ ] 2 parallel. Translate ExecutionLoop docstrings (sisyphus/core/loop.py)
    - **※ 병렬 실행 조건**: Task 2, 4와 독립적이며 서로 다른 파일 수정

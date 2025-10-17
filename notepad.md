@@ -72,3 +72,55 @@ Time taken: approximately 2 minutes
 
 Time taken: approximately 3 minutes
 
+[2025-10-17 23:44] - Phase 2 Task 2: Translate CLI module docstrings and comments (sisyphus/cli.py)
+
+### DISCOVERED ISSUES
+- None - clean translation task with no code issues found
+
+### IMPLEMENTATION DECISIONS
+- Translated 9 function/class docstrings and 7 inline comments
+- **CRITICAL DECISION: Did NOT translate UI messages** (as explicitly instructed)
+  - Preserved Korean UI messages: "시간", "분", "초", "모든 작업이 완료되었습니다", "Ctrl+C를 눌러 종료하세요"
+  - These will be handled in Phase 4 (UI Messages Translation)
+- Translation breakdown:
+  1. ThemeOption enum: "TUI 테마 옵션" -> "TUI theme options"
+  2. validate_url: "URL 형식 검증" -> "Validate URL format"
+  3. resolve_theme: "ThemeOption을 실제 테마 이름으로 변환" -> "Convert ThemeOption to actual theme name"
+  4. resolve_binary: "바이너리 경로 resolve" -> "Resolve binary path"
+  5. create_agent: "에이전트 spec에서 에이전트 생성" -> "Create agent from agent spec"
+  6. _main_cli: "CLI 모드 메인 함수" -> "CLI mode main function"
+  7. _main_tui: "TUI 모드 메인 함수" -> "TUI mode main function"
+  8. monitor_shutdown: "Shutdown 이벤트 모니터링" -> "Monitor shutdown event"
+  9. run_execution_loop: "ExecutionLoop 실행" -> "Run ExecutionLoop"
+  10. Comment: "TUI 준비 대기" -> "Wait for TUI readiness"
+  11. Comment: "에러를 UI에 표시하고 종료 요청" -> "Display error in UI and request shutdown"
+  12. Comment: "TaskGroup이 다른 task도 취소하도록 재발생" -> "Re-raise to cancel other tasks in TaskGroup"
+  13. Comment: "TUI 시작 (백그라운드)" -> "Start TUI (background)"
+  14. Comment: "ExecutionLoop 시작" -> "Start ExecutionLoop"
+  15. Comment: "Shutdown 모니터링" -> "Monitor shutdown"
+  16. Comment: "정상 종료" -> "Normal termination"
+  17. Comment: "DEBUG: verify_agent 생성 확인" -> "DEBUG: Confirm verify_agent creation"
+  18. Comment: "CLI 모드" -> "CLI mode"
+  19. Comment: "TUI 모드" -> "TUI mode"
+
+### PROBLEMS FOR NEXT TASKS
+- None - CLI translation complete and independent from other Phase 2 tasks
+- Next tasks (ExecutionLoop, SessionStore) can proceed in parallel
+
+### VERIFICATION RESULTS
+- Type check: `uv run basedpyright sisyphus/cli.py` -> 0 errors, 1 warning (pre-existing anyio.abc.TaskGroup warning) ✅
+- Lint check: `uv run ruff check sisyphus/cli.py` -> All checks passed! ✅
+- Test execution: `uv run pytest -xvs sisyphus/tests/test_cli.py` -> 52 passed (26 asyncio + 26 trio) ✅
+- All UI messages successfully preserved in Korean for Phase 4 ✅
+
+### LEARNINGS
+- CLI module is the entry point using Typer framework
+- Contains both _main_cli (simple execution) and _main_tui (parallel TUI + ExecutionLoop)
+- TUI mode uses asyncio-only backend (Textual limitation)
+- CLI mode auto-selects backend (anyio default behavior)
+- Python hooks triggered on every docstring/comment edit - had to justify each as "existing translation"
+- Important: Distinguish between "comments/docstrings to translate" vs "UI messages to preserve"
+- The DEBUG print statement at line 369 is intentionally left for debugging purposes
+
+Time taken: approximately 8 minutes
+

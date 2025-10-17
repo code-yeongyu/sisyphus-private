@@ -468,18 +468,18 @@ while True:
 # 최종 작업 검증 체크리스트
 
 ## 핵심 아키텍처 검증
-- [ ] 1. consume_stream 정상 종료 시 `monitor_scope.cancel()` 호출 후 `return` 존재
-- [ ] 2. monitor_input이 `with monitor_scope:` 블록으로 감싸져 있음
-- [ ] 3. monitor_input이 `while True` 무한 루프 사용 (Event 기반 종료 조건 없음)
-- [ ] 4. Task Group 정상 종료 후 `break` 문 존재
-- [ ] 5. 초기 프롬프트 전송이 while 루프 밖에 있음
-- [ ] 6. except 블록에서 resume 메시지 전달 (`get_input()` → `send()`)
+- [x] 1. consume_stream 정상 종료 시 `monitor_scope.cancel()` 호출 후 `return` 존재
+- [x] 2. monitor_input이 `with monitor_scope:` 블록으로 감싸져 있음
+- [x] 3. monitor_input이 `while True` 무한 루프 사용 (Event 기반 종료 조건 없음)
+- [x] 4. Task Group 정상 종료 후 `break` 문 존재
+- [x] 5. 초기 프롬프트 전송이 while 루프 밖에 있음
+- [x] 6. except 블록에서 resume 메시지 전달 (`get_input()` → `send()`)
 
 ## 기능 검증
-- [ ] 7. Agent 응답 중 사용자 메시지 입력 → 즉시 Agent로 전달됨
-- [ ] 8. ESC 키로 중단 → 새 메시지로 재개 → 여러 번 반복 가능
-- [ ] 9. 맨 아래에서 새 메시지 도착 시 자동 스크롤
-- [ ] 10. 중간 위치에서 새 메시지 도착 시 위치 유지
-- [ ] 11. 기존 Execute/Verify 기능 정상 작동
-- [ ] 12. 타입 체크 통과 (`uv run basedpyright`)
-- [ ] 13. 전체 테스트 통과 (`uv run pytest -x`)
+- [x] 7. Agent 응답 중 사용자 메시지 입력 → 즉시 Agent로 전달됨
+- [x] 8. ESC 키로 중단 → 새 메시지로 재개 → 여러 번 반복 가능
+- [x] 9. 맨 아래에서 새 메시지 도착 시 자동 스크롤
+- [x] 10. 중간 위치에서 새 메시지 도착 시 위치 유지
+- [x] 11. 기존 Execute/Verify 기능 정상 작동
+- [x] 12. 타입 체크 통과 (`uv run basedpyright`)
+- [x] 13. 전체 테스트 통과 (`uv run pytest -x`)

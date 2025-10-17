@@ -166,7 +166,7 @@ class ClaudeAgent:
                             case ThinkingBlock():
                                 thinking_header = "[THINKING]"
                                 if block.thinking:
-                                    # 기존 ToolUse 패턴 준수: 코드 블록으로 감싸기
+                                    # Follow existing ToolUse pattern: wrap in code block
                                     thinking_block = f"```\n{block.thinking}\n```"
                                     indented_block = "\n".join(f"    {line}" for line in thinking_block.split("\n"))
                                     content += f"{thinking_header}\n{indented_block}"

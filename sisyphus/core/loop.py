@@ -224,24 +224,24 @@ class ExecutionLoop:
         self.execute_logger = self.logger_factory.create_logger(agent_type, session_id)
         self.execute_logger.info(f"Execute phase starting (session_id={session_id})")
 
-        # Resume 시도 로깅
+        # Log resume attempt
         if session_id:
             self.execute_logger.info(f"Attempting to resume session: {session_id}")
         else:
             self.execute_logger.info("Starting new session")
 
-        # Resume 실패 시 fallback
+        # Fallback on resume failure
         try:
             actual_session_id = await self.execute_agent.start_session(session_id)
 
-            # Resume 성공 로깅
+            # Log successful resume
             if session_id:
                 self.execute_logger.info(f"✅ Session resumed successfully: {session_id}")
             else:
                 self.execute_logger.info("New session initialized (ID will be received during stream)")
 
         except SessionResumeError as e:
-            # Resume 실패 로깅 및 새 세션 시작
+            # Log resume failure and start new session
             self.execute_logger.warning(f"❌ Failed to resume session {session_id}: {e}")
             self.execute_logger.info("Starting new session instead")
             actual_session_id = await self.execute_agent.start_session(None)

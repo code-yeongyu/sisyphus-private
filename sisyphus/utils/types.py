@@ -9,7 +9,7 @@ from typing import Any
 
 @dataclass
 class AgentMessage:
-    """통합 메시지 형식."""
+    """Unified message format."""
 
     role: str  # 'user', 'assistant', 'system'
     content: str
@@ -18,7 +18,7 @@ class AgentMessage:
 
 @dataclass
 class AgentConfig:
-    """에이전트 설정."""
+    """Agent configuration."""
 
     agent_type: str  # 'claude', 'opencode'
     model: str | None

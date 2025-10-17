@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class TaskValidator:
-    """ai-todolist.md 검증 도구."""
+    """ai-todolist.md validation tool."""
 
     def __init__(self, todolist_path: Path = Path("./ai-todolist.md")) -> None:
         """Initialize TaskValidator.

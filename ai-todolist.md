@@ -32,8 +32,9 @@ is_all_goals_accomplished = FALSE
 parallel_requested = TRUE
 
 # 현재 진행 중인 작업
-- Phase 3 - Task 5: Translate CLI test docstrings (sisyphus/tests/test_cli.py) - IN PROGRESS ⚙️
-  - 작업 내용: sisyphus/tests/test_cli.py의 모든 테스트 docstring을 영어로 번역
+- Phase 3 - Task 7: Translate Core test docstrings (sisyphus/core/tests/) - IN PROGRESS ⚙️
+  - 작업 내용: sisyphus/core/tests/ 디렉토리 내 모든 테스트 파일의 docstring을 영어로 번역
+  - 작업 시작: 2025-10-18
 
 # 필요한 사전 지식
 
@@ -328,22 +329,22 @@ graph TB
       - [x] 모든 테스트 docstring이 영어로 번역되었는가?
       - [x] 테스트가 모두 통과하는가?
 
-- [ ] 3 parallel. Translate Agent test docstrings (sisyphus/agents/tests/)
+- [x] 3 parallel. Translate Agent test docstrings (sisyphus/agents/tests/)
    - **※ 병렬 실행 조건**: Task 5, 7과 독립적이며 서로 다른 파일들 수정
-   - [ ] 3.1 구현: sisyphus/agents/tests/의 모든 테스트 docstring 번역
-      - test_claude.py
-      - test_opencode.py
-      - test_base.py
-   - [ ] 3.2 테스트: 타입 체크 및 lint
-      - [ ] `uv run basedpyright sisyphus/agents/tests/`
-      - [ ] `uv run ruff check sisyphus/agents/tests/`
-   - [ ] 3.3 테스트 실행
-      - [ ] `uv run pytest -xvs sisyphus/agents/tests/`
-   - [ ] 3.4 커밋
-      - `git add sisyphus/agents/tests/ && git commit -m "translate agent test docstrings to English"`
-   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-      - [ ] 모든 에이전트 테스트 docstring이 번역되었는가?
-      - [ ] 모든 테스트가 통과하는가?
+   - [x] 3.1 구현: sisyphus/agents/tests/의 모든 테스트 docstring 번역
+      - test_claude.py - ALREADY IN ENGLISH (no changes needed)
+      - test_opencode.py - ALREADY IN ENGLISH (no changes needed)
+      - test_base.py - ALREADY IN ENGLISH (no changes needed)
+   - [x] 3.2 테스트: 타입 체크 및 lint
+      - [x] `uv run basedpyright sisyphus/agents/tests/` - 0 errors, 2 warnings (pre-existing)
+      - [x] `uv run ruff check sisyphus/agents/tests/` - All checks passed
+   - [x] 3.3 테스트 실행
+      - [x] `uv run pytest -xvs sisyphus/agents/tests/` - 92 passed
+   - [x] 3.4 커밋
+      - NO COMMIT NEEDED - All docstrings already in English
+   - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+      - [x] 모든 에이전트 테스트 docstring이 번역되었는가? - YES (already in English)
+      - [x] 모든 테스트가 통과하는가? - YES (92 passed)
 
 - [ ] 3 parallel. Translate Core test docstrings (sisyphus/core/tests/)
    - **※ 병렬 실행 조건**: Task 5, 6과 독립적이며 서로 다른 파일들 수정

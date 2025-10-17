@@ -17,7 +17,7 @@ pytestmark = [pytest.mark.anyio()]
 
 
 async def test_validate_url_valid_http() -> None:
-    """Valid HTTP URL 검증."""
+    """Validates a valid HTTP URL."""
     # given
     url = "http://localhost:8080"
 
@@ -29,7 +29,7 @@ async def test_validate_url_valid_http() -> None:
 
 
 async def test_validate_url_valid_https() -> None:
-    """Valid HTTPS URL 검증."""
+    """Validates a valid HTTPS URL."""
     # given
     url = "https://example.com:3000/api"
 
@@ -41,7 +41,7 @@ async def test_validate_url_valid_https() -> None:
 
 
 async def test_validate_url_invalid_no_scheme() -> None:
-    """스킴이 없는 잘못된 URL."""
+    """Invalid URL without scheme."""
     # given
     url = "localhost:8080"
 
@@ -51,7 +51,7 @@ async def test_validate_url_invalid_no_scheme() -> None:
 
 
 async def test_validate_url_invalid_no_netloc() -> None:
-    """netloc이 없는 잘못된 URL."""
+    """Invalid URL without netloc."""
     # given
     url = "http://"
 
@@ -61,7 +61,7 @@ async def test_validate_url_invalid_no_netloc() -> None:
 
 
 async def test_resolve_binary_specific_priority() -> None:
-    """specific 바이너리가 우선순위를 갖는다."""
+    """Specific binary takes priority."""
     # given
     common = Path("/common/binary")
     specific = Path("/specific/binary")
@@ -74,7 +74,7 @@ async def test_resolve_binary_specific_priority() -> None:
 
 
 async def test_resolve_binary_common_fallback() -> None:
-    """specific이 None이면 common 사용."""
+    """Falls back to common if specific is None."""
     # given
     common = Path("/common/binary")
     specific = None
@@ -87,7 +87,7 @@ async def test_resolve_binary_common_fallback() -> None:
 
 
 async def test_resolve_binary_both_none() -> None:
-    """둘 다 None이면 None 반환."""
+    """Returns None if both are None."""
     # given
     common = None
     specific = None
@@ -100,7 +100,7 @@ async def test_resolve_binary_both_none() -> None:
 
 
 async def test_create_agent_claude_without_model() -> None:
-    """Claude 에이전트 생성 (모델 없음)."""
+    """Creates Claude agent without model."""
     # given
     agent_spec = "claude"
     sdk_options_json = None
@@ -116,7 +116,7 @@ async def test_create_agent_claude_without_model() -> None:
 
 
 async def test_create_agent_claude_with_model() -> None:
-    """Claude 에이전트 생성 (모델 포함)."""
+    """Creates Claude agent with model."""
     # given
     agent_spec = "claude:sonnet"
     sdk_options_json = None
@@ -132,7 +132,7 @@ async def test_create_agent_claude_with_model() -> None:
 
 
 async def test_create_agent_claude_with_sdk_options() -> None:
-    """Claude 에이전트 생성 (SDK 옵션 포함)."""
+    """Creates Claude agent with SDK options."""
     # given
     agent_spec = "claude"
     sdk_options_json = '{"temperature": 0.5, "max_tokens": 1000}'
@@ -149,7 +149,7 @@ async def test_create_agent_claude_with_sdk_options() -> None:
 
 
 async def test_create_agent_opencode() -> None:
-    """OpenCode 에이전트 생성."""
+    """Creates OpenCode agent."""
     # given
     agent_spec = "opencode"
     sdk_options_json = None
@@ -165,7 +165,7 @@ async def test_create_agent_opencode() -> None:
 
 
 async def test_create_agent_unknown_type() -> None:
-    """알 수 없는 에이전트 타입."""
+    """Unknown agent type."""
     # given
     agent_spec = "unknown-agent"
     sdk_options_json = None
@@ -178,7 +178,7 @@ async def test_create_agent_unknown_type() -> None:
 
 
 async def test_create_agent_invalid_json() -> None:
-    """잘못된 JSON SDK 옵션."""
+    """Invalid JSON SDK options."""
     # given
     agent_spec = "claude"
     sdk_options_json = '{"invalid": json}'
@@ -191,7 +191,7 @@ async def test_create_agent_invalid_json() -> None:
 
 
 async def test_create_agent_json_with_model_override() -> None:
-    """SDK 옵션 JSON에 모델이 있을 때 agent_spec의 모델로 오버라이드."""
+    """Overrides model with agent_spec when SDK options JSON contains model."""
     # given
     agent_spec = "claude:sonnet-4"
     sdk_options_json = '{"model": "old-model", "temperature": 0.7}'
@@ -203,13 +203,13 @@ async def test_create_agent_json_with_model_override() -> None:
 
     # then
     assert isinstance(agent, ClaudeAgent)
-    # agent_spec의 모델이 sdk_options에 추가됨
+    # agent_spec's model is added to sdk_options
     assert agent._sdk_options["model"] == "sonnet-4"
     assert agent._sdk_options["temperature"] == 0.7
 
 
 async def test_create_agent_empty_json() -> None:
-    """빈 JSON 객체는 유효하다."""
+    """Empty JSON object is valid."""
     # given
     agent_spec = "claude"
     sdk_options_json = "{}"
@@ -225,28 +225,28 @@ async def test_create_agent_empty_json() -> None:
 
 
 async def test_run_agent_and_execute_conflict() -> None:
-    """--agent와 --execute를 동시에 사용할 수 없다."""
+    """Cannot use --agent with --execute simultaneously."""
     # given/when/then
     with pytest.raises(typer.BadParameter, match="Cannot use --agent with --execute or --verify"):
         run(agent="claude", execute="opencode")
 
 
 async def test_run_agent_and_verify_conflict() -> None:
-    """--agent와 --verify를 동시에 사용할 수 없다."""
+    """Cannot use --agent with --verify simultaneously."""
     # given/when/then
     with pytest.raises(typer.BadParameter, match="Cannot use --agent with --execute or --verify"):
         run(agent="claude", verify="opencode")
 
 
 async def test_run_defaults_to_claude() -> None:
-    """아무 에이전트도 지정하지 않으면 claude가 기본값."""
+    """Defaults to claude when no agent is specified."""
     # given/when/then
-    # run() 함수는 anyio.run()을 호출하므로 mock 처리 필요
+    # run() calls anyio.run() so mock handling is required
     with patch("sisyphus.cli.create_agent") as mock_create_agent:
         with patch("sisyphus.cli.create_ui") as mock_create_ui:
             with patch("sisyphus.cli.SessionStore") as mock_session_store:
                 with patch("sisyphus.cli.anyio.run"):
-                    # Mock 설정
+                    # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
                     mock_ui = MagicMock()
@@ -274,20 +274,20 @@ async def test_run_defaults_to_claude() -> None:
                     )
 
                     # then
-                    # create_agent가 "claude"로 호출되었는지 확인
+                    # Verify create_agent was called with "claude"
                     assert mock_create_agent.call_count >= 1
                     first_call = mock_create_agent.call_args_list[0]
                     assert first_call[0][0] == "claude"
 
 
 async def test_run_execute_without_verify() -> None:
-    """--execute만 사용 (verify 없음)."""
+    """Uses only --execute (no verify)."""
     # given/when/then
     with patch("sisyphus.cli.create_agent") as mock_create_agent:
         with patch("sisyphus.cli.create_ui") as mock_create_ui:
             with patch("sisyphus.cli.SessionStore") as mock_session_store:
                 with patch("sisyphus.cli.anyio.run"):
-                    # Mock 설정
+                    # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
                     mock_ui = MagicMock()
@@ -315,20 +315,20 @@ async def test_run_execute_without_verify() -> None:
                     )
 
                     # then
-                    # create_agent가 execute와 verify 모두에 대해 호출됨 (verify는 execute와 동일)
+                    # create_agent is called for both execute and verify (verify uses same as execute)
                     assert mock_create_agent.call_count == 2
                     first_call = mock_create_agent.call_args_list[0]
                     assert first_call[0][0] == "opencode"
 
 
 async def test_run_execute_and_verify() -> None:
-    """--execute와 --verify 모두 사용."""
+    """Uses both --execute and --verify."""
     # given/when/then
     with patch("sisyphus.cli.create_agent") as mock_create_agent:
         with patch("sisyphus.cli.create_ui") as mock_create_ui:
             with patch("sisyphus.cli.SessionStore") as mock_session_store:
                 with patch("sisyphus.cli.anyio.run"):
-                    # Mock 설정
+                    # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
                     mock_ui = MagicMock()
@@ -356,7 +356,7 @@ async def test_run_execute_and_verify() -> None:
                     )
 
                     # then
-                    # create_agent가 execute와 verify에 대해 각각 1번씩 호출
+                    # create_agent is called once each for execute and verify
                     assert mock_create_agent.call_count == 2
                     first_call = mock_create_agent.call_args_list[0]
                     second_call = mock_create_agent.call_args_list[1]
@@ -365,13 +365,13 @@ async def test_run_execute_and_verify() -> None:
 
 
 async def test_run_binary_resolution() -> None:
-    """바이너리 resolve 우선순위 테스트."""
+    """Tests binary resolution priority."""
     # given/when/then
     with patch("sisyphus.cli.create_agent") as mock_create_agent:
         with patch("sisyphus.cli.create_ui") as mock_create_ui:
             with patch("sisyphus.cli.SessionStore") as mock_session_store:
                 with patch("sisyphus.cli.anyio.run"):
-                    # Mock 설정
+                    # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
                     mock_ui = MagicMock()
@@ -399,25 +399,25 @@ async def test_run_binary_resolution() -> None:
                     )
 
                     # then
-                    # create_agent 호출 시 resolve된 바이너리가 전달되는지 확인
+                    # Verify resolved binaries are passed to create_agent
                     assert mock_create_agent.call_count == 2
                     first_call = mock_create_agent.call_args_list[0]
                     second_call = mock_create_agent.call_args_list[1]
 
-                    # execute는 execute_binary 사용
+                    # execute uses execute_binary
                     assert first_call[0][2] == Path("/specific/execute-opencode")
-                    # verify는 verify_binary 사용
+                    # verify uses verify_binary
                     assert second_call[0][2] == Path("/specific/verify-opencode")
 
 
 async def test_run_opencode_server_url_validation() -> None:
-    """OpenCode 서버 URL 검증."""
+    """Validates OpenCode server URL."""
     # given/when/then
     with patch("sisyphus.cli.create_agent") as mock_create_agent:
         with patch("sisyphus.cli.create_ui") as mock_create_ui:
             with patch("sisyphus.cli.SessionStore") as mock_session_store:
                 with patch("sisyphus.cli.anyio.run"):
-                    # Mock 설정
+                    # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
                     mock_ui = MagicMock()
@@ -445,14 +445,14 @@ async def test_run_opencode_server_url_validation() -> None:
                     )
 
                     # then
-                    # create_agent가 execute와 verify 모두에 대해 호출됨
+                    # create_agent is called for both execute and verify
                     assert mock_create_agent.call_count == 2
                     first_call = mock_create_agent.call_args_list[0]
                     assert first_call[0][3] == "http://localhost:8080"
 
 
 async def test_run_opencode_invalid_url() -> None:
-    """OpenCode 잘못된 URL."""
+    """OpenCode invalid URL."""
     # given/when/then
     with pytest.raises(typer.BadParameter, match="Invalid URL"):
         run(
@@ -475,13 +475,13 @@ async def test_run_opencode_invalid_url() -> None:
 
 
 async def test_run_ui_mode_cli() -> None:
-    """--no-tui 플래그로 CLI 모드 선택."""
+    """Selects CLI mode with --no-tui flag."""
     # given/when/then
     with patch("sisyphus.cli.create_agent") as mock_create_agent:
         with patch("sisyphus.cli.create_ui") as mock_create_ui:
             with patch("sisyphus.cli.SessionStore") as mock_session_store:
                 with patch("sisyphus.cli.anyio.run"):
-                    # Mock 설정
+                    # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
                     mock_ui = MagicMock()
@@ -509,18 +509,18 @@ async def test_run_ui_mode_cli() -> None:
                     )
 
                     # then
-                    # create_ui가 "cli"로 호출되는지 확인 (theme=None for CLI mode)
+                    # Verify create_ui is called with "cli" (theme=None for CLI mode)
                     mock_create_ui.assert_called_once_with("cli", theme=None)
 
 
 async def test_run_ui_mode_tui() -> None:
-    """기본값으로 TUI 모드 선택."""
+    """Selects TUI mode by default."""
     # given/when/then
     with patch("sisyphus.cli.create_agent") as mock_create_agent:
         with patch("sisyphus.cli.create_ui") as mock_create_ui:
             with patch("sisyphus.cli.SessionStore") as mock_session_store:
                 with patch("sisyphus.cli.anyio.run"):
-                    # Mock 설정
+                    # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
                     mock_ui = MagicMock()
@@ -552,13 +552,13 @@ async def test_run_ui_mode_tui() -> None:
 
 
 async def test_run_verify_only_uses_claude_for_both() -> None:
-    """verify만 지정하면 agent가 claude로 설정되어 execute/verify 모두 claude를 사용한다."""
+    """When only verify is specified, agent is set to claude so both execute/verify use claude."""
     # given/when/then
     with patch("sisyphus.cli.create_agent") as mock_create_agent:
         with patch("sisyphus.cli.create_ui") as mock_create_ui:
             with patch("sisyphus.cli.SessionStore") as mock_session_store:
                 with patch("sisyphus.cli.anyio.run"):
-                    # Mock 설정
+                    # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
                     mock_ui = MagicMock()

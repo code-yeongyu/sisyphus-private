@@ -329,8 +329,9 @@ graph TB
       - [x] 모든 테스트 docstring이 영어로 번역되었는가?
       - [x] 테스트가 모두 통과하는가?
 
-- [x] 3 parallel. Translate Agent test docstrings (sisyphus/agents/tests/)
+- [x] 3 parallel. Translate Agent test docstrings (sisyphus/agents/tests/) ✅
    - **※ 병렬 실행 조건**: Task 5, 7과 독립적이며 서로 다른 파일들 수정
+   - **결과**: 모든 파일이 이미 영어로 작성되어 있어 번역 불필요
    - [x] 3.1 구현: sisyphus/agents/tests/의 모든 테스트 docstring 번역
       - test_claude.py - ALREADY IN ENGLISH (no changes needed)
       - test_opencode.py - ALREADY IN ENGLISH (no changes needed)
@@ -346,24 +347,26 @@ graph TB
       - [x] 모든 에이전트 테스트 docstring이 번역되었는가? - YES (already in English)
       - [x] 모든 테스트가 통과하는가? - YES (92 passed)
 
-- [ ] 3 parallel. Translate Core test docstrings (sisyphus/core/tests/)
+- [x] 3 parallel. Translate Core test docstrings (sisyphus/core/tests/) ✅
    - **※ 병렬 실행 조건**: Task 5, 6과 독립적이며 서로 다른 파일들 수정
-   - [ ] 3.1 구현: sisyphus/core/tests/ 내 모든 테스트 파일의 docstring 번역
-      - test_loop.py
-      - test_loop__*.py (여러 파일)
-      - test_prompts.py
-      - test_session.py
-      - test_tasks.py
-   - [ ] 3.2 테스트: 타입 체크 및 lint
-      - [ ] `uv run basedpyright sisyphus/core/tests/`
-      - [ ] `uv run ruff check sisyphus/core/tests/`
-   - [ ] 3.3 테스트 실행
-      - [ ] `uv run pytest -xvs sisyphus/core/tests/`
-   - [ ] 3.4 커밋
-      - `git add sisyphus/core/tests/ && git commit -m "translate core test docstrings to English"`
-   - [ ] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
-      - [ ] 모든 core 테스트 docstring이 번역되었는가?
-      - [ ] 모든 테스트가 통과하는가?
+   - **결과**: 11개 파일 중 1개 파일에서 3개 한국어 docstring 발견 및 번역 완료
+   - [x] 3.1 구현: sisyphus/core/tests/ 내 모든 테스트 파일의 docstring 번역
+      - test_loop.py - ALREADY IN ENGLISH (no changes needed)
+      - test_loop__*.py (여러 파일) - ALREADY IN ENGLISH except integration_feedback_loop
+      - test_loop__integration_feedback_loop.py - TRANSLATED 3 docstrings
+      - test_prompts.py - ALREADY IN ENGLISH (no changes needed)
+      - test_session.py - ALREADY IN ENGLISH (no changes needed)
+      - test_tasks.py - ALREADY IN ENGLISH (no changes needed)
+   - [x] 3.2 테스트: 타입 체크 및 lint
+      - [x] `uv run basedpyright sisyphus/core/tests/` - 0 errors, 9 warnings (pre-existing)
+      - [x] `uv run ruff check sisyphus/core/tests/` - All checks passed
+   - [x] 3.3 테스트 실행
+      - [x] `uv run pytest -xvs sisyphus/core/tests/` - 188 passed (94 asyncio + 94 trio)
+   - [x] 3.4 커밋
+      - `git add sisyphus/core/tests/ && git commit -m "translate core test docstrings to English"` - Success (hash: a21c64e)
+   - [x] 아래의 가이드대로 진행했을 때 작업 검증 성공 여부
+      - [x] 모든 core 테스트 docstring이 번역되었는가? - YES (only 3 needed translation)
+      - [x] 모든 테스트가 통과하는가? - YES (188 passed)
 
 - [ ] 4. Translate UI and Utils test docstrings (순차 실행)
    - [ ] 4.1 구현: UI 및 Utils 테스트 파일들의 docstring 번역

@@ -246,3 +246,45 @@ Time taken: approximately 8 minutes
 - Always check if translation is needed before proceeding with modification
 
 소요 시간: approximately 2 minutes
+
+[2025-10-18 00:08] - Phase 3 Task 7: Translate Core test docstrings (sisyphus/core/tests/)
+
+### DISCOVERED ISSUES
+- Found only 1 file with Korean docstrings out of 11 test files
+- test_loop__integration_feedback_loop.py had 3 Korean scenario docstrings
+- All other files (test_loop.py, test_prompts.py, test_tasks.py, test_session.py, and all other test_loop__*.py files) were already in English
+
+### IMPLEMENTATION DECISIONS
+- Translated 3 Korean docstrings in test_loop__integration_feedback_loop.py:
+  1. Line 22: "시나리오 1: Execute → Task 완료 → Verify FULLY_DONE → 종료" → "Scenario 1: Execute → Task complete → Verify FULLY_DONE → Exit."
+  2. Line 62: "시나리오 2: Execute → Task 미완료 → Execute 재시작 → Task 완료 → Verify → 종료" → "Scenario 2: Execute → Task incomplete → Execute retry → Task complete → Verify → Exit."
+  3. Line 102: "시나리오 3: 여러 번의 Verify 피드백 iteration → 누적 → 최종 성공" → "Scenario 3: Multiple Verify feedback iterations → Accumulate → Final success."
+- Preserved the arrow notation (→) to maintain the flow diagram style
+- Used concise English that matches the existing test naming conventions
+- Python hooks triggered 2 times - justified as "existing docstring translation" (Priority 1)
+
+### PROBLEMS FOR NEXT TASKS
+- None - Core test translation complete
+- Next: Phase 3 Task 4 (UI and Utils tests)
+
+### VERIFICATION RESULTS
+- Files examined: 11 total test files in sisyphus/core/tests/
+  - Already in English: test_loop.py, test_prompts.py, test_tasks.py, test_session.py, test_loop__verify_phase_feedback.py, test_loop__non_interactive_flow.py, test_loop__execute_feedback_injection.py, test_loop__verify_feedback_history.py, test_loop__concurrent_input_monitoring.py, test_loop__phase_resume.py
+  - Translated: test_loop__integration_feedback_loop.py (3 docstrings)
+- Type check: `uv run basedpyright sisyphus/core/tests/` → 0 errors, 9 warnings (pre-existing anyio warnings) ✅
+- Lint check: `uv run ruff check sisyphus/core/tests/` → All checks passed! ✅
+- Test execution: `uv run pytest -xvs sisyphus/core/tests/` → 188 passed (94 asyncio + 94 trio) ✅
+- Commit creation: `git commit -m "translate core test docstrings to English"` → Success (hash: a21c64e) ✅
+
+### LEARNINGS
+- Core tests are comprehensive with 188 total tests (94 × 2 backends)
+- Test categories:
+  - Basic ExecutionLoop tests (test_loop.py): 9 tests
+  - Phase-specific tests: concurrent input monitoring, phase resume, feedback injection, verify phase feedback, verify feedback history, non-interactive flow
+  - Integration tests: feedback loop scenarios
+  - Component tests: prompts, tasks, session
+- Most files already in English - only integration feedback loop had Korean scenario descriptions
+- The scenario-based test descriptions use arrow notation (→) to show workflow progression
+- All tests follow Given-When-Then pattern (marked with # given, # when, # then comments)
+
+소요 시간: approximately 4 minutes

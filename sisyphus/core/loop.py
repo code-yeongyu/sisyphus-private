@@ -292,16 +292,33 @@ class ExecutionLoop:
                 async with anyio.create_task_group() as tg:
                     tg.start_soon(consume_stream)
                     tg.start_soon(monitor_input)
-            except SessionLimitError as e:
-                self.execute_logger.warning(f"Session limit reached: {e}")
+            except* SessionLimitError as exception_group:
+                # Extract first SessionLimitError from ExceptionGroup
+                session_limit_error = exception_group.exceptions[0]
+
+                self.execute_logger.error(
+                    f"Session limit reached: {session_limit_error}",
+                    exc_info=session_limit_error,
+                )
                 await self.ui.show_status("⚠️  Session limit reached")
 
-                if e.reset_time:
-                    await sleep_until_reset(e.reset_time, self.ui)
+                if session_limit_error.reset_time:
+                    self.execute_logger.info(f"Reset time parsed: {session_limit_error.reset_time}")
+                    await sleep_until_reset(session_limit_error.reset_time, self.ui)
                 else:
+                    self.execute_logger.warning("Reset time unknown, waiting until next hour")
                     await self.ui.show_status("Reset time unknown, waiting until next hour...")
                     await sleep_until_next_hour(self.ui)
 
+                # Re-raise for outer loop to continue
+                raise session_limit_error
+            except* Exception as exception_group:
+                # Catch any other unexpected exceptions from TaskGroup
+                for exception in exception_group.exceptions:
+                    self.execute_logger.error(
+                        f"Unexpected error in execute phase: {exception}",
+                        exc_info=exception,
+                    )
                 raise
 
             # Task Group completed normally - check interrupt status
@@ -427,16 +444,33 @@ class ExecutionLoop:
                 async with anyio.create_task_group() as tg:
                     tg.start_soon(consume_stream)
                     tg.start_soon(monitor_input)
-            except SessionLimitError as e:
-                self.verify_logger.warning(f"Session limit reached: {e}")
+            except* SessionLimitError as exception_group:
+                # Extract first SessionLimitError from ExceptionGroup
+                session_limit_error = exception_group.exceptions[0]
+
+                self.verify_logger.error(
+                    f"Session limit reached: {session_limit_error}",
+                    exc_info=session_limit_error,
+                )
                 await self.ui.show_status("⚠️  Verify session limit reached")
 
-                if e.reset_time:
-                    await sleep_until_reset(e.reset_time, self.ui)
+                if session_limit_error.reset_time:
+                    self.verify_logger.info(f"Reset time parsed: {session_limit_error.reset_time}")
+                    await sleep_until_reset(session_limit_error.reset_time, self.ui)
                 else:
+                    self.verify_logger.warning("Reset time unknown, waiting until next hour")
                     await self.ui.show_status("Reset time unknown, waiting until next hour...")
                     await sleep_until_next_hour(self.ui)
 
+                # Re-raise for outer loop to continue
+                raise session_limit_error
+            except* Exception as exception_group:
+                # Catch any other unexpected exceptions from TaskGroup
+                for exception in exception_group.exceptions:
+                    self.verify_logger.error(
+                        f"Unexpected error in verify phase: {exception}",
+                        exc_info=exception,
+                    )
                 raise
 
             # Task Group completed normally - check interrupt status

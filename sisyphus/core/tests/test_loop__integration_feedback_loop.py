@@ -19,7 +19,7 @@ pytestmark = [pytest.mark.anyio]
 
 
 async def test_feedback_loop__scenario_1_immediate_success() -> None:
-    """시나리오 1: Execute → Task 완료 → Verify FULLY_DONE → 종료"""
+    """Scenario 1: Execute → Task complete → Verify FULLY_DONE → Exit."""
     # given
     execute_agent = MockAgent()
     verify_agent = MockAgent()
@@ -59,7 +59,7 @@ async def test_feedback_loop__scenario_1_immediate_success() -> None:
 
 
 async def test_feedback_loop__scenario_2_task_incomplete_retry() -> None:
-    """시나리오 2: Execute → Task 미완료 → Execute 재시작 → Task 완료 → Verify → 종료"""
+    """Scenario 2: Execute → Task incomplete → Execute retry → Task complete → Verify → Exit."""
     # given
     execute_agent = MockAgent()
     verify_agent = MockAgent()
@@ -99,7 +99,7 @@ async def test_feedback_loop__scenario_2_task_incomplete_retry() -> None:
 
 
 async def test_feedback_loop__scenario_3_verify_feedback_iteration() -> None:
-    """시나리오 3: 여러 번의 Verify 피드백 iteration → 누적 → 최종 성공"""
+    """Scenario 3: Multiple Verify feedback iterations → Accumulate → Final success."""
     # given
     execute_agent = MockAgent()
     verify_agent = MockAgent()
@@ -135,32 +135,32 @@ async def test_feedback_loop__scenario_3_verify_feedback_iteration() -> None:
     )
 
     # then
-    # Execute phase 3번 호출 확인
+    # Verify Execute phase called 3 times
     assert len(execute_agent.sent_messages) == 3
 
-    # Verify phase 3번 호출 확인
+    # Verify Verify phase called 3 times
     assert len(verify_agent.sent_messages) == 3
 
-    # 2차 Execute: 피드백1 포함 확인
+    # 2nd Execute: Verify feedback 1 included
     second_execute_prompt = execute_agent.sent_messages[1]
     assert "<architect-feedback-history>" in second_execute_prompt
     assert '<feedback iteration="1">' in second_execute_prompt
     assert "First feedback: needs improvement in A" in second_execute_prompt
 
-    # 3차 Execute: 피드백1+2 포함 확인
+    # 3rd Execute: Verify feedback 1+2 included
     third_execute_prompt = execute_agent.sent_messages[2]
     assert '<feedback iteration="1">' in third_execute_prompt
     assert "First feedback: needs improvement in A" in third_execute_prompt
     assert '<feedback iteration="2">' in third_execute_prompt
     assert "Second feedback: needs improvement in B" in third_execute_prompt
 
-    # 2차 Verify: 피드백 히스토리1 포함 확인
+    # 2nd Verify: Verify feedback history 1 included
     second_verify_prompt = verify_agent.sent_messages[1]
     assert "<previous_architect_reviews>" in second_verify_prompt
     assert '<review iteration="1">' in second_verify_prompt
     assert "First feedback: needs improvement in A" in second_verify_prompt
 
-    # 3차 Verify: 피드백 히스토리1+2 포함 확인
+    # 3rd Verify: Verify feedback history 1+2 included
     third_verify_prompt = verify_agent.sent_messages[2]
     assert '<review iteration="1">' in third_verify_prompt
     assert "First feedback: needs improvement in A" in third_verify_prompt

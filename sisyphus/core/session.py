@@ -11,7 +11,7 @@ import anyio
 
 
 class SessionStore:
-    """세션 영속성 관리 (파일 락 포함)"""
+    """Manage session persistence with file locking"""
 
     def __init__(self, base_dir: Path = Path("./sessions")) -> None:
         self.base_dir = base_dir
@@ -49,7 +49,7 @@ class SessionStore:
         return {}
 
     async def _save_sessions_atomic(self, sessions: dict[str, dict[str, Any]]) -> None:
-        """원자적 저장 (임시 파일 + rename)"""
+        """Atomic save using temporary file and rename"""
         if self.sessions_file.exists():
             if self.backup_file.exists():
                 await anyio.to_thread.run_sync(self._remove_path_sync, self.backup_file)

@@ -51,6 +51,9 @@ class InputBar(TextArea):
         Args:
             event: Key event object with .key attribute
         """
+        if event.key == "shift+enter":
+            return
+
         if event.key == "enter":
             message = self.text.strip()
             if message:

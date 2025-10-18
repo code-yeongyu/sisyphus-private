@@ -93,22 +93,39 @@ The work is complete.
 
 ### Installation
 
-Sisyphus requires Python 3.12 or higher. We recommend using the uv package manager.
+#### From PyPI (Recommended)
+
+Sisyphus requires Python 3.12 or higher.
+
+```sh
+# Using pip
+pip install sisyphus-ai
+
+# Using uv (faster)
+uv tool install sisyphus-ai
+```
+
+After installation, you can run Sisyphus directly:
+```sh
+sisyphus work
+```
+
+#### From Source
+
+For development or contributing:
 
 ```sh
 # Install uv (if you don't have it)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone the project
-git clone <repository-url>
+git clone https://github.com/code-yeongyu/sisyphus.git
 cd sisyphus
 
 # Install dependencies
 uv sync
-```
 
-Run directly in development mode:
-```sh
+# Run directly in development mode
 uv run sisyphus work
 ```
 
@@ -507,6 +524,40 @@ For full license terms, see [LICENSE.md](LICENSE.md).
 ### Enterprise License
 
 Need commercial use or SaaS provision? Contact us separately.
+
+## For Developers
+
+### Release Process
+
+Sisyphus uses automated GitHub Actions for releases.
+
+1. Go to Actions tab in GitHub repository
+2. Select "Bump Version and Release" workflow
+3. Click "Run workflow"
+4. Choose version type:
+   - **patch**: Bug fixes (0.1.0 → 0.1.1)
+   - **minor**: New features (0.1.0 → 0.2.0)
+   - **major**: Breaking changes (0.1.0 → 1.0.0)
+5. Click "Run workflow" button
+
+The workflow will:
+- Update version in pyproject.toml
+- Create git commit and tag
+- Create GitHub Release
+- Automatically publish to PyPI
+
+### Manual Publishing (if needed)
+
+```sh
+# Build package
+uv build
+
+# Publish to PyPI
+uv publish
+
+# Publish to TestPyPI (for testing)
+uv publish --publish-url https://test.pypi.org/legacy/
+```
 
 ## Contributing
 

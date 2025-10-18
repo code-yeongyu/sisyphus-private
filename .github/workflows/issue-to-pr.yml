@@ -39,10 +39,16 @@ jobs:
       - name: Setup Claude Code configuration
         run: |
           if [ -d ".github/workflows/.claude" ]; then
+            # Copy to user config (~/.claude)
             mkdir -p ~/.claude
             cp -r .github/workflows/.claude/* ~/.claude/
-            echo "Copied .claude configuration from .github/workflows/.claude to ~/.claude"
+            echo "Copied .claude configuration to ~/.claude"
             ls -la ~/.claude
+
+            # Copy to project root (.claude) for SDK project settings discovery
+            cp -r .github/workflows/.claude .claude
+            echo "Copied .claude configuration to project root"
+            ls -la .claude
           else
             echo "No .github/workflows/.claude directory found, skipping configuration copy"
           fi

@@ -52,6 +52,9 @@ class InputBar(TextArea):
             event: Key event object with .key attribute
         """
         if event.key == "shift+enter":
+            self.insert("\n")
+            event.prevent_default()
+            event.stop()
             return
 
         if event.key == "enter":

@@ -1,0 +1,159 @@
+name: Bump Version and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+      custom_version:
+        description: 'Custom version (leave empty for auto-bump)'
+        required: false
+        type: string
+
+permissions:
+  contents: write  # Git push 및 Release 생성 권한
+
+jobs:
+  bump-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 전체 히스토리 가져오기
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install toml package
+        run: pip install toml
+
+      - name: Get current version and bump
+        id: version
+        run: |
+          # Python 스크립트로 버전 읽기 및 bump
+          python << 'EOF'
+          import toml
+          import sys
+          import os
+
+          # pyproject.toml 읽기
+          with open('pyproject.toml', 'r') as f:
+              data = toml.load(f)
+
+          current_version = data['project']['version']
+          print(f"Current version: {current_version}")
+
+          # 버전 파싱
+          major, minor, patch = map(int, current_version.split('.'))
+
+          # Custom version이 제공되었는지 확인
+          custom_version = "${{ github.event.inputs.custom_version }}"
+
+          if custom_version:
+              new_version = custom_version
+              print(f"Using custom version: {new_version}")
+          else:
+              # 버전 bump
+              version_type = "${{ github.event.inputs.version_type }}"
+              if version_type == 'major':
+                  major += 1
+                  minor = 0
+                  patch = 0
+              elif version_type == 'minor':
+                  minor += 1
+                  patch = 0
+              else:  # patch
+                  patch += 1
+
+              new_version = f"{major}.{minor}.{patch}"
+              print(f"Bumped {version_type} version to: {new_version}")
+
+          # pyproject.toml 업데이트
+          data['project']['version'] = new_version
+          with open('pyproject.toml', 'w') as f:
+              toml.dump(data, f)
+
+          # GitHub Actions output 설정
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"old_version={current_version}\n")
+              f.write(f"new_version={new_version}\n")
+              f.write(f"tag=v{new_version}\n")
+          EOF
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit version bump
+        run: |
+          git add pyproject.toml
+          git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }}"
+          git push origin master
+
+      - name: Create Git tag
+        run: |
+          git tag ${{ steps.version.outputs.tag }}
+          git push origin ${{ steps.version.outputs.tag }}
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # 이전 태그부터 현재까지의 커밋 메시지 수집
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            # 첫 릴리즈인 경우
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            # 이전 태그 이후의 커밋들
+            CHANGELOG=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          # Changelog를 파일로 저장 (multiline string 처리)
+          cat > changelog.txt << 'CHANGELOG_EOF'
+          ## What's Changed
+
+          ${CHANGELOG}
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.version.outputs.old_version }}...${{ steps.version.outputs.tag }}
+          CHANGELOG_EOF
+
+          # GitHub output 설정
+          {
+            echo "changelog<<CHANGELOG_DELIMITER"
+            cat changelog.txt
+            echo "CHANGELOG_DELIMITER"
+          } >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create ${{ steps.version.outputs.tag }} \
+            --title "Release ${{ steps.version.outputs.tag }}" \
+            --notes "${{ steps.changelog.outputs.changelog }}" \
+            --verify-tag
+
+      - name: Summary
+        run: |
+          echo "## 🚀 Release Created Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Old Version:** ${{ steps.version.outputs.old_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **New Version:** ${{ steps.version.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag:** ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The \`Publish to PyPI\` workflow will now automatically deploy to PyPI." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }})" >> $GITHUB_STEP_SUMMARY

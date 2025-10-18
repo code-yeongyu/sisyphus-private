@@ -97,6 +97,7 @@ def create_agent(
     sdk_options_json: str | None,
     binary_path: Path | None,
     opencode_url: str | None,
+    cwd: Path | None = None,
 ) -> Agent:
     """Create agent from agent spec.
 
@@ -105,6 +106,7 @@ def create_agent(
         sdk_options_json: JSON string (SDK options)
         binary_path: Binary path (auto-detect if None)
         opencode_url: OpenCode server URL (auto-start if None)
+        cwd: Working directory for Claude Agent SDK (auto-detect if None)
 
     Returns:
         Agent instance
@@ -127,7 +129,8 @@ def create_agent(
 
     match agent_type:
         case "claude":
-            return cast("Agent", ClaudeAgent(model=model, sdk_options=sdk_options))
+            working_dir = str(cwd) if cwd else str(Path.cwd())
+            return cast("Agent", ClaudeAgent(model=model, sdk_options=sdk_options, cwd=working_dir))
         case "opencode":
             return cast("Agent", OpenCodeAgent(binary=binary_path, server_url=opencode_url))
         case _:

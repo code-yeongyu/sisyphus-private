@@ -33,15 +33,18 @@ class ClaudeAgent:
         self,
         model: str | None = None,
         sdk_options: dict[str, Any] | None = None,
+        cwd: str | None = None,
     ) -> None:
         """Initialize ClaudeAgent.
 
         Args:
             model: Optional model override (e.g., "claude-sonnet-4-5-20250929")
             sdk_options: Optional SDK options to override defaults
+            cwd: Optional working directory path for resolving project settings
         """
         self._model = model
         self._sdk_options = sdk_options or {}
+        self._cwd = cwd
         self._client: ClaudeSDKClient | None = None
         self._options: ClaudeAgentOptions | None = None
         self._session_id: str | None = None
@@ -69,6 +72,9 @@ class ClaudeAgent:
         if self._model:
             final_options["model"] = self._model
 
+        if self._cwd:
+            final_options["cwd"] = self._cwd
+
         self._options = ClaudeAgentOptions(**final_options)
         self._client = ClaudeSDKClient(self._options)
 
@@ -95,6 +101,9 @@ class ClaudeAgent:
 
             if self._model:
                 resume_options["model"] = self._model
+
+            if self._cwd:
+                resume_options["cwd"] = self._cwd
 
             resume_options["resume"] = session_id
 

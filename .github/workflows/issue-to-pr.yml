@@ -1,0 +1,132 @@
+name: Issue to PR via Sisyphus
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  process-issue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Cache Claude Code installation
+        id: cache-claude
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/bin/claude
+            ~/.claude
+          key: ${{ runner.os }}-claude-code-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-claude-code-
+
+      - name: Install Claude Code
+        if: steps.cache-claude.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL https://claude.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Ensure Claude Code in PATH
+        run: |
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Setup Claude Code configuration
+        run: |
+          if [ -d ".github/workflows/.claude" ]; then
+            mkdir -p ~/.claude
+            cp -r .github/workflows/.claude/* ~/.claude/
+            echo "Copied .claude configuration from .github/workflows/.claude to ~/.claude"
+            ls -la ~/.claude
+          else
+            echo "No .github/workflows/.claude directory found, skipping configuration copy"
+          fi
+
+      - name: Setup GitHub CLI authentication
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          gh auth status
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            .venv
+          key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml', '**/uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Sync project dependencies
+        run: |
+          uv sync
+
+      - name: Create ai-todolist.md from issue
+        run: |
+          cat > ai-todolist.md << 'EOF'
+          # Task from Issue #${{ github.event.issue.number }}
+
+          **Title:** ${{ github.event.issue.title }}
+
+          **Description:**
+          ${{ github.event.issue.body }}
+
+          ---
+          EOF
+
+          cat ai-todolist.md
+
+      - name: Run Sisyphus
+        run: |
+          uv run sisyphus run --no-tui
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        continue-on-error: true
+
+      - name: Create Pull Request via Claude Code
+        run: |
+          ~/.local/bin/claude --dangerously-skip-permissions "create PR of this, using gh cli. Title should be 'Fix #${{ github.event.issue.number }}: ${{ github.event.issue.title }}' and include reference to issue #${{ github.event.issue.number }}"
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on issue
+        if: success()
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --body "🤖 Automated PR has been created via Sisyphus workflow!"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sisyphus-logs
+          path: |
+            logs/
+            ai-todolist.md
+          retention-days: 7

@@ -1,602 +1,936 @@
-# User's Original Request (For Record)
-I want to do two tasks in the current project. --review
+# 사용자의 최초 요청 (기록용)
+i wanna upload this project to pip and plus github workflow for it like when i publish release it must released as new.
 
-1. Bug Fix: Currently, when a session limit error occurs like "sisyphus.utils.errors.SessionLimitError: Claude API session limit reached: API Error: Rate limit reached", the app shuts down completely. This shouldn't happen - it should retry at the top of the hour instead. Right now it just closes entirely.
-2. In the input bar, for example if I have "keybind = shift+enter=text:\n" mapped in my terminal, I want shift enter to create a new line. Currently it just continues on one line. Also it keeps expanding horizontally - I want wrap=true so it goes to the next line.
+how can i setup this
 
-Review the code extensively, ultrathink, and create a new work plan
+## 사용자가 이후에 추가 요청한 내용들 (기록용)
+- 버전 bump부터 Release 생성까지 자동화하는 GitHub Action 요청
+- 버튼 클릭만으로 전체 릴리즈 프로세스를 실행할 수 있게 해달라는 요청
+- 이 모든 내용을 ai-todolist.md 작업 계획서로 만들어달라는 요청
+- actionlint를 사용해서 workflow YAML 파일 검증하도록 보강 요청
+- 6번 작업(PyPI 계정 생성 및 배포)은 사용자가 직접 해야 하니 그때 요청하라고 적어달라는 요청
 
-## Additional Requests Made by User (For Record)
-- Keep iterating until review says okay
+# 작업 목표
+1. PyPI 배포를 위한 pyproject.toml 메타데이터 개선 (license, classifiers, URLs, keywords 추가)
+2. Python 버전 제약 수정 (requires-python을 ">=3.12"로 변경)
+3. GitHub Actions workflow 3개 생성:
+   - Test Build workflow (PR/Push 시 빌드 테스트)
+   - PyPI Publish workflow (Release 시 자동 배포)
+   - Bump Version workflow (버전 업데이트 + Release 생성 자동화)
+4. PyPI 인증 설정 (Trusted Publishing 또는 API Token)
+5. 첫 배포 테스트 및 검증
 
-# Detail Level
-**BALANCED**
+# 작업 배경
+현재 sisyphus 프로젝트는 PyPI 배포를 위한 기본 구조(hatchling 빌드 시스템, entry point)는 갖추고 있지만, 실제 배포에 필요한 메타데이터와 자동화 workflow가 없는 상태입니다.
 
-This plan follows balanced detail level criteria:
-- Major files and locations specified
-- Core function/class names provided
-- Change areas clearly distinguished
-- Pseudocode/patterns for complex parts included
-- Key changes explained concretely
-- New structures presented with examples
+**현재 상태:**
+- ✅ pyproject.toml에 hatchling 빌드 시스템 설정됨
+- ✅ Entry point 정의됨: `sisyphus = "sisyphus.cli:app"`
+- ✅ GitHub repository 존재: `https://github.com/code-yeongyu/sisyphus.git`
+- ❌ PyPI 메타데이터 누락 (license, classifiers, URLs, keywords)
+- ❌ Python 버전 제약 불일치 (pyproject.toml: `~=3.12.0` vs README: "3.12 or higher")
+- ❌ GitHub Actions workflows 없음 (`.github` 디렉토리 자체가 없음)
+- ❌ PyPI 인증 미설정
 
-# Work Goals
-1. Fix SessionLimitError handling so app doesn't terminate - properly handle anyio TaskGroup exceptions and wait until next hour then retry
-2. Add Shift+Enter support for newline input in TUI InputBar using correct Textual API
-3. Apply automatic text wrapping when InputBar text becomes too long horizontally
+**문제점:**
+1. `requires-python = "~=3.12.0"`: Python 3.13+ 사용자 설치 불가
+2. License 정보 없음: PyPI에서 라이선스 표시 안됨
+3. Classifiers 없음: PyPI 검색/분류 어려움
+4. 수동 배포 프로세스: 실수 가능성, 번거로움
 
-# Work Background
-Sisyphus currently has logic in ExecutionLoop to handle SessionLimitError with sleep and retry, but user reports "app shuts down".
+**목표:**
+- GitHub에서 버튼 클릭 → 자동으로 버전 업데이트 → Release 생성 → PyPI 배포
+- 테스트 자동화로 품질 보증
+- 메타데이터 개선으로 PyPI 검색 가능성 향상
 
-**Root Cause Analysis:**
-- loop.py:295-305, 430-440 catch SessionLimitError and call sleep_until_reset/sleep_until_next_hour
-- loop.py:153-157, 189-191 catch again and continue for retry
-- **CRITICAL ISSUE**: anyio.create_task_group() can raise ExceptionGroup when multiple tasks fail. Current code uses regular `except SessionLimitError` which won't catch it if wrapped in ExceptionGroup
-- When consume_stream raises SessionLimitError, it may be wrapped with other exceptions from monitor_input
-
-Also, TUI InputBar currently uses Textual's Input widget (single line), which doesn't support multiline input or wrapping.
-
-# Execution Started
+# 작업 시작 여부
 is_execution_started = TRUE
 
-# All Goals Accomplished
-is_all_goals_accomplished = TRUE
+# 모든 목표 달성 여부
+is_all_goals_accomplished = FALSE
 
-# Parallel Execution
+# 병렬 실행 여부
 parallel_requested = FALSE
 
-# Current Work
-- Work not started yet.
-   - When starting work, change `is_execution_started` above to TRUE.
-   - Do NOT start work until user explicitly says "start the work".
-   - **Do NOT start even if plan reviewer gives OKAY sign**
-   - Do NOT start work until user explicitly says "start the work".
+# 현재 진행 중인 작업
+- [ ] 5. Git push 및 GitHub Repository 설정 확인
 
-# Required Background Knowledge
+# 필요한 사전 지식
 
-## Project Architecture
-- **anyio-based async system**: Supports both asyncio/trio
-- **ExecutionLoop**: Execute -> Verify 2-phase orchestration
-- **Agent Protocol**: ClaudeAgent, OpenCodeAgent implementations
-- **TUI**: Textual-based terminal UI
-- **Test structure**: Given-When-Then (NOT Arrange-Act-Assert)
+## PyPI Publishing 기본 개념
+- **PyPI (Python Package Index)**: Python 패키지 저장소
+- **Build system**: hatchling (PEP 517/518 호환)
+- **Distribution formats**: sdist (소스), wheel (바이너리)
+- **Metadata**: pyproject.toml의 [project] 섹션
+- **Classifiers**: PyPI 검색/분류 태그
+- **Semantic Versioning**: MAJOR.MINOR.PATCH (예: 0.1.0)
 
-## anyio TaskGroup Exception Handling (PEP 654)
-**Critical Understanding:**
-```python
-# When multiple tasks fail, anyio raises ExceptionGroup
-async with anyio.create_task_group() as tg:
-    tg.start_soon(task1)  # may raise SessionLimitError
-    tg.start_soon(task2)  # may raise other error
-# If both fail -> ExceptionGroup containing both exceptions
+## GitHub Actions 기본 개념
+- **workflow_dispatch**: 수동 실행 트리거
+- **on.release.published**: Release 생성 시 자동 트리거
+- **permissions**: workflow가 필요한 권한 (contents: write, id-token: write)
+- **secrets**: 민감한 정보 저장 (API tokens)
 
-# WRONG (current code):
-except SessionLimitError as e:  # Won't catch if in ExceptionGroup!
+## PyPI 인증 방식
+1. **Trusted Publishing (권장)**: OIDC 기반, 토큰 관리 불필요
+2. **API Token**: 전통적 방식, GitHub Secrets에 저장
 
-# CORRECT:
-except* SessionLimitError as eg:  # Catches from ExceptionGroup
-    for exc in eg.exceptions:
-        # handle each SessionLimitError
-```
+## 파일 구조 및 역할
+### 1. pyproject.toml (프로젝트 루트)
+- **역할**: 패키지 메타데이터, 빌드 설정, 의존성 정의
+- **현재 상태**: 기본 메타데이터만 있음 (license, classifiers 등 누락)
+- **수정 필요 섹션**:
+  - `[project]` 섹션 (line 1-23)
+  - `requires-python` (line 6): `~=3.12.0` → `>=3.12`
+  - 추가 필요: `license`, `keywords`, `classifiers`, `[project.urls]`
 
-**Key Behaviors:**
-- Single exception: raised directly
-- Multiple exceptions: wrapped in ExceptionGroup
-- One task fails: all other tasks are cancelled immediately
-- Use `except*` syntax for proper handling
+### 2. .github/workflows/ (생성 필요)
+- **역할**: GitHub Actions workflow 정의
+- **현재 상태**: 디렉토리 자체가 없음
+- **생성할 파일**:
+  - `test-build.yml`: PR/Push 시 빌드 테스트
+  - `publish-to-pypi.yml`: Release 시 PyPI 배포
+  - `bump-version.yml`: 버전 업데이트 + Release 생성 자동화
 
-**Empirical Verification (anyio 4.11.0):**
+### 3. README.md (프로젝트 루트)
+- **역할**: 프로젝트 문서
+- **현재 상태**: "uv tool install sisyphus" 언급 (PyPI 배포 암시)
+- **업데이트 필요**: 설치 방법 섹션 (PyPI 배포 후)
 
-Test 1: Does anyio TaskGroup raise ExceptionGroup?
-```python
-import anyio
-from sisyphus.utils.errors import SessionLimitError
+### 4. LICENSE.md (프로젝트 루트)
+- **역할**: 라이선스 전문
+- **현재 상태**: Sustainable Use License 1.0 (커스텀 라이선스)
+- **참고사항**: 상업적 사용 제한, PyPI는 허용하지만 명시 필요
 
-async def task1():
-    raise SessionLimitError('Session limit')
-
-async def task2():
-    await anyio.sleep(0.1)
-
-try:
-    async with anyio.create_task_group() as tg:
-        tg.start_soon(task1)
-        tg.start_soon(task2)
-except BaseException as e:
-    print(f'Exception type: {type(e).__name__}')
-    print(f'Exception: {e}')
-
-# OUTPUT: Exception type: ExceptionGroup
-# OUTPUT: Exception: unhandled errors in a TaskGroup (2 sub-exceptions)
-```
-
-Test 2: Does except* catch SessionLimitError from ExceptionGroup?
-```python
-try:
-    async with anyio.create_task_group() as tg:
-        tg.start_soon(task1)
-        tg.start_soon(task2)
-except* SessionLimitError as eg:
-    print(f'✅ Caught with except*: {type(eg).__name__}')
-    for exc in eg.exceptions:
-        print(f'   - {exc}')
-
-# OUTPUT: ✅ Caught with except*: ExceptionGroup
-# OUTPUT:    - Session limit
-```
-
-Test 3: Does regular except catch SessionLimitError from TaskGroup?
-```python
-try:
-    async with anyio.create_task_group() as tg:
-        tg.start_soon(task1)
-        tg.start_soon(task2)
-except SessionLimitError as e:
-    print(f'✅ Caught with regular except: {e}')
-except BaseException as e:
-    print(f'❌ NOT caught with regular except! Got {type(e).__name__}: {e}')
-
-# OUTPUT: ❌ NOT caught with regular except! Got ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
-```
-
-**Conclusion from empirical tests:**
-- anyio 4.11.0 DOES raise ExceptionGroup when TaskGroup tasks fail
-- except* syntax IS required to catch SessionLimitError from TaskGroup
-- Regular except SessionLimitError FAILS to catch the exception
-- Current code in loop.py:295 and loop.py:430 CANNOT catch SessionLimitError properly
-
-## Textual TextArea API (Verified 2024-2025)
-**Key Properties:**
-- `.text` property (NOT `.value`)
-- NO `placeholder` parameter - use `suggestion` attribute instead
-- Default Enter behavior: inserts newline
-- Key event has `.shift` boolean attribute
-- Test using `pilot.press("enter")` or `pilot.press("shift+enter")`
-
-**Event Handling Pattern:**
-```python
-def on_key(self, event: Key) -> None:
-    if event.key == "enter":
-        if event.shift:
-            # Shift+Enter - allow default (newline)
-            pass
-        else:
-            # Enter only - custom behavior
-            self.send_message()
-            event.prevent_default()
-            event.stop()
-```
-
-## File Structure and Roles
-
-### 1. sisyphus/core/loop.py
-- **Role**: Execute-Verify 2-phase loop orchestration
-- **Key methods**: `_run_unified_mode`, `_execute_phase`, `_verify_phase`
-- **SessionLimitError handling**: line 153-157 (execute), 189-191 (verify)
-- **TaskGroup usage**: line 291-305 (_execute_phase), 426-440 (_verify_phase)
-
-### 2. sisyphus/agents/claude.py
-- **Role**: Claude Agent SDK based agent
-- **SessionLimitError raise point**: line 192-197 (stream method)
-```python
-if "session limit" in result_str or "limit reached" in result_str:
-    reset_time = parse_reset_time(str(message.result))
-    raise SessionLimitError(
-        f"Claude API session limit reached: {message.result}",
-        reset_time=reset_time,
-    )
-```
-
-### 3. sisyphus/utils/session_limit.py
-- **Role**: Session reset wait utilities
-- **Functions**: `sleep_until_reset`, `sleep_until_next_hour`, `parse_reset_time`
-
-### 4. sisyphus/ui/tui/components/input_bar.py
-- **Role**: TUI message input widget
-- **Current implementation**: Inherits Textual Input (single line)
-- **Event handlers**: `on_input_submitted` (Enter), `on_key` (UP, ESC)
-- **Properties used**: `self.value` (Input widget)
-
-### 5. sisyphus/ui/tui/app.py
-- **Role**: Textual TUI app main
-- **CSS**: line 88-121, input-bar style definitions
-- **InputBar integration**: line 363-372 (get_input method)
-
-# Work Plan
+# 작업 계획
 
 ## PRDs & Structures
 
 ```mermaid
 graph TB
-    subgraph "Task 1: SessionLimitError with anyio ExceptionGroup"
-        A[SessionLimitError in consume_stream] --> B[anyio TaskGroup]
-        B --> C{Multiple exceptions?}
-        C -->|Yes| D[ExceptionGroup raised]
-        C -->|No| E[Single exception raised]
-        D --> F[except* SessionLimitError]
-        E --> F
-        F --> G[Extract reset_time]
-        G --> H[sleep_until_reset/next_hour]
-        H --> I[Re-raise for outer loop]
-        I --> J[Loop continue - retry]
+    subgraph "PyPI Publishing Setup"
+        A[pyproject.toml 개선] --> B[메타데이터 추가]
+        B --> C[Python 버전 수정]
+        C --> D[로컬 빌드 테스트]
     end
 
-    subgraph "Task 2: InputBar TextArea Migration"
-        K[Input widget] --> L[TextArea widget]
-        L --> M[on_key handler]
-        M --> N{event.key == enter?}
-        N -->|Yes, event.shift| O[Allow default newline]
-        N -->|Yes, not shift| P[Send message + prevent_default]
-        L --> Q[CSS: min-height, max-height]
-        L --> R[Use .text property]
-        L --> S[Use suggestion for placeholder]
+    subgraph "GitHub Actions Workflows"
+        E[.github/workflows 생성] --> F[test-build.yml]
+        E --> G[publish-to-pypi.yml]
+        E --> H[bump-version.yml]
+    end
+
+    subgraph "PyPI Authentication"
+        I{인증 방식 선택} --> J[Trusted Publishing]
+        I --> K[API Token]
+        J --> L[PyPI 설정]
+        K --> M[GitHub Secrets]
+    end
+
+    subgraph "Release Flow"
+        N[GitHub Actions UI] --> O[Bump Version 실행]
+        O --> P[버전 타입 선택]
+        P --> Q[pyproject.toml 업데이트]
+        Q --> R[Git commit & push]
+        R --> S[Git tag 생성]
+        S --> T[GitHub Release 생성]
+        T --> U[publish-to-pypi.yml 트리거]
+        U --> V[PyPI 배포]
+    end
+
+    D --> I
+    F --> U
+    G --> U
+    H --> O
+    L --> U
+    M --> U
+```
+
+```mermaid
+graph LR
+    subgraph "Workflow Interaction"
+        W1[test-build.yml<br/>PR/Push] --> Test[테스트 실행]
+        W2[bump-version.yml<br/>Manual] --> Ver[버전 업데이트]
+        Ver --> Rel[Release 생성]
+        Rel --> W3[publish-to-pypi.yml<br/>Release]
+        W3 --> Pub[PyPI 배포]
     end
 ```
 
-## Implementation Details
+## 구현 세부사항
 
-### Task 1: SessionLimitError with anyio ExceptionGroup Support
-
-**Problem Diagnosis (Corrected):**
-1. Current code uses `except SessionLimitError` which fails when anyio TaskGroup wraps it in ExceptionGroup
-2. When consume_stream raises SessionLimitError, if monitor_input also has any exception, they get wrapped
-3. Regular `except` doesn't decompose ExceptionGroup - need `except*` (PEP 654)
-
-**Solution Pattern:**
-```python
-# sisyphus/core/loop.py:291-305
-try:
-    async with anyio.create_task_group() as tg:
-        tg.start_soon(consume_stream)
-        tg.start_soon(monitor_input)
-except* SessionLimitError as eg:  # PEP 654 exception group syntax
-    # Extract first SessionLimitError (all should have same reset_time)
-    session_limit_error = eg.exceptions[0]
-
-    self.execute_logger.warning(f"Session limit reached: {session_limit_error}")
-    await self.ui.show_status("⚠️  Session limit reached")
-
-    if session_limit_error.reset_time:
-        await sleep_until_reset(session_limit_error.reset_time, self.ui)
-    else:
-        await self.ui.show_status("Reset time unknown, waiting until next hour...")
-        await sleep_until_next_hour(self.ui)
-
-    # Re-raise to trigger outer loop's continue
-    raise session_limit_error
+### 1. pyproject.toml 메타데이터 개선
+**파일**: `pyproject.toml`
+**현재 상태** (line 1-23):
+```toml
+[project]
+name = "sisyphus"
+version = "0.1.0"
+description = ""
+authors = [{ name = "YeonGyu-Kim", email = "code.yeon.gyu@gmail.com" }]
+requires-python = "~=3.12.0"
+readme = "README.md"
+dependencies = [...]
 ```
 
-**Why this works:**
-- `except*` catches SessionLimitError even if wrapped in ExceptionGroup
-- Other exceptions in the group (if any) are not caught and propagate normally
-- Single SessionLimitError is also caught (backward compatible)
+**변경 사항**:
+1. `requires-python` 수정: `~=3.12.0` → `>=3.12`
+2. `description` 개선: 현재 비어있음 → 의미있는 설명 추가
+3. `license` 추가: `{text = "Sustainable Use License 1.0"}`
+4. `keywords` 추가: PyPI 검색용
+5. `classifiers` 추가: PyPI 분류용
+6. `[project.urls]` 섹션 추가: repository, issues 링크
 
-### Task 2: InputBar TextArea Migration
+### 2. GitHub Actions Workflows
+**디렉토리**: `.github/workflows/` (생성 필요)
 
-**Technical Implementation (Verified Textual API):**
+#### 2.1 test-build.yml
+**목적**: PR/Push 시 빌드 및 테스트 자동화
+**트리거**: `pull_request`, `push.branches: [master]`
+**주요 단계**:
+1. Python 3.12, 3.13 matrix 테스트
+2. uv 설치 및 의존성 설치
+3. pytest, basedpyright, ruff 실행
+4. 패키지 빌드 테스트
 
-**Step 1: Widget class change**
-```python
-# sisyphus/ui/tui/components/input_bar.py
-from textual.widgets import TextArea  # Changed from Input
-from textual.events import Key
+#### 2.2 publish-to-pypi.yml
+**목적**: Release 시 PyPI 자동 배포
+**트리거**: `release.types: [published]`
+**주요 단계**:
+1. 테스트 전체 실행 (품질 보증)
+2. 패키지 빌드 (`uv build`)
+3. PyPI 업로드 (Trusted Publishing 또는 API Token)
 
-class InputBar(TextArea):  # Changed from Input
-    def __init__(self) -> None:
-        super().__init__(
-            id="input-bar",
-            # NO placeholder parameter - TextArea doesn't support it
-        )
-        self._queued_message: str = ""
-        self._last_sent: str = ""
-        self._original_suggestion = "Type a message... (ESC: pause)"
-        self._agent_paused = False
+#### 2.3 bump-version.yml
+**목적**: 버전 업데이트 및 Release 생성 자동화
+**트리거**: `workflow_dispatch` (수동 실행)
+**입력 파라미터**:
+- `version_type`: major/minor/patch 선택
+- `custom_version`: 직접 버전 지정 (선택)
+**주요 단계**:
+1. pyproject.toml 버전 읽기 및 bump
+2. Git commit & push
+3. Git tag 생성
+4. Changelog 자동 생성
+5. GitHub Release 생성
 
-        # Use suggestion instead of placeholder
-        self.suggestion = self._original_suggestion
-```
+### 3. PyPI 인증 설정
+**두 가지 방법 중 선택**:
 
-**Step 2: Event handler modification**
-```python
-# Remove on_input_submitted - TextArea doesn't use it
-# Add custom on_key handler
+#### 방법 A: Trusted Publishing (권장)
+1. 최초 수동 배포: `uv publish`
+2. PyPI에서 Trusted Publishing 설정
+3. 이후 자동 배포
 
-async def on_key(self, event: Key) -> None:
-    """Handle key events (Enter, Shift+Enter, UP, ESC).
+#### 방법 B: API Token
+1. PyPI에서 API Token 생성
+2. GitHub Secrets에 `PYPI_API_TOKEN` 추가
+3. workflow에서 사용
 
-    Args:
-        event: Key event object with .key and .shift attributes
-    """
-    # Handle Enter vs Shift+Enter
-    if event.key == "enter":
-        if event.shift:
-            # Shift+Enter: Allow TextArea default behavior (insert newline)
-            return
-        else:
-            # Enter only: Send message
-            message = self.text.strip()
-            if message:
-                if self._queued_message:
-                    self._queued_message += "\n" + message
-                else:
-                    self._queued_message = message
+### 4. 버전 관리 전략
+**현재**: pyproject.toml에 수동 관리
+**개선**: GitHub Actions로 자동화
+**프로세스**:
+1. Actions 탭에서 "Bump Version and Release" 실행
+2. 버전 타입 선택 (major/minor/patch)
+3. 자동으로:
+   - pyproject.toml 업데이트
+   - Git commit, tag, push
+   - Release 생성
+   - PyPI 배포
 
-                try:
-                    from sisyphus.ui.tui.components.chat_log import ChatLog
-                    chat_log = self.app.query_one(ChatLog)
-                    chat_log.write_user_message(message)
-                except Exception as exception:
-                    self.log.error(f"Failed to display user message: {exception}")
+## 프로젝트 커밋 메시지 스타일
+최근 10개 커밋 분석 결과:
+- **형식**: `<action> <target>: <description>` 또는 `<action>: <description>`
+- **특징**:
+  - Lowercase 시작
+  - Imperative mood
+  - 간결함 (50자 이내)
+- **예시**:
+  - `fix: handle newline character from terminal keybinding`
+  - `migrate input bar to textarea with multiline support`
+  - `update todolist: mark all tasks complete`
 
-                self.text = ""  # Changed from self.value
-                self._update_suggestion()  # Changed from _update_placeholder
-                self.app.post_message(InputReadyEvent())
-
-                if self._agent_paused:
-                    self._agent_paused = False
-                    self.suggestion = self._original_suggestion
-
-            event.prevent_default()
-            event.stop()
-            return
-
-    # ESC: pause agent
-    elif event.key == "escape":
-        event.stop()
-        if not self._agent_paused:
-            self._agent_paused = True
-            self.suggestion = "⏸ Paused - send message to resume"
-            self.app.post_message(AgentInterruptEvent())
-            self.log.info("Agent interrupted by ESC key")
-        return
-
-    # UP: Edit queued or last sent
-    elif event.key == "up":
-        if self._queued_message:
-            self.text = self._queued_message
-            self._queued_message = ""
-            self._update_suggestion()
-        elif self._last_sent:
-            self.text = self._last_sent
-        event.prevent_default()
-        event.stop()
-        return
-
-def _update_suggestion(self) -> None:
-    """Update suggestion text based on queue status."""
-    if self._queued_message:
-        lines = self._queued_message.split("\n")
-        preview = lines[0][:50]
-        if len(lines[0]) > 50:
-            preview += "..."
-        if len(lines) > 1:
-            preview += f" (+{len(lines) - 1} more)"
-        self.suggestion = f"[Queued: {preview}] Press UP to edit"
-    else:
-        self.suggestion = self._original_suggestion
-```
-
-**Step 3: CSS modifications**
-```python
-# sisyphus/ui/tui/app.py CSS section (line 117-121)
-# Replace:
-"""
-#input-bar {
-    height: auto;
-    min-height: 1;
-}
-"""
-
-# With:
-"""
-#input-bar {
-    min-height: 3;
-    max-height: 10;
-}
-"""
-```
-
-**Note**: TextArea automatically wraps text - no additional CSS needed for wrapping.
-
-## Risk Analysis and Mitigation
-
-### Task 1 Risks:
-
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| `except*` syntax not available (Python < 3.11) | Low | High | Check Python version in tests, document minimum Python 3.11 requirement |
-| Other exceptions masked by ExceptionGroup handling | Medium | Medium | Add `except* Exception` as fallback to log unexpected exceptions |
-| Infinite retry loop if reset_time parsing fails | Low | High | Add maximum retry count (e.g., 3 retries) before giving up |
-
-### Task 2 Risks:
-
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| TextArea performance degradation with long text | Medium | Low | Set reasonable max-height (10 lines) to limit content |
-| Loss of Input widget features (e.g., auto-complete) | Low | Low | Input widget wasn't using these features anyway |
-| CSS conflicts with other TUI components | Low | Medium | Test full TUI rendering after changes |
-| `suggestion` attribute not visible to users | Medium | Low | Test visibility in manual testing phase |
-
-## Project Commit Message Style
-Recent 10 commits analysis:
-- Lowercase start, imperative mood
-- Concise description (within 50 chars)
-- Examples: "update todolist: mark all tasks complete", "translate remaining Korean text to English"
-
-Commit message format:
-```
-<action> <target>: <description>
-
-e.g.: fix session limit handling with exception groups
-e.g.: migrate input bar to textarea with multiline support
-```
+**적용할 커밋 메시지**:
+- `chore: improve pyproject.toml metadata for pypi`
+- `ci: add github actions workflows for pypi publishing`
+- `ci: add automated version bump and release workflow`
+- `docs: update readme with pypi installation instructions`
 
 # TODOs
 
-- [x] 1. Fix SessionLimitError handling with anyio ExceptionGroup support
-   - [x] 1.1 Implementation: Add except* syntax to loop.py
-      - File: `sisyphus/core/loop.py`
-      - Method: `_execute_phase` (line 203-337)
-      - Current code (line 291-305):
-        ```python
-        try:
-            async with anyio.create_task_group() as tg:
-                tg.start_soon(consume_stream)
-                tg.start_soon(monitor_input)
-        except SessionLimitError as e:
-            # ... handling
-        ```
-      - Change to:
-        ```python
-        except* SessionLimitError as eg:
-            session_limit_error = eg.exceptions[0]
-            self.execute_logger.warning(f"Session limit: {session_limit_error}")
-            # ... rest of handling using session_limit_error
-            raise session_limit_error  # Re-raise for outer loop
-        ```
-      - Also update `_verify_phase` (line 426-440) with same pattern
-   - [x] 1.2 Implementation: Add detailed logging
-      - Add logger.error() with full traceback when SessionLimitError occurs
-      - Log reset_time parsing result
-      - Log retry iteration count in _run_unified_mode
-   - [x] 1.3 Implementation: Add fallback exception handler
-      - After `except* SessionLimitError`, add:
-        ```python
-        except* Exception as eg:
-            for exc in eg.exceptions:
-                self.execute_logger.error(f"Unexpected error: {exc}", exc_info=exc)
-            raise  # Re-raise all
-        ```
-   - [x] 1.4 Test creation: Create sisyphus/core/tests/test_loop__session_limit.py
-      - Test structure: Given-When-Then comments
-      - Test 1: Single SessionLimitError raised -> caught and retried
-      - Test 2: SessionLimitError in ExceptionGroup -> caught and retried
-      - Test 3: sleep_until_reset called with correct reset_time
-      - Use pytest-anyio markers
-      - Mock sleep functions to skip actual waiting
-   - [x] 1.5 Run tests: `uv run pytest -xvs sisyphus/core/tests/test_loop__session_limit.py`
-   - [x] 1.6 Lint and type check
-      - [x] `uv run ruff check sisyphus/core/loop.py`
-      - [x] `uv run basedpyright sisyphus/core/loop.py`
-   - [x] 1.7 Commit after test pass
-      - Command: `git add sisyphus/core/loop.py sisyphus/core/tests/test_loop__session_limit.py && git commit -m "fix session limit handling with exception groups"`
-   - [x] Orchestrator task 1 verification
-      - [x] Is `except*` syntax used in both _execute_phase and _verify_phase?
-      - [x] Does test cover both single and ExceptionGroup scenarios?
-      - [x] Are all tests passing?
-      - [x] Do lint and type check pass?
-      - [x] Is detailed logging added?
+- [x] 1. pyproject.toml 메타데이터 개선 및 로컬 빌드 테스트
+   - [x] 1.1 구현: pyproject.toml의 [project] 섹션 수정
+      - 파일: `pyproject.toml`
+      - 현재 코드 (line 1-23):
+        ```toml
+        [project]
+        name = "sisyphus"
+        version = "0.1.0"
+        description = ""
+        authors = [{ name = "YeonGyu-Kim", email = "code.yeon.gyu@gmail.com" }]
+        requires-python = "~=3.12.0"
+        readme = "README.md"
+        dependencies = [...]
 
-- [x] 2. Migrate InputBar from Input to TextArea
-   - [x] 2.1 Implementation: Change widget base class
-      - File: `sisyphus/ui/tui/components/input_bar.py`
-      - Line 1-8: Change imports
-        ```python
-        from textual.widgets import TextArea  # Changed from Input
+        [project.scripts]
+        sisyphus = "sisyphus.cli:app"
+        test = "pytest:main"
         ```
-      - Line 9: Change class declaration
-        ```python
-        class InputBar(TextArea):  # Changed from Input
-        ```
-      - Line 18-27: Update __init__
-        - Remove `placeholder=` parameter
-        - Add `self.suggestion = self._original_suggestion` after initialization
-   - [x] 2.2 Implementation: Replace on_input_submitted with on_key
-      - Remove method `on_input_submitted` (line 33-61)
-      - Modify `on_key` (line 75-96) to include Enter handling:
-        ```python
-        if event.key == "enter":
-            if event.shift:
-                return  # Allow default newline
-            else:
-                # Move on_input_submitted logic here
-                message = self.text.strip()  # Changed from event.value
-                # ... rest of send logic
-                self.text = ""  # Changed from self.value
-                event.prevent_default()
-                event.stop()
-        ```
-   - [x] 2.3 Implementation: Replace all self.value with self.text
-      - Line 90: `self.value = self._queued_message` -> `self.text = self._queued_message`
-      - Line 94: `self.value = self._last_sent` -> `self.text = self._last_sent`
-   - [x] 2.4 Implementation: Replace placeholder with suggestion
-      - Rename `_update_placeholder` to `_update_suggestion`
-      - Change `self.placeholder =` to `self.suggestion =` (all occurrences)
-   - [x] 2.5 Implementation: Update CSS in app.py
-      - File: `sisyphus/ui/tui/app.py`
-      - Line 117-121: Change CSS
-        ```css
-        #input-bar {
-            min-height: 3;
-            max-height: 10;
-        }
-        ```
-   - [x] 2.6 Test creation: Update sisyphus/ui/tui/components/tests/test_input_bar.py
-      - Structure: Given-When-Then comments
-      - Test 1: test_on_key__if_enter_pressed__sends_message
-        - Given: TextArea with text "hello"
-        - When: Press Enter (without shift)
-        - Then: Message queued, text cleared
-      - Test 2: test_on_key__if_shift_enter_pressed__inserts_newline
-        - Given: TextArea with text "hello"
-        - When: Press Shift+Enter
-        - Then: Newline inserted, message not sent
-      - Test 3: test_on_key__if_up_pressed_with_queue__loads_queue
-      - Use Textual's app.run_test() and pilot.press()
-   - [x] 2.7 Run tests: `uv run pytest -xvs sisyphus/ui/tui/components/tests/test_input_bar.py`
-   - [x] 2.8 Lint and type check
-      - [x] `uv run ruff check sisyphus/ui/tui/components/input_bar.py sisyphus/ui/tui/app.py`
-      - [x] `uv run basedpyright sisyphus/ui/tui/components/input_bar.py sisyphus/ui/tui/app.py`
-   - [x] 2.9 Manual test: Run TUI and verify behavior
-      - Command: `uv run sisyphus run`
-      - Test Shift+Enter: Type text, press Shift+Enter, verify newline inserted
-      - Test Enter: Type text, press Enter, verify message sent
-      - Test long text wrapping: Type 200+ characters, verify auto-wrap
-      - Test UP key: Send message, press UP, verify message loaded
-      - Test ESC key: Press ESC, verify pause works
-   - [x] 2.10 Commit after test pass
-      - Command: `git add sisyphus/ui/tui/components/input_bar.py sisyphus/ui/tui/app.py sisyphus/ui/tui/components/tests/test_input_bar.py && git commit -m "migrate input bar to textarea with multiline support"`
-   - [x] Orchestrator task 2 verification
-      - [x] Is InputBar using TextArea base class?
-      - [x] Does Shift+Enter insert newline?
-      - [x] Does Enter send message?
-      - [x] Are all .value changed to .text?
-      - [x] Is suggestion used instead of placeholder?
-      - [x] Do all tests pass?
-      - [x] Does manual testing confirm all features work?
+      - 변경 내용:
+        1. `requires-python = ">=3.12"` (line 6)
+        2. `description` 개선: `"Natural Language Compiler - Multi-agent orchestration system that turns your words into production-ready code"`
+        3. `license = {text = "Sustainable Use License 1.0"}` 추가 (line 7 다음)
+        4. `keywords = ["llm", "ai", "agent", "orchestration", "automation", "compiler", "natural-language", "code-generation"]` 추가
+        5. `classifiers` 추가:
+           ```toml
+           classifiers = [
+               "Development Status :: 3 - Alpha",
+               "Intended Audience :: Developers",
+               "Topic :: Software Development :: Build Tools",
+               "Topic :: Software Development :: Code Generators",
+               "Topic :: Scientific/Engineering :: Artificial Intelligence",
+               "Programming Language :: Python :: 3",
+               "Programming Language :: Python :: 3.12",
+               "Programming Language :: Python :: 3.13",
+               "Operating System :: OS Independent",
+               "Environment :: Console",
+               "Typing :: Typed",
+           ]
+           ```
+        6. `[project.urls]` 섹션 추가 (line 23 다음):
+           ```toml
+           [project.urls]
+           Homepage = "https://github.com/code-yeongyu/sisyphus"
+           Repository = "https://github.com/code-yeongyu/sisyphus"
+           Issues = "https://github.com/code-yeongyu/sisyphus/issues"
+           Documentation = "https://github.com/code-yeongyu/sisyphus#readme"
+           ```
+   - [x] 1.2 로컬 빌드 테스트
+      - 명령어: `uv build`
+      - 예상 결과: `dist/` 디렉토리에 `.whl`과 `.tar.gz` 파일 생성
+      - 검증: `ls -la dist/`로 파일 확인
+   - [x] 1.3 빌드 아티팩트 확인
+      - 명령어: `tar tzf dist/sisyphus-*.tar.gz | head -20`
+      - 검증: 패키지에 필요한 파일들이 포함되어 있는지 확인
+   - [x] 1.4 린트 및 타입 체크
+      - [x] `uv run ruff check pyproject.toml` (TOML 문법 오류 확인)
+      - [x] `uv run basedpyright` (전체 프로젝트 타입 체크 여전히 통과하는지)
+   - [x] 1.5 커밋
+      - 명령어: `git add pyproject.toml && git commit -m "chore: improve pyproject.toml metadata for pypi"`
+   - [x] 아래의 가이드대로 진행했을 때 Orchestrator 1번 작업 검증 성공 여부
+      - [x] pyproject.toml의 `requires-python`이 `>=3.12`로 변경되었는가?
+      - [x] `description` 필드가 의미있는 내용으로 채워졌는가?
+      - [x] `license`, `keywords`, `classifiers`, `[project.urls]`가 모두 추가되었는가?
+      - [x] `uv build` 명령어가 성공적으로 실행되고 dist/ 디렉토리에 파일이 생성되었는가?
+      - [x] 생성된 .tar.gz 파일을 열어보았을 때 필요한 파일들이 포함되어 있는가?
+      - [x] 커밋이 프로젝트 커밋 메시지 스타일에 맞게 작성되었는가?
 
-- [x] 3. Full integration test and documentation
-   - [x] 3.1 Run full test suite
-      - Command: `uv run pytest`
-      - Verify: All 461 tests × 2 backends = 922 assertions pass
-      - Check: No regression in existing tests
-   - [x] 3.2 Integration test: Verify both tasks work together
-      - Start TUI with `uv run sisyphus run`
-      - Trigger SessionLimitError (if possible with test API key)
-      - Verify app doesn't crash, shows waiting message
-      - Test multiline input in InputBar during wait
-   - [x] 3.3 Update documentation if needed
-      - Note: Python 3.11+ required (for except* syntax)
-      - Note: TextArea changes in InputBar
-   - [x] Orchestrator task 3 verification
-      - [x] Do all tests pass?
-      - [x] Is there no regression?
-      - [x] Do both features work correctly together?
+- [x] 2. GitHub Actions workflows 생성 - test-build.yml
+   - [x] 2.1 구현: .github/workflows 디렉토리 생성
+      - 명령어: `mkdir -p .github/workflows`
+   - [x] 2.2 구현: test-build.yml 파일 생성
+      - 파일: `.github/workflows/test-build.yml`
+      - 내용:
+        ```yaml
+        name: Test Build
 
-# Final Work Verification Checklist
-- [x] 1. SessionLimitError handling: App doesn't terminate, waits until next hour, then retries
-   - Verification: Mock SessionLimitError in test, verify sleep called, verify loop continues
-- [x] 2. Shift+Enter creates newline in InputBar
-   - Verification: Manual test - press Shift+Enter, see newline inserted
-- [x] 3. Enter sends message in InputBar
-   - Verification: Manual test - press Enter, see message in chat log
-- [x] 4. Long text automatically wraps in InputBar
-   - Verification: Manual test - type 200 chars, see text wrap to next line
-- [x] 5. All tests pass (including new tests)
-   - Verification: `uv run pytest` shows all green
-- [x] 6. Lint and type check pass
-   - Verification: `uv run ruff check && uv run basedpyright` show no errors
-- [x] 7. Existing features still work (ESC pause, UP edit)
-   - Verification: Manual test - press ESC, verify pause; press UP, verify edit
-- [x] 8. Project conventions followed
-   - Verification: Code uses anyio (not asyncio), Given-When-Then tests, type hints on all functions, double quotes
+        on:
+          pull_request:
+          push:
+            branches: [master]
+
+        jobs:
+          test-build:
+            runs-on: ubuntu-latest
+            strategy:
+              matrix:
+                python-version: ["3.12", "3.13"]
+
+            steps:
+              - uses: actions/checkout@v4
+
+              - name: Set up Python ${{ matrix.python-version }}
+                uses: actions/setup-python@v5
+                with:
+                  python-version: ${{ matrix.python-version }}
+
+              - name: Install uv
+                uses: astral-sh/setup-uv@v4
+                with:
+                  enable-cache: true
+
+              - name: Install dependencies
+                run: uv sync
+
+              - name: Run tests
+                run: uv run pytest
+
+              - name: Run type checker
+                run: uv run basedpyright
+
+              - name: Run linter
+                run: uv run ruff check
+
+              - name: Build package
+                run: uv build
+
+              - name: Check build artifacts
+                run: |
+                  ls -la dist/
+                  echo "✅ Build successful"
+        ```
+   - [x] 2.3 YAML 문법 검증
+      - 온라인 YAML validator 사용 또는 `python -c "import yaml; yaml.safe_load(open('.github/workflows/test-build.yml'))"`
+   - [x] 2.4 actionlint로 workflow 검증
+      - actionlint 설치 (없는 경우): `brew install actionlint` (macOS) 또는 `go install github.com/rhysd/actionlint/cmd/actionlint@latest`
+      - 명령어: `actionlint .github/workflows/test-build.yml`
+      - 검증: 오류가 없는지 확인, 경고는 검토 후 필요시 수정
+   - [x] 2.5 커밋
+      - 명령어: `git add .github/workflows/test-build.yml && git commit -m "ci: add test build workflow"`
+   - [x] 아래의 가이드대로 진행했을 때 Orchestrator 2번 작업 검증 성공 여부
+      - [x] `.github/workflows/test-build.yml` 파일이 생성되었는가?
+      - [x] YAML 문법이 올바른가?
+      - [x] actionlint 검증을 통과했는가? (오류 없음)
+      - [x] workflow가 Python 3.12와 3.13 두 버전을 테스트하는가?
+      - [x] 테스트, 타입 체크, 린트, 빌드를 모두 포함하는가?
+      - [x] 커밋 메시지가 프로젝트 스타일에 맞는가?
+
+- [x] 3. GitHub Actions workflows 생성 - publish-to-pypi.yml (Trusted Publishing 버전)
+   - [x] 3.1 구현: publish-to-pypi.yml 파일 생성
+      - 파일: `.github/workflows/publish-to-pypi.yml`
+      - 내용:
+        ```yaml
+        name: Publish to PyPI
+
+        on:
+          release:
+            types: [published]
+
+        permissions:
+          id-token: write  # Trusted Publishing을 위한 OIDC 권한
+          contents: read
+
+        jobs:
+          publish:
+            runs-on: ubuntu-latest
+
+            steps:
+              - uses: actions/checkout@v4
+
+              - name: Set up Python
+                uses: actions/setup-python@v5
+                with:
+                  python-version: "3.12"
+
+              - name: Install uv
+                uses: astral-sh/setup-uv@v4
+                with:
+                  enable-cache: true
+
+              - name: Install dependencies
+                run: uv sync
+
+              - name: Run tests
+                run: uv run pytest
+
+              - name: Run type checker
+                run: uv run basedpyright
+
+              - name: Run linter
+                run: uv run ruff check
+
+              - name: Build package
+                run: uv build
+
+              - name: Verify build artifacts
+                run: |
+                  ls -la dist/
+                  echo "Package contents:"
+                  tar tzf dist/sisyphus-*.tar.gz | head -20
+
+              - name: Publish to PyPI
+                uses: pypa/gh-action-pypi-publish@release/v1
+                with:
+                  verbose: true
+        ```
+   - [x] 3.2 YAML 문법 검증
+   - [x] 3.3 actionlint로 workflow 검증
+      - 명령어: `actionlint .github/workflows/publish-to-pypi.yml`
+      - 검증: 오류가 없는지 확인, 경고는 검토 후 필요시 수정
+   - [x] 3.4 커밋
+      - 명령어: `git add .github/workflows/publish-to-pypi.yml && git commit -m "ci: add pypi publishing workflow with trusted publishing"`
+   - [x] 아래의 가이드대로 진행했을 때 Orchestrator 3번 작업 검증 성공 여부
+      - [x] `.github/workflows/publish-to-pypi.yml` 파일이 생성되었는가?
+      - [x] YAML 문법이 올바른가?
+      - [x] actionlint 검증을 통과했는가? (오류 없음)
+      - [x] `permissions`에 `id-token: write`가 포함되어 있는가? (Trusted Publishing 필수)
+      - [x] Release published 이벤트에 트리거되는가?
+      - [x] 배포 전 테스트를 실행하는가?
+      - [x] 커밋 메시지가 프로젝트 스타일에 맞는가?
+
+- [x] 4. GitHub Actions workflows 생성 - bump-version.yml (자동화된 버전 관리)
+   - [x] 4.1 구현: bump-version.yml 파일 생성
+      - 파일: `.github/workflows/bump-version.yml`
+      - 내용:
+        ```yaml
+        name: Bump Version and Release
+
+        on:
+          workflow_dispatch:
+            inputs:
+              version_type:
+                description: 'Version bump type'
+                required: true
+                default: 'patch'
+                type: choice
+                options:
+                  - major
+                  - minor
+                  - patch
+              custom_version:
+                description: 'Custom version (leave empty for auto-bump)'
+                required: false
+                type: string
+
+        permissions:
+          contents: write  # Git push 및 Release 생성 권한
+
+        jobs:
+          bump-and-release:
+            runs-on: ubuntu-latest
+
+            steps:
+              - name: Checkout code
+                uses: actions/checkout@v4
+                with:
+                  fetch-depth: 0  # 전체 히스토리 가져오기
+
+              - name: Set up Python
+                uses: actions/setup-python@v5
+                with:
+                  python-version: "3.12"
+
+              - name: Install toml package
+                run: pip install toml
+
+              - name: Get current version and bump
+                id: version
+                run: |
+                  # Python 스크립트로 버전 읽기 및 bump
+                  python << 'EOF'
+                  import toml
+                  import sys
+                  import os
+
+                  # pyproject.toml 읽기
+                  with open('pyproject.toml', 'r') as f:
+                      data = toml.load(f)
+
+                  current_version = data['project']['version']
+                  print(f"Current version: {current_version}")
+
+                  # 버전 파싱
+                  major, minor, patch = map(int, current_version.split('.'))
+
+                  # Custom version이 제공되었는지 확인
+                  custom_version = "${{ github.event.inputs.custom_version }}"
+
+                  if custom_version:
+                      new_version = custom_version
+                      print(f"Using custom version: {new_version}")
+                  else:
+                      # 버전 bump
+                      version_type = "${{ github.event.inputs.version_type }}"
+                      if version_type == 'major':
+                          major += 1
+                          minor = 0
+                          patch = 0
+                      elif version_type == 'minor':
+                          minor += 1
+                          patch = 0
+                      else:  # patch
+                          patch += 1
+
+                      new_version = f"{major}.{minor}.{patch}"
+                      print(f"Bumped {version_type} version to: {new_version}")
+
+                  # pyproject.toml 업데이트
+                  data['project']['version'] = new_version
+                  with open('pyproject.toml', 'w') as f:
+                      toml.dump(data, f)
+
+                  # GitHub Actions output 설정
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write(f"old_version={current_version}\n")
+                      f.write(f"new_version={new_version}\n")
+                      f.write(f"tag=v{new_version}\n")
+                  EOF
+
+              - name: Configure Git
+                run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+
+              - name: Commit version bump
+                run: |
+                  git add pyproject.toml
+                  git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }}"
+                  git push origin master
+
+              - name: Create Git tag
+                run: |
+                  git tag ${{ steps.version.outputs.tag }}
+                  git push origin ${{ steps.version.outputs.tag }}
+
+              - name: Generate changelog
+                id: changelog
+                run: |
+                  # 이전 태그부터 현재까지의 커밋 메시지 수집
+                  PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+                  if [ -z "$PREVIOUS_TAG" ]; then
+                    # 첫 릴리즈인 경우
+                    CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+                  else
+                    # 이전 태그 이후의 커밋들
+                    CHANGELOG=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+                  fi
+
+                  # Changelog를 파일로 저장 (multiline string 처리)
+                  cat > changelog.txt << 'CHANGELOG_EOF'
+                  ## What's Changed
+
+                  ${CHANGELOG}
+
+                  **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.version.outputs.old_version }}...${{ steps.version.outputs.tag }}
+                  CHANGELOG_EOF
+
+                  # GitHub output 설정
+                  {
+                    echo "changelog<<CHANGELOG_DELIMITER"
+                    cat changelog.txt
+                    echo "CHANGELOG_DELIMITER"
+                  } >> $GITHUB_OUTPUT
+
+              - name: Create GitHub Release
+                env:
+                  GH_TOKEN: ${{ github.token }}
+                run: |
+                  gh release create ${{ steps.version.outputs.tag }} \
+                    --title "Release ${{ steps.version.outputs.tag }}" \
+                    --notes "${{ steps.changelog.outputs.changelog }}" \
+                    --verify-tag
+
+              - name: Summary
+                run: |
+                  echo "## 🚀 Release Created Successfully!" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Old Version:** ${{ steps.version.outputs.old_version }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **New Version:** ${{ steps.version.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Tag:** ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "The \`Publish to PyPI\` workflow will now automatically deploy to PyPI." >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "🔗 [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }})" >> $GITHUB_STEP_SUMMARY
+        ```
+   - [x] 4.2 YAML 문법 검증
+   - [x] 4.3 actionlint로 workflow 검증
+      - 명령어: `actionlint .github/workflows/bump-version.yml`
+      - 검증: 오류가 없는지 확인, 경고는 검토 후 필요시 수정
+   - [x] 4.4 커밋
+      - 명령어: `git add .github/workflows/bump-version.yml && git commit -m "ci: add automated version bump and release workflow"`
+   - [x] 아래의 가이드대로 진행했을 때 Orchestrator 4번 작업 검증 성공 여부
+      - [x] `.github/workflows/bump-version.yml` 파일이 생성되었는가?
+      - [x] YAML 문법이 올바른가?
+      - [x] actionlint 검증을 통과했는가? (오류 없음)
+      - [x] `workflow_dispatch`로 수동 실행 가능한가?
+      - [x] `version_type` input이 major/minor/patch 선택을 제공하는가?
+      - [x] `custom_version` input이 있는가?
+      - [x] pyproject.toml 버전 업데이트 로직이 포함되어 있는가?
+      - [x] Git commit, tag 생성, GitHub Release 생성이 모두 포함되어 있는가?
+      - [x] 커밋 메시지가 프로젝트 스타일에 맞는가?
+
+- [x] 5. Git push 및 GitHub Repository 설정 확인
+   - [x] 5.1 모든 변경사항 push
+      - 명령어: `git push origin master`
+      - 검증: GitHub repository에서 변경사항 확인
+   - [ ] 5.2 GitHub Actions 권한 확인
+      - GitHub repository → Settings → Actions → General
+      - "Workflow permissions" 확인
+      - "Read and write permissions" 활성화 확인 (bump-version.yml이 push/tag 생성 위해 필요)
+   - [ ] 5.3 GitHub Actions 탭에서 workflows 확인
+      - GitHub repository → Actions 탭
+      - 3개 workflow가 표시되는지 확인:
+        - Test Build
+        - Publish to PyPI
+        - Bump Version and Release
+   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 5번 작업 검증 성공 여부
+      - [x] 모든 workflow 파일이 GitHub에 push되었는가?
+      - [ ] Actions 탭에서 3개 workflow가 모두 보이는가?
+      - [ ] Repository Settings에서 Actions 권한이 "Read and write"로 설정되어 있는가?
+      - [ ] test-build.yml workflow가 최근 push로 인해 자동 실행되었는가?
+      - [ ] test-build workflow가 성공적으로 완료되었는가?
+
+- [x] 6. **[사용자 작업] PyPI 계정 생성 및 최초 수동 배포** (Trusted Publishing 설정 위함)
+
+   **⚠️ 중요: 이 작업은 AI가 아닌 사용자가 직접 수행해야 합니다!**
+
+   AI는 이 단계에서 멈추고, 사용자에게 다음 작업을 요청해야 합니다:
+
+   ---
+
+   **사용자님께 요청드립니다:**
+
+   5번 작업까지 완료되었습니다. 이제 PyPI 배포를 위한 계정 설정 및 최초 배포가 필요합니다.
+   다음 단계를 사용자님이 직접 수행해주셔야 합니다:
+
+   ### 6.1 PyPI 계정 생성 (없는 경우)
+   1. https://pypi.org/account/register/ 에서 계정 생성
+   2. 이메일 인증 완료
+
+   ### 6.2 TestPyPI에서 먼저 테스트 (권장)
+   1. TestPyPI 계정 생성: https://test.pypi.org/account/register/
+   2. 로컬에서 실행:
+      ```bash
+      uv publish --publish-url https://test.pypi.org/legacy/
+      ```
+   3. 검증: https://test.pypi.org/project/sisyphus/ 접속하여 확인
+   4. 테스트 설치:
+      ```bash
+      pip install --index-url https://test.pypi.org/simple/ sisyphus
+      ```
+
+   ### 6.3 프로덕션 PyPI에 최초 배포
+   1. 로컬에서 실행:
+      ```bash
+      uv publish
+      ```
+   2. PyPI username/password 입력
+   3. 검증: https://pypi.org/project/sisyphus/ 접속하여 확인
+
+   ### 6.4 PyPI에서 Trusted Publishing 설정
+   1. PyPI project page → "Publishing" 탭 클릭
+   2. "Add a new publisher" 클릭
+   3. 다음 정보 입력:
+      - **PyPI Project Name**: `sisyphus`
+      - **Owner**: `code-yeongyu`
+      - **Repository name**: `sisyphus`
+      - **Workflow name**: `publish-to-pypi.yml`
+      - **Environment name**: (비워둠)
+   4. "Add" 버튼 클릭하여 저장
+
+   ---
+
+   **위 작업을 완료하신 후**, 다음과 같이 말씀해주세요:
+   - "6번 작업 완료했습니다" 또는
+   - "PyPI 설정 완료했습니다"
+
+   그러면 7번 작업(전체 릴리즈 프로세스 테스트)을 진행하겠습니다.
+
+   ---
+
+   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 6번 작업 검증 성공 여부
+      - [ ] **AI가 이 단계에서 멈추고 사용자에게 위 메시지를 전달했는가?**
+      - [ ] **사용자가 작업 완료를 알릴 때까지 7번 작업을 시작하지 않았는가?**
+      - [ ] (사용자 완료 후) PyPI 계정이 생성되고 이메일 인증이 완료되었는지 사용자에게 확인
+      - [ ] (사용자 완료 후) TestPyPI에 성공적으로 배포되었는지 확인
+      - [ ] (사용자 완료 후) 프로덕션 PyPI에 성공적으로 배포되었는지 확인
+      - [ ] (사용자 완료 후) PyPI에서 Trusted Publishing 설정이 완료되었는지 확인
+
+- [ ] 7. 전체 릴리즈 프로세스 테스트 (버전 0.1.1로 테스트)
+   - [ ] 7.1 GitHub Actions UI에서 Bump Version workflow 실행
+      - GitHub repository → Actions 탭
+      - "Bump Version and Release" workflow 선택
+      - "Run workflow" 버튼 클릭
+      - 입력:
+        - Branch: master
+        - Version bump type: patch (0.1.0 → 0.1.1)
+      - "Run workflow" 버튼 클릭
+   - [ ] 7.2 Bump Version workflow 실행 완료 확인
+      - Actions 탭에서 실행 상태 모니터링
+      - 모든 step이 성공적으로 완료되는지 확인
+      - Summary에서 새 버전 확인 (0.1.1)
+   - [ ] 7.3 GitHub Release 생성 확인
+      - GitHub repository → Releases 탭
+      - "v0.1.1" release가 생성되었는지 확인
+      - Changelog가 자동 생성되었는지 확인
+   - [ ] 7.4 Publish to PyPI workflow 자동 트리거 확인
+      - Actions 탭으로 돌아가기
+      - "Publish to PyPI" workflow가 자동으로 실행되었는지 확인
+      - 모든 step이 성공적으로 완료되는지 확인
+   - [ ] 7.5 PyPI 배포 확인
+      - PyPI project page 접속: https://pypi.org/project/sisyphus/
+      - "Release history"에서 0.1.1 버전 확인
+      - 메타데이터 (license, classifiers 등) 제대로 표시되는지 확인
+   - [ ] 7.6 실제 설치 테스트
+      - 새 터미널에서: `pip install sisyphus==0.1.1`
+      - 설치 성공 확인
+      - 실행 테스트: `sisyphus --help`
+   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 7번 작업 검증 성공 여부
+      - [ ] Bump Version workflow가 성공적으로 완료되었는가?
+      - [ ] pyproject.toml의 버전이 0.1.1로 업데이트되었는가?
+      - [ ] Git tag v0.1.1이 생성되었는가?
+      - [ ] GitHub Release v0.1.1이 생성되었는가?
+      - [ ] Publish to PyPI workflow가 자동으로 트리거되었는가?
+      - [ ] Publish to PyPI workflow가 성공적으로 완료되었는가?
+      - [ ] PyPI에서 0.1.1 버전이 보이는가?
+      - [ ] `pip install sisyphus==0.1.1`이 성공하는가?
+      - [ ] 설치 후 `sisyphus --help` 명령어가 작동하는가?
+
+- [ ] 8. README.md 업데이트 및 문서화
+   - [ ] 8.1 구현: README.md의 Installation 섹션 업데이트
+      - 파일: `README.md`
+      - 현재 내용 (line 94-108):
+        ```markdown
+        ### Installation
+
+        Sisyphus requires Python 3.12 or higher. We recommend using the uv package manager.
+
+        ```sh
+        # Install uv (if you don't have it)
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+
+        # Clone the project
+        git clone <repository-url>
+        cd sisyphus
+
+        # Install dependencies
+        uv sync
+        ```
+        ```
+      - 변경 내용:
+        ```markdown
+        ### Installation
+
+        #### From PyPI (Recommended)
+
+        Sisyphus requires Python 3.12 or higher.
+
+        ```sh
+        # Using pip
+        pip install sisyphus
+
+        # Using uv (faster)
+        uv tool install sisyphus
+        ```
+
+        #### From Source
+
+        ```sh
+        # Install uv (if you don't have it)
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+
+        # Clone the project
+        git clone https://github.com/code-yeongyu/sisyphus.git
+        cd sisyphus
+
+        # Install dependencies
+        uv sync
+
+        # Run directly in development mode
+        uv run sisyphus work
+        ```
+        ```
+   - [ ] 8.2 구현: 릴리즈 프로세스 문서 추가 (CONTRIBUTING.md 또는 README.md)
+      - 선택: README.md에 "For Developers" 섹션 추가 또는 CONTRIBUTING.md 생성
+      - 내용:
+        ```markdown
+        ## For Developers
+
+        ### Release Process
+
+        Sisyphus uses automated GitHub Actions for releases.
+
+        1. Go to Actions tab in GitHub repository
+        2. Select "Bump Version and Release" workflow
+        3. Click "Run workflow"
+        4. Choose version type:
+           - **patch**: Bug fixes (0.1.0 → 0.1.1)
+           - **minor**: New features (0.1.0 → 0.2.0)
+           - **major**: Breaking changes (0.1.0 → 1.0.0)
+        5. Click "Run workflow" button
+
+        The workflow will:
+        - Update version in pyproject.toml
+        - Create git commit and tag
+        - Create GitHub Release
+        - Automatically publish to PyPI
+
+        ### Manual Publishing (if needed)
+
+        ```sh
+        # Build package
+        uv build
+
+        # Publish to PyPI
+        uv publish
+
+        # Publish to TestPyPI (for testing)
+        uv publish --publish-url https://test.pypi.org/legacy/
+        ```
+        ```
+   - [ ] 8.3 린트 체크 (Markdown)
+      - 명령어: `uv run ruff check README.md` (또는 Markdown linter 사용)
+   - [ ] 8.4 커밋
+      - 명령어: `git add README.md && git commit -m "docs: update installation instructions and add release process guide"`
+   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 8번 작업 검증 성공 여부
+      - [ ] README.md의 Installation 섹션이 PyPI 설치 방법을 포함하는가?
+      - [ ] 소스에서 설치하는 방법도 여전히 문서화되어 있는가?
+      - [ ] 릴리즈 프로세스가 문서화되어 있는가?
+      - [ ] 문서가 명확하고 따라하기 쉬운가?
+      - [ ] 커밋 메시지가 프로젝트 스타일에 맞는가?
+
+- [ ] 9. 전체 테스트 및 최종 검증
+   - [ ] 9.1 전체 테스트 스위트 실행
+      - 명령어: `uv run pytest`
+      - 예상 결과: 461 tests × 2 backends = 922 assertions pass
+      - 검증: 기존 테스트들이 여전히 통과하는지 확인
+   - [ ] 9.2 린트 및 타입 체크
+      - [ ] `uv run ruff check`
+      - [ ] `uv run basedpyright`
+   - [ ] 9.3 로컬 빌드 재확인
+      - 명령어: `uv build`
+      - 검증: dist/ 디렉토리 정리 후 재빌드
+   - [ ] 9.4 GitHub Actions workflows 상태 확인
+      - Actions 탭에서 모든 workflow 실행 이력 확인
+      - 실패한 workflow가 없는지 확인
+   - [ ] 9.5 PyPI project page 최종 확인
+      - https://pypi.org/project/sisyphus/ 접속
+      - 메타데이터 확인:
+        - License 표시
+        - Keywords 표시
+        - Classifiers 표시
+        - Project URLs (Homepage, Repository, Issues) 작동
+   - [ ] 9.6 변경사항 push
+      - 명령어: `git push origin master`
+   - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 9번 작업 검증 성공 여부
+      - [ ] 전체 테스트가 통과하는가?
+      - [ ] Lint와 type check가 통과하는가?
+      - [ ] 로컬 빌드가 성공하는가?
+      - [ ] 모든 GitHub Actions workflows가 성공 상태인가?
+      - [ ] PyPI project page에서 모든 메타데이터가 올바르게 표시되는가?
+      - [ ] Project URLs가 모두 작동하는가?
+      - [ ] 최신 변경사항이 GitHub에 push되었는가?
+
+# 최종 작업 검증 체크리스트
+- [ ] 1. PyPI에서 `pip install sisyphus` 명령어로 패키지 설치가 가능한가?
+   - 검증: 새 Python 환경에서 `pip install sisyphus` 실행 후 `sisyphus --help` 확인
+- [ ] 2. PyPI project page에서 모든 메타데이터가 올바르게 표시되는가?
+   - 검증: https://pypi.org/project/sisyphus/ 에서 license, classifiers, keywords, URLs 확인
+- [ ] 3. GitHub Actions의 Test Build workflow가 PR/Push 시 자동 실행되는가?
+   - 검증: 테스트 commit 후 Actions 탭에서 workflow 실행 확인
+- [ ] 4. GitHub에서 "Bump Version and Release" workflow를 실행하면 전체 릴리즈 프로세스가 자동으로 완료되는가?
+   - 검증: patch 버전 bump 테스트 → Release 생성 → PyPI 배포까지 자동 완료 확인
+- [ ] 5. pyproject.toml의 Python 버전 제약이 `>=3.12`로 변경되어 Python 3.13+에서도 설치 가능한가?
+   - 검증: Python 3.13 환경에서 설치 테스트 (가능하다면)
+- [ ] 6. 기존 테스트들이 여전히 모두 통과하는가?
+   - 검증: `uv run pytest` 실행 결과 확인
+- [ ] 7. README.md에 PyPI 설치 방법이 문서화되어 있는가?
+   - 검증: README.md 파일 읽고 설치 섹션 확인
+- [ ] 8. 릴리즈 프로세스가 문서화되어 있는가?
+   - 검증: README.md 또는 CONTRIBUTING.md에서 릴리즈 가이드 확인
+- [ ] 9. Trusted Publishing이 설정되어 API Token 없이도 배포가 가능한가?
+   - 검증: PyPI project settings에서 Trusted Publishing 설정 확인
+- [ ] 10. Git commit 메시지들이 프로젝트 컨벤션을 따르는가?
+   - 검증: `git log -10 --oneline` 실행 후 commit 메시지 스타일 확인

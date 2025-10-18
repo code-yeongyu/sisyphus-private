@@ -100,7 +100,7 @@ jobs:
 
       - name: Run Sisyphus
         run: |
-          uv run sisyphus run --no-tui
+          uv run sisyphus work --no-tui
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}

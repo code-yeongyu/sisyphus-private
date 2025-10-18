@@ -76,9 +76,9 @@ class InputBar(TextArea):
                     self._agent_paused = False
                     self.suggestion = self._original_suggestion
 
-            event.prevent_default()
-            event.stop()
-            return
+                event.prevent_default()
+                event.stop()
+                return
 
         elif event.key == "escape":
             event.stop()

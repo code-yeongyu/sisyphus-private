@@ -1,37 +1,25 @@
 [project]
 name = "sisyphus"
-version = "0.1.0"
+version = "0.1.1"
 description = "Natural Language Compiler - Multi-agent orchestration system that turns your words into production-ready code"
-authors = [{ name = "YeonGyu-Kim", email = "code.yeon.gyu@gmail.com" }]
 requires-python = ">=3.12"
 readme = "README.md"
-license = {text = "Sustainable Use License 1.0"}
-keywords = ["llm", "ai", "agent", "orchestration", "automation", "compiler", "natural-language", "code-generation"]
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "Topic :: Software Development :: Build Tools",
-    "Topic :: Software Development :: Code Generators",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Operating System :: OS Independent",
-    "Environment :: Console",
-    "Typing :: Typed",
-]
-dependencies = [
-    "anyio>=4.11.0",
-    "trio>=0.31.0",
-    "uvloop>=0.21.0",
-    "typer>=0.15.0",
-    "textual>=1.0.0",
-    "rich>=13.0.0",
-    "httpx>=0.28.0",
-    "claude-agent-sdk>=0.1.0",
-    "aiofiles>=24.0.0",
-    "catppuccin>=2.5.0",
-]
+keywords = [ "llm", "ai", "agent", "orchestration", "automation", "compiler", "natural-language", "code-generation",]
+classifiers = [ "Development Status :: 3 - Alpha", "Intended Audience :: Developers", "Topic :: Software Development :: Build Tools", "Topic :: Software Development :: Code Generators", "Topic :: Scientific/Engineering :: Artificial Intelligence", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Operating System :: OS Independent", "Environment :: Console", "Typing :: Typed",]
+dependencies = [ "anyio>=4.11.0", "trio>=0.31.0", "uvloop>=0.21.0", "typer>=0.15.0", "textual>=1.0.0", "rich>=13.0.0", "httpx>=0.28.0", "claude-agent-sdk>=0.1.0", "aiofiles>=24.0.0", "catppuccin>=2.5.0",]
+[[project.authors]]
+name = "YeonGyu-Kim"
+email = "code.yeon.gyu@gmail.com"
+
+[dependency-groups]
+dev = [ "basedpyright>=1.31.6", "pytest>=8.4.2", "pytest-anyio>=0.0.0", "ruff>=0.14.0",]
+
+[build-system]
+requires = [ "hatchling",]
+build-backend = "hatchling.build"
+
+[project.license]
+text = "Sustainable Use License 1.0"
 
 [project.scripts]
 sisyphus = "sisyphus.cli:app"
@@ -42,26 +30,6 @@ Homepage = "https://github.com/code-yeongyu/sisyphus"
 Repository = "https://github.com/code-yeongyu/sisyphus"
 Issues = "https://github.com/code-yeongyu/sisyphus/issues"
 Documentation = "https://github.com/code-yeongyu/sisyphus#readme"
-
-[dependency-groups]
-dev = [
-    "basedpyright>=1.31.6",
-    "pytest>=8.4.2",
-    "pytest-anyio>=0.0.0",
-    "ruff>=0.14.0",
-]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.pytest.ini_options]
-python_files = ["tests.py", "test_*.py", "*_tests.py", "*_test.py"]
-testpaths = ["tests"]
-addopts = """\
-    --disable-warnings \
-"""
-log_level = "ERROR"
 
 [tool.basedpyright]
 pythonVersion = "3.12"
@@ -83,20 +51,15 @@ reportCallIssue = "warning"
 [tool.ruff]
 line-length = 119
 target-version = "py312"
-lint.select = [
-    "PLE",
-    "PLW",
-    "E",
-    "W",
-    "F",
-    "I",
-    "Q",
-    "UP",
-    "C4",
-    "PT",
-    "ANN001",
-    "ASYNC",
-]
+
+[tool.pytest.ini_options]
+python_files = [ "tests.py", "test_*.py", "*_tests.py", "*_test.py",]
+testpaths = [ "tests",]
+addopts = "--disable-warnings "
+log_level = "ERROR"
+
+[tool.ruff.lint]
+select = [ "PLE", "PLW", "E", "W", "F", "I", "Q", "UP", "C4", "PT", "ANN001", "ASYNC",]
 
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = "double"

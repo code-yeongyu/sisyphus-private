@@ -1,10 +1,25 @@
 [project]
 name = "sisyphus"
 version = "0.1.0"
-description = ""
+description = "Natural Language Compiler - Multi-agent orchestration system that turns your words into production-ready code"
 authors = [{ name = "YeonGyu-Kim", email = "code.yeon.gyu@gmail.com" }]
-requires-python = "~=3.12.0"
+requires-python = ">=3.12"
 readme = "README.md"
+license = {text = "Sustainable Use License 1.0"}
+keywords = ["llm", "ai", "agent", "orchestration", "automation", "compiler", "natural-language", "code-generation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Typing :: Typed",
+]
 dependencies = [
     "anyio>=4.11.0",
     "trio>=0.31.0",
@@ -21,6 +36,12 @@ dependencies = [
 [project.scripts]
 sisyphus = "sisyphus.cli:app"
 test = "pytest:main"
+
+[project.urls]
+Homepage = "https://github.com/code-yeongyu/sisyphus"
+Repository = "https://github.com/code-yeongyu/sisyphus"
+Issues = "https://github.com/code-yeongyu/sisyphus/issues"
+Documentation = "https://github.com/code-yeongyu/sisyphus#readme"
 
 [dependency-groups]
 dev = [

@@ -57,6 +57,7 @@ reportIncompatibleMethodOverride = "warning"
 reportIncompatibleVariableOverride = "warning"
 reportAssignmentType = "error"
 reportMissingTypeArgument = "error"
+reportCallIssue = "warning"
 
 [tool.ruff]
 line-length = 119

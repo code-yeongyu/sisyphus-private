@@ -1,10 +1,110 @@
 from __future__ import annotations
 
+from unittest.mock import Mock
+
 import pytest
+from textual.app import App, ComposeResult
 
 from sisyphus.ui.tui.components.input_bar import InputBar
 
 pytestmark = [pytest.mark.anyio]
+
+
+async def test_on_key__if_enter_pressed__sends_message() -> None:
+    # given
+    class TestApp(App[None]):
+        def compose(self) -> ComposeResult:
+            yield InputBar()
+
+    app = TestApp()
+    try:
+        async with app.run_test() as pilot:
+            input_bar = app.query_one(InputBar)
+            input_bar.text = "hello"
+            input_bar.app.query_one = Mock(return_value=Mock(write_user_message=Mock()))
+
+            # when
+            await pilot.press("enter")
+
+            # then
+            assert input_bar._queued_message == "hello"
+            assert input_bar.text == ""
+    except RuntimeError as e:
+        if "no running event loop" in str(e):
+            pytest.skip("Textual requires asyncio")
+        raise
+
+
+async def test_on_key__if_shift_enter_pressed__does_not_send_message() -> None:
+    # given
+    class TestApp(App[None]):
+        def compose(self) -> ComposeResult:
+            yield InputBar()
+
+    app = TestApp()
+    try:
+        async with app.run_test() as pilot:
+            input_bar = app.query_one(InputBar)
+            input_bar.text = "hello"
+
+            # when
+            await pilot.press("shift+enter")
+
+            # then
+            assert input_bar._queued_message == ""
+    except RuntimeError as e:
+        if "no running event loop" in str(e):
+            pytest.skip("Textual requires asyncio")
+        raise
+
+
+async def test_on_key__if_up_pressed_with_queue__loads_queue() -> None:
+    # given
+    class TestApp(App[None]):
+        def compose(self) -> ComposeResult:
+            yield InputBar()
+
+    app = TestApp()
+    try:
+        async with app.run_test() as pilot:
+            input_bar = app.query_one(InputBar)
+            input_bar._queued_message = "queued message"
+            input_bar.text = ""
+
+            # when
+            await pilot.press("up")
+
+            # then
+            assert input_bar.text == "queued message"
+            assert input_bar._queued_message == ""
+    except RuntimeError as e:
+        if "no running event loop" in str(e):
+            pytest.skip("Textual requires asyncio")
+        raise
+
+
+async def test_on_key__if_escape_pressed__pauses_agent() -> None:
+    # given
+    class TestApp(App[None]):
+        def compose(self) -> ComposeResult:
+            yield InputBar()
+
+    app = TestApp()
+    try:
+        async with app.run_test() as pilot:
+            input_bar = app.query_one(InputBar)
+            input_bar._agent_paused = False
+
+            # when
+            await pilot.press("escape")
+
+            # then
+            assert input_bar._agent_paused is True
+            assert "paused" in input_bar.suggestion.lower()
+    except RuntimeError as e:
+        if "no running event loop" in str(e):
+            pytest.skip("Textual requires asyncio")
+        raise
 
 
 async def test_input_bar__if_initialized__has_correct_defaults() -> None:

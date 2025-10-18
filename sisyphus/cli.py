@@ -195,13 +195,6 @@ async def _main_cli(
 
     elapsed_str = " ".join(time_parts)
     await ui.show_status(f"✅ All tasks completed. (Elapsed time: {elapsed_str})")
-    await ui.show_status("Press Ctrl+C to exit.")
-
-    try:
-        shutdown_event = anyio.Event()
-        await shutdown_event.wait()
-    except (KeyboardInterrupt, anyio.get_cancelled_exc_class()):
-        pass
 
 
 async def _main_tui(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -21,7 +22,10 @@ class CLI:
 
     def __init__(self) -> None:
         """Initialize CLI with Rich Console."""
-        self.console = Console()
+        # Use very large width for non-TTY environments (CI/CD) to prevent unwanted line breaks
+        # For TTY environments, use default terminal width
+        width = None if sys.stdout.isatty() else 1000
+        self.console = Console(width=width, soft_wrap=True)
         self._initialized = False
 
     async def initialize(self) -> None:

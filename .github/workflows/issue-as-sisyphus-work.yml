@@ -81,6 +81,10 @@ jobs:
           echo "${{ steps.generate-token.outputs.token }}" | gh auth login --with-token
           gh auth status
 
+      - name: Post initial comment
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --body "🤖 Sisyphus has started working on this issue. I'll create a pull request once the work is complete."
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -212,3 +216,10 @@ jobs:
             logs/
             ai-todolist.md
           retention-days: 7
+
+      - name: Post failure comment
+        if: failure()
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --body "❌ Sisyphus encountered an error while working on this issue. Please check the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}

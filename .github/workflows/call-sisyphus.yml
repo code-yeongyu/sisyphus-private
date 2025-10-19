@@ -481,7 +481,6 @@ jobs:
       branch: ${{ needs.agent.outputs.BRANCH }}
       sha: ${{ needs.agent.outputs.SHA }}
       requested_user: ${{ needs.agent.outputs.REQUESTED_USER }}
-      model_name: ${{ inputs.model_name || '' }}
     secrets:
       ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

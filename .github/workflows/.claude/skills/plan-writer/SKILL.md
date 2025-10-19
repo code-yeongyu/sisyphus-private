@@ -401,4 +401,4 @@ Identify GitHub CI execution by:
    - Reference previous commits or PRs when relevant
    - Use GitHub's markdown features for clear communication
 
-**Key Principle**: In GitHub CI context, treat comments as the primary communication channel, not real-time chat. Be comprehensive in each interaction to account for asynchronous response times.
+**Key Principle**: In GitHub CI context, treat comments as the primary communication channel, not real-time chat. Be comprehensive in each interaction to account for asynchronous response times. And always write the full ai-todolist.md file as a single comment.

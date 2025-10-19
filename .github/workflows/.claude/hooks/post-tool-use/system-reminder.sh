@@ -81,24 +81,10 @@ if [[ -n "$LOCAL_VENV" && -n "$VIRTUAL_ENV" && "$REAL_VIRTUAL_ENV" != "$REAL_LOC
 fi
 
 echo "" >&2
-echo "[CRITICAL SYSTEM CHECK]" >&2
-echo "If you received ANY hook messages above, you MUST:" >&2
-echo "1. ACKNOWLEDGE each hook message explicitly" >&2
-echo "2. RESPOND to each hook's requirements SEPARATELY" >&2
-echo "3. EXECUTE the required actions for EACH hook" >&2
-echo "4. NEVER ignore or skip hook requirements" >&2
-echo "Each hook message is MANDATORY and requires immediate action." >&2
-echo "You must address EVERY hook message in priority order." >&2
-echo "[TASK COMPLETION CHECKPOINT]" >&2
-echo "Ask yourself RIGHT NOW:" >&2
-echo "- Did I compromise on any user requirements? If YES, GO BACK and fix it." >&2
-echo "- Did tests fail and I gave up? If YES, GO BACK and make them pass." >&2
-echo "- Did I say 'I cannot' or 'This is difficult'? If YES, TRY HARDER." >&2
-echo "- Did I skip any requested feature? If YES, IMPLEMENT IT NOW." >&2
-echo "REMEMBER: Your job is to COMPLETE tasks, not to explain why they're hard." >&2
-echo "If something didn't work, that's NOT acceptable. Make it work." >&2
-echo "Tests MUST pass. Features MUST work. No exceptions." >&2
+echo "[To-Do Managements]" >&2
+echo "Always use todo tool to plan and processing user's request." >&2
 echo "" >&2
+echo "[Hook compliance]" >&2
 echo "Remember: Hook compliance is NON-NEGOTIABLE." >&2
 echo "Your response must demonstrate clear understanding and execution of each hook's requirements." >&2
 

@@ -14,13 +14,6 @@ import re
 import sys
 from dataclasses import dataclass
 
-TODOLIST_CHECK_CMD = (
-    "input=$(cat); "
-    "file_path=$(printf '%s' \"$input\" | jq -r '.tool_input.file_path // .tool_input.target_file // \"\"'); "
-    'if [[ "$file_path" =~ ai-todolist\\.md$ ]] && [[ -f "ai-todolist.md" ]]; then '
-    "printf '%s' \"$input\" | ~/.claude/hooks/post-tool-use/remind-ai-todolist.sh; fi"
-)
-
 
 @dataclass
 class HookCommand:
@@ -46,21 +39,6 @@ POST_TOOL_USE_CONFIG: list[HookMatcher] = [
             ),
             HookCommand(
                 type="command",
-                command="uv run ~/.claude/hooks/post-tool-use/inject_language_guide.py",
-                asyncable=False,
-            ),
-            HookCommand(
-                type="command",
-                command="uv run ~/.claude/hooks/post-tool-use/inject_knowledge.py",
-                asyncable=False,
-            ),
-            HookCommand(
-                type="command",
-                command="uv run ~/.claude/hooks/post-tool-use/inject_conftest.py",
-                asyncable=False,
-            ),
-            HookCommand(
-                type="command",
                 command="uv run ~/.claude/hooks/post-tool-use/static_check.py",
                 asyncable=False,
             ),
@@ -71,17 +49,7 @@ POST_TOOL_USE_CONFIG: list[HookMatcher] = [
             ),
             HookCommand(
                 type="command",
-                command=TODOLIST_CHECK_CMD,
-                asyncable=False,
-            ),
-        ],
-    ),
-    HookMatcher(
-        matcher="Read",
-        hooks=[
-            HookCommand(
-                type="command",
-                command="uv run ~/.claude/hooks/post-tool-use/inject_language_guide.py",
+                command="uv run ~/.claude/hooks/post-tool-use/inject_conftest.py",
                 asyncable=False,
             ),
             HookCommand(
@@ -91,7 +59,27 @@ POST_TOOL_USE_CONFIG: list[HookMatcher] = [
             ),
             HookCommand(
                 type="command",
+                command="uv run ~/.claude/hooks/post-tool-use/inject_language_guide.py",
+                asyncable=False,
+            ),
+        ],
+    ),
+    HookMatcher(
+        matcher="Read",
+        hooks=[
+            HookCommand(
+                type="command",
                 command="uv run ~/.claude/hooks/post-tool-use/inject_conftest.py",
+                asyncable=False,
+            ),
+            HookCommand(
+                type="command",
+                command="uv run ~/.claude/hooks/post-tool-use/inject_knowledge.py",
+                asyncable=False,
+            ),
+            HookCommand(
+                type="command",
+                command="uv run ~/.claude/hooks/post-tool-use/inject_language_guide.py",
                 asyncable=False,
             ),
         ],
@@ -116,17 +104,12 @@ POST_TOOL_USE_CONFIG: list[HookMatcher] = [
         hooks=[
             HookCommand(
                 type="command",
-                command="uv run ~/.claude/hooks/post-tool-use/suggest_terminalcp_for_bash.py",
+                command="uv run ~/.claude/hooks/post-tool-use/remind_tmux_sessions.py",
                 asyncable=True,
             ),
-        ],
-    ),
-    HookMatcher(
-        matcher="mcp__terminalcp__terminalcp",
-        hooks=[
             HookCommand(
                 type="command",
-                command="uv run ~/.claude/hooks/post-tool-use/terminalcp_list_on_start.py",
+                command="uv run ~/.claude/hooks/post-tool-use/remind_tmux_usage.py",
                 asyncable=True,
             ),
         ],
@@ -143,9 +126,7 @@ def is_self_hook(command: str) -> bool:
     return "post_tool_use.py" in command
 
 
-async def execute_hook_async(
-    command: str, stdin_data: str, cwd: str
-) -> tuple[int, str, str]:
+async def execute_hook_async(command: str, stdin_data: str, cwd: str) -> tuple[int, str, str]:
     try:
         process = await asyncio.create_subprocess_shell(
             command,
@@ -155,9 +136,7 @@ async def execute_hook_async(
             cwd=cwd,
         )
 
-        stdout_bytes, stderr_bytes = await asyncio.wait_for(
-            process.communicate(stdin_data.encode()), timeout=30.0
-        )
+        stdout_bytes, stderr_bytes = await asyncio.wait_for(process.communicate(stdin_data.encode()), timeout=30.0)
 
         return (
             process.returncode or 0,
@@ -202,9 +181,7 @@ async def _main() -> int:
         return 0
 
     valid_hooks = [
-        hook
-        for hook in matching_hooks
-        if hook.type == "command" and hook.command and not is_self_hook(hook.command)
+        hook for hook in matching_hooks if hook.type == "command" and hook.command and not is_self_hook(hook.command)
     ]
 
     if not valid_hooks:
@@ -215,16 +192,15 @@ async def _main() -> int:
     claude_needs_to_know = False
 
     if async_hooks:
-        tasks = [
-            execute_hook_async(hook.command, stdin_data, current_cwd)
-            for hook in async_hooks
-        ]
-        results: list[tuple[int, str, str] | BaseException] = await asyncio.gather(
-            *tasks, return_exceptions=True
-        )
+        tasks = [execute_hook_async(hook.command, stdin_data, current_cwd) for hook in async_hooks]
+        results: list[tuple[int, str, str] | BaseException] = await asyncio.gather(*tasks, return_exceptions=True)
 
         for hook, result in zip(async_hooks, results, strict=False):
             if isinstance(result, BaseException):
+                print(
+                    f"Error executing hook: {hook.command}. WARN TO USER THIS HAS FAILED. {result=}",
+                    file=sys.stderr,
+                )
                 continue
 
             returncode, _stdout, stderr = result
@@ -233,9 +209,7 @@ async def _main() -> int:
                 print(stderr, file=sys.stderr, end="")
 
     for hook in sync_hooks:
-        returncode, _stdout, stderr = await execute_hook_async(
-            hook.command, stdin_data, current_cwd
-        )
+        returncode, _stdout, stderr = await execute_hook_async(hook.command, stdin_data, current_cwd)
 
         if returncode == 2 and stderr:
             claude_needs_to_know = True

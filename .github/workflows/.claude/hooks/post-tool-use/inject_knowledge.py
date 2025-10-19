@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
+# dependencies = [
+#     "orjson",
+# ]
 # ///
+# pyright: reportMissingImports=false
 
 from __future__ import annotations
 
 import hashlib
-import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
+
+import orjson
 
 
 class EditOperation(TypedDict):
@@ -49,9 +54,48 @@ class PostToolUseInput(TypedDict):
     tool_response: dict[str, Any]
 
 
-class TranscriptMessage(TypedDict):
-    role: NotRequired[str]
-    content: NotRequired[str | list[dict[str, Any]]]
+class ToolUseBlock(TypedDict):
+    type: Literal["tool_use"]
+    name: Literal["Read"] | str
+    id: str
+    input: dict[str, Any]
+
+
+class ToolResultBlock(TypedDict):
+    type: Literal["tool_result"]
+    tool_use_id: str
+    content: str | list[dict[str, Any]]
+    is_error: NotRequired[bool]
+
+
+class TextBlock(TypedDict):
+    type: Literal["text"]
+    text: str
+
+
+ContentBlock = ToolUseBlock | ToolResultBlock | TextBlock
+
+
+class AssistantMessage(TypedDict):
+    role: Literal["assistant"]
+    content: list[ContentBlock]
+
+
+class UserMessage(TypedDict):
+    role: Literal["user"]
+    content: str | list[ContentBlock]
+
+
+class TranscriptEntry(TypedDict):
+    type: Literal["user", "assistant"]
+    message: AssistantMessage | UserMessage
+    timestamp: NotRequired[str]
+
+
+class RawTranscriptEntry(TypedDict):
+    type: str
+    message: dict[str, Any]
+    timestamp: NotRequired[str]
 
 
 class KnowledgeInfo(TypedDict):
@@ -96,6 +140,7 @@ class KnowledgeFinder:
         distance = 0
 
         while current_dir >= self.project_root and current_dir != current_dir.parent:
+            # Skip project root as it's automatically read by the system
             if current_dir != self.project_root:
                 for file in current_dir.iterdir():
                     if file.is_file() and file.name.lower() in self.KNOWLEDGE_FILES:
@@ -142,59 +187,82 @@ class KnowledgeInjector:
         self.project_root = project_root
         self.transcript_path = Path(transcript_path)
 
-    def _get_knowledge_identifier(self, path: str, file_hash: str, content: str) -> str:
-        return f"[knowledge:{path}:{file_hash}]"
-
-    def _is_knowledge_in_transcript(self, identifier: str) -> bool:
+    def _has_knowledge_been_read(self, knowledge_path: Path) -> bool:
         if not self.transcript_path.exists():
             return False
 
         try:
-            with self.transcript_path.open("r", encoding="utf-8") as f:
-                for line in f:
-                    if not line.strip():
+            knowledge_path_str = str(knowledge_path)
+            transcript_content = self.transcript_path.read_text(encoding="utf-8")
+
+            for line in transcript_content.splitlines():
+                if not line.strip():
+                    continue
+
+                try:
+                    entry: RawTranscriptEntry = orjson.loads(line)
+                except orjson.JSONDecodeError:
+                    continue
+
+                if not isinstance(entry, dict):
+                    continue
+
+                if entry.get("type") != "assistant":
+                    continue
+
+                message = entry.get("message")
+                if not isinstance(message, dict):
+                    continue
+
+                if message.get("role") != "assistant":
+                    continue
+
+                content = message.get("content")
+                if not isinstance(content, list):
+                    continue
+
+                for block in content:
+                    if not isinstance(block, dict):
                         continue
 
-                    try:
-                        message: TranscriptMessage = json.loads(line)
-                        content = message.get("content", "")
-
-                        if isinstance(content, list):
-                            content_str = json.dumps(content)
-                        else:
-                            content_str = str(content)
-
-                        if identifier in content_str:
-                            return True
-
-                    except (json.JSONDecodeError, KeyError, TypeError):
+                    if block.get("type") != "tool_use":
                         continue
+
+                    if block.get("name") != "Read":
+                        continue
+
+                    tool_input = block.get("input")
+                    if not isinstance(tool_input, dict):
+                        continue
+
+                    if tool_input.get("file_path") == knowledge_path_str:
+                        return True
 
             return False
 
         except OSError:
             return False
 
-    def inject_knowledge(self, knowledge_info: KnowledgeInfo) -> str:
+    def check_and_inject(self, knowledge_info: KnowledgeInfo) -> str:
         path = knowledge_info["path"]
-        file_hash = knowledge_info["hash"]
-        last_modified = knowledge_info["last_modified"]
+        knowledge_type = knowledge_info["type"]
 
         full_path = self.project_root / path
         if not full_path.exists():
             return ""
 
-        try:
-            content = full_path.read_text(encoding="utf-8")
-        except OSError:
+        if self._has_knowledge_been_read(full_path):
             return ""
 
-        identifier = self._get_knowledge_identifier(path, file_hash, content)
+        file_type_display = knowledge_type.upper()
 
-        if self._is_knowledge_in_transcript(identifier):
-            return ""
+        warning_message = (
+            f"ACTION REQUIRED: Use Read tool to read {file_type_display} knowledge immediately. READ NOW.\n"
+            f"You MUST read the following knowledge file before proceeding:\n"
+            f"{full_path}\n\n"
+        )
 
-        return f"[knowledge:{path}:{file_hash}:{last_modified}]\n{content}"
+        return warning_message
 
 
 class HookHandler:
@@ -207,8 +275,8 @@ class HookHandler:
                 print(f"[{hook_filename}] Skipping: No input provided")
                 sys.exit(0)
 
-            data: PostToolUseInput = json.loads(input_raw)
-        except (json.JSONDecodeError, KeyError, TypeError):
+            data: PostToolUseInput = orjson.loads(input_raw)
+        except (orjson.JSONDecodeError, KeyError, TypeError):
             print(f"[{hook_filename}] Skipping: Invalid input format")
             sys.exit(0)
 
@@ -268,7 +336,7 @@ class HookHandler:
         messages_to_inject: list[str] = []
 
         for knowledge_info in filtered_knowledge_infos:
-            message = injector.inject_knowledge(knowledge_info)
+            message = injector.check_and_inject(knowledge_info)
             if message:
                 messages_to_inject.append(message)
 

@@ -54,7 +54,6 @@ Use **ALL available tools** to verify the work:
 For every checkbox in ai-todolist.md:
 
 - ✅ Check that ALL completion criteria are met
-- ✅ Review the NOTEPAD section for any compromises or skipped implementations
 - ✅ **Actually execute and test** EVERY checkbox item to confirm it works
 - ✅ Test edge cases, error handling, and boundary conditions
 - ❌ **CRITICAL**: "SKIPPED" is NOT acceptable
@@ -62,6 +61,10 @@ For every checkbox in ai-todolist.md:
   - Tasks marked as "SKIPPED", "Optional", or "Production build needed" must STILL be completed
   - There is NO valid reason to skip a task
   - Everything must be implemented
+
+For ./notepad.md file:
+- ✅ Review every section for any compromises or skipped implementations
+- ✅ Extract potential bugs that might be introduced by the changes - Verify them to ensure working properly
 
 ### 4. CODE QUALITY REVIEW
 

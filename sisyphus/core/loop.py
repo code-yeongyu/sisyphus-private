@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import sys
+import time
 from typing import TYPE_CHECKING
 
 import anyio
@@ -63,6 +64,7 @@ class ExecutionLoop:
         self._current_cancel_scope: anyio.CancelScope | None = None
         self._resume_event: anyio.Event | None = None
         self._resumed_once = False
+        self._execute_timestamps: list[float] = []
 
     async def run(
         self,
@@ -129,8 +131,25 @@ class ExecutionLoop:
         iteration = 0
         verify_feedback_history: list[str] = []
 
+        execute_throttle_window_seconds = 60.0
+        execute_throttle_max_count = 10
+
         while True:
             iteration += 1
+
+            current_time = time.time()
+            self._execute_timestamps.append(current_time)
+            self._execute_timestamps = [
+                t for t in self._execute_timestamps if current_time - t <= execute_throttle_window_seconds
+            ]
+
+            force_verify = len(self._execute_timestamps) >= execute_throttle_max_count
+
+            if force_verify:
+                await self.ui.show_status(
+                    f"⚠️  Execute repeated {len(self._execute_timestamps)} times in 1 minute. "
+                    f"Forcing Verify phase to break potential infinite loop."
+                )
 
             await self.ui.show_status(f"[Iteration {iteration}] Starting Execute phase...")
 
@@ -162,6 +181,14 @@ class ExecutionLoop:
                 goals_accomplished = self.task_validator.check_all_goals_accomplished(content)
                 checkboxes_completed = self.task_validator.check_all_checkboxes_completed(content)
                 should_verify = goals_accomplished and checkboxes_completed
+
+            should_verify = should_verify or force_verify
+
+            if force_verify and not self.verify_agent:
+                await self.ui.show_status(
+                    "⚠️  Execute loop detected but no Verify agent available. Terminating to prevent infinite loop."
+                )
+                break
 
             if should_verify and self.verify_agent:
                 actual_verify_prompt = verify_prompt if verify_prompt is not None else DEFAULT_VERIFY_PROMPT

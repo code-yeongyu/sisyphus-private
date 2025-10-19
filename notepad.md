@@ -283,3 +283,37 @@ All tasks execution STARTED: Sun Oct 19 00:13:11 KST 2025
 - 프로젝트의 기존 패턴: 복잡한 에러 처리는 별도 helper 메서드 대신 inline 로직으로 구현
 
 소요 시간: 5분
+
+[2025-10-19 11:38] - ChatLog 스크롤 동작 개선 (Task 2.1-2.5)
+
+### DISCOVERED ISSUES
+- 없음. ChatLog 스크롤 구현이 깔끔했으며 기존 코드 문제점 없음
+
+### IMPLEMENTATION DECISIONS
+- `_should_auto_scroll()` 헬퍼 메서드 추가: 스크롤 위치 5줄 버퍼로 사용자 UX 개선
+  * 로직: `return self.scroll_offset.y >= self.max_scroll_y - 5`
+  * 사용자가 위로 스크롤했을 때도 완전히 활성화/비활성화되지 않고 5줄 여유 제공
+- 모든 write 메서드 수정 (4개): 조건부 스크롤 적용
+  * `write_user_message`, `write_execute_message`, `write_verify_message`, `write_completion_message`
+  * 기존 `self.scroll_end()` → `if self._should_auto_scroll(): self.call_after_refresh(self.scroll_end)`
+- `call_after_refresh()` 사용: Textual 렌더링 완료 후 콜백 실행으로 race condition 방지
+- `auto_scroll=True` 속성 유지: 기존 RichLog 기능과 호환성 유지
+
+### PROBLEMS FOR NEXT TASKS
+- Task 3 (InputBar placeholder 항상 표시)는 독립적인 작업
+- Task 4 (전체 통합 테스트)에서 스크롤 동작이 제대로 작동하는지 확인 필요
+
+### VERIFICATION RESULTS
+- Lint: `uv run ruff check sisyphus/ui/tui/components/chat_log.py` 통과 (All checks passed!)
+- Type check: `uv run basedpyright sisyphus/ui/tui/components/chat_log.py` 통과 (0 errors, 0 warnings)
+- Tests: `uv run pytest sisyphus/ui/tui/components/tests/ -v` 통과 (14 passed, 4 skipped)
+- Commit: 929af8b "fix: improve chatlog scroll behavior for better ux"
+
+### LEARNINGS
+- Textual RichLog의 `scroll_offset.y`와 `max_scroll_y` 속성: 현재 스크롤 위치 감지 가능
+- 5줄 버퍼는 타이핑 체험 상 "매우 아래쪽에 있는" 상태로 간주되어 UX 개선
+- `call_after_refresh()`: Textual의 렌더링 사이클 이후 콜백 실행으로 동기 문제 해결
+- Textual에서 조건부 스크롤은 `if condition: self.call_after_refresh(self.scroll_end)` 패턴 사용
+- 헬퍼 메서드 `_should_auto_scroll()`는 private 메서드 이름으로 시작 (언더스코어)
+
+소요 시간: 2분

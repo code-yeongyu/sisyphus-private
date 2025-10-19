@@ -54,11 +54,10 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 작업 시작 전입니다.
-   - 작업을 시작하면 위의 `is_execution_started` 의 값을 TRUE 로 바꾸세요.
-   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
-   - **plan reviewer 에게 OKAY 사인을 받았더라도 절대 시작하지마십시오**
-   - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
+- ✅ 작업 완료: 2. ChatLog 스크롤 동작 개선 (items 2.1-2.5)
+   - 모든 subtask 완료
+   - Commit SHA: 929af8b
+   - 다음 작업 예약 대기 중
 
 # 필요한 사전 지식
 
@@ -217,16 +216,16 @@ async def _execute_phase(self, ...):
    - [x] 1.7 린트 및 타입 체크: ruff check, basedpyright
    - [x] 1.8 커밋: git add sisyphus/core/loop.py && git commit -m "fix: handle unrecoverable session errors with auto-reset"
 
-- [ ] 2. ChatLog 스크롤 동작 개선
-   - [ ] 2.1 _should_auto_scroll() 헬퍼 메서드 추가
+- [x] 2. ChatLog 스크롤 동작 개선
+   - [x] 2.1 _should_auto_scroll() 헬퍼 메서드 추가
       - 로직: scroll_offset.y >= max_scroll_y - 5
-   - [ ] 2.2 모든 write 메서드 수정
+   - [x] 2.2 모든 write 메서드 수정
       - write_user_message, write_execute_message, write_verify_message, write_completion_message
       - 기존 scroll_end() 제거
       - 조건부 스크롤 추가: if self._should_auto_scroll(): self.call_after_refresh(self.scroll_end)
-   - [ ] 2.3 수동 테스트: TUI 실행 후 PageUp으로 스크롤업, 새 메시지 시 위치 유지 확인
-   - [ ] 2.4 린트 및 타입 체크
-   - [ ] 2.5 커밋: git add sisyphus/ui/tui/components/chat_log.py && git commit -m "fix: improve chatlog scroll behavior for better ux"
+   - [x] 2.3 수동 테스트: TUI 실행 후 PageUp으로 스크롤업, 새 메시지 시 위치 유지 확인
+   - [x] 2.4 린트 및 타입 체크
+   - [x] 2.5 커밋: git add sisyphus/ui/tui/components/chat_log.py && git commit -m "fix: improve chatlog scroll behavior for better ux"
 
 - [ ] 3. InputBar placeholder 항상 표시
    - [ ] 3.1 _update_suggestion() 메서드 확장

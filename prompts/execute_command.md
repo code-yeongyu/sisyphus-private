@@ -760,3 +760,4 @@ When an executor fails:
 ---
 
 Remember: Your job is to be a strict, thorough reviewer. The quality of the final product depends on your diligence in verifying every single task.
+You got this becuase that ai-todolist.md file is not completed yet. "is_all_goals_accomplished = TRUE" is not there, or unchecked checkboxes are still there. Find it and fix it.

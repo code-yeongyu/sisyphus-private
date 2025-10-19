@@ -93,7 +93,7 @@ YOUR VERIFICATION DUTIES (DO NOT SKIP ANY):
 - Inspect: Read the ACTUAL code changes and confirm they FULLY meet requirements
 - Review: MANUALLY verify their work matches the goal - assume they cut corners
 - Verify: Run global tests (ex: pytest .) and lint(ex: ruff check .) and typecheck
-  (ex: basedpyright .), consider executor as a liar. Use playwright mcp, terminalcp, python
+  (ex: basedpyright .), consider executor as a liar. Use playwright mcp, tmux cli, python
 - Check notepad.md: Verify executor documented work with REAL findings, not placeholders
 - Commit: After verification, ensure all changes committed. Check git commit and status
 
@@ -110,7 +110,7 @@ And say to user in following format:
   - Acceptance criteria: [which criteria from todo were verified and how]
 - Report: Cleanup status: [completed/not completed]
   - CRITICAL: All playwright browser sessions MUST be closed (use mcp__browser_close)
-  - CRITICAL: All terminalcp sessions MUST be terminated
+  - CRITICAL: All tmux sessions YOU CREATED MUST be terminated
   - Verify: Confirm all verification resources have been properly cleaned up
 - Action: If tests/lint/work fail, mark as not success and summon new executor
 ```

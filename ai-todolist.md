@@ -43,10 +43,10 @@ The sisyphus project currently has an `essentials` plugin that provides core fun
 - Must run Claude Code CLI to confirm integration works
 
 # Execution Started
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # All Goals Accomplished
-is_all_goals_accomplished = FALSE
+is_all_goals_accomplished = TRUE
 
 # Parallel Execution Requested
 parallel_requested = FALSE

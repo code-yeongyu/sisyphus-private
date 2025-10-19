@@ -33,7 +33,13 @@ class InputBar(TextArea):
         self.call_after_refresh(self.focus)
 
     def _update_suggestion(self) -> None:
-        """Display queue status in suggestion."""
+        """Display queue status or placeholder based on state.
+
+        Logic:
+        - If queue message exists: show queue status
+        - Elif user typed text: hide suggestion (show empty)
+        - Else: show original suggestion (placeholder)
+        """
         if self._queued_message:
             lines = self._queued_message.split("\n")
             preview = lines[0][:50]
@@ -42,7 +48,11 @@ class InputBar(TextArea):
             if len(lines) > 1:
                 preview += f" (+{len(lines) - 1} more)"
             self.suggestion = f"[Queued: {preview}] Press UP to edit"
+        elif self.text.strip():
+            # Hide suggestion when user has typed text
+            self.suggestion = ""
         else:
+            # Show original suggestion when no text
             self.suggestion = self._original_suggestion
 
     async def on_key(self, event: Key) -> None:

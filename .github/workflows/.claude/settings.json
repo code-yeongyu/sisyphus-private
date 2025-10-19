@@ -91,7 +91,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "~/.claude/hooks/user-prompt-submit/system-reminder.py"
+                        "command": "uv run python ~/.claude/hooks/user-prompt-submit/system-reminder.py"
                     }
                 ]
             }
@@ -106,11 +106,11 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "uv run ~/.claude/hooks/pre-tool-use/block_asyncio_when_anyio_exists.py"
+                        "command": "uv run python ~/.claude/hooks/pre-tool-use/block_asyncio_when_anyio_exists.py"
                     },
                     {
                         "type": "command",
-                        "command": "uv run ~/.claude/hooks/pre-tool-use/block_json_when_orjson_exists.py"
+                        "command": "uv run python ~/.claude/hooks/pre-tool-use/block_json_when_orjson_exists.py"
                     }
                 ]
             }
@@ -121,7 +121,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "uv run ~/.claude/hooks/post_tool_use.py"
+                        "command": "uv run python ~/.claude/hooks/post_tool_use.py"
                     }
                 ]
             }

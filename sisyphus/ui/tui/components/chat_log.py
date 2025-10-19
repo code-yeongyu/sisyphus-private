@@ -25,6 +25,17 @@ class ChatLog(RichLog):
             wrap=True,
         )
 
+    def _should_auto_scroll(self) -> bool:
+        """Check if auto-scroll should be active.
+
+        Returns True if scroll position is near bottom (within 5-line buffer).
+        This allows slight scroll-up without disabling auto-scroll.
+
+        Returns:
+            bool: True if should auto-scroll, False otherwise
+        """
+        return self.scroll_offset.y >= self.max_scroll_y - 5
+
     def write_user_message(self, content: str) -> None:
         """Display user message.
 
@@ -33,7 +44,8 @@ class ChatLog(RichLog):
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [green]👤 USER:[/green] {content}")
-        self.scroll_end()
+        if self._should_auto_scroll():
+            self.call_after_refresh(self.scroll_end)
 
     def write_execute_message(self, content: str) -> None:
         """Write Execute message.
@@ -43,7 +55,8 @@ class ChatLog(RichLog):
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [yellow]▶ EXECUTE:[/yellow] {content}")
-        self.scroll_end()
+        if self._should_auto_scroll():
+            self.call_after_refresh(self.scroll_end)
 
     def write_verify_message(self, content: str) -> None:
         """Write Verify message.
@@ -53,7 +66,8 @@ class ChatLog(RichLog):
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [cyan]✓ VERIFY:[/cyan] {content}")
-        self.scroll_end()
+        if self._should_auto_scroll():
+            self.call_after_refresh(self.scroll_end)
 
     def write_completion_message(self, content: str) -> None:
         """Write task completion message.
@@ -63,4 +77,5 @@ class ChatLog(RichLog):
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [bold green]✅ COMPLETED:[/bold green] {content}")
-        self.scroll_end()
+        if self._should_auto_scroll():
+            self.call_after_refresh(self.scroll_end)

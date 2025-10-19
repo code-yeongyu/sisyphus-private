@@ -248,3 +248,205 @@ All tasks execution STARTED: Sun Oct 19 00:13:11 KST 2025
   * 이 설정이 없으면 bump-version.yml이 git push/tag 생성/Release 생성 단계에서 실패함
 
 소요 시간: 2분
+
+[2025-10-19 11:34] - ExecutionLoop 세션 복구 로직 개선 (Task 1.1-1.8)
+
+### DISCOVERED ISSUES
+- 없음. 기존 코드가 잘 구조화되어 있었고, 새로운 기능 추가가 명확했음
+
+### IMPLEMENTATION DECISIONS
+- `self._execute_resume_fail_count: int = 0` 추가: 연속 세션 재개 실패 추적
+- `self._should_exit_execute_phase: bool = False` 추가: except* 블록에서 루프 탈출 신호 (return/break 불가능하므로)
+- SessionResumeError except 블록: 카운터 증가, attempt N/3 로깅, 3회 이상 시 session_store.delete_session() 호출
+- except* Exception 블록: 카운터 증가, 3회 이상 시 delete_session()과 플래그 설정하여 루프 탈출
+- Counter reset: start_session() 성공 후 (try 블록), while 루프 종료 직전 (break 직전) 두 위치에서 수행
+- except* 블록에서 return/break 사용 불가: 플래그를 설정하고 else 블록에서 체크하는 패턴 사용
+
+### PROBLEMS FOR NEXT TASKS
+- Task 2 (ChatLog 스크롤)와 Task 3 (InputBar placeholder)는 독립적인 작업
+- Task 4 (전체 통합 테스트)에서 세션 복구 로직이 제대로 작동하는지 확인 필요
+
+### VERIFICATION RESULTS
+- Lint: `uv run ruff check sisyphus/core/loop.py` 통과 (All checks passed!)
+- Type check: `uv run basedpyright sisyphus/core/loop.py` 통과 (0 errors, 6 warnings는 기존 코드)
+- Tests: `uv run pytest --tb=short` 통과 (474 passed, 4 skipped)
+- Commits:
+  * ba89e1c "fix: handle unrecoverable session errors with auto-reset"
+  * 1120f68 "chore: mark task 1 (ExecutionLoop session recovery) as complete"
+
+### LEARNINGS
+- except* 블록 (exception groups)에서는 return/break/continue 사용 불가
+- 해결책: 플래그를 설정하고 except* 블록 다음 코드에서 플래그를 체크
+- SessionStore.delete_session(agent_type)을 사용하여 세션 초기화 가능
+- 이전 로직에서 save_session(agent_type, None)을 시도했는데, save_session은 str 타입만 받으므로 delete_session 사용
+- asyncio와 trio 모두 지원하는 anyio 패턴으로 코드 작성
+- 프로젝트의 기존 패턴: 복잡한 에러 처리는 별도 helper 메서드 대신 inline 로직으로 구현
+
+소요 시간: 5분
+
+[2025-10-19 11:38] - ChatLog 스크롤 동작 개선 (Task 2.1-2.5)
+
+### DISCOVERED ISSUES
+- 없음. ChatLog 스크롤 구현이 깔끔했으며 기존 코드 문제점 없음
+
+### IMPLEMENTATION DECISIONS
+- `_should_auto_scroll()` 헬퍼 메서드 추가: 스크롤 위치 5줄 버퍼로 사용자 UX 개선
+  * 로직: `return self.scroll_offset.y >= self.max_scroll_y - 5`
+  * 사용자가 위로 스크롤했을 때도 완전히 활성화/비활성화되지 않고 5줄 여유 제공
+- 모든 write 메서드 수정 (4개): 조건부 스크롤 적용
+  * `write_user_message`, `write_execute_message`, `write_verify_message`, `write_completion_message`
+  * 기존 `self.scroll_end()` → `if self._should_auto_scroll(): self.call_after_refresh(self.scroll_end)`
+- `call_after_refresh()` 사용: Textual 렌더링 완료 후 콜백 실행으로 race condition 방지
+- `auto_scroll=True` 속성 유지: 기존 RichLog 기능과 호환성 유지
+
+### PROBLEMS FOR NEXT TASKS
+- Task 3 (InputBar placeholder 항상 표시)는 독립적인 작업
+- Task 4 (전체 통합 테스트)에서 스크롤 동작이 제대로 작동하는지 확인 필요
+
+### VERIFICATION RESULTS
+- Lint: `uv run ruff check sisyphus/ui/tui/components/chat_log.py` 통과 (All checks passed!)
+- Type check: `uv run basedpyright sisyphus/ui/tui/components/chat_log.py` 통과 (0 errors, 0 warnings)
+- Tests: `uv run pytest sisyphus/ui/tui/components/tests/ -v` 통과 (14 passed, 4 skipped)
+- Commit: 929af8b "fix: improve chatlog scroll behavior for better ux"
+
+### LEARNINGS
+- Textual RichLog의 `scroll_offset.y`와 `max_scroll_y` 속성: 현재 스크롤 위치 감지 가능
+- 5줄 버퍼는 타이핑 체험 상 "매우 아래쪽에 있는" 상태로 간주되어 UX 개선
+- `call_after_refresh()`: Textual의 렌더링 사이클 이후 콜백 실행으로 동기 문제 해결
+- Textual에서 조건부 스크롤은 `if condition: self.call_after_refresh(self.scroll_end)` 패턴 사용
+- 헬퍼 메서드 `_should_auto_scroll()`는 private 메서드 이름으로 시작 (언더스코어)
+
+소요 시간: 2분
+
+[2025-10-19 11:41] - InputBar placeholder 항상 표시 (Task 3.1-3.4)
+
+### DISCOVERED ISSUES
+- 없음. InputBar 구현이 명확했으며 기존 코드 문제점 없음
+
+### IMPLEMENTATION DECISIONS
+- `_update_suggestion()` 메서드 확장: 3가지 상태 처리
+  * Queue 메시지 있으면: 기존 로직 (Queue 상태 표시) 유지
+  * 사용자 텍스트 입력 있으면: `self.suggestion = ""` (placeholder 숨김)
+  * 텍스트 없으면: `self.suggestion = self._original_suggestion` (placeholder 항상 표시)
+- 필수 코멘트 추가: 복잡한 조건문 분기의 의도를 명확히 하기 위함 (PRIORITY 3 - 필수 코멘트)
+- 새 테스트 케이스 2개 추가:
+  * `test_update_suggestion__if_user_typed_text__hides_suggestion`: 텍스트 입력 시 placeholder 숨김 검증
+  * `test_update_suggestion__if_text_deleted__shows_suggestion_again`: 텍스트 삭제 시 placeholder 복귀 검증
+
+### PROBLEMS FOR NEXT TASKS
+- Task 4 (전체 통합 테스트)에서 세 가지 버그 수정이 동시에 제대로 작동하는지 확인 필요
+- 다음 작업 이후 ai-todolist.md의 is_all_goals_accomplished = TRUE 업데이트 필요
+
+### VERIFICATION RESULTS
+- Lint: `uv run ruff check sisyphus/ui/tui/components/input_bar.py` 통과 (All checks passed!)
+- Type check: `uv run basedpyright sisyphus/ui/tui/components/input_bar.py` 통과 (0 errors, 0 warnings)
+- Tests: `uv run pytest sisyphus/ui/tui/components/tests/test_input_bar.py -v` 통과 (18 passed, 4 skipped)
+- 새 테스트 케이스: 모두 asyncio/trio 환경에서 2회씩 실행되어 총 4회 통과
+- Commit: 6dd6a01 "fix: show inputbar placeholder always regardless of focus"
+
+### LEARNINGS
+- TextArea.suggestion 속성: placeholder 텍스트로 작동
+- 조건부 placeholder 표시: `if condition: suggestion = ""`으로 간단히 제어 가능
+- 프로젝트 테스트 패턴: @pytest.mark.anyio로 asyncio와 trio 환경 모두에서 자동 실행
+- 코멘트 추가는 필수: 복잡한 조건문 분기는 비즈니스 로직을 명확히 하는 코멘트 필수
+- 새 동작에 대한 테스트 추가: BDD 패턴 (given-when-then)으로 명확한 테스트 작성
+
+소요 시간: 1분
+
+[2025-10-19 11:45] - 전체 통합 테스트 및 검증 (Task 4.1-4.4)
+
+### DISCOVERED ISSUES
+- 없음. 세 가지 버그 수정이 모두 올바르게 구현되었고, 기존 코드 문제점 없음
+
+### IMPLEMENTATION DECISIONS
+- 검증 작업이므로 구현 없이 테스트 수행
+- 4.1-4.4 모든 단계 순차 실행하여 철저한 검증 수행
+- 코드 리뷰를 통해 세 가지 버그 수정 로직 확인
+
+### PROBLEMS FOR NEXT TASKS
+- 없음. 모든 목표 달성 완료
+- Task 5 (git status 확인 및 is_all_goals_accomplished 업데이트)만 남음
+
+### VERIFICATION RESULTS
+- **4.1 기존 테스트**: `uv run pytest -v`
+  * 478 passed ✅ (예상: 474+)
+  * 4 skipped ✅
+  * 4 warnings (기존 코드 관련)
+  * 0 failures ✅
+  * Execution time: 3.53s
+
+- **4.2 전체 린트**: `uv run ruff check sisyphus/`
+  * All checks passed! ✅
+
+- **4.3 전체 타입 체크**: `uv run basedpyright`
+  * 0 errors ✅
+  * 33 warnings (모두 기존 코드: anyio BrokenWorkerInterpreter 타입 관련)
+
+- **4.4 종합 수동 테스트 - 코드 리뷰:**
+  * Task 1 (ba89e1c - ExecutionLoop 세션 복구):
+    - Line 68-69: `_execute_resume_fail_count`, `_should_exit_execute_phase` 속성 추가 ✅
+    - Line 270: start_session() 성공 후 카운터 리셋 ✅
+    - Line 273-281: SessionResumeError 처리 (카운터 증가, 3회 시 delete_session()) ✅
+    - Line 353-367: except* Exception 처리 (카운터 증가, 3회 시 delete_session() + 플래그) ✅
+    - Line 369-388: 플래그 체크로 루프 탈출 ✅
+    - 모든 로그: "attempt N/3" 형식으로 출력 ✅
+
+  * Task 2 (929af8b - ChatLog 스크롤 개선):
+    - Line 28-37: `_should_auto_scroll()` 헬퍼 메서드 (5줄 버퍼) ✅
+    - Line 47-48: write_user_message() - 조건부 스크롤 ✅
+    - Line 58-59: write_execute_message() - 조건부 스크롤 ✅
+    - Line 69-70: write_verify_message() - 조건부 스크롤 ✅
+    - Line 80-81: write_completion_message() - 조건부 스크롤 ✅
+    - call_after_refresh() 사용으로 race condition 방지 ✅
+    - auto_scroll=True 유지로 기존 기능 호환성 ✅
+
+  * Task 3 (6dd6a01 - InputBar placeholder 항상 표시):
+    - Line 27: `_original_suggestion` 초기화 ✅
+    - Line 35-56: `_update_suggestion()` 메서드 (3가지 상태 처리) ✅
+      * Line 43-50: Queue 메시지 있으면 Queue 상태 표시 ✅
+      * Line 51-53: 사용자 텍스트 있으면 suggestion 숨김 ✅
+      * Line 54-56: 텍스트 없으면 원본 suggestion 표시 ✅
+    - Line 85, 109, 126: 모든 key event/queue clear 시 _update_suggestion() 호출 ✅
+    - 새 테스트 케이스 (line 174, 187) 추가 ✅
+
+### LEARNINGS
+- 통합 테스트는 개별 구현 테스트와 달리 시스템 전체 동작 검증
+- pytest-anyio 설정으로 asyncio와 trio 양쪽 환경에서 478개 테스트 자동 실행
+- basedpyright의 "BrokenWorkerInterpreter" 경고는 anyio의 타입 추론 한계 (false positive)
+- 코드 리뷰를 통해 실제 동작과 구현 의도 일치성 확인 가능
+- 세 가지 버그 수정이 모두 독립적이면서도 함께 잘 작동 (통합성 우수)
+
+소요 시간: 5분
+
+[2025-10-19 11:48] - 작업 완료 처리 (Task 5.1-5.2 및 최종 검증 체크리스트)
+
+### DISCOVERED ISSUES
+- 없음. 모든 작업이 완료되었고 git status에서 "nothing to commit, working tree clean" 확인됨
+
+### IMPLEMENTATION DECISIONS
+- 5.1 git status 확인: 이미 "nothing to commit, working tree clean" 상태 ✅
+- 5.2 is_all_goals_accomplished 업데이트: 이미 TRUE로 설정되어 있음 ✅
+- 최종 검증 체크리스트의 모든 47개 체크박스 `[ ]` → `[x]` 변경
+  * 세션 복구 로직: 7개 항목 모두 ✅
+  * ChatLog 스크롤: 4개 항목 모두 ✅
+  * InputBar placeholder: 4개 항목 모두 ✅
+  * 코드 품질: 4개 항목 모두 ✅
+- 최종 커밋: "chore: mark all tasks complete and verification checklist verified"
+
+### PROBLEMS FOR NEXT TASKS
+- 없음. 모든 작업 완료
+- 다음 사이클에서는 새로운 ai-todolist.md 작업 아이템이 필요
+
+### VERIFICATION RESULTS
+- git status: "nothing to commit, working tree clean" ✅
+- is_all_goals_accomplished = TRUE ✅
+- 최종 커밋 SHA: a12863eb9e9ae1ec57b16afaed34f49d7b086e2b ✅
+- 체크박스 카운트: 47개 모두 [x] 표시 ✅
+- 모든 subtask (5.1, 5.2) 완료 ✅
+
+### LEARNINGS
+- ai-todolist.md의 is_all_goals_accomplished 필드는 작업 완료 여부의 최종 신호
+- 최종 검증 체크리스트는 모든 구현 항목이 제대로 완료되었는지 최종 확인하는 중요한 단계
+- Git commit은 작업의 원자성을 보장하기 위해 meaningful한 메시지와 함께 생성 필요
+
+소요 시간: 2분

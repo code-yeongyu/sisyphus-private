@@ -169,3 +169,32 @@ async def test_update_suggestion__if_no_queue__shows_original() -> None:
 
     # then
     assert input_bar.suggestion == original
+
+
+async def test_update_suggestion__if_user_typed_text__hides_suggestion() -> None:
+    # given
+    input_bar = InputBar()
+    input_bar._queued_message = ""
+    input_bar.text = "hello world"
+
+    # when
+    input_bar._update_suggestion()
+
+    # then
+    assert input_bar.suggestion == ""
+
+
+async def test_update_suggestion__if_text_deleted__shows_suggestion_again() -> None:
+    # given
+    input_bar = InputBar()
+    input_bar._queued_message = ""
+    input_bar.text = "hello"
+    input_bar._update_suggestion()
+    assert input_bar.suggestion == ""
+
+    # when
+    input_bar.text = ""
+    input_bar._update_suggestion()
+
+    # then
+    assert input_bar.suggestion == input_bar._original_suggestion

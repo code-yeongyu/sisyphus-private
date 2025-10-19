@@ -65,6 +65,8 @@ class ExecutionLoop:
         self._resume_event: anyio.Event | None = None
         self._resumed_once = False
         self._execute_timestamps: list[float] = []
+        self._execute_resume_fail_count: int = 0
+        self._should_exit_execute_phase = False
 
     async def run(
         self,
@@ -257,19 +259,27 @@ class ExecutionLoop:
         else:
             self.execute_logger.info("Starting new session")
 
-        # Fallback on resume failure
         try:
             actual_session_id = await self.execute_agent.start_session(session_id)
 
-            # Log successful resume
             if session_id:
                 self.execute_logger.info(f"✅ Session resumed successfully: {session_id}")
             else:
                 self.execute_logger.info("New session initialized (ID will be received during stream)")
 
+            self._execute_resume_fail_count = 0
+
         except SessionResumeError as e:
-            # Log resume failure and start new session
-            self.execute_logger.warning(f"❌ Failed to resume session {session_id}: {e}")
+            self._execute_resume_fail_count += 1
+            self.execute_logger.warning(
+                f"❌ Failed to resume session {session_id}: {e} (attempt {self._execute_resume_fail_count}/3)"
+            )
+
+            if self._execute_resume_fail_count >= 3:
+                self.execute_logger.info("Session resume failed 3 times. Resetting session store.")
+                await self.session_store.delete_session(agent_type)
+                self._execute_resume_fail_count = 0
+
             self.execute_logger.info("Starting new session instead")
             actual_session_id = await self.execute_agent.start_session(None)
 
@@ -340,13 +350,21 @@ class ExecutionLoop:
                 # Re-raise for outer loop to continue
                 raise session_limit_error
             except* Exception as exception_group:
-                # Catch any other unexpected exceptions from TaskGroup
+                self._execute_resume_fail_count += 1
                 for exception in exception_group.exceptions:
+                    attempt_msg = f"(attempt {self._execute_resume_fail_count}/3)"
                     self.execute_logger.error(
-                        f"Unexpected error in execute phase: {exception}",
+                        f"Unexpected error in execute phase: {exception} {attempt_msg}",
                         exc_info=exception,
                     )
-                raise
+
+                if self._execute_resume_fail_count >= 3:
+                    self.execute_logger.info("Exception occurred 3 times. Resetting session store.")
+                    await self.session_store.delete_session(agent_type)
+                    self._execute_resume_fail_count = 0
+                    self._should_exit_execute_phase = True
+                else:
+                    raise
 
             # Task Group completed normally - check interrupt status
             if self._interrupt_flag:
@@ -364,10 +382,15 @@ class ExecutionLoop:
                 self._interrupt_flag = False
                 await self.ui.show_status("▶ Resuming work")
             else:
+                if self._should_exit_execute_phase:
+                    self._should_exit_execute_phase = False
+                    self._execute_resume_fail_count = 0
+                    break
                 if self._resumed_once:
                     self._resumed_once = False
                     continue
                 else:
+                    self._execute_resume_fail_count = 0
                     break
 
         # Update actual session_id after stream() completes

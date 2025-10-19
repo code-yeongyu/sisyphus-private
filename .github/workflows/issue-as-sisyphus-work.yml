@@ -133,10 +133,41 @@ jobs:
           CLAUDE_CLI_PATH: ${{ env.HOME }}/.local/bin/claude
         continue-on-error: true
 
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create and push branch with changes
+        run: |
+          # Create a new branch for this issue
+          BRANCH_NAME="sisyphus/issue-${{ github.event.issue.number }}"
+          git checkout -b "$BRANCH_NAME"
+
+          # Add all changes
+          git add .
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          # Commit changes
+          git commit -m "feat: implement solution for issue #${{ github.event.issue.number }}
+
+          ${{ github.event.issue.title }}"
+
+          # Push to origin
+          git push -u origin "$BRANCH_NAME"
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+
       - name: Create Pull Request via Claude Code
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          claude --dangerously-skip-permissions "create PR of this, using gh cli. Title should be 'Fix #${{ github.event.issue.number }}: ${{ github.event.issue.title }}' and include reference to issue #${{ github.event.issue.number }}"
+          claude --dangerously-skip-permissions \
+          "create PR of this, using gh cli. Title should be 'Fix #${{ github.event.issue.number }}: ${{ github.event.issue.title }}' and include reference to issue #${{ github.event.issue.number }} using GH CLI. No Ask to me, you are  a fully automated system, just CREATE PULL REQUEST."
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}

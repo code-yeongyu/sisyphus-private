@@ -27,6 +27,8 @@ class InputBar(TextArea):
         self._original_suggestion = "Type a message... (ESC: pause)"
         self._agent_paused = False
         self.suggestion = self._original_suggestion
+        # Show suggestion even when unfocused (fixes issue #15)
+        self.hide_suggestion_on_blur = False
 
     def on_mount(self) -> None:
         """Set focus when widget is mounted."""

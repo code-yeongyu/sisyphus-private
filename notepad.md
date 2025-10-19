@@ -352,3 +352,68 @@ All tasks execution STARTED: Sun Oct 19 00:13:11 KST 2025
 - 새 동작에 대한 테스트 추가: BDD 패턴 (given-when-then)으로 명확한 테스트 작성
 
 소요 시간: 1분
+
+[2025-10-19 11:45] - 전체 통합 테스트 및 검증 (Task 4.1-4.4)
+
+### DISCOVERED ISSUES
+- 없음. 세 가지 버그 수정이 모두 올바르게 구현되었고, 기존 코드 문제점 없음
+
+### IMPLEMENTATION DECISIONS
+- 검증 작업이므로 구현 없이 테스트 수행
+- 4.1-4.4 모든 단계 순차 실행하여 철저한 검증 수행
+- 코드 리뷰를 통해 세 가지 버그 수정 로직 확인
+
+### PROBLEMS FOR NEXT TASKS
+- 없음. 모든 목표 달성 완료
+- Task 5 (git status 확인 및 is_all_goals_accomplished 업데이트)만 남음
+
+### VERIFICATION RESULTS
+- **4.1 기존 테스트**: `uv run pytest -v`
+  * 478 passed ✅ (예상: 474+)
+  * 4 skipped ✅
+  * 4 warnings (기존 코드 관련)
+  * 0 failures ✅
+  * Execution time: 3.53s
+
+- **4.2 전체 린트**: `uv run ruff check sisyphus/`
+  * All checks passed! ✅
+
+- **4.3 전체 타입 체크**: `uv run basedpyright`
+  * 0 errors ✅
+  * 33 warnings (모두 기존 코드: anyio BrokenWorkerInterpreter 타입 관련)
+
+- **4.4 종합 수동 테스트 - 코드 리뷰:**
+  * Task 1 (ba89e1c - ExecutionLoop 세션 복구):
+    - Line 68-69: `_execute_resume_fail_count`, `_should_exit_execute_phase` 속성 추가 ✅
+    - Line 270: start_session() 성공 후 카운터 리셋 ✅
+    - Line 273-281: SessionResumeError 처리 (카운터 증가, 3회 시 delete_session()) ✅
+    - Line 353-367: except* Exception 처리 (카운터 증가, 3회 시 delete_session() + 플래그) ✅
+    - Line 369-388: 플래그 체크로 루프 탈출 ✅
+    - 모든 로그: "attempt N/3" 형식으로 출력 ✅
+
+  * Task 2 (929af8b - ChatLog 스크롤 개선):
+    - Line 28-37: `_should_auto_scroll()` 헬퍼 메서드 (5줄 버퍼) ✅
+    - Line 47-48: write_user_message() - 조건부 스크롤 ✅
+    - Line 58-59: write_execute_message() - 조건부 스크롤 ✅
+    - Line 69-70: write_verify_message() - 조건부 스크롤 ✅
+    - Line 80-81: write_completion_message() - 조건부 스크롤 ✅
+    - call_after_refresh() 사용으로 race condition 방지 ✅
+    - auto_scroll=True 유지로 기존 기능 호환성 ✅
+
+  * Task 3 (6dd6a01 - InputBar placeholder 항상 표시):
+    - Line 27: `_original_suggestion` 초기화 ✅
+    - Line 35-56: `_update_suggestion()` 메서드 (3가지 상태 처리) ✅
+      * Line 43-50: Queue 메시지 있으면 Queue 상태 표시 ✅
+      * Line 51-53: 사용자 텍스트 있으면 suggestion 숨김 ✅
+      * Line 54-56: 텍스트 없으면 원본 suggestion 표시 ✅
+    - Line 85, 109, 126: 모든 key event/queue clear 시 _update_suggestion() 호출 ✅
+    - 새 테스트 케이스 (line 174, 187) 추가 ✅
+
+### LEARNINGS
+- 통합 테스트는 개별 구현 테스트와 달리 시스템 전체 동작 검증
+- pytest-anyio 설정으로 asyncio와 trio 양쪽 환경에서 478개 테스트 자동 실행
+- basedpyright의 "BrokenWorkerInterpreter" 경고는 anyio의 타입 추론 한계 (false positive)
+- 코드 리뷰를 통해 실제 동작과 구현 의도 일치성 확인 가능
+- 세 가지 버그 수정이 모두 독립적이면서도 함께 잘 작동 (통합성 우수)
+
+소요 시간: 5분

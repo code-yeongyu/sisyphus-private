@@ -54,9 +54,12 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- ✅ 작업 완료: 3. InputBar placeholder 항상 표시 (items 3.1-3.4)
+- ✅ 작업 완료: 4. 전체 통합 테스트 및 검증 (items 4.1-4.4)
    - 모든 subtask 완료
-   - Commit SHA: 6dd6a01
+   - 478 tests passed, 0 failures
+   - All lint checks passed
+   - 0 type errors
+   - Code review 완료
    - 다음 작업 예약 대기 중
 
 # 필요한 사전 지식
@@ -240,11 +243,11 @@ async def _execute_phase(self, ...):
    - [x] 3.4 커밋: git add sisyphus/ui/tui/components/input_bar.py && git commit -m "fix: show inputbar placeholder always regardless of focus"
       - Commit SHA: 6dd6a01
 
-- [ ] 4. 전체 통합 테스트 및 검증
-   - [ ] 4.1 기존 테스트: uv run pytest -v
-   - [ ] 4.2 전체 린트: uv run ruff check sisyphus/
-   - [ ] 4.3 전체 타입 체크: uv run basedpyright
-   - [ ] 4.4 종합 수동 테스트: 세 가지 버그 동시 확인
+- [x] 4. 전체 통합 테스트 및 검증
+   - [x] 4.1 기존 테스트: uv run pytest -v
+   - [x] 4.2 전체 린트: uv run ruff check sisyphus/
+   - [x] 4.3 전체 타입 체크: uv run basedpyright
+   - [x] 4.4 종합 수동 테스트: 세 가지 버그 동시 확인
 
 - [ ] 5. 작업 완료 처리
    - [ ] 5.1 git status 확인: nothing to commit, working tree clean

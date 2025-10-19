@@ -166,21 +166,42 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
 
-      - name: Create Pull Request via Claude Code
+      - name: Get Bun Path to use
+        id: bun_path
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          claude --dangerously-skip-permissions \
-          "create PR of this, using gh cli. Title should be 'Fix #${{ github.event.issue.number }}: ${{ github.event.issue.title }}' and include reference to issue #${{ github.event.issue.number }} using GH CLI. No Ask to me, you are  a fully automated system, just CREATE PULL REQUEST."
+          BUN_PATH=$(which bun)
+          echo "BUN_PATH=$BUN_PATH" >> $GITHUB_OUTPUT
+          echo "Bun executable path: $BUN_PATH"
+
+      - name: Run Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v1.0.13
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY || '' }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          track_progress: true
+          use_sticky_comment: true
+          path_to_bun_executable: ${{ steps.bun_path.outputs.BUN_PATH }}
+          prompt: |
+            You have done your work as ./ai-todolist.md file and your work logs are on ./notepad.md
+            I want you to create PR using gh cli,
+            of the works that you have done.
+            This work from Issue #${{ github.event.issue.number }} ${{ github.event.issue.title }}
 
-      - name: Comment on issue
-        if: success()
-        run: |
-          gh issue comment ${{ github.event.issue.number }} --body "🤖 Automated PR has been created via Sisyphus workflow!"
+            And I want you to be the description and the title of the PR is nice to read and good to review.
+            You have to make the title / description's language as that ./ai-todolist.md file's language. So if the ./ai-todolist.md file is mostly written in 한국어, then write all the texts in 한국어 since it means that the plan file is generated from Korean. This same applies to many other languages.
+
+            No Ask to me at all from now, just create PR. You are a fully automated system, just CREATE PULL REQUEST. No Excuses.
+
+            1. Create PR Using gh cli
+            2. Comment on Issue #${{ github.event.issue.number }} that PR has been created - with the PR link - reply in the same language as the PR.
+          claude_args: |
+            --dangerously-skip-permissions
 
       - name: Upload logs on failure
         if: failure()

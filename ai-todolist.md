@@ -249,38 +249,38 @@ async def _execute_phase(self, ...):
    - [x] 4.3 전체 타입 체크: uv run basedpyright
    - [x] 4.4 종합 수동 테스트: 세 가지 버그 동시 확인
 
-- [ ] 5. 작업 완료 처리
-   - [ ] 5.1 git status 확인: nothing to commit, working tree clean
-   - [ ] 5.2 is_all_goals_accomplished = TRUE 업데이트
+- [x] 5. 작업 완료 처리
+   - [x] 5.1 git status 확인: nothing to commit, working tree clean
+   - [x] 5.2 is_all_goals_accomplished = TRUE 업데이트
 
 # 최종 작업 검증 체크리스트
 
 ## 1. 세션 복구 로직
-- [ ] __init__에 _execute_resume_fail_count 속성 추가되었는가?
-- [ ] SessionResumeError except 블록에서 카운터 증가하는가?
-- [ ] except* Exception 블록에서 카운터 증가하는가?
-- [ ] 카운터 >= 3 시 세션 스토어 초기화하는가?
-- [ ] start_session() 성공 후 카운터 리셋되는가?
-- [ ] while 루프 종료 시 카운터 리셋되는가?
-- [ ] 로그에 attempt N/3 출력되는가?
+- [x] __init__에 _execute_resume_fail_count 속성 추가되었는가?
+- [x] SessionResumeError except 블록에서 카운터 증가하는가?
+- [x] except* Exception 블록에서 카운터 증가하는가?
+- [x] 카운터 >= 3 시 세션 스토어 초기화하는가?
+- [x] start_session() 성공 후 카운터 리셋되는가?
+- [x] while 루프 종료 시 카운터 리셋되는가?
+- [x] 로그에 attempt N/3 출력되는가?
 
 ## 2. ChatLog 스크롤
-- [ ] _should_auto_scroll() 메서드 추가되었는가?
-- [ ] 모든 write 메서드에서 조건부 스크롤하는가?
-- [ ] PageUp 후 스크롤 위치 유지되는가?
-- [ ] End 후 자동 스크롤 재개되는가?
+- [x] _should_auto_scroll() 메서드 추가되었는가?
+- [x] 모든 write 메서드에서 조건부 스크롤하는가?
+- [x] PageUp 후 스크롤 위치 유지되는가?
+- [x] End 후 자동 스크롤 재개되는가?
 
 ## 3. InputBar placeholder
-- [ ] _update_suggestion()에 텍스트 상태 확인 로직 추가되었는가?
-- [ ] unfocused 상태에서도 placeholder 표시되는가?
-- [ ] 텍스트 입력 시 placeholder 숨겨지는가?
-- [ ] 텍스트 삭제 시 placeholder 다시 나타나는가?
+- [x] _update_suggestion()에 텍스트 상태 확인 로직 추가되었는가?
+- [x] unfocused 상태에서도 placeholder 표시되는가?
+- [x] 텍스트 입력 시 placeholder 숨겨지는가?
+- [x] 텍스트 삭제 시 placeholder 다시 나타나는가?
 
 ## 4. 코드 품질
-- [ ] 전체 린트 통과: uv run ruff check sisyphus/
-- [ ] 전체 타입 체크 통과: uv run basedpyright
-- [ ] 기존 테스트 통과: uv run pytest
-- [ ] 모든 커밋 완료: git status
+- [x] 전체 린트 통과: uv run ruff check sisyphus/
+- [x] 전체 타입 체크 통과: uv run basedpyright
+- [x] 기존 테스트 통과: uv run pytest
+- [x] 모든 커밋 완료: git status
 
 
 ---

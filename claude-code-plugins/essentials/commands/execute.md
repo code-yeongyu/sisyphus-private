@@ -1,5 +1,5 @@
 ---
-allowed-tools: Read(*), Write(*), Edit(*), Task(*), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Grep(*), Glob(*), LS(*)
+allowed-tools: Read(*), Write(*), Edit(*), Task(*), Bash(*), Bash(git log:*), Grep(*), Glob(*)
 description: Orchestrates executor agent to complete all tasks in todo list until fully done
 argument-hint: <todo-list-path> [additional-request]
 ---

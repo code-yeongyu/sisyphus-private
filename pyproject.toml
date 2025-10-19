@@ -2,11 +2,20 @@
 name = "sisyphus-ai"
 version = "0.1.1"
 description = "Natural Language Compiler - Multi-agent orchestration system that turns your words into production-ready code"
-authors = [{ name = "YeonGyu-Kim", email = "code.yeon.gyu@gmail.com" }]
+authors = [{ name = "YeonGyu-Kim", email = "public.kim.yeon.gyu@gmail.com" }]
 requires-python = ">=3.12"
 readme = "README.md"
-license = {text = "Sustainable Use License 1.0"}
-keywords = ["llm", "ai", "agent", "orchestration", "automation", "compiler", "natural-language", "code-generation"]
+license = { text = "Sustainable Use License 1.0" }
+keywords = [
+    "llm",
+    "ai",
+    "agent",
+    "orchestration",
+    "automation",
+    "compiler",
+    "natural-language",
+    "code-generation",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

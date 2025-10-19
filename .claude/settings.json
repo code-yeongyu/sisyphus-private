@@ -1,0 +1,10 @@
+{
+  "extraKnownMarketplaces": {
+    "project-specific": {
+      "source": {
+        "source": "github",
+        "repo": "code-yeongyu/sisyphus"
+      }
+    }
+  }
+}

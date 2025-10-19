@@ -1,0 +1,11 @@
+{
+  "context7": {
+    "type": "stdio",
+    "command": "bunx",
+    "args": [
+      "--bun",
+      "-y",
+      "@upstash/context7-mcp"
+    ]
+  }
+}

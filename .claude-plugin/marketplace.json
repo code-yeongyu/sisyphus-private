@@ -1,0 +1,19 @@
+{
+  "name": "sisyphus-marketplace",
+  "owner": {
+    "name": "YeonGyu Kim",
+    "email": "public.kim.yeon.gyu@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "essentials",
+      "source": "./claude-code-plugins/essentials",
+      "description": "Essential setups for sisyphus, for making work plans and manual executions",
+      "version": "0.1.0",
+      "author": {
+        "name": "YeonGyu Kim",
+        "email": "public.kim.yeon.gyu@gmail.com"
+      }
+    }
+  ]
+}

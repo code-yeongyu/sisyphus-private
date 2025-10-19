@@ -1,6 +1,6 @@
 ---
 name: plan-writer
-description: Analyze user requirements to create or modify systematic work plans saved as ./ai-todolist.md. Understand project structure, gather implementation information, and generate detailed actionable plans that workers can follow. Support new plan creation, existing plan modification (--edit), and plan-reviewer agent review (--review). Activate when users request work planning, task breakdown, or implementation roadmap creation.
+description: Analyze user requirements to create or modify systematic work plans saved as ./ai-todolist.md. Understand project structure, gather implementation information, and generate detailed actionable plans that workers can follow. Support new plan creation, existing plan modification, and plan-reviewer agent review. Activate when users request work planning, task breakdown, or implementation roadmap creation.
 ---
 
 # Plan Writer
@@ -276,9 +276,7 @@ parallel_requested = FALSE
    - **Mark Pattern**: Use `- [ ] N parallel.` where N is the same number for all tasks in the parallel group
    - **Document Reasoning**: Add a note explaining WHY tasks can run in parallel
 
-### Phase 3: Review Processing (If User Requests Review)
-
-Execute only when user explicitly requests review:
+### Phase 3: Review Processing (ALWAYS, MUST)
 
 1. **Request Review from plan-reviewer**
    Use Task tool with subagent_type="plan-reviewer":

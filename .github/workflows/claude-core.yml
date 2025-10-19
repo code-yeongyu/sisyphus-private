@@ -31,7 +31,10 @@ jobs:
         with:
           app-id: ${{ secrets.SISYPHUS_APP_ID }}
           private-key: ${{ secrets.SISYPHUS_APP_PRIVATE_KEY }}
-
+      - name: Setup GitHub CLI authentication
+        run: |
+          echo "${{ steps.generate-token.outputs.token }}" | gh auth login --with-token
+          gh auth status
       - name: Checkout repository
         uses: actions/checkout@v5
         with:

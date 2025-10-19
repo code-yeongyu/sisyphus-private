@@ -81,6 +81,44 @@ jobs:
           echo "${{ steps.generate-token.outputs.token }}" | gh auth login --with-token
           gh auth status
 
+      - name: Validate issue format
+        id: validate
+        run: |
+          ISSUE_BODY="${{ github.event.issue.body }}"
+
+          # Check for unchecked checkboxes (- [ ])
+          if ! echo "$ISSUE_BODY" | grep -q '\- \[ \]'; then
+            echo "❌ Issue does not contain unchecked checkboxes (- [ ])"
+            echo "valid=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check for is_execution_started = FALSE
+          if ! echo "$ISSUE_BODY" | grep -iq 'is_execution_started.*=.*FALSE'; then
+            echo "❌ Issue does not contain 'is_execution_started = FALSE'"
+            echo "valid=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "✅ Issue format is valid"
+          echo "valid=true" >> $GITHUB_OUTPUT
+
+      - name: Post validation failure comment
+        if: steps.validate.outputs.valid == 'false'
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --body "⚠️ This issue does not match the required ai-todolist.md format. Sisyphus workflows require:
+
+          1. Unchecked checkboxes (\`- [ ]\`)
+          2. \`is_execution_started = FALSE\`
+
+          Please update the issue to match the format."
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+
+      - name: Exit if validation failed
+        if: steps.validate.outputs.valid == 'false'
+        run: exit 0
+
       - name: Post initial comment
         run: |
           gh issue comment ${{ github.event.issue.number }} --body "🤖 Sisyphus has started working on this issue. I'll create a pull request once the work is complete."
@@ -109,6 +147,10 @@ jobs:
       - name: Sync project dependencies
         run: |
           uv sync
+
+      - name: Set environments for work
+        run: |
+          uv run sisyphus reset --include-task-specs
 
       - name: Create ai-todolist.md from issue
         run: |
@@ -188,6 +230,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY || '' }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          github_token: ${{ steps.app-token.outputs.token }}
           track_progress: true
           use_sticky_comment: true
           path_to_bun_executable: ${{ steps.bun_path.outputs.BUN_PATH }}

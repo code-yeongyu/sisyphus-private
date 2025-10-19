@@ -99,12 +99,24 @@ Sisyphus requires Python 3.12 or higher.
 uv tool install sisyphus-ai
 ```
 
-Then run following commands to setup environments for sisyphus.
+Then run the setup script to install the essential Claude Code plugin for Sisyphus development:
 
 ```sh
-claude plugin marketplace add code-yeongyu/sisyphus
-claude plugin install essentials@sisyphus-marketplace
+# Clone the repository if you haven't already
+git clone https://github.com/code-yeongyu/sisyphus.git
+cd sisyphus
+
+# Run the setup script
+python scripts/setup-claude-plugin.py
 ```
+
+This will install:
+- Custom Claude Code hooks for quality checks and Python best practices
+- Essential commands: `/execute`, `/plan`
+- Essential agents: architect, executor, plan-reviewer
+- MCP server configuration for context7
+
+For detailed plugin documentation, see [PLUGIN_SETUP.md](PLUGIN_SETUP.md).
 
 After installation, you can run Sisyphus directly:
 ```sh

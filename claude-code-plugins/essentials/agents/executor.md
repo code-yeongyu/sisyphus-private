@@ -248,7 +248,7 @@ Run following command to get current datetime.
 Say: "**6. 작업 로그 및 인사이트 기록**"
 
 #### NOTEPAD DOCUMENTATION RULES (CRITICAL)
-- ALWAYS append to the Notepad section at the bottom of @notepad.md file
+- ALWAYS append to the Notepad section at the bottom of ./notepad.md file
 - Record with timestamp: [YYYY-MM-DD HH:MM]
 - **CRITICAL CHRONOLOGICAL ORDER**: ALWAYS append at the BOTTOM of existing Notepad
   - Find the END of the Notepad section

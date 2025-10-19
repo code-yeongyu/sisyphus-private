@@ -106,10 +106,7 @@ Current system time: {current_time}
         git_lines = ["[GIT INFO]"]
         if "branch" in git_info:
             git_lines.append(f"Git branch: {git_info['branch']}")
-        if all(
-            k in git_info
-            for k in ["commit_hash", "commit_message", "commit_author", "commit_time"]
-        ):
+        if all(k in git_info for k in ["commit_hash", "commit_message", "commit_author", "commit_time"]):
             git_lines.append(
                 f"Git commit: [{git_info['commit_hash']}] "
                 f'"{git_info["commit_message"]}" by {git_info["commit_author"]} ({git_info["commit_time"]})'
@@ -126,7 +123,7 @@ Current system time: {current_time}
 📋 NOTEPAD.MD DOCUMENTATION REQUIREMENTS
 {"=" * 40}
 
-**당신은 executor agent입니다. @notepad.md에 메모하며 진행하는 것을 잊지마세요!**
+**당신은 executor agent입니다. ./notepad.md에 메모하며 진행하는 것을 잊지마세요!**
 
 메모해야 할 내용:
 - 작업 시점에 요구받은 내용 (정확한 요구사항 기록)

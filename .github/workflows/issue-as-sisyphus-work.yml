@@ -28,6 +28,9 @@ jobs:
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
 
+      - name: Install Tmux
+        run: sudo apt-get update && sudo apt-get install -y tmux
+
       - name: Install Node
         uses: actions/setup-node@v5
         with:

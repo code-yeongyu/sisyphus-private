@@ -93,40 +93,22 @@ The work is complete.
 
 ### Installation
 
-#### From PyPI (Recommended)
-
 Sisyphus requires Python 3.12 or higher.
 
 ```sh
-# Using pip
-pip install sisyphus-ai
-
-# Using uv (faster)
 uv tool install sisyphus-ai
+```
+
+Then run following commands to setup environments for sisyphus.
+
+```sh
+claude plugin marketplace add code-yeongyu/sisyphus
+claude plugin install essentials@sisyphus-marketplace
 ```
 
 After installation, you can run Sisyphus directly:
 ```sh
 sisyphus work
-```
-
-#### From Source
-
-For development or contributing:
-
-```sh
-# Install uv (if you don't have it)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Clone the project
-git clone https://github.com/code-yeongyu/sisyphus.git
-cd sisyphus
-
-# Install dependencies
-uv sync
-
-# Run directly in development mode
-uv run sisyphus work
 ```
 
 ### First Task

@@ -142,14 +142,5 @@
     "feedbackSurveyState": {
         "lastShownTime": 1754041351589
     },
-    "DISABLE_AUTOUPDATER": "1",
-    "installedPlugins": [
-        {
-            "name": "sisyphus-workflow",
-            "marketplace": "code-yeongyu/sisyphus"
-        }
-    ],
-    "enabledPlugins": {
-        "essentials@sisyphus-marketplace": true
-    },
+    "DISABLE_AUTOUPDATER": "1"
 }

@@ -85,6 +85,10 @@ jobs:
         run: |
           uv sync
 
+      - name: Cleanup Tasks
+        run: |
+          uv run sisyphus reset --include-task-specs
+
       - name: Create ai-todolist.md from issue
         run: |
           cat > ai-todolist.md << 'EOF'
@@ -92,13 +96,17 @@ jobs:
 
           **Title:** ${{ github.event.issue.title }}
 
-          **Description:**
+          Document:
           ${{ github.event.issue.body }}
 
           ---
           EOF
 
           cat ai-todolist.md
+      - name: Setup Sisyphus Claude Code Plugin
+        run: |
+          claude plugin marketplace add ./
+          claude plugin install essentials@sisyphus-marketplace
 
       - name: Run Sisyphus
         run: |

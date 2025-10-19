@@ -125,16 +125,6 @@
                     }
                 ]
             }
-        ],
-        "Stop": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "uv run ~/.claude/hooks/stop/check_todos_completed.py"
-                    }
-                ]
-            }
         ]
     },
     "alwaysThinkingEnabled": false,

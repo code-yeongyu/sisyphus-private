@@ -50,7 +50,7 @@ Set `self.hide_suggestion_on_blur = False` in InputBar's `__init__` method, exac
 The original fix in commit 771feb2 added `self.hide_suggestion_on_blur = False`, which was correct. However, commit 7207a13 performed a major refactor (migrating InputBar to use TextArea for multiline support) and this line was accidentally omitted in the refactored code. This is a regression bug.
 
 # Execution Started
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # All Goals Accomplished
 is_all_goals_accomplished = FALSE

@@ -248,3 +248,38 @@ All tasks execution STARTED: Sun Oct 19 00:13:11 KST 2025
   * 이 설정이 없으면 bump-version.yml이 git push/tag 생성/Release 생성 단계에서 실패함
 
 소요 시간: 2분
+
+[2025-10-19 11:34] - ExecutionLoop 세션 복구 로직 개선 (Task 1.1-1.8)
+
+### DISCOVERED ISSUES
+- 없음. 기존 코드가 잘 구조화되어 있었고, 새로운 기능 추가가 명확했음
+
+### IMPLEMENTATION DECISIONS
+- `self._execute_resume_fail_count: int = 0` 추가: 연속 세션 재개 실패 추적
+- `self._should_exit_execute_phase: bool = False` 추가: except* 블록에서 루프 탈출 신호 (return/break 불가능하므로)
+- SessionResumeError except 블록: 카운터 증가, attempt N/3 로깅, 3회 이상 시 session_store.delete_session() 호출
+- except* Exception 블록: 카운터 증가, 3회 이상 시 delete_session()과 플래그 설정하여 루프 탈출
+- Counter reset: start_session() 성공 후 (try 블록), while 루프 종료 직전 (break 직전) 두 위치에서 수행
+- except* 블록에서 return/break 사용 불가: 플래그를 설정하고 else 블록에서 체크하는 패턴 사용
+
+### PROBLEMS FOR NEXT TASKS
+- Task 2 (ChatLog 스크롤)와 Task 3 (InputBar placeholder)는 독립적인 작업
+- Task 4 (전체 통합 테스트)에서 세션 복구 로직이 제대로 작동하는지 확인 필요
+
+### VERIFICATION RESULTS
+- Lint: `uv run ruff check sisyphus/core/loop.py` 통과 (All checks passed!)
+- Type check: `uv run basedpyright sisyphus/core/loop.py` 통과 (0 errors, 6 warnings는 기존 코드)
+- Tests: `uv run pytest --tb=short` 통과 (474 passed, 4 skipped)
+- Commits:
+  * ba89e1c "fix: handle unrecoverable session errors with auto-reset"
+  * 1120f68 "chore: mark task 1 (ExecutionLoop session recovery) as complete"
+
+### LEARNINGS
+- except* 블록 (exception groups)에서는 return/break/continue 사용 불가
+- 해결책: 플래그를 설정하고 except* 블록 다음 코드에서 플래그를 체크
+- SessionStore.delete_session(agent_type)을 사용하여 세션 초기화 가능
+- 이전 로직에서 save_session(agent_type, None)을 시도했는데, save_session은 str 타입만 받으므로 delete_session 사용
+- asyncio와 trio 모두 지원하는 anyio 패턴으로 코드 작성
+- 프로젝트의 기존 패턴: 복잡한 에러 처리는 별도 helper 메서드 대신 inline 로직으로 구현
+
+소요 시간: 5분

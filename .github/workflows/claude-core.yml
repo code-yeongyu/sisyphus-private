@@ -41,6 +41,9 @@ jobs:
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
 
+      - name: Install Tmux
+        run: sudo apt-get update && sudo apt-get install -y tmux
+
       - name: Install Node
         uses: actions/setup-node@v5
         with:
@@ -77,6 +80,23 @@ jobs:
           else
             echo "No .github/workflows/.claude directory found, skipping configuration copy"
           fi
+
+      - name: Install Claude Code
+        run: |
+          curl -fsSL https://claude.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Ensure Claude Code in PATH
+        run: |
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.local/bin:$PATH"
+          # Verify claude is accessible
+          claude --version || echo "Claude command failed!"
+
+      - name: Setup Sisyphus Claude Code Plugin
+        run: |
+          claude plugin marketplace add ./
+          claude plugin install essentials@sisyphus-marketplace
 
       - name: Run Claude Code
         id: claude

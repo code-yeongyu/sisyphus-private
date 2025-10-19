@@ -17,13 +17,13 @@ jobs:
     steps:
       - name: Generate GitHub App Token
         id: generate-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2.1.4
         with:
           app-id: ${{ secrets.SISYPHUS_APP_ID }}
           private-key: ${{ secrets.SISYPHUS_APP_PRIVATE_KEY }}
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
@@ -51,11 +51,6 @@ jobs:
             cp -r .github/workflows/.claude/* ~/.claude/
             echo "Copied .claude configuration to ~/.claude"
             ls -la ~/.claude
-
-            # Copy to project root (.claude) for SDK project settings discovery
-            cp -r .github/workflows/.claude .claude
-            echo "Copied .claude configuration to project root"
-            ls -la .claude
           else
             echo "No .github/workflows/.claude directory found, skipping configuration copy"
           fi
@@ -71,7 +66,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7.1.0
         with:
           version: "latest"
           enable-cache: true

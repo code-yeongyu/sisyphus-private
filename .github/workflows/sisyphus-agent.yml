@@ -1,22 +1,47 @@
-name: Claude Code
+name: Sisyphus Agent
 
 on:
-  issue_comment:
-    types: [created]
-  pull_request_review_comment:
-    types: [created]
-  issues:
-    types: [opened, assigned]
-  pull_request_review:
-    types: [submitted]
+  workflow_call:
+    inputs:
+      run_id:
+        required: true
+        type: string
+        description: 'GitHub run ID for artifact retrieval'
+      pr_number:
+        required: false
+        type: string
+      issue_number:
+        required: false
+        type: string
+      branch:
+        required: false
+        type: string
+      sha:
+        required: false
+        type: string
+        description: 'Commit SHA'
+      requested_user:
+        required: false
+        type: string
+        description: 'User who requested the action'
+      model_name:
+        required: false
+        type: string
+        description: 'Claude Code Model Name'
+    secrets:
+      ANTHROPIC_BASE_URL:
+        required: false
+      ANTHROPIC_API_KEY:
+        required: false
+      CLAUDE_CODE_OAUTH_TOKEN:
+        required: false
+      SISYPHUS_APP_ID:
+        required: true
+      SISYPHUS_APP_PRIVATE_KEY:
+        required: true
 
 jobs:
-  claude:
-    if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@sisyphus-dev-ai')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@sisyphus-dev-ai')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@sisyphus-dev-ai')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@sisyphus-dev-ai') || contains(github.event.issue.title, '@sisyphus-dev-ai')))
+  sisyphus-agent:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -74,6 +99,12 @@ jobs:
           claude plugin marketplace add ./
           claude plugin install essentials@sisyphus-marketplace
 
+      - name: Download Append Prompt Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: append-prompt-${{ inputs.run_id }}
+          path: /tmp
+
       - name: Install Node
         uses: actions/setup-node@v5
         with:
@@ -106,12 +137,41 @@ jobs:
           echo "CLAUDE_CODE_PATH=$CLAUDE_CODE_PATH" >> $GITHUB_OUTPUT
           echo "Claude Code executable path: $CLAUDE_CODE_PATH"
 
+      - name: Build System Prompt
+        id: build_system_prompt
+        run: |
+          {
+            echo "system_prompt<<EOF"
+            cat .github/sisyphus-prompts/system.md
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Build User Prompt
+        id: build_user_prompt
+        run: |
+          echo "📝 Building final prompt from system.md + persona.md + user.md + things-to-remember.md + append_prompt..."
+
+          # Read append prompt from file
+          APPEND_PROMPT=$(cat /tmp/append_prompt.txt)
+
+          # Save to output using heredoc - combine all prompts
+          {
+            echo "FINAL_PROMPT<<EOFMARKER"
+            cat .github/sisyphus-prompts/user.md
+            echo ""
+            echo ""
+            printf '%s\n' "${APPEND_PROMPT}"
+            echo "EOFMARKER"
+          } >> $GITHUB_OUTPUT
+
+          echo "✅ Final prompt built successfully"
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1.0.13
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
         with:
@@ -125,4 +185,8 @@ jobs:
           path_to_claude_code_executable: ${{ steps.claude_code_path.outputs.CLAUDE_CODE_PATH }}
 
           claude_args: |
+            --system-prompt "${{ steps.build_system_prompt.outputs.system_prompt }}"
             --dangerously-skip-permissions
+
+          prompt: |
+            ${{ steps.build_prompt.outputs.FINAL_PROMPT }}

@@ -1,0 +1,490 @@
+name: Call Sisyphus
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to process'
+        required: false
+      issue_number:
+        description: 'Issue number to process'
+        required: false
+      custom_prompt:
+        description: 'Custom prompt to append'
+        required: false
+      model_name:
+        description: 'Model name to use'
+        required: false
+  issue_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+  pull_request_review_comment:
+    types: [created]
+
+permissions:
+  actions: read
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  agent:
+    name: Agent Context Collection
+    runs-on: ubuntu-24.04
+    if: |
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@sisyphus-dev-ai') && github.event.comment.user.login != 'sisyphus-dev-ai') ||
+        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@sisyphus-dev-ai') && github.event.comment.user.login != 'sisyphus-dev-ai') ||
+        (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@sisyphus-dev-ai') && github.event.review.user.login != 'sisyphus-dev-ai') ||
+        (github.event_name == 'issue_comment' && github.event.issue.pull_request && github.event.issue.user.login == 'sisyphus-dev-ai' && github.event.comment.user.login != 'sisyphus-dev-ai' && !contains(github.event.comment.body, '@sisyphus-dev-ai')) ||
+        (github.event_name == 'pull_request_review_comment' && github.event.pull_request.user.login == 'sisyphus-dev-ai' && github.event.comment.user.login != 'sisyphus-dev-ai' && !contains(github.event.comment.body, '@sisyphus-dev-ai')) ||
+        (github.event_name == 'pull_request_review' && github.event.pull_request.user.login == 'sisyphus-dev-ai' && github.event.review.user.login != 'sisyphus-dev-ai' && !contains(github.event.review.body, '@sisyphus-dev-ai')) ||
+        (github.event_name == 'pull_request_review_comment' && github.event.comment.in_reply_to_id != null && github.event.comment.user.login != 'sisyphus-dev-ai')
+      )
+    outputs:
+      continue: ${{ steps.check_parent.outputs.continue || steps.manual_setup.outputs.continue }}
+      PR_NUMBER: ${{ steps.detect_context.outputs.PR_NUMBER || steps.manual_setup.outputs.PR_NUMBER }}
+      ISSUE_NUMBER: ${{ steps.detect_context.outputs.ISSUE_NUMBER || steps.manual_setup.outputs.ISSUE_NUMBER }}
+      BRANCH: ${{ steps.detect_context.outputs.BRANCH || steps.manual_setup.outputs.BRANCH }}
+      SHA: ${{ steps.detect_context.outputs.SHA || steps.manual_setup.outputs.SHA }}
+      REQUESTED_USER: ${{ steps.detect_context.outputs.REQUESTED_USER || steps.manual_setup.outputs.REQUESTED_USER }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7.1.0
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Setup Manual Trigger Context
+        if: github.event_name == 'workflow_dispatch'
+        id: manual_setup
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          INPUT_ISSUE_NUMBER: ${{ inputs.issue_number }}
+        run: |
+          echo "continue=true" >> $GITHUB_OUTPUT
+
+          if [[ -n "${INPUT_PR_NUMBER}" ]]; then
+            PR_DATA=$(gh pr view ${INPUT_PR_NUMBER} --json headRefName,headRefOid,author)
+            BRANCH=$(echo "$PR_DATA" | jq -r '.headRefName')
+            SHA=$(echo "$PR_DATA" | jq -r '.headRefOid')
+            AUTHOR=$(echo "$PR_DATA" | jq -r '.author.login')
+
+            echo "PR_NUMBER=${INPUT_PR_NUMBER}" >> $GITHUB_OUTPUT
+            echo "ISSUE_NUMBER=" >> $GITHUB_OUTPUT
+            echo "BRANCH=${BRANCH}" >> $GITHUB_OUTPUT
+            echo "SHA=${SHA}" >> $GITHUB_OUTPUT
+            echo "REQUESTED_USER=${AUTHOR}" >> $GITHUB_OUTPUT
+          elif [[ -n "${INPUT_ISSUE_NUMBER}" ]]; then
+            ISSUE_DATA=$(gh issue view ${INPUT_ISSUE_NUMBER} --json author)
+            AUTHOR=$(echo "$ISSUE_DATA" | jq -r '.author.login')
+
+            echo "PR_NUMBER=" >> $GITHUB_OUTPUT
+            echo "ISSUE_NUMBER=${INPUT_ISSUE_NUMBER}" >> $GITHUB_OUTPUT
+            echo "BRANCH=" >> $GITHUB_OUTPUT
+            echo "SHA=" >> $GITHUB_OUTPUT
+            echo "REQUESTED_USER=${AUTHOR}" >> $GITHUB_OUTPUT
+          else
+            echo "PR_NUMBER=" >> $GITHUB_OUTPUT
+            echo "ISSUE_NUMBER=" >> $GITHUB_OUTPUT
+            echo "BRANCH=" >> $GITHUB_OUTPUT
+            echo "SHA=" >> $GITHUB_OUTPUT
+            echo "REQUESTED_USER=${{ github.actor }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if replying to sisyphus-dev-ai's comment
+        if: github.event_name != 'workflow_dispatch'
+        id: check_parent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PARENT_ID: ${{ github.event.comment.in_reply_to_id }}
+          EVENT_NAME: ${{ github.event_name }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          # 1. If not pull_request_review_comment, always run
+          if [[ "${EVENT_NAME}" != "pull_request_review_comment" ]]; then
+            echo "continue=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # 2. If not a reply (new comment), apply existing logic
+          if [[ -z "${PARENT_ID}" ]]; then
+            echo "continue=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # 3. For reply comments:
+          # 3-1. If @sisyphus-dev-ai mention exists, always run (preserve existing behavior)
+          if [[ "${COMMENT_BODY}" == *"@sisyphus-dev-ai"* ]]; then
+            echo "✅ Reply with @sisyphus-dev-ai mention"
+            echo "continue=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # 3-2. Reply without mention: Check if sisyphus-dev-ai participated in thread
+          CURRENT_ID="${PARENT_ID}"
+          sisyphus-dev-ai_PARTICIPATED=false
+
+          echo "🔍 Checking thread for sisyphus-dev-ai participation..."
+
+          # Traverse parent chain to find sisyphus-dev-ai
+          while [[ -n "${CURRENT_ID}" ]]; do
+            COMMENT_DATA=$(gh api "/repos/${{ github.repository }}/pulls/comments/${CURRENT_ID}")
+            AUTHOR=$(echo "$COMMENT_DATA" | jq -r '.user.login')
+
+            echo "  - Comment ${CURRENT_ID} by @${AUTHOR}"
+
+            if [[ "${AUTHOR}" == "sisyphus-dev-ai" ]]; then
+              sisyphus-dev-ai_PARTICIPATED=true
+              echo "✅ Found sisyphus-dev-ai in thread!"
+              break
+            fi
+
+            CURRENT_ID=$(echo "$COMMENT_DATA" | jq -r '.in_reply_to_id // ""')
+          done
+
+          if [[ "${sisyphus-dev-ai_PARTICIPATED}" == "true" ]]; then
+            echo "✅ sisyphus-dev-ai participated in this thread, trigger agent"
+            echo "continue=true" >> $GITHUB_OUTPUT
+          else
+            echo "⏭️  sisyphus-dev-ai not in thread, skip"
+            echo "continue=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Detect Context Type
+        if: github.event_name != 'workflow_dispatch' && steps.check_parent.outputs.continue == 'true'
+        id: detect_context
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          # PR related
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+          PR_USER_LOGIN: ${{ github.event.pull_request.user.login || '' }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref || '' }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
+          # Review related
+          REVIEW_USER_LOGIN: ${{ github.event.review.user.login || '' }}
+          # Comment related
+          COMMENT_USER_LOGIN: ${{ github.event.comment.user.login || '' }}
+          # Issue related
+          ISSUE_NUMBER: ${{ github.event.issue.number || '' }}
+          # Repository
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          echo "🔍 Detecting context type from event: ${EVENT_NAME}..."
+
+          # Determine if this is PR or Issue context
+          if [[ "${EVENT_NAME}" == "pull_request" ]]; then
+            # Direct PR event
+            PR_NUM="${PR_NUMBER}"
+            ISSUE_NUM=""
+            AUTHOR="${PR_USER_LOGIN}"
+            BRANCH="${PR_HEAD_REF}"
+            SHA="${PR_HEAD_SHA}"
+          elif [[ "${EVENT_NAME}" == "pull_request_review" || "${EVENT_NAME}" == "pull_request_review_comment" ]]; then
+            # PR review/comment
+            PR_NUM="${PR_NUMBER}"
+            ISSUE_NUM=""
+            if [[ "${EVENT_NAME}" == "pull_request_review" ]]; then
+              AUTHOR="${REVIEW_USER_LOGIN}"
+            else
+              AUTHOR="${COMMENT_USER_LOGIN}"
+            fi
+            BRANCH="${PR_HEAD_REF}"
+            SHA="${PR_HEAD_SHA}"
+          elif [[ "${EVENT_NAME}" == "issue_comment" ]]; then
+            # Could be issue or PR comment
+            AUTHOR="${COMMENT_USER_LOGIN}"
+            # Check if this is a PR by trying to get PR info
+            ISSUE_DATA=$(gh api "repos/${REPOSITORY}/issues/${ISSUE_NUMBER}")
+            if echo "$ISSUE_DATA" | jq -e '.pull_request' > /dev/null; then
+              # This is a PR
+              PR_NUM="${ISSUE_NUMBER}"
+              ISSUE_NUM=""
+              PR_DATA=$(gh pr view ${PR_NUM} --json headRefName,headRefOid)
+              BRANCH=$(echo "$PR_DATA" | jq -r '.headRefName')
+              SHA=$(echo "$PR_DATA" | jq -r '.headRefOid')
+            else
+              # This is an issue
+              PR_NUM=""
+              ISSUE_NUM="${ISSUE_NUMBER}"
+              BRANCH=""
+              SHA=""
+            fi
+          fi
+
+          echo "PR_NUMBER=${PR_NUM}" >> $GITHUB_OUTPUT
+          echo "ISSUE_NUMBER=${ISSUE_NUM}" >> $GITHUB_OUTPUT
+          echo "BRANCH=${BRANCH}" >> $GITHUB_OUTPUT
+          echo "SHA=${SHA}" >> $GITHUB_OUTPUT
+          echo "REQUESTED_USER=${AUTHOR}" >> $GITHUB_OUTPUT
+
+          echo "✅ Context detected: PR=${PR_NUM}, Issue=${ISSUE_NUM}, Author=${AUTHOR}"
+
+      - name: Build Append Prompt
+        if: steps.check_parent.outputs.continue == 'true' || steps.manual_setup.outputs.continue == 'true'
+        id: build_append
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.detect_context.outputs.PR_NUMBER || steps.manual_setup.outputs.PR_NUMBER }}
+          ISSUE_NUMBER: ${{ steps.detect_context.outputs.ISSUE_NUMBER || steps.manual_setup.outputs.ISSUE_NUMBER }}
+          EVENT_NAME: ${{ github.event_name }}
+          COMMENT_BODY: ${{ github.event.comment.body || '' }}
+          REVIEW_BODY: ${{ github.event.review.body || '' }}
+          COMMENT_AUTHOR: ${{ github.event.comment.user.login || '' }}
+          REVIEW_AUTHOR: ${{ github.event.review.user.login || '' }}
+          CUSTOM_PROMPT: ${{ inputs.custom_prompt || '' }}
+        run: |
+          echo "📝 Building append prompt with agent guide and context..."
+
+          # Save to file instead of output
+          {
+            # If directly invoked via workflow_dispatch
+            if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
+              # Agent-specific instructions
+              cat .github/sisyphus-prompts/agent.md
+              echo ""
+              echo ""
+
+              echo "## Context Information"
+              echo ""
+
+              # Add PR or Issue context if available
+              if [[ -n "${PR_NUMBER}" ]]; then
+                echo "📦 Collecting PR context..."
+
+                PR_DATA=$(gh pr view ${PR_NUMBER} --json files,body,title,headRefName,headRefOid,author,comments)
+                PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
+                PR_BODY=$(echo "$PR_DATA" | jq -r '.body // ""')
+                PR_AUTHOR=$(echo "$PR_DATA" | jq -r '.author.login')
+                PR_BRANCH=$(echo "$PR_DATA" | jq -r '.headRefName')
+                PR_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid')
+
+                printf '**Type:** Pull Request #%s\n' "${PR_NUMBER}"
+                echo ""
+                printf '**Title:** %s\n' "$PR_TITLE"
+                printf '**Author:** @%s\n' "$PR_AUTHOR"
+                printf '**Branch:** %s\n' "$PR_BRANCH"
+                printf '**SHA:** %s\n' "$PR_SHA"
+                echo ""
+                echo "**Description:**"
+                printf '%s\n' "$PR_BODY"
+                echo ""
+
+                # Get changed files
+                CHANGED_FILES=$(echo "$PR_DATA" | jq -r '.files[].path')
+
+                echo "## Changed Files"
+                echo ""
+
+                # Add file contents with size limit
+                TOTAL_SIZE=0
+                MAX_SIZE=150000  # 150KB limit
+
+                while IFS= read -r file; do
+                  if [[ ! -f "$file" ]]; then
+                    continue
+                  fi
+
+                  FILE_SIZE=$(wc -c < "$file" 2>/dev/null || echo 0)
+                  NEW_TOTAL=$((TOTAL_SIZE + FILE_SIZE + 100))
+
+                  if [[ $NEW_TOTAL -gt $MAX_SIZE ]]; then
+                    echo ""
+                    echo "... (remaining files truncated due to size limit)"
+                    break
+                  fi
+
+                  echo "\`\`\`path: ${file}"
+                  cat "$file"
+                  echo "\`\`\`"
+                  echo ""
+
+                  TOTAL_SIZE=$NEW_TOTAL
+                done <<< "$CHANGED_FILES"
+
+              elif [[ -n "${ISSUE_NUMBER}" ]]; then
+                echo "📦 Collecting Issue context..."
+
+                ISSUE_DATA=$(gh issue view ${ISSUE_NUMBER} --json body,title,author,comments)
+                ISSUE_TITLE=$(echo "$ISSUE_DATA" | jq -r '.title')
+                ISSUE_BODY=$(echo "$ISSUE_DATA" | jq -r '.body // ""')
+                ISSUE_AUTHOR=$(echo "$ISSUE_DATA" | jq -r '.author.login')
+
+                printf '**Type:** Issue #%s\n' "${ISSUE_NUMBER}"
+                echo ""
+                printf '**Title:** %s\n' "$ISSUE_TITLE"
+                printf '**Author:** @%s\n' "$ISSUE_AUTHOR"
+                echo ""
+                echo "**Description:**"
+                printf '%s\n' "$ISSUE_BODY"
+                echo ""
+
+                # Include recent comments for context (up to 5)
+                echo "## Recent Comments"
+                echo ""
+                echo "$ISSUE_DATA" | jq -r '.comments[-5:] | .[] | "**@\(.author.login)** (\(.createdAt)):\n\(.body)\n"'
+                echo ""
+              fi
+
+              # Add custom prompt
+              echo "---"
+              echo ""
+              echo "## User Request"
+              echo ""
+              printf '%s\n' "${CUSTOM_PROMPT}"
+
+              # If invoked via automatic event (existing logic)
+            else
+              # Agent-specific instructions
+              cat .github/sisyphus-prompts/agent.md
+              echo ""
+              echo ""
+
+              echo "## Context Information"
+              echo ""
+
+              # Handle PR context
+              if [[ -n "${PR_NUMBER}" ]]; then
+              echo "📦 Collecting PR context..."
+
+              # Get PR information
+              PR_DATA=$(gh pr view ${PR_NUMBER} --json files,body,title,headRefName,headRefOid,author,comments)
+              PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
+              PR_BODY=$(echo "$PR_DATA" | jq -r '.body // ""')
+              PR_AUTHOR=$(echo "$PR_DATA" | jq -r '.author.login')
+              PR_BRANCH=$(echo "$PR_DATA" | jq -r '.headRefName')
+              PR_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid')
+
+              printf '**Type:** Pull Request #%s\n' "${PR_NUMBER}"
+              echo ""
+              printf '**Title:** %s\n' "$PR_TITLE"
+              printf '**Author:** @%s\n' "$PR_AUTHOR"
+              printf '**Branch:** %s\n' "$PR_BRANCH"
+              printf '**SHA:** %s\n' "$PR_SHA"
+              echo ""
+              echo "**Description:**"
+              printf '%s\n' "$PR_BODY"
+              echo ""
+
+              # Get changed files
+              CHANGED_FILES=$(echo "$PR_DATA" | jq -r '.files[].path')
+
+              echo "## Changed Files"
+              echo ""
+
+              # Add file contents with size limit
+              TOTAL_SIZE=0
+              MAX_SIZE=150000  # 150KB limit
+
+              while IFS= read -r file; do
+                if [[ ! -f "$file" ]]; then
+                  continue
+                fi
+
+                FILE_SIZE=$(wc -c < "$file" 2>/dev/null || echo 0)
+                NEW_TOTAL=$((TOTAL_SIZE + FILE_SIZE + 100))
+
+                if [[ $NEW_TOTAL -gt $MAX_SIZE ]]; then
+                  echo ""
+                  echo "... (remaining files truncated due to size limit)"
+                  break
+                fi
+
+                echo "\`\`\`path: ${file}"
+                cat "$file"
+                echo "\`\`\`"
+                echo ""
+
+                TOTAL_SIZE=$NEW_TOTAL
+              done <<< "$CHANGED_FILES"
+
+            # Handle Issue context
+            elif [[ -n "${ISSUE_NUMBER}" ]]; then
+              echo "📦 Collecting Issue context..."
+
+              # Get Issue information
+              ISSUE_DATA=$(gh issue view ${ISSUE_NUMBER} --json body,title,author,comments)
+              ISSUE_TITLE=$(echo "$ISSUE_DATA" | jq -r '.title')
+              ISSUE_BODY=$(echo "$ISSUE_DATA" | jq -r '.body // ""')
+              ISSUE_AUTHOR=$(echo "$ISSUE_DATA" | jq -r '.author.login')
+
+              printf '**Type:** Issue #%s\n' "${ISSUE_NUMBER}"
+              echo ""
+              printf '**Title:** %s\n' "$ISSUE_TITLE"
+              printf '**Author:** @%s\n' "$ISSUE_AUTHOR"
+              echo ""
+              echo "**Description:**"
+              printf '%s\n' "$ISSUE_BODY"
+              echo ""
+
+              # Include recent comments for context (up to 5)
+              echo "## Recent Comments"
+              echo ""
+              echo "$ISSUE_DATA" | jq -r '.comments[-5:] | .[] | "**@\(.author.login)** (\(.createdAt)):\n\(.body)\n"'
+              echo ""
+              fi
+
+              # Add triggering event information at the very end
+              echo "---"
+              echo ""
+              echo "## Invocation Information"
+              echo ""
+
+              if [[ "${EVENT_NAME}" == "issue_comment" ]]; then
+                if [[ -n "${PR_NUMBER}" ]]; then
+                  printf '@%s invoked you in a PR comment:\n\n' "${COMMENT_AUTHOR}"
+                else
+                  printf '@%s invoked you in an issue comment:\n\n' "${COMMENT_AUTHOR}"
+                fi
+                printf '%s\n' "${COMMENT_BODY}"
+              elif [[ "${EVENT_NAME}" == "pull_request_review" ]]; then
+                printf '@%s invoked you in a PR review:\n\n' "${REVIEW_AUTHOR}"
+                printf '%s\n' "${REVIEW_BODY}"
+              elif [[ "${EVENT_NAME}" == "pull_request_review_comment" ]]; then
+                printf '@%s invoked you in a PR review comment:\n\n' "${COMMENT_AUTHOR}"
+                printf '%s\n' "${COMMENT_BODY}"
+              fi
+            fi
+          } > /tmp/append_prompt.txt
+
+          echo "✅ Append prompt saved to file"
+
+      - name: Upload Append Prompt
+        if: steps.check_parent.outputs.continue == 'true' || steps.manual_setup.outputs.continue == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: append-prompt-${{ github.run_id }}
+          path: /tmp/append_prompt.txt
+          retention-days: 1
+
+  call-agent:
+    name: Call Sisyphus Agent
+    needs: agent
+    uses: ./.github/workflows/sisyphus-agent.yml
+    with:
+      run_id: ${{ github.run_id }}
+      pr_number: ${{ needs.agent.outputs.PR_NUMBER }}
+      issue_number: ${{ needs.agent.outputs.ISSUE_NUMBER }}
+      branch: ${{ needs.agent.outputs.BRANCH }}
+      sha: ${{ needs.agent.outputs.SHA }}
+      requested_user: ${{ needs.agent.outputs.REQUESTED_USER }}
+      model_name: ${{ inputs.model_name || '' }}
+    secrets:
+      ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      SISYPHUS_APP_ID: ${{ secrets.SISYPHUS_APP_ID }}
+      SISYPHUS_APP_PRIVATE_KEY: ${{ secrets.SISYPHUS_APP_PRIVATE_KEY }}

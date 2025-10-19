@@ -317,3 +317,38 @@ All tasks execution STARTED: Sun Oct 19 00:13:11 KST 2025
 - 헬퍼 메서드 `_should_auto_scroll()`는 private 메서드 이름으로 시작 (언더스코어)
 
 소요 시간: 2분
+
+[2025-10-19 11:41] - InputBar placeholder 항상 표시 (Task 3.1-3.4)
+
+### DISCOVERED ISSUES
+- 없음. InputBar 구현이 명확했으며 기존 코드 문제점 없음
+
+### IMPLEMENTATION DECISIONS
+- `_update_suggestion()` 메서드 확장: 3가지 상태 처리
+  * Queue 메시지 있으면: 기존 로직 (Queue 상태 표시) 유지
+  * 사용자 텍스트 입력 있으면: `self.suggestion = ""` (placeholder 숨김)
+  * 텍스트 없으면: `self.suggestion = self._original_suggestion` (placeholder 항상 표시)
+- 필수 코멘트 추가: 복잡한 조건문 분기의 의도를 명확히 하기 위함 (PRIORITY 3 - 필수 코멘트)
+- 새 테스트 케이스 2개 추가:
+  * `test_update_suggestion__if_user_typed_text__hides_suggestion`: 텍스트 입력 시 placeholder 숨김 검증
+  * `test_update_suggestion__if_text_deleted__shows_suggestion_again`: 텍스트 삭제 시 placeholder 복귀 검증
+
+### PROBLEMS FOR NEXT TASKS
+- Task 4 (전체 통합 테스트)에서 세 가지 버그 수정이 동시에 제대로 작동하는지 확인 필요
+- 다음 작업 이후 ai-todolist.md의 is_all_goals_accomplished = TRUE 업데이트 필요
+
+### VERIFICATION RESULTS
+- Lint: `uv run ruff check sisyphus/ui/tui/components/input_bar.py` 통과 (All checks passed!)
+- Type check: `uv run basedpyright sisyphus/ui/tui/components/input_bar.py` 통과 (0 errors, 0 warnings)
+- Tests: `uv run pytest sisyphus/ui/tui/components/tests/test_input_bar.py -v` 통과 (18 passed, 4 skipped)
+- 새 테스트 케이스: 모두 asyncio/trio 환경에서 2회씩 실행되어 총 4회 통과
+- Commit: 6dd6a01 "fix: show inputbar placeholder always regardless of focus"
+
+### LEARNINGS
+- TextArea.suggestion 속성: placeholder 텍스트로 작동
+- 조건부 placeholder 표시: `if condition: suggestion = ""`으로 간단히 제어 가능
+- 프로젝트 테스트 패턴: @pytest.mark.anyio로 asyncio와 trio 환경 모두에서 자동 실행
+- 코멘트 추가는 필수: 복잡한 조건문 분기는 비즈니스 로직을 명확히 하는 코멘트 필수
+- 새 동작에 대한 테스트 추가: BDD 패턴 (given-when-then)으로 명확한 테스트 작성
+
+소요 시간: 1분

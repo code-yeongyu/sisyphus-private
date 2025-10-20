@@ -138,7 +138,7 @@ jobs:
       - name: Configure git
         run: |
           git config user.name "Sisyphus"
-          git config user.email "ai@sisyphus.mengmota.com"
+          git config user.email "sisyphus@mengmota.com"
 
       - name: Run Sisyphus
         id: run_sisyphus

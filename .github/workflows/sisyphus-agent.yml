@@ -123,6 +123,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-global-
 
+      - name: Configure git
+        run: |
+          git config user.name "Sisyphus"
+          git config user.email "sisyphus@mengmota.com"
+
       - name: Get Bun Path to use
         id: bun_path
         run: |
@@ -149,7 +154,7 @@ jobs:
       - name: Build User Prompt
         id: build_user_prompt
         run: |
-          echo "📝 Building final prompt from system.md + persona.md + user.md + things-to-remember.md + append_prompt..."
+          echo "📝 Building final prompt from user.md + append_prompt..."
 
           # Read append prompt from file
           APPEND_PROMPT=$(cat /tmp/append_prompt.txt)
@@ -179,7 +184,7 @@ jobs:
           bot_name: "Sisyphus - Claude"
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY || '' }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
-          track_progress: true
+          track_progress: false
           use_sticky_comment: false
           path_to_bun_executable: ${{ steps.bun_path.outputs.BUN_PATH }}
           path_to_claude_code_executable: ${{ steps.claude_code_path.outputs.CLAUDE_CODE_PATH }}

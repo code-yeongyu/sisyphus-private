@@ -194,4 +194,4 @@ jobs:
             --dangerously-skip-permissions
 
           prompt: |
-            ${{ steps.build_prompt.outputs.FINAL_PROMPT }}
+            ${{ steps.build_user_prompt.outputs.FINAL_PROMPT }}

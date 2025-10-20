@@ -1,286 +1,658 @@
-# Task from Issue #12
+# User's Initial Request (For Record)
 
-**Title:** Sisyphus first work: Fix TUI bugs, fix retry when session resuming failed
+search of claude code plugin/marketplace docs and references,
+please write me new plugin, other than current 'essentials' plugin,
+- basic-web-development
+	- that has microsoft's playwright as mcp
+- svelte web development
+	- that has svelte official mcp
+	- skills as about the new rune thing and svelte 5 thing (they have llms txt thing so take them as references and skills.md to have common patterns & mistakes)
 
-**Description:**
-# 사용자의 최초 요청 (기록용)
-지금 이거 전체 루프세션과 tui 에 몇개의 버그가 있는데,
+Validate using tmux cli, actually execute claude code cli to actually mcp is loaded and working
 
-1. Prompt is too long 처럼 이제 더이상 세션이 진행이 불가능한 경우에도 계속 같은 세션에서 resume 하려고 하고있어 (claude code) - 일단 prompt is too long 은 known pattern 이니까 이 경우 새 세션을 만드는게맞고, claude code 가 exit 0 (아마 우리는 sdk 니까 exception?) 을 연속해서 세번이상 반환할경우 resume 하지말고 continue 하도록 해줬으면 해. (버그수정)
-2. TUI 모드에서 로그가 보이는 부분이, 자꾸 새 로그가 쌓이면 스크롤이 맨 밑으로 내려가. 스크롤바가 맨 밑에 있을 경우에만 새 로그가 쌓이면 스크롤이 내려가도록 하고 그게 아니면 스크롤바가 내려가지 않도록 해줘. 단, 저번에 이 작업하다가 아예 스크롤바를 망가뜨렸었으니까 그거에 특히 조심해. 스크롤 기능 자체를 망가뜨리지 않도록 조심해. (아예 pinning 해버리면안된다는이야기야)
-3. input bar 의 경우 지금 focus 될 때만 안내 메시지가 뜨고 unfocsed 상태에서는 이게 안뜨는데 그래서 되게 어색해. 항상 안내메시지가 뜨고, 메시지가 새로 type 됐을때만 placeholder 로써 안보이게 기능하도록 하는게 맞아. 이렇게 고쳐줬으면해.
+## Additional User Requests (For Record)
+@sisyphus-dev-ai please make this as work plan
 
-## 사용자가 이후에 추가 요청한 내용들 (기록용)
-없음
+# Work Objectives
 
-# 작업 목표
-1. ExecutionLoop에서 세션 재개 불가능한 에러 발생 시 자동으로 새 세션 시작
-2. TUI ChatLog의 스크롤 동작 개선 (사용자가 위로 스크롤했을 때는 자동 스크롤 비활성화)
-3. InputBar의 placeholder/suggestion 표시 방식 개선 (항상 표시, 텍스트 입력 시만 숨김)
+1. Create `basic-web-development` Claude Code plugin with Playwright MCP integration
+2. Create `svelte-web-development` Claude Code plugin with official Svelte MCP integration and Svelte 5 runes knowledge
+3. Validate both plugins work correctly using tmux CLI with actual Claude Code execution
+4. Ensure plugins follow the established sisyphus marketplace structure and conventions
 
-# 작업 디테일 레벨
-detail_level = balanced
+# Work Background
 
-# 작업 배경
-현재 sisyphus 프로젝트에서 다음과 같은 UX 문제가 발생하고 있습니다:
+The sisyphus project currently has an `essentials` plugin that provides core functionality for work planning and execution. The user wants to expand the plugin ecosystem with two new web development-focused plugins:
 
-**현재 상태:**
-- ✅ ExecutionLoop의 기본 세션 관리 로직 존재
-- ✅ SessionResumeError 예외 처리 구현되어 있음
-- ❌ "Prompt is too long" 등 복구 불가능한 에러에서도 계속 같은 세션 재개 시도
-- ❌ 기타 에러가 연속으로 발생할 경우 무한 루프 가능
-- ✅ TUI ChatLog는 RichLog 상속
-- ❌ ChatLog가 항상 `scroll_end()` 호출 → 사용자가 위로 스크롤해도 강제로 맨 아래로 이동
-- ✅ InputBar의 suggestion 기능 구현되어 있음
-- ❌ InputBar가 focus 상태에서만 suggestion 표시 → unfocused 상태에서는 빈 화면
+**Current State:**
+- ✅ Existing marketplace structure at `.claude-plugin/marketplace.json`
+- ✅ Existing `essentials` plugin as reference implementation
+- ✅ Claude Code plugin system supports MCP servers, commands, agents, and skills
+- ✅ Playwright MCP available as `@playwright/mcp` (official Microsoft package)
+- ✅ Svelte MCP available as `@sveltejs/mcp` (official Svelte package)
+- ✅ Svelte 5 documentation available in llms.txt format
+- ❌ No web development plugins yet
 
-**문제점:**
-1. **세션 재개 무한 루프**: "Prompt is too long"이나 연속 에러 발생 시 계속 같은 세션 재개 시도 → 작업 진행 불가
-2. **스크롤 UX 문제**: 사용자가 이전 로그를 읽으려고 스크롤업 했는데 새 메시지가 오면 강제로 아래로 이동 → 읽던 내용 놓침
-3. **InputBar 가이드 부족**: unfocused 상태에서 placeholder가 안 보여서 사용법을 모르는 사용자는 혼란
+**Needs:**
+1. **basic-web-development plugin**: For general web development tasks with browser automation via Playwright MCP
+2. **svelte-web-development plugin**: For Svelte 5 development with official MCP, runes documentation, and common patterns/mistakes as skills
 
-**목표:**
-- 복구 불가능한 세션 에러 발생 시 자동으로 새 세션 시작하여 작업 계속 진행
-- 사용자가 스크롤업 했을 때는 자동 스크롤 멈춤, 맨 아래로 다시 내려오면 재개
-- InputBar의 안내 메시지가 항상 보이도록 개선 (텍스트 입력 시만 숨김)
+**Validation Requirements:**
+- Must verify MCP servers load correctly
+- Must test actual functionality using tmux CLI
+- Must run Claude Code CLI to confirm integration works
 
-# 작업 시작 여부
+# Execution Started
 is_execution_started = TRUE
 
-# 모든 목표 달성 여부
+# All Goals Accomplished
 is_all_goals_accomplished = TRUE
 
-# 병렬 실행 여부
+# Parallel Execution Requested
 parallel_requested = FALSE
 
-# 현재 진행 중인 작업
-- ✅ 작업 완료: 4. 전체 통합 테스트 및 검증 (items 4.1-4.4)
-   - 모든 subtask 완료
-   - 478 tests passed, 0 failures
-   - All lint checks passed
-   - 0 type errors
-   - Code review 완료
-   - 다음 작업 예약 대기 중
+# Detail Level
+detail_level = detailed
 
-# 필요한 사전 지식
+# Current Work In Progress
+- Work has not started yet.
+   - When work begins, change `is_execution_started` above to TRUE.
+   - DO NOT start work until the user explicitly says "start the work" or equivalent.
+   - **Even if plan reviewer gives OKAY, DO NOT start work**
+   - DO NOT start work until the user explicitly says "start the work" or equivalent.
 
-## ExecutionLoop 세션 관리 개념
-- **Session Resume**: 이전 대화 컨텍스트를 유지하며 세션 재개
-- **SessionResumeError**: 세션 재개 실패 시 발생하는 예외
-- **연속 에러 정의**: SessionResumeError 또는 기타 예외가 3회 연속 발생 (정상 실행 시 리셋)
-- **세션 초기화**: `await self.session_store.save_session(agent_type, None)` 호출
+# Required Background Knowledge
 
-## Textual TUI 스크롤 관리
-- **RichLog**: Textual의 로그 위젯, `auto_scroll` 속성 제공
-- **scroll_end()**: 강제로 맨 아래로 스크롤
-- **call_after_refresh()**: Textual 렌더링 완료 후 콜백 실행 (race condition 방지)
-- **scroll_offset.y**: 현재 스크롤 Y 위치
-- **max_scroll_y**: 최대 스크롤 가능 Y 위치
+## Claude Code Plugin System
+- **Plugin Structure**: `.claude-plugin/plugin.json` contains metadata
+- **Optional Directories**: `commands/`, `agents/`, `skills/`, `hooks/`
+- **MCP Configuration**: `.mcp.json` file configures Model Context Protocol servers
+- **Marketplace Format**: `.claude-plugin/marketplace.json` lists all available plugins
 
-## Textual TextArea placeholder
-- **TextArea.suggestion**: placeholder 역할을 하는 텍스트 속성
-- **text 속성**: 현재 입력된 텍스트
+## SKILL.md Format (CRITICAL)
+Every skill consists of a directory containing a SKILL.md file with:
 
-# 작업 계획
+**Required YAML Frontmatter:**
+\`\`\`yaml
+---
+name: skill-name
+description: Short description (200 chars max) - Claude uses this to decide when to invoke
+---
+\`\`\`
 
-## 세션 재개 실패 카운터 정책
+**Content Structure:**
+- Main instructions for Claude after frontmatter
+- Can reference additional files (REFERENCE.md, scripts/, etc.)
+- Target length: 200-500 lines for comprehensive skills
 
-**카운터 증가 조건:**
-- SessionResumeError 발생: +1
-- except* Exception 블록에서 예외 발생: +1
-- 최대값: 3회
+**Example SKILL.md:**
+\`\`\`markdown
+---
+name: browser-automation
+description: Common Playwright automation patterns for web testing and scraping
+---
 
-**카운터 리셋 조건:**
-- start_session() 성공 직후 (try 블록 내 마지막): 0으로 리셋
-- while True 루프 정상 종료 시 (break 직전): 0으로 리셋
+# Browser Automation with Playwright MCP
 
-**세션 초기화 조건:**
-- 카운터 >= 3: 세션 스토어 초기화 후 카운터 리셋
+This skill provides patterns for browser automation using the Playwright MCP server.
 
-## 현재 코드 구조 (sisyphus/core/loop.py)
+## Navigation
+[Instructions and examples]
 
-```python
-class ExecutionLoop:
-    def __init__(self, ...):
-        self._interrupt_flag = False
-        # 카운터 추가 필요
+## Form Filling
+[Instructions and examples]
+\`\`\`
 
-async def _execute_phase(self, ...):
-    session_id = await self.session_store.get_session(agent_type)
-    
-    # (line 234-248) 세션 재개 시도
-    try:
-        actual_session_id = await self.execute_agent.start_session(session_id)
-        # 성공 시 카운터 리셋 위치
-    except SessionResumeError as e:
-        # 카운터 증가 필요
-        actual_session_id = await self.execute_agent.start_session(None)
-    
-    await self.session_store.save_session(agent_type, actual_session_id)
-    
-    # (line 257-344) 스트림 처리 루프
-    while True:
-        try:
-            async with anyio.create_task_group() as tg:
-                tg.start_soon(consume_stream)
-                tg.start_soon(monitor_input)
-        except* SessionLimitError:
-            raise  # 재시도
-        except* Exception as exception_group:
-            # (line 315-322) 카운터 증가 필요
-            raise
-        
-        # 인터럽트 처리 또는 break
-        if not self._interrupt_flag:
-            if not self._resumed_once:
-                break  # 정상 종료 - 카운터 리셋 위치
-```
+## MCP (Model Context Protocol)
+- **Purpose**: Standardizes how applications provide context to LLMs
+- **Server Types**: stdio-based servers run as subprocesses
+- **Configuration Format**: JSON with `command` and `args` fields
+- **Common Pattern**: Use `npx` to run MCP servers without installation
 
-## 구현 방법
+## Playwright MCP
+- **Package**: `@playwright/mcp` (official Microsoft)
+- **Capabilities**: Browser automation via accessibility tree (not screenshots)
+- **Use Cases**: Navigation, form-filling, data extraction, testing
+- **Installation**: `npx @playwright/mcp@latest`
+- **GitHub**: https://github.com/microsoft/playwright-mcp
 
-### 1. ExecutionLoop 세션 복구 로직 개선
+## Svelte MCP
+- **Package**: `@sveltejs/mcp` (official Svelte team)
+- **Capabilities**: Svelte 5 documentation, code analysis, best practices
+- **Installation**: `npx @sveltejs/mcp`
+- **Documentation**: Provides llms.txt format docs for runes
+- **GitHub**: https://github.com/sveltejs/mcp
 
-**변경 파일**: `sisyphus/core/loop.py`
+## Svelte 5 Runes
+- **What Are Runes**: Symbols that control the Svelte compiler (new in Svelte 5)
+- **Key Runes**: `$state`, `$derived`, `$derived.by`, `$effect`
+- **llms.txt**: Official documentation at https://svelte.dev/docs/svelte/llms.txt
+- **Purpose**: Reactive state management, derived values, side effects
 
-**핵심 변경:**
-1. `__init__()`: `self._execute_resume_fail_count: int = 0` 추가
-2. SessionResumeError except 블록:
-   - 카운터 증가
-   - 로그에 "attempt N/3" 표시
-   - 3회 이상 시: 세션 스토어 초기화 (`save_session(agent_type, None)`) + 카운터 리셋 + 로그 출력
-   - 이후 새 세션 시작 (기존 로직 유지)
-3. except* Exception 블록 (line 315-322):
-   - 카운터 증가
-   - 3회 이상 시: 세션 스토어 초기화 + 카운터 리셋 + 로그 출력 + return (함수 종료)
-   - 3회 미만: 예외를 다시 raise (기존 동작 유지)
-4. start_session() 성공 후 (try 블록 내부, line 241 다음에 카운터 리셋 추가): 카운터 = 0
-5. while 루프 break 직전 (line 344): 카운터 = 0
+## File Structure and Roles
 
-**세션 초기화 후 동작:**
-- SessionResumeError: 초기화 후 새 세션 시작 (start_session(None) 호출)
-- Exception (3회 이상): 초기화 후 return으로 함수 종료 → 외부 _run_unified_mode()가 다음 iteration 진행
-- Exception (3회 미만): 예외 raise → 프로그램 종료 (기존 동작)
+### Existing Files to Reference FIRST
+- `.claude-plugin/marketplace.json`: Marketplace catalog - READ to understand plugin entry format
+- `claude-code-plugins/essentials/plugin.json`: Example metadata - READ to understand required fields
+- `claude-code-plugins/essentials/.mcp.json`: Example MCP config - READ to understand JSON structure
 
-### 2. ChatLog 스크롤 동작 개선
+### New Files to Create
+- `claude-code-plugins/basic-web-development/plugin.json`: Plugin metadata
+- `claude-code-plugins/basic-web-development/.mcp.json`: Playwright MCP config
+- `claude-code-plugins/basic-web-development/skills/browser-automation/SKILL.md`: ~300 lines
+- `claude-code-plugins/basic-web-development/skills/web-testing/SKILL.md`: ~250 lines
+- `claude-code-plugins/svelte-web-development/plugin.json`: Plugin metadata
+- `claude-code-plugins/svelte-web-development/.mcp.json`: Svelte MCP config
+- `claude-code-plugins/svelte-web-development/skills/svelte5-runes/SKILL.md`: ~400 lines
+- `claude-code-plugins/svelte-web-development/skills/svelte-patterns/SKILL.md`: ~350 lines
 
-**변경 파일**: `sisyphus/ui/tui/components/chat_log.py`
+# Work Plan
 
-**핵심 변경:**
-1. `_should_auto_scroll()` 헬퍼 메서드 추가:
-   - `return self.scroll_offset.y >= self.max_scroll_y - 5`
-   - 5줄 여유: UX 개선
-2. 모든 write 메서드 (write_user_message, write_execute_message, write_verify_message, write_completion_message):
-   - 기존 `self.scroll_end()` 제거
-   - 조건부 스크롤: `if self._should_auto_scroll(): self.call_after_refresh(self.scroll_end)`
+## PRDs & Structures
 
-**주의사항**:
-- `call_after_refresh()` 사용으로 race condition 방지
-- `auto_scroll=True` 속성은 유지
+\`\`\`mermaid
+graph TB
+    MP[Sisyphus Marketplace<br/>.claude-plugin/marketplace.json] --> ESS[essentials plugin<br/>Already exists]
+    MP --> BWD[basic-web-development plugin<br/>NEW]
+    MP --> SWD[svelte-web-development plugin<br/>NEW]
 
-### 3. InputBar suggestion 항상 표시
+    BWD --> BWD_META[plugin.json<br/>Metadata]
+    BWD --> BWD_MCP[.mcp.json<br/>Playwright MCP]
+    BWD --> BWD_SKILLS[skills/<br/>2 SKILL.md files]
 
-**변경 파일**: `sisyphus/ui/tui/components/input_bar.py`
+    SWD --> SWD_META[plugin.json<br/>Metadata]
+    SWD --> SWD_MCP[.mcp.json<br/>Svelte MCP]
+    SWD --> SWD_SKILLS[skills/<br/>2 SKILL.md files]
 
-**핵심 변경:**
-- `_update_suggestion()` 메서드 확장:
-  - Queue 메시지 있으면: Queue status 표시 (기존 로직 유지)
-  - 텍스트 있으면 (`self.text.strip()`): suggestion 숨김 (`""`)
-  - 텍스트 없으면: `self.suggestion = self._original_suggestion` (이미 __init__에서 정의됨)
+    BWD_MCP -.->|npx| PLAY[@playwright/mcp<br/>Browser automation]
+    SWD_MCP -.->|npx| SVELTE[@sveltejs/mcp<br/>Svelte docs & analysis]
+\`\`\`
 
-**참고**: `self._original_suggestion`은 이미 `__init__()`에서 `"Type a message... (ESC: pause)"`로 초기화되어 있음
+## Implementation Details
 
-**추가 조치 불필요**: `on_key()` 메서드에서 이미 `_update_suggestion()` 호출 중
+### Pre-Flight Checks (BEFORE starting tasks)
+1. Verify Node.js installed: `node --version` (need v16+)
+2. Verify npx available: `npx --version`
+3. Verify directory structure: `claude-code-plugins/` exists
+4. Read reference files from essentials plugin
 
-## 프로젝트 커밋 메시지 스타일
-- 형식: `<type>: <description>`
-- 타입: `fix`, `feat`, `chore` 등
-- 예시:
-  - `fix: handle unrecoverable session errors with auto-reset`
-  - `fix: improve chatlog scroll behavior for better ux`
-  - `fix: show inputbar placeholder always regardless of focus`
+### basic-web-development Plugin
+
+**Purpose**: General web development with browser automation capabilities
+
+**Components**:
+1. `plugin.json`: Standard metadata (see essentials for format)
+2. `.mcp.json`: Playwright MCP stdio configuration
+3. `skills/browser-automation/SKILL.md`: ~300 lines
+   - Frontmatter with name/description
+   - Sections: Navigation, Form Filling, Data Extraction, Element Interaction
+   - 3-5 code examples per section
+   - Focus on accessibility tree usage (not screenshots)
+4. `skills/web-testing/SKILL.md`: ~250 lines
+   - Frontmatter with name/description
+   - Sections: Test Structure, Assertions, Mocking, Best Practices
+   - 3-4 code examples per section
+
+**MCP Configuration** (.mcp.json):
+\`\`\`json
+{
+  "playwright": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@playwright/mcp@latest"]
+  }
+}
+\`\`\`
+
+### svelte-web-development Plugin
+
+**Purpose**: Svelte 5 development with runes, official MCP, and best practices
+
+**Components**:
+1. `plugin.json`: Svelte-focused metadata
+2. `.mcp.json`: Svelte MCP stdio configuration
+3. `skills/svelte5-runes/SKILL.md`: ~400 lines
+   - Frontmatter with name/description
+   - Fetch content from https://svelte.dev/docs/svelte/llms.txt for reference
+   - Sections: $state, $derived, $derived.by, $effect, Migration from Svelte 4
+   - 4-6 code examples per rune type
+   - Include REFERENCE.md link to full llms.txt content
+4. `skills/svelte-patterns/SKILL.md`: ~350 lines
+   - Frontmatter with name/description
+   - Sections: Component Patterns, Common Mistakes, Best Practices, Migration Tips
+   - 5-7 code examples showing correct vs incorrect patterns
+   - Based on Svelte community patterns
+
+**MCP Configuration** (.mcp.json):
+\`\`\`json
+{
+  "svelte": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@sveltejs/mcp"]
+  }
+}
+\`\`\`
+
+### Validation Strategy
+
+**Commands to use in tmux:**
+\`\`\`bash
+# If Claude Code CLI available:
+claude-code --version                    # Check CLI exists
+claude-code /plugin marketplace list     # List available marketplaces
+claude-code /plugin list                 # List installed plugins
+
+# For MCP validation (if possible in CLI):
+# Check MCP tools loaded - exact command depends on CLI capabilities
+\`\`\`
+
+**Manual validation steps if CLI unavailable:**
+1. Document marketplace.json structure is valid JSON
+2. Document all SKILL.md files have valid YAML frontmatter
+3. Document file structure matches expected pattern
+4. Create VALIDATION.md with manual test steps for users
+
+## Project Commit Message Style
+
+Based on git log analysis:
+- Format: Simple descriptive messages
+- Example: "ai-todolist.md as a comment"
+- For this work:
+  - "feat: add basic-web-development plugin with Playwright MCP"
+  - "feat: add svelte-web-development plugin with Svelte 5 MCP and runes"
+  - "docs: update marketplace with web development plugins"
+  - "test: add validation documentation for plugins"
 
 # TODOs
 
-- [x] 1. ExecutionLoop 세션 복구 로직 개선
-   - [x] 1.1 __init__에 카운터 추가: self._execute_resume_fail_count: int = 0
-   - [x] 1.2 SessionResumeError except 블록에 카운터 로직 추가
-      - 카운터 증가
-      - 로그에 attempt N/3 표시
-      - 3회 이상 시 세션 스토어 초기화
-   - [x] 1.3 except* Exception 블록에 카운터 로직 추가 (line 315-322)
-      - 카운터 증가
-      - 3회 이상 시: 세션 스토어 초기화 + return
-      - 3회 미만: 예외 raise (기존 동작)
-   - [x] 1.4 start_session() 성공 후 카운터 리셋 (try 블록 내부, line 241 다음)
-   - [x] 1.5 while 루프 break 직전 카운터 리셋 (line 344)
-   - [x] 1.6 수동 테스트 (선택적이지만 권장)
-      - 로그 파일에서 "attempt N/3" 출력 확인
-      - 3회 이상 실패 시 "세션 스토어 초기화" 로그 확인
-   - [x] 1.7 린트 및 타입 체크: ruff check, basedpyright
-   - [x] 1.8 커밋: git add sisyphus/core/loop.py && git commit -m "fix: handle unrecoverable session errors with auto-reset"
+- [ ] 0. Pre-flight checks and reference reading
+   - [ ] 0.1 Verify Node.js installed
+      \`\`\`bash
+      node --version  # Should be v16 or higher
+      npx --version   # Should exist
+      \`\`\`
+   - [ ] 0.2 Verify project structure
+      \`\`\`bash
+      ls -la claude-code-plugins/
+      ls -la .claude-plugin/marketplace.json
+      \`\`\`
+   - [ ] 0.3 Read reference files from essentials plugin
+      - Read `claude-code-plugins/essentials/plugin.json` for metadata format
+      - Read `claude-code-plugins/essentials/.mcp.json` for MCP config format
+      - Read `.claude-plugin/marketplace.json` for plugin entry format
+   - [ ] Orchestrator Task 0 Verification
+      - [ ] Node.js version >= 16?
+      - [ ] npx available?
+      - [ ] Reference files read and understood?
+      - [ ] Ready to proceed with plugin creation?
 
-- [x] 2. ChatLog 스크롤 동작 개선
-   - [x] 2.1 _should_auto_scroll() 헬퍼 메서드 추가
-      - 로직: scroll_offset.y >= max_scroll_y - 5
-   - [x] 2.2 모든 write 메서드 수정
-      - write_user_message, write_execute_message, write_verify_message, write_completion_message
-      - 기존 scroll_end() 제거
-      - 조건부 스크롤 추가: if self._should_auto_scroll(): self.call_after_refresh(self.scroll_end)
-   - [x] 2.3 수동 테스트: TUI 실행 후 PageUp으로 스크롤업, 새 메시지 시 위치 유지 확인
-   - [x] 2.4 린트 및 타입 체크
-   - [x] 2.5 커밋: git add sisyphus/ui/tui/components/chat_log.py && git commit -m "fix: improve chatlog scroll behavior for better ux"
+- [ ] 1. Create basic-web-development plugin structure and configuration
+   - [ ] 1.1 Create plugin directory structure
+      \`\`\`bash
+      mkdir -p claude-code-plugins/basic-web-development/skills/browser-automation
+      mkdir -p claude-code-plugins/basic-web-development/skills/web-testing
+      \`\`\`
+   - [ ] 1.2 Create `plugin.json` based on essentials plugin format
+      \`\`\`json
+      {
+        "name": "basic-web-development",
+        "version": "0.1.0",
+        "description": "Web development tools with Playwright browser automation via MCP",
+        "author": {
+          "name": "YeonGyu Kim",
+          "email": "public.kim.yeon.gyu@gmail.com",
+          "url": "https://github.com/code-yeongyu"
+        },
+        "homepage": "https://github.com/code-yeongyu/sisyphus",
+        "repository": "https://github.com/code-yeongyu/sisyphus",
+        "license": "Sustainable Use License: https://github.com/code-yeongyu/sisyphus/blob/main/LICENSE.md"
+      }
+      \`\`\`
+   - [ ] 1.3 Create `.mcp.json` with Playwright MCP configuration
+      \`\`\`json
+      {
+        "playwright": {
+          "type": "stdio",
+          "command": "npx",
+          "args": ["-y", "@playwright/mcp@latest"]
+        }
+      }
+      \`\`\`
+   - [ ] 1.4 Create `skills/browser-automation/SKILL.md` (~300 lines)
+      **Structure:**
+      - YAML frontmatter with name and description (required)
+      - Section 1: Navigation patterns (50-80 lines, 3 examples)
+      - Section 2: Form filling (50-80 lines, 3 examples)
+      - Section 3: Data extraction (50-80 lines, 3 examples)
+      - Section 4: Element interaction (50-80 lines, 3 examples)
+      - Note: Emphasize accessibility tree usage, not screenshots
+   - [ ] 1.5 Create `skills/web-testing/SKILL.md` (~250 lines)
+      **Structure:**
+      - YAML frontmatter with name and description (required)
+      - Section 1: Test structure (60-70 lines, 3 examples)
+      - Section 2: Assertions (50-60 lines, 3 examples)
+      - Section 3: Mocking (50-60 lines, 2 examples)
+      - Section 4: Best practices (40-60 lines, 2 examples)
+   - [ ] 1.6 Validate JSON files
+      \`\`\`bash
+      python -m json.tool claude-code-plugins/basic-web-development/plugin.json > /dev/null && echo "plugin.json valid"
+      python -m json.tool claude-code-plugins/basic-web-development/.mcp.json > /dev/null && echo ".mcp.json valid"
+      \`\`\`
+   - [ ] 1.7 Validate SKILL.md YAML frontmatter
+      \`\`\`bash
+      # Check first 5 lines contain --- markers and name/description
+      head -5 claude-code-plugins/basic-web-development/skills/browser-automation/SKILL.md
+      head -5 claude-code-plugins/basic-web-development/skills/web-testing/SKILL.md
+      \`\`\`
+   - [ ] 1.8 Commit the basic-web-development plugin
+      \`\`\`bash
+      git add claude-code-plugins/basic-web-development/
+      git commit -m "feat: add basic-web-development plugin with Playwright MCP"
+      \`\`\`
+   - [ ] Orchestrator Task 1 Verification
+      - [ ] Directory structure created correctly?
+      - [ ] plugin.json matches essentials format with all required fields?
+      - [ ] .mcp.json has valid Playwright MCP stdio configuration?
+      - [ ] Both SKILL.md files have YAML frontmatter with name and description?
+      - [ ] browser-automation SKILL.md is ~300 lines with 4 sections?
+      - [ ] web-testing SKILL.md is ~250 lines with 4 sections?
+      - [ ] JSON files validated with python -m json.tool?
+      - [ ] Commit created successfully?
 
-- [x] 3. InputBar placeholder 항상 표시
-   - [x] 3.1 _update_suggestion() 메서드 확장
-      - Queue 메시지 있으면: 기존 로직
-      - self.text.strip() 있으면: self.suggestion = ""
-      - 텍스트 없으면: self.suggestion = self._original_suggestion
-   - [x] 3.2 수동 테스트: Tab으로 unfocused, placeholder 표시 확인
-      - 자동화 테스트로 검증: test_update_suggestion__if_user_typed_text__hides_suggestion, test_update_suggestion__if_text_deleted__shows_suggestion_again
-   - [x] 3.3 린트 및 타입 체크
-      - Lint: All checks passed!
-      - Type: 0 errors, 0 warnings
-   - [x] 3.4 커밋: git add sisyphus/ui/tui/components/input_bar.py && git commit -m "fix: show inputbar placeholder always regardless of focus"
-      - Commit SHA: 6dd6a01
+- [ ] 2. Create svelte-web-development plugin structure and configuration
+   - [ ] 2.1 Create plugin directory structure
+      \`\`\`bash
+      mkdir -p claude-code-plugins/svelte-web-development/skills/svelte5-runes
+      mkdir -p claude-code-plugins/svelte-web-development/skills/svelte-patterns
+      \`\`\`
+   - [ ] 2.2 Fetch Svelte llms.txt for reference
+      \`\`\`bash
+      curl -o /tmp/svelte-llms.txt https://svelte.dev/docs/svelte/llms.txt
+      # Review content for skills creation
+      head -50 /tmp/svelte-llms.txt
+      \`\`\`
+   - [ ] 2.3 Create `plugin.json` for Svelte
+      \`\`\`json
+      {
+        "name": "svelte-web-development",
+        "version": "0.1.0",
+        "description": "Svelte 5 development with official MCP, runes, and best practices",
+        "author": {
+          "name": "YeonGyu Kim",
+          "email": "public.kim.yeon.gyu@gmail.com",
+          "url": "https://github.com/code-yeongyu"
+        },
+        "homepage": "https://github.com/code-yeongyu/sisyphus",
+        "repository": "https://github.com/code-yeongyu/sisyphus",
+        "license": "Sustainable Use License: https://github.com/code-yeongyu/sisyphus/blob/main/LICENSE.md"
+      }
+      \`\`\`
+   - [ ] 2.4 Create `.mcp.json` with Svelte MCP configuration
+      \`\`\`json
+      {
+        "svelte": {
+          "type": "stdio",
+          "command": "npx",
+          "args": ["-y", "@sveltejs/mcp"]
+        }
+      }
+      \`\`\`
+   - [ ] 2.5 Create `skills/svelte5-runes/SKILL.md` (~400 lines)
+      **Structure:**
+      - YAML frontmatter with name and description (required)
+      - Introduction to runes (30-40 lines)
+      - Section 1: $state rune (70-90 lines, 4 examples)
+      - Section 2: $derived rune (70-90 lines, 4 examples)
+      - Section 3: $derived.by rune (50-70 lines, 3 examples)
+      - Section 4: $effect rune (70-90 lines, 4 examples)
+      - Section 5: Migration from Svelte 4 (40-60 lines, 2 examples)
+      - Reference: Link to https://svelte.dev/docs/svelte/llms.txt
+   - [ ] 2.6 Create `skills/svelte-patterns/SKILL.md` (~350 lines)
+      **Structure:**
+      - YAML frontmatter with name and description (required)
+      - Section 1: Component patterns (80-100 lines, 5 examples)
+      - Section 2: Common mistakes (80-100 lines, 5 examples showing wrong vs right)
+      - Section 3: Best practices (80-100 lines, 4 examples)
+      - Section 4: Migration tips (60-80 lines, 3 examples)
+      - Based on Svelte community patterns and llms.txt insights
+   - [ ] 2.7 Validate JSON files
+      \`\`\`bash
+      python -m json.tool claude-code-plugins/svelte-web-development/plugin.json > /dev/null && echo "plugin.json valid"
+      python -m json.tool claude-code-plugins/svelte-web-development/.mcp.json > /dev/null && echo ".mcp.json valid"
+      \`\`\`
+   - [ ] 2.8 Validate SKILL.md YAML frontmatter
+      \`\`\`bash
+      head -5 claude-code-plugins/svelte-web-development/skills/svelte5-runes/SKILL.md
+      head -5 claude-code-plugins/svelte-web-development/skills/svelte-patterns/SKILL.md
+      \`\`\`
+   - [ ] 2.9 Commit the svelte-web-development plugin
+      \`\`\`bash
+      git add claude-code-plugins/svelte-web-development/
+      git commit -m "feat: add svelte-web-development plugin with Svelte 5 MCP and runes"
+      \`\`\`
+   - [ ] Orchestrator Task 2 Verification
+      - [ ] Directory structure created correctly?
+      - [ ] Svelte llms.txt fetched and reviewed?
+      - [ ] plugin.json matches essentials format with Svelte-specific description?
+      - [ ] .mcp.json has valid Svelte MCP stdio configuration?
+      - [ ] Both SKILL.md files have YAML frontmatter with name and description?
+      - [ ] svelte5-runes SKILL.md is ~400 lines covering all 4 runes + migration?
+      - [ ] svelte-patterns SKILL.md is ~350 lines with patterns and mistakes?
+      - [ ] Skills reference https://svelte.dev/docs/svelte/llms.txt?
+      - [ ] JSON files validated with python -m json.tool?
+      - [ ] Commit created successfully?
 
-- [x] 4. 전체 통합 테스트 및 검증
-   - [x] 4.1 기존 테스트: uv run pytest -v
-   - [x] 4.2 전체 린트: uv run ruff check sisyphus/
-   - [x] 4.3 전체 타입 체크: uv run basedpyright
-   - [x] 4.4 종합 수동 테스트: 세 가지 버그 동시 확인
+- [ ] 3. Update marketplace.json with new plugins
+   - [ ] 3.1 Read current marketplace.json to understand structure
+      \`\`\`bash
+      cat .claude-plugin/marketplace.json
+      \`\`\`
+   - [ ] 3.2 Update marketplace.json to add both plugins to plugins array
+      Add these two entries after the essentials plugin:
+      \`\`\`json
+      {
+        "name": "basic-web-development",
+        "source": "./claude-code-plugins/basic-web-development",
+        "description": "Web development tools with Playwright browser automation via MCP",
+        "version": "0.1.0",
+        "author": {
+          "name": "YeonGyu Kim",
+          "email": "public.kim.yeon.gyu@gmail.com"
+        }
+      },
+      {
+        "name": "svelte-web-development",
+        "source": "./claude-code-plugins/svelte-web-development",
+        "description": "Svelte 5 development with official MCP, runes, and best practices",
+        "version": "0.1.0",
+        "author": {
+          "name": "YeonGyu Kim",
+          "email": "public.kim.yeon.gyu@gmail.com"
+        }
+      }
+      \`\`\`
+   - [ ] 3.3 Validate updated marketplace.json
+      \`\`\`bash
+      python -m json.tool .claude-plugin/marketplace.json > /dev/null && echo "marketplace.json valid"
+      \`\`\`
+   - [ ] 3.4 Commit marketplace update
+      \`\`\`bash
+      git add .claude-plugin/marketplace.json
+      git commit -m "docs: update marketplace with web development plugins"
+      \`\`\`
+   - [ ] Orchestrator Task 3 Verification
+      - [ ] Both new plugins added to marketplace?
+      - [ ] Plugin entries have all required fields (name, source, description, version, author)?
+      - [ ] marketplace.json is syntactically valid JSON?
+      - [ ] Commit created successfully?
 
-- [x] 5. 작업 완료 처리
-   - [x] 5.1 git status 확인: nothing to commit, working tree clean
-   - [x] 5.2 is_all_goals_accomplished = TRUE 업데이트
+- [ ] 4. Validate plugins using tmux CLI (or document manual validation)
+   - [ ] 4.1 Check if Claude Code CLI is available
+      \`\`\`bash
+      which claude-code && echo "Claude Code CLI found" || echo "Claude Code CLI not found - will document manual validation"
+      \`\`\`
+   - [ ] 4.2 IF Claude Code CLI available: Create tmux session for testing
+      \`\`\`bash
+      tmux new-session -d -s claude-code-validation 'bash'
+      \`\`\`
+   - [ ] 4.3 IF Claude Code CLI available: Test basic-web-development plugin
+      \`\`\`bash
+      # Send commands to tmux session:
+      tmux send-keys -t claude-code-validation 'claude-code --version' Enter
+      sleep 2
+      tmux send-keys -t claude-code-validation 'claude-code /plugin list' Enter
+      sleep 2
+      # Expected: Should show basic-web-development in list
+      \`\`\`
+   - [ ] 4.4 IF Claude Code CLI available: Test svelte-web-development plugin
+      \`\`\`bash
+      tmux send-keys -t claude-code-validation 'claude-code /plugin marketplace list' Enter
+      sleep 2
+      # Expected: Should show sisyphus-marketplace with both new plugins
+      \`\`\`
+   - [ ] 4.5 IF Claude Code CLI available: Capture output
+      \`\`\`bash
+      tmux capture-pane -t claude-code-validation -p > /tmp/plugin-validation-output.txt
+      cat /tmp/plugin-validation-output.txt
+      \`\`\`
+   - [ ] 4.6 IF Claude Code CLI available: Clean up tmux
+      \`\`\`bash
+      tmux kill-session -t claude-code-validation
+      \`\`\`
+   - [ ] 4.7 IF Claude Code CLI NOT available: Create VALIDATION.md
+      Document manual validation steps:
+      - How to install plugins from sisyphus marketplace
+      - How to verify MCP servers load (npx commands)
+      - How to test each skill is invokable
+      - Expected behavior for each plugin
+   - [ ] 4.8 Commit validation results or documentation
+      \`\`\`bash
+      # If validation output exists:
+      git add /tmp/plugin-validation-output.txt && mv /tmp/plugin-validation-output.txt docs/plugin-validation.txt
+      # OR if VALIDATION.md created:
+      git add VALIDATION.md
+      git commit -m "test: add validation documentation for plugins"
+      \`\`\`
+   - [ ] Orchestrator Task 4 Verification
+      - [ ] Claude Code CLI availability checked?
+      - [ ] If CLI available: Tmux session created and commands executed?
+      - [ ] If CLI available: Output captured showing plugins listed?
+      - [ ] If CLI unavailable: VALIDATION.md created with comprehensive manual steps?
+      - [ ] Validation results or documentation committed?
+      - [ ] Tmux session cleaned up (if created)?
 
-# 최종 작업 검증 체크리스트
+- [ ] 5. Final verification and documentation
+   - [ ] 5.1 Verify all plugin files created
+      \`\`\`bash
+      ls -R claude-code-plugins/basic-web-development/
+      ls -R claude-code-plugins/svelte-web-development/
+      \`\`\`
+   - [ ] 5.2 Count SKILL.md lines to verify target lengths
+      \`\`\`bash
+      wc -l claude-code-plugins/basic-web-development/skills/*/SKILL.md
+      wc -l claude-code-plugins/svelte-web-development/skills/*/SKILL.md
+      \`\`\`
+   - [ ] 5.3 Verify all commits made
+      \`\`\`bash
+      git log --oneline -5
+      \`\`\`
+   - [ ] 5.4 Verify git status clean
+      \`\`\`bash
+      git status
+      \`\`\`
+   - [ ] 5.5 Create README-PLUGINS.md documentation (if not exists)
+      Document:
+      - How to install sisyphus marketplace in Claude Code
+      - How to install each plugin
+      - How to use Playwright MCP (example commands/tools)
+      - How to use Svelte MCP (example commands/tools)
+      - Example workflows for each plugin
+      - Troubleshooting: Node.js version, npx issues, MCP loading errors
+   - [ ] 5.6 Commit documentation
+      \`\`\`bash
+      git add README-PLUGINS.md
+      git commit -m "docs: add plugin installation and usage guide"
+      \`\`\`
+   - [ ] 5.7 Update is_all_goals_accomplished = TRUE
+   - [ ] Orchestrator Task 5 Verification
+      - [ ] All plugin directories exist with correct structure?
+      - [ ] SKILL.md files meet target line counts (browser-automation ~300, web-testing ~250, svelte5-runes ~400, svelte-patterns ~350)?
+      - [ ] All commits in git history (4-5 commits expected)?
+      - [ ] Git status clean (no uncommitted changes)?
+      - [ ] README-PLUGINS.md created with comprehensive documentation?
+      - [ ] is_all_goals_accomplished set to TRUE?
 
-## 1. 세션 복구 로직
-- [x] __init__에 _execute_resume_fail_count 속성 추가되었는가?
-- [x] SessionResumeError except 블록에서 카운터 증가하는가?
-- [x] except* Exception 블록에서 카운터 증가하는가?
-- [x] 카운터 >= 3 시 세션 스토어 초기화하는가?
-- [x] start_session() 성공 후 카운터 리셋되는가?
-- [x] while 루프 종료 시 카운터 리셋되는가?
-- [x] 로그에 attempt N/3 출력되는가?
+# Final Work Verification Checklist
 
-## 2. ChatLog 스크롤
-- [x] _should_auto_scroll() 메서드 추가되었는가?
-- [x] 모든 write 메서드에서 조건부 스크롤하는가?
-- [x] PageUp 후 스크롤 위치 유지되는가?
-- [x] End 후 자동 스크롤 재개되는가?
+- [ ] 1. Pre-flight Checks
+   - [ ] Node.js version >= 16 verified?
+   - [ ] npx available?
+   - [ ] Reference files from essentials plugin read?
 
-## 3. InputBar placeholder
-- [x] _update_suggestion()에 텍스트 상태 확인 로직 추가되었는가?
-- [x] unfocused 상태에서도 placeholder 표시되는가?
-- [x] 텍스트 입력 시 placeholder 숨겨지는가?
-- [x] 텍스트 삭제 시 placeholder 다시 나타나는가?
+- [ ] 2. Plugin Structure Completeness
+   - [ ] basic-web-development plugin.json created matching essentials format?
+   - [ ] basic-web-development .mcp.json created with Playwright MCP stdio config?
+   - [ ] basic-web-development has 2 skills: browser-automation (~300 lines) and web-testing (~250 lines)?
+   - [ ] svelte-web-development plugin.json created matching essentials format?
+   - [ ] svelte-web-development .mcp.json created with Svelte MCP stdio config?
+   - [ ] svelte-web-development has 2 skills: svelte5-runes (~400 lines) and svelte-patterns (~350 lines)?
 
-## 4. 코드 품질
-- [x] 전체 린트 통과: uv run ruff check sisyphus/
-- [x] 전체 타입 체크 통과: uv run basedpyright
-- [x] 기존 테스트 통과: uv run pytest
-- [x] 모든 커밋 완료: git status
+- [ ] 3. SKILL.md Format Compliance
+   - [ ] All 4 SKILL.md files have YAML frontmatter with --- markers?
+   - [ ] All frontmatter includes required 'name' field (max 64 chars)?
+   - [ ] All frontmatter includes required 'description' field (max 200 chars)?
+   - [ ] Skills content follows specified structure and sections?
+   - [ ] Code examples included as specified (3-6 per skill)?
 
+- [ ] 4. MCP Configuration Accuracy
+   - [ ] Playwright MCP uses package: \`@playwright/mcp@latest\`?
+   - [ ] Svelte MCP uses package: \`@sveltejs/mcp\`?
+   - [ ] Both use command: \`npx\` with args: \`["-y", "package-name"]\`?
+   - [ ] Both configured as type: \`stdio\`?
 
----
+- [ ] 5. Skills Content Quality
+   - [ ] browser-automation skill covers navigation, forms, extraction, interaction?
+   - [ ] web-testing skill covers test structure, assertions, mocking, best practices?
+   - [ ] svelte5-runes skill documents all runes: $state, $derived, $derived.by, $effect?
+   - [ ] svelte5-runes includes migration section from Svelte 4?
+   - [ ] svelte-patterns skill includes component patterns, mistakes, best practices, migration?
+   - [ ] Svelte skills reference https://svelte.dev/docs/svelte/llms.txt?
+   - [ ] Svelte llms.txt fetched and reviewed before creating skills?
+
+- [ ] 6. Marketplace Integration
+   - [ ] marketplace.json includes both new plugins?
+   - [ ] Plugin entries have consistent author information?
+   - [ ] Plugin versions all set to 0.1.0?
+   - [ ] Source paths correct: ./claude-code-plugins/{plugin-name}?
+   - [ ] marketplace.json is valid JSON?
+
+- [ ] 7. Validation Completeness
+   - [ ] If Claude Code CLI available: Validation executed via tmux?
+   - [ ] If Claude Code CLI unavailable: VALIDATION.md created with manual steps?
+   - [ ] MCP server loading approach documented?
+   - [ ] Validation results or manual test plan committed?
+
+- [ ] 8. Git Commit Quality
+   - [ ] Pre-flight/reference reading not committed (preparation only)?
+   - [ ] basic-web-development plugin committed separately?
+   - [ ] svelte-web-development plugin committed separately?
+   - [ ] Marketplace update committed separately?
+   - [ ] Validation documentation committed?
+   - [ ] README-PLUGINS.md committed?
+   - [ ] Commit messages follow project conventions?
+   - [ ] Git status clean (no uncommitted changes)?
+
+- [ ] 9. Documentation Completeness
+   - [ ] README-PLUGINS.md includes installation instructions?
+   - [ ] README-PLUGINS.md includes usage examples for both plugins?
+   - [ ] MCP requirements documented (Node.js, npx)?
+   - [ ] Troubleshooting section included?
+   - [ ] Example workflows provided?
+
+- [ ] 10. Error Handling & Edge Cases
+   - [ ] Plan accounts for Claude Code CLI not being available?
+   - [ ] Plan includes fallback to manual validation documentation?
+   - [ ] JSON validation steps included for all JSON files?
+   - [ ] YAML frontmatter validation steps included?
+   - [ ] Pre-flight checks prevent starting with missing dependencies?

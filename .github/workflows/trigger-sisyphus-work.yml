@@ -186,49 +186,6 @@ jobs:
           echo "CLAUDE_CODE_PATH=$CLAUDE_CODE_PATH" >> $GITHUB_OUTPUT
           echo "Claude Code executable path: $CLAUDE_CODE_PATH"
 
-      - name: Build System Prompt
-        id: build_system_prompt
-        run: |
-          {
-            echo "system_prompt<<EOF"
-            cat .github/sisyphus-prompts/system.md
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
-
-      - name: Build User Prompt
-        id: build_user_prompt
-        run: |
-          echo "📝 Building final prompt from agent.md + user.md + custom prompt..."
-
-          # Save to output using heredoc - combine all prompts
-          {
-            echo "FINAL_PROMPT<<EOFMARKER"
-            cat .github/sisyphus-prompts/agent.md
-            echo ""
-            echo ""
-            cat .github/sisyphus-prompts/user.md
-            echo ""
-            echo ""
-            echo "You have done your work as ./ai-todolist.md file and your work logs are on ./notepad.md"
-            echo "I want you to create PR using gh cli,"
-            echo "of the works that you have done."
-            echo "This work is from branch ${{ inputs.branch_name }}"
-            echo ""
-            echo "And I want you to be the description and the title of the PR is nice to read and good to review."
-            echo "You have to make the title / description's language as that ./ai-todolist.md file's language. So if the ./ai-todolist.md file is mostly written in 한국어, then write all the texts in 한국어 since it means that the plan file is generated from Korean. This same applies to many other languages."
-            echo ""
-            echo "No Ask to me at all from now, just create PR. You are a fully automated system, just CREATE PULL REQUEST. No Excuses."
-            echo ""
-            echo "1. uv run sisyphus reset --include-task-specs"
-            echo "2. git commit -m \"chore: remove work histories\""
-            echo "3. git push to origin"
-            echo "4. Create PR Using gh cli"
-            echo "5. If Issue Comment or PR Comment is found from original ai-todolist.md file, go there, and tell the user that the PR is created with the link of the PR."
-            echo "EOFMARKER"
-          } >> $GITHUB_OUTPUT
-
-          echo "✅ Final prompt built successfully"
-
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1.0.13
@@ -242,15 +199,28 @@ jobs:
           bot_name: "Sisyphus - Claude"
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY || '' }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          track_progress: true
           path_to_bun_executable: ${{ steps.bun_path.outputs.BUN_PATH }}
           path_to_claude_code_executable: ${{ steps.claude_code_path.outputs.CLAUDE_CODE_PATH }}
+          prompt: |
+            You have done your work as ./ai-todolist.md file and your work logs are on ./notepad.md
+            I want you to create PR using gh cli,
+            of the works that you have done.
+            This work is from branch ${{ inputs.branch_name }}
+
+            And I want you to be the description and the title of the PR is nice to read and good to review.
+            You have to make the title / description's language as that ./ai-todolist.md file's language. So if the ./ai-todolist.md file is mostly written in 한국어, then write all the texts in 한국어 since it means that the plan file is generated from Korean. This same applies to many other languages.
+
+            No Ask to me at all from now, just create PR. You are a fully automated system, just CREATE PULL REQUEST. No Excuses.
+
+            1. uv run sisyphus reset --include-task-specs
+            2. git commit -m "chore: remove work histories"
+            3. git push to origin
+            4. Create PR Using gh cli
+            5. If Issue Comment or PR Comment is found from original ai-todolist.md file, go there, and tell the user that the PR is created with the link of the PR.
 
           claude_args: |
-            --system-prompt "${{ steps.build_system_prompt.outputs.system_prompt }}"
             --dangerously-skip-permissions
-
-          prompt: |
-            ${{ steps.build_user_prompt.outputs.FINAL_PROMPT }}
 
       - name: Upload logs on failure
         if: failure()

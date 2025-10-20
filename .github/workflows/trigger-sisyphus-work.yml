@@ -130,10 +130,6 @@ jobs:
         run: |
           uv sync
 
-      - name: Set environments for work
-        run: |
-          uv run sisyphus reset --include-task-specs
-
       - name: Setup Sisyphus Claude Code Plugin
         run: |
           claude plugin marketplace add ./

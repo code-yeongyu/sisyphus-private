@@ -53,6 +53,6 @@ htmlcov/
 local-ignore
 */**/local-ignore
 logs/
-sessions/
+# sessions/ - commented out to allow session resume in CI
 claude_session_*.log
 agentloop.json

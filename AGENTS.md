@@ -198,6 +198,27 @@ uv run sisyphus run --execute claude:sonnet --verify opencode
 uv run sisyphus run --execute-prompt prompts/custom.md --verify-prompt /architect
 ```
 
+**Git File Management:**
+```bash
+# Add Sisyphus files to .gitignore
+uv run sisyphus ignore
+
+# Add to .git/info/exclude only (local)
+uv run sisyphus ignore --exclude-only
+
+# Add to both .gitignore and .git/info/exclude
+uv run sisyphus ignore --both
+
+# Show what would be cleaned from git history
+uv run sisyphus clean-history --dry-run
+
+# Generate cleanup guide for current branch
+uv run sisyphus clean-history
+
+# Specify base branch manually
+uv run sisyphus clean-history --base-branch origin/develop
+```
+
 ## CONVENTIONS
 
 **Predicted Standard Conventions:**

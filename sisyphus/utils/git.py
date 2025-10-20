@@ -111,40 +111,26 @@ def find_commits_with_files(base_branch: str, file_patterns: list[str]) -> list[
     i = 0
 
     while i < len(entries):
-        if not entries[i].strip():
+        entry = entries[i].strip()
+        if not entry:
             i += 1
             continue
 
-        # Each commit starts with "HASH\x1fMESSAGE\x1f" format
-        commit_line = entries[i].strip()
-
-        # Split by unit separator to get hash and message
-        parts = commit_line.split("\x1f")
-        if len(parts) < 2:
-            # Malformed entry, skip
+        parts = entry.split("\x1f")
+        if len(parts) < 3:
             i += 1
             continue
 
         commit_hash = parts[0]
         message = parts[1]
-        i += 1
 
-        # Following entries are file paths until next commit or end
         files = []
-        while i < len(entries):
-            entry = entries[i].strip()
-            if not entry:
-                # Empty entry marks end of file list
-                i += 1
-                break
-            # Check if this is the start of next commit (contains \x1f)
-            if "\x1f" in entry:
-                # Next commit, don't consume
-                break
-            files.append(entry)
-            i += 1
+        if len(parts) > 2 and parts[2]:
+            file_content = parts[2].lstrip("\n")
+            if file_content:
+                file_lines = file_content.split("\n")
+                files.extend([f for f in file_lines if f.strip()])
 
-        # Check if any file matches patterns using helper
         matching_files = []
         for f in files:
             if _matches_pattern(f, file_patterns):
@@ -158,6 +144,8 @@ def find_commits_with_files(base_branch: str, file_patterns: list[str]) -> list[
                     "files": matching_files,
                 }
             )
+
+        i += 1
 
     return commits
 

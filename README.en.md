@@ -230,6 +230,83 @@ uv run sisyphus reset
 uv run sisyphus reset --include-task-specs
 ```
 
+### Managing Sisyphus Files in Existing Projects
+
+When using Sisyphus with existing projects, you may need to manage the files it generates.
+
+#### Adding Files to .gitignore
+
+Use `sisyphus ignore` to automatically add Sisyphus-generated files to your git configuration.
+
+```sh
+# Default: Add to .gitignore (shared with team)
+uv run sisyphus ignore
+
+# Local-only: Add to .git/info/exclude (not version-controlled)
+uv run sisyphus ignore --exclude-only
+
+# Both: Add to both .gitignore and .git/info/exclude
+uv run sisyphus ignore --both
+```
+
+**What gets ignored:**
+- `ai-todolist.md` - Work plan
+- `notepad.md` - Work notes
+- `sessions/` - Agent session data
+- `logs/` - Log files
+- `agentloop.json` - Agent state
+- `claude_session_*.log` - Session logs
+
+**When to use:**
+- **Default `.gitignore`**: When setting up Sisyphus in a shared project
+- **`--exclude-only`**: When you only want local ignoring (e.g., on a personal branch)
+- **`--both`**: When you want maximum safety (redundant but covers all bases)
+
+#### Cleaning Git History
+
+If Sisyphus files were accidentally committed, use `sisyphus clean-history` to remove them from git history.
+
+```sh
+# Show what would be cleaned (safe to run)
+uv run sisyphus clean-history --dry-run
+
+# Auto-detect base branch and show cleanup guide
+uv run sisyphus clean-history
+
+# Specify base branch manually
+uv run sisyphus clean-history --base-branch origin/develop
+```
+
+**How it works:**
+1. Detects base branch (`origin/main` → `origin/master` → `origin/develop`)
+2. Finds commits containing Sisyphus files
+3. Generates step-by-step `git rebase -i` instructions
+4. Provides exact commands to remove files from each commit
+
+**Important:**
+- Protects main/master branches (won't run on them)
+- Always shows instructions before making changes
+- Use `--dry-run` to preview without modifying
+- After cleanup, use `git push --force-with-lease` to sync
+
+**Example output:**
+```
+⚠ Git History Cleanup Guide
+
+Found 2 commit(s) containing Sisyphus files since origin/main:
+
+1. abc123 - Add feature
+   Files: ai-todolist.md, sessions/test.json
+
+2. def456 - Another commit
+   Files: logs/test.log
+
+Step-by-step cleanup instructions:
+1. Start interactive rebase:
+   $ git rebase -i origin/main
+...
+```
+
 ---
 
 ## TUI Usage

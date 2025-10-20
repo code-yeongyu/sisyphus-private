@@ -172,8 +172,8 @@ def test_matches_pattern__with_no_match__returns_false() -> None:
 def test_find_commits_with_files__if_commits_found__returns_list() -> None:
     # given
     mock_stdout = (
-        "abc123\x1fAdd feature\x1f\x00ai-todolist.md\x00sessions/test.json\x00\x00"
-        "def456\x1fAnother commit\x1f\x00logs/test.log\x00\x00"
+        "abc123\x1fAdd feature\x1f\nai-todolist.md\nsessions/test.json\x00\x00"
+        "def456\x1fAnother commit\x1f\nlogs/test.log\x00"
     )
     with patch("sisyphus.utils.git.subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(

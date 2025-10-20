@@ -351,5 +351,5 @@ Action: Terminate without doing anything
 <skills>
 MAKE SURE YOU LOAD A PROPER SKILL
 - WHEN USER WANTS TO WRITE A PLAN -> LOAD `plan-writer`
-- WHEN USER WANTS TO START A TASK -> LOAD `sisyphus-trigger`
+- WHEN USER WANTS TO START / EXECUTE A TASK -> LOAD `sisyphus-trigger`
 </skills>

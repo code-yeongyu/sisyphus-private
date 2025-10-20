@@ -7,6 +7,11 @@ on:
         description: 'Branch name with existing ai-todolist.md'
         required: true
         type: string
+      retry_count:
+        description: 'Current retry count (internal use)'
+        required: false
+        type: number
+        default: 0
 
 permissions:
   contents: write
@@ -140,6 +145,7 @@ jobs:
           git config user.email "ai@sisyphus.mengmota.com"
 
       - name: Run Sisyphus
+        id: run_sisyphus
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           uv run sisyphus work --no-tui
@@ -151,7 +157,56 @@ jobs:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
         continue-on-error: true
 
+      - name: Check Sisyphus Result and Handle WIP
+        id: check_result
+        run: |
+          SISYPHUS_EXIT_CODE="${{ steps.run_sisyphus.outcome }}"
+
+          if [ "$SISYPHUS_EXIT_CODE" != "success" ]; then
+            echo "❌ Sisyphus failed. Creating WIP commit..."
+
+            # Stage all changes including sessions/
+            git add .
+            git add -f sessions/
+
+            # Create WIP commit if there are changes
+            if ! git diff --staged --quiet; then
+              git commit -m "wip: save progress after failure (retry ${{ inputs.retry_count }})"
+              git push origin "${{ inputs.branch_name }}"
+              echo "✅ WIP commit pushed"
+            fi
+
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Sisyphus succeeded"
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Trigger Retry if Failed
+        if: steps.check_result.outputs.failed == 'true'
+        run: |
+          RETRY_COUNT=${{ inputs.retry_count }}
+          NEXT_RETRY=$((RETRY_COUNT + 1))
+
+          if [ $NEXT_RETRY -lt 5 ]; then
+            echo "🔄 Triggering retry $NEXT_RETRY/5..."
+
+            # Trigger workflow retry with incremented counter
+            gh workflow run trigger-sisyphus-work.yml \
+              -f branch_name="${{ inputs.branch_name }}" \
+              -f retry_count=$NEXT_RETRY
+
+            echo "✅ Retry $NEXT_RETRY triggered"
+            exit 0
+          else
+            echo "❌ Max retries (5) reached. Stopping."
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+
       - name: Commit and push changes
+        if: steps.check_result.outputs.failed == 'false'
         run: |
           # Add all changes
           git add .
@@ -187,6 +242,7 @@ jobs:
           echo "Claude Code executable path: $CLAUDE_CODE_PATH"
 
       - name: Run Claude Code
+        if: steps.check_result.outputs.failed == 'false'
         id: claude
         uses: anthropics/claude-code-action@v1.0.13
         env:
@@ -226,8 +282,10 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: sisyphus-logs
+          name: sisyphus-logs-retry-${{ inputs.retry_count }}
           path: |
             logs/
+            sessions/
             ai-todolist.md
+            notepad.md
           retention-days: 7

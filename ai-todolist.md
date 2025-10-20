@@ -37,10 +37,10 @@ Sisyphus는 작업 중 다양한 파일들을 생성합니다 (`ai-todolist.md`,
 2. **clean-history 커맨드**: 실수로 커밋된 Sisyphus 파일을 안전하게 히스토리에서 제거
 
 # Execution Started
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # All Goals Accomplished
-is_all_goals_accomplished = FALSE
+is_all_goals_accomplished = TRUE
 
 # Parallel Execution Requested
 parallel_requested = FALSE
@@ -204,8 +204,8 @@ claude_session_*.log
 
 # TODOs
 
-- [ ] 1. Create git utility module
-   - [ ] 1.1 Create `sisyphus/utils/git.py`
+- [x] 1. Create git utility module
+   - [x] 1.1 Create `sisyphus/utils/git.py`
       - Current: File doesn't exist
       - Change: New file with git helper functions
       - **IMPORTANT**: Start with complete import section at the top:
@@ -245,7 +245,7 @@ claude_session_*.log
           """Generate interactive rebase guide for removing files."""
           # Implementation
       ```
-   - [ ] 1.2 Implement `run_git_command` helper
+   - [x] 1.2 Implement `run_git_command` helper
       ```python
       def run_git_command(args: list[str], cwd: Path | None = None) -> tuple[int, str, str]:
           """Run git command and return (returncode, stdout, stderr)."""
@@ -261,7 +261,7 @@ claude_session_*.log
           except FileNotFoundError:
               return (127, "", "git command not found")
       ```
-   - [ ] 1.3 Implement `detect_base_branch`
+   - [x] 1.3 Implement `detect_base_branch`
       ```python
       def detect_base_branch() -> str | None:
           """Detect base branch (origin/main > origin/master > origin/develop)."""
@@ -275,10 +275,10 @@ claude_session_*.log
                   return branch
           return None
       ```
-   - [ ] 1.4 Implement `is_on_main_branch`
+   - [x] 1.4 Implement `is_on_main_branch`
       - Run `git branch --show-current`
       - Check if result is "main" or "master"
-   - [ ] 1.5 Implement helper function `_matches_pattern` (module-level private function)
+   - [x] 1.5 Implement helper function `_matches_pattern` (module-level private function)
       - Place this function at module level in git.py, before `find_commits_with_files`
       - **IMPROVED**: Add glob pattern support using `fnmatch`
       ```python
@@ -314,7 +314,7 @@ claude_session_*.log
                       return True
           return False
       ```
-   - [ ] 1.6 Implement `find_commits_with_files`
+   - [x] 1.6 Implement `find_commits_with_files`
       - Place after `_matches_pattern` function
       - **IMPROVED**: Use `--no-merges` to skip merge commits and `-z` for null-terminated output (handles filenames with spaces)
       ```python
@@ -387,7 +387,7 @@ claude_session_*.log
 
           return commits
       ```
-   - [ ] 1.7 Implement `generate_rebase_guide`
+   - [x] 1.7 Implement `generate_rebase_guide`
       ```python
       def generate_rebase_guide(commits: list[dict], base_branch: str) -> str:
           """Generate interactive rebase guide for removing files.
@@ -436,7 +436,7 @@ claude_session_*.log
 
           return "\n".join(lines)
       ```
-   - [ ] 1.8 Write tests for git utilities
+   - [x] 1.8 Write tests for git utilities
       - Create `sisyphus/utils/tests/test_git.py`
       - Test each function with mocked git commands using `unittest.mock.patch`
       - Use `#given`, `#when`, `#then` pattern
@@ -502,16 +502,16 @@ claude_session_*.log
           assert result1 is True
           assert result2 is False
       ```
-   - [ ] 1.9 Run tests
+   - [x] 1.9 Run tests
       ```bash
       pytest -xvs sisyphus/utils/tests/test_git.py
       ```
-   - [ ] 1.10 Lint and type check
+   - [x] 1.10 Lint and type check
       ```bash
       ruff check sisyphus/utils/git.py sisyphus/utils/tests/test_git.py
       basedpyright sisyphus/utils/git.py sisyphus/utils/tests/test_git.py
       ```
-   - [ ] 1.11 Add import to cli.py (preparation for Task 2 & 3)
+   - [x] 1.11 Add import to cli.py (preparation for Task 2 & 3)
       - Open `sisyphus/cli.py`
       - Locate the imports section at the top of the file (around lines 1-30)
       - Find the line containing: `from sisyphus.utils.theme import ThemeName, detect_system_theme`
@@ -527,23 +527,23 @@ claude_session_*.log
       ```
       - Note: Line numbers may vary, use the actual line content as anchor
       - This allows cli.py to use git utilities in subsequent tasks
-   - [ ] 1.12 Commit git utilities with cli.py import
+   - [x] 1.12 Commit git utilities with cli.py import
       ```bash
       git add sisyphus/utils/git.py sisyphus/utils/tests/test_git.py sisyphus/cli.py
       git commit -m "feat: add git utility functions for branch detection and history analysis (#23)"
       ```
-   - [ ] Orchestrator Task 1 Verification
-      - [ ] `sisyphus/utils/git.py` 파일이 생성되었는가?
-      - [ ] 모든 함수가 proper type hints와 docstring을 가지고 있는가?
-      - [ ] `detect_base_branch()` 함수가 origin/main, origin/master, origin/develop 순으로 확인하는가?
-      - [ ] `find_commits_with_files()` 함수가 베이스 브랜치 이후 커밋만 검사하는가?
-      - [ ] `_matches_pattern()` 함수가 glob 패턴을 지원하는가?
-      - [ ] Tests가 작성되고 통과하는가?
-      - [ ] Type check와 lint가 통과하는가?
-      - [ ] Commit이 생성되었는가?
+   - [x] Orchestrator Task 1 Verification
+      - [x] `sisyphus/utils/git.py` 파일이 생성되었는가?
+      - [x] 모든 함수가 proper type hints와 docstring을 가지고 있는가?
+      - [x] `detect_base_branch()` 함수가 origin/main, origin/master, origin/develop 순으로 확인하는가?
+      - [x] `find_commits_with_files()` 함수가 베이스 브랜치 이후 커밋만 검사하는가?
+      - [x] `_matches_pattern()` 함수가 glob 패턴을 지원하는가?
+      - [x] Tests가 작성되고 통과하는가?
+      - [x] Type check와 lint가 통과하는가?
+      - [x] Commit이 생성되었는가?
 
-- [ ] 2. Implement `sisyphus ignore` command
-   - [ ] 2.1 Define Sisyphus file patterns constant
+- [x] 2. Implement `sisyphus ignore` command
+   - [x] 2.1 Define Sisyphus file patterns constant
       - Open `sisyphus/cli.py`
       - Locate the line: `error_console = Console(stderr=True)` (around line 35)
       - Add immediately after that line:
@@ -562,7 +562,7 @@ claude_session_*.log
       - **Note**: Path import already exists, no need to add it
       - **Context**: Current .gitignore already has some of these (logs/, claude_session_*.log, agentloop.json)
       - This command will detect duplicates and skip them
-   - [ ] 2.2 Implement ignore command in `cli.py`
+   - [x] 2.2 Implement ignore command in `cli.py`
       - Open `sisyphus/cli.py`
       - Locate the `reset` command: search for `@app.command(name="reset")`
       - Find the end of the reset function
@@ -581,12 +581,12 @@ claude_session_*.log
           """Add Sisyphus-generated files to git ignore configuration."""
           # Implementation
       ```
-   - [ ] 2.3 Implement target file selection logic
+   - [x] 2.3 Implement target file selection logic
       - Default: only `.gitignore`
       - `--exclude-only`: only `.git/info/exclude`
       - `--both`: both files
       - Validate conflicts (can't use both flags)
-   - [ ] 2.4 Implement pattern addition logic
+   - [x] 2.4 Implement pattern addition logic
       - Add these helper functions to `sisyphus/cli.py` as private functions (prefix with `_`)
       - Place immediately before the `ignore` command definition
       ```python
@@ -627,7 +627,7 @@ claude_session_*.log
           file_path.write_text(existing_content + content_to_add)
           return new_patterns
       ```
-   - [ ] 2.5 Implement output formatting
+   - [x] 2.5 Implement output formatting
       - Show which file(s) were updated
       - List added patterns with color coding
       - Show message if all patterns already exist
@@ -648,11 +648,11 @@ claude_session_*.log
       [yellow]ℹ[/yellow] All Sisyphus patterns already present in .gitignore
       [dim]No changes made[/dim]
       ```
-   - [ ] 2.6 Handle edge cases
+   - [x] 2.6 Handle edge cases
       - Create `.git/info/exclude` if doesn't exist
       - Handle file permission errors
       - Validate `.git` directory exists
-   - [ ] 2.7 Write tests for ignore command
+   - [x] 2.7 Write tests for ignore command
       - Create `sisyphus/tests/test_cli_ignore.py`
       - Use `typer.testing.CliRunner` for testing CLI commands
       - Use temporary directories with `tmp_path` pytest fixture
@@ -699,7 +699,7 @@ claude_session_*.log
           assert "# Sisyphus generated files" in gitignore_content
       ```
       - Use `#given`, `#when`, `#then` pattern
-   - [ ] 2.8 Run tests
+   - [x] 2.8 Run tests
       ```bash
       pytest -xvs sisyphus/tests/test_cli_ignore.py
       ```
@@ -708,31 +708,31 @@ claude_session_*.log
         - test for --exclude-only flag
         - test for --both flag
         - test for duplicate prevention
-   - [ ] 2.9 Lint and type check
+   - [x] 2.9 Lint and type check
       ```bash
       ruff check sisyphus/cli.py sisyphus/tests/test_cli_ignore.py
       basedpyright sisyphus/cli.py sisyphus/tests/test_cli_ignore.py
       ```
-   - [ ] 2.10 Commit ignore command
+   - [x] 2.10 Commit ignore command
       ```bash
       git add sisyphus/cli.py sisyphus/tests/test_cli_ignore.py
       git commit -m "feat: add ignore command for Sisyphus-generated files (#23)"
       ```
-   - [ ] Orchestrator Task 2 Verification
-      - [ ] `sisyphus ignore` 커맨드가 `cli.py`에 추가되었는가?
-      - [ ] `SISYPHUS_IGNORE_PATTERNS` 상수가 정의되었는가?
-      - [ ] 기본 동작(`.gitignore`만)이 올바르게 작동하는가?
-      - [ ] `--exclude-only` 옵션이 `.git/info/exclude`에만 추가하는가?
-      - [ ] `--both` 옵션이 양쪽 모두에 추가하는가?
-      - [ ] 중복 패턴이 올바르게 감지되고 건너뛰는가?
-      - [ ] Rich로 포맷팅된 출력이 명확한가?
-      - [ ] Tests가 모든 시나리오를 커버하는가?
-      - [ ] Tests에서 `monkeypatch.chdir()`를 사용하는가?
-      - [ ] Type check와 lint가 통과하는가?
-      - [ ] Commit이 생성되었는가?
+   - [x] Orchestrator Task 2 Verification
+      - [x] `sisyphus ignore` 커맨드가 `cli.py`에 추가되었는가?
+      - [x] `SISYPHUS_IGNORE_PATTERNS` 상수가 정의되었는가?
+      - [x] 기본 동작(`.gitignore`만)이 올바르게 작동하는가?
+      - [x] `--exclude-only` 옵션이 `.git/info/exclude`에만 추가하는가?
+      - [x] `--both` 옵션이 양쪽 모두에 추가하는가?
+      - [x] 중복 패턴이 올바르게 감지되고 건너뛰는가?
+      - [x] Rich로 포맷팅된 출력이 명확한가?
+      - [x] Tests가 모든 시나리오를 커버하는가?
+      - [x] Tests에서 `monkeypatch.chdir()`를 사용하는가?
+      - [x] Type check와 lint가 통과하는가?
+      - [x] Commit이 생성되었는가?
 
-- [ ] 3. Implement `sisyphus clean-history` command
-   - [ ] 3.1 Implement clean-history command skeleton
+- [x] 3. Implement `sisyphus clean-history` command
+   - [x] 3.1 Implement clean-history command skeleton
       - Locate the `ignore` command definition in cli.py
       - Add immediately after the entire `ignore` function:
       ```python
@@ -748,26 +748,26 @@ claude_session_*.log
           """Remove Sisyphus-generated files from git history (current branch only)."""
           # Implementation
       ```
-   - [ ] 3.2 Implement base branch detection/validation
+   - [x] 3.2 Implement base branch detection/validation
       - Use `detect_base_branch()` if not specified
       - Validate specified branch exists
       - Error if no base branch found
-   - [ ] 3.3 Implement safety checks
+   - [x] 3.3 Implement safety checks
       - Check current branch is not main/master (use `is_on_main_branch()`)
       - **DO NOT implement remote push check** - adds complexity without significant value
         - Users will see warning in rebase guide about force-push if needed
         - Simpler implementation, fewer edge cases to handle
       - Show clear warning message about destructive operation
-   - [ ] 3.4 Implement commit analysis
+   - [x] 3.4 Implement commit analysis
       - Use `find_commits_with_files()` to find affected commits
       - If no commits found, show success message and exit
       - Display found commits with file lists
-   - [ ] 3.5 Implement user confirmation
+   - [x] 3.5 Implement user confirmation
       - Show affected commits count
       - Show file patterns that will be removed
       - Use `typer.confirm()` for yes/no prompt
       - Exit if user declines
-   - [ ] 3.6 Implement rebase guide generation
+   - [x] 3.6 Implement rebase guide generation
       - Use `generate_rebase_guide()` from git utilities to create instructions
       - Output the guide using Rich console:
       ```python
@@ -812,11 +812,11 @@ claude_session_*.log
       [yellow]Note:[/yellow] If you've already pushed these commits, you'll need to force push:
       [dim]$[/dim] git push --force-with-lease
       ```
-   - [ ] 3.7 Implement dry-run mode
+   - [x] 3.7 Implement dry-run mode
       - Skip confirmation prompt
       - Show all analysis and guide
       - Display "DRY RUN - no changes made" message
-   - [ ] 3.8 Write tests for clean-history command
+   - [x] 3.8 Write tests for clean-history command
       - Create `sisyphus/tests/test_cli_clean_history.py`
       - Test base branch auto-detection
       - Test safety checks (main branch prevention)
@@ -825,7 +825,7 @@ claude_session_*.log
       - Mock git commands
       - **IMPROVED**: Use `monkeypatch.chdir()` for test isolation
       - Use `#given`, `#when`, `#then` pattern
-   - [ ] 3.9 Run tests
+   - [x] 3.9 Run tests
       ```bash
       pytest -xvs sisyphus/tests/test_cli_clean_history.py
       ```
@@ -834,32 +834,32 @@ claude_session_*.log
         - test for --base-branch manual specification
         - test for main branch safety check (should error)
         - test for --dry-run mode
-   - [ ] 3.10 Lint and type check
+   - [x] 3.10 Lint and type check
       ```bash
       ruff check sisyphus/cli.py sisyphus/tests/test_cli_clean_history.py
       basedpyright sisyphus/cli.py sisyphus/tests/test_cli_clean_history.py
       ```
-   - [ ] 3.11 Commit clean-history command
+   - [x] 3.11 Commit clean-history command
       ```bash
       git add sisyphus/cli.py sisyphus/tests/test_cli_clean_history.py
       git commit -m "feat: add clean-history command to remove files from git history (#23)"
       ```
-   - [ ] Orchestrator Task 3 Verification
-      - [ ] `sisyphus clean-history` 커맨드가 `cli.py`에 추가되었는가?
-      - [ ] 베이스 브랜치 자동 감지가 작동하는가?
-      - [ ] `--base-branch` 옵션으로 수동 지정이 가능한가?
-      - [ ] main/master 브랜치에서 실행 시 에러가 발생하는가?
-      - [ ] 사용자 확인 프롬프트가 표시되는가?
-      - [ ] `--dry-run` 모드가 변경 없이 가이드만 출력하는가?
-      - [ ] 생성된 rebase 가이드가 명확하고 실행 가능한가?
-      - [ ] Sisyphus 파일이 없는 경우 적절한 메시지가 표시되는가?
-      - [ ] Tests가 모든 시나리오와 에러 케이스를 커버하는가?
-      - [ ] Tests에서 `monkeypatch.chdir()`를 사용하는가?
-      - [ ] Type check와 lint가 통과하는가?
-      - [ ] Commit이 생성되었는가?
+   - [x] Orchestrator Task 3 Verification
+      - [x] `sisyphus clean-history` 커맨드가 `cli.py`에 추가되었는가?
+      - [x] 베이스 브랜치 자동 감지가 작동하는가?
+      - [x] `--base-branch` 옵션으로 수동 지정이 가능한가?
+      - [x] main/master 브랜치에서 실행 시 에러가 발생하는가?
+      - [x] 사용자 확인 프롬프트가 표시되는가?
+      - [x] `--dry-run` 모드가 변경 없이 가이드만 출력하는가?
+      - [x] 생성된 rebase 가이드가 명확하고 실행 가능한가?
+      - [x] Sisyphus 파일이 없는 경우 적절한 메시지가 표시되는가?
+      - [x] Tests가 모든 시나리오와 에러 케이스를 커버하는가?
+      - [x] Tests에서 `monkeypatch.chdir()`를 사용하는가?
+      - [x] Type check와 lint가 통과하는가?
+      - [x] Commit이 생성되었는가?
 
-- [ ] 4. Integration testing and documentation
-   - [ ] 4.1 Manual integration test - ignore command
+- [x] 4. Integration testing and documentation
+   - [x] 4.1 Manual integration test - ignore command
       - Create test repository with sisyphus files
       ```bash
       mkdir /tmp/sisyphus-test && cd /tmp/sisyphus-test
@@ -895,7 +895,7 @@ claude_session_*.log
       # Should show .git/info/exclude as source
       ```
       - **If fails**: Verify .git/info directory exists and is writable
-   - [ ] 4.2 Manual integration test - clean-history command
+   - [x] 4.2 Manual integration test - clean-history command
       - Set up test repository with commits
       ```bash
       cd /tmp/sisyphus-test2 && mkdir -p /tmp/sisyphus-test2
@@ -920,11 +920,11 @@ claude_session_*.log
         - Exact `git rm` commands for each commit
         - `git commit --amend --no-edit` and `git rebase --continue` steps
       - Verify no actual changes made (dry-run mode)
-   - [ ] 4.3 Update CLI help documentation
+   - [x] 4.3 Update CLI help documentation
       - Verify `sisyphus --help` shows new commands
       - Verify `sisyphus ignore --help` shows clear usage
       - Verify `sisyphus clean-history --help` shows clear usage
-   - [ ] 4.4 Create usage examples in README
+   - [x] 4.4 Create usage examples in README
       - Locate the "Commands" or "Usage" section in README.md
       - Add section "Managing Sisyphus Files in Existing Projects" with subsections:
         - "Adding Files to .gitignore"
@@ -933,39 +933,39 @@ claude_session_*.log
       - Document `ignore` command with examples
       - Document `clean-history` command with examples
       - Include best practices (when to use each)
-   - [ ] 4.5 Update CLAUDE.md if needed
+   - [x] 4.5 Update CLAUDE.md if needed
       - Locate the "PROJECT KNOWLEDGE BASE" section
       - Add new commands to relevant subsections
       - Update "DEVELOPMENT COMMANDS" section with new command examples
       - Document new git utilities in "PROJECT STRUCTURE" or "ARCHITECTURE" section
-   - [ ] 4.6 Final test suite run
+   - [x] 4.6 Final test suite run
       ```bash
       pytest -xvs
       ```
       - Verify all tests pass
       - Check coverage for new code
-   - [ ] 4.7 Final lint and type check
+   - [x] 4.7 Final lint and type check
       ```bash
       ruff check
       basedpyright
       ```
       - Fix any remaining issues
-   - [ ] 4.8 Commit documentation
+   - [x] 4.8 Commit documentation
       ```bash
       git add README.md CLAUDE.md
       git commit -m "docs: document ignore and clean-history commands (#23)"
       ```
-   - [ ] Orchestrator Task 4 Verification
-      - [ ] Manual integration tests 실행하고 성공했는가?
-      - [ ] `sisyphus --help` 출력이 새 커맨드를 포함하는가?
-      - [ ] README.md에 사용 예제가 추가되었는가?
-      - [ ] CLAUDE.md가 필요시 업데이트되었는가?
-      - [ ] 전체 test suite가 통과하는가?
-      - [ ] 전체 codebase에서 lint와 type check가 통과하는가?
-      - [ ] Documentation commit이 생성되었는가?
+   - [x] Orchestrator Task 4 Verification
+      - [x] Manual integration tests 실행하고 성공했는가?
+      - [x] `sisyphus --help` 출력이 새 커맨드를 포함하는가?
+      - [x] README.md에 사용 예제가 추가되었는가?
+      - [x] CLAUDE.md가 필요시 업데이트되었는가?
+      - [x] 전체 test suite가 통과하는가?
+      - [x] 전체 codebase에서 lint와 type check가 통과하는가?
+      - [x] Documentation commit이 생성되었는가?
 
-- [ ] 5. Final verification and cleanup
-   - [ ] 5.1 Verify all commits
+- [x] 5. Final verification and cleanup
+   - [x] 5.1 Verify all commits
       ```bash
       git log --oneline -5
       ```
@@ -974,114 +974,114 @@ claude_session_*.log
         2. feat: add ignore command for Sisyphus-generated files (#23)
         3. feat: add clean-history command to remove files from git history (#23)
         4. docs: document ignore and clean-history commands (#23)
-   - [ ] 5.2 Verify implementation completeness
-      - [ ] `sisyphus/utils/git.py` exists with all functions
-      - [ ] `sisyphus ignore` command works as specified
-      - [ ] `sisyphus clean-history` command works as specified
-      - [ ] All tests exist and pass
-      - [ ] Documentation updated
-   - [ ] 5.3 Run final comprehensive test
+   - [x] 5.2 Verify implementation completeness
+      - [x] `sisyphus/utils/git.py` exists with all functions
+      - [x] `sisyphus ignore` command works as specified
+      - [x] `sisyphus clean-history` command works as specified
+      - [x] All tests exist and pass
+      - [x] Documentation updated
+   - [x] 5.3 Run final comprehensive test
       ```bash
       # In project root
       sisyphus ignore --both
       git status  # Should ignore sisyphus files
       sisyphus clean-history --dry-run  # Should show guide
       ```
-   - [ ] 5.4 Check for any uncommitted changes
+   - [x] 5.4 Check for any uncommitted changes
       ```bash
       git status
       ```
       - Should be clean
-   - [ ] 5.5 Verify no extraneous changes
+   - [x] 5.5 Verify no extraneous changes
       - Review `git diff master` (or base branch)
       - Ensure only intended files modified
       - No unrelated fixes or refactoring
-   - [ ] 5.6 Update is_all_goals_accomplished = TRUE
-   - [ ] Orchestrator Task 5 Verification
-      - [ ] 정확히 4개의 커밋이 생성되었는가?
-      - [ ] 모든 기능이 요구사항대로 구현되었는가?
-      - [ ] Test suite 전체가 통과하는가?
-      - [ ] Documentation이 완전한가?
-      - [ ] Git status가 clean한가?
-      - [ ] 의도하지 않은 파일 수정이 없는가?
-      - [ ] is_all_goals_accomplished가 TRUE로 설정되었는가?
+   - [x] 5.6 Update is_all_goals_accomplished = TRUE
+   - [x] Orchestrator Task 5 Verification
+      - [x] 정확히 4개의 커밋이 생성되었는가?
+      - [x] 모든 기능이 요구사항대로 구현되었는가?
+      - [x] Test suite 전체가 통과하는가?
+      - [x] Documentation이 완전한가?
+      - [x] Git status가 clean한가?
+      - [x] 의도하지 않은 파일 수정이 없는가?
+      - [x] is_all_goals_accomplished가 TRUE로 설정되었는가?
 
 # Final Work Verification Checklist
 
-- [ ] 1. Command Implementation
-   - [ ] `sisyphus ignore` 커맨드가 존재하고 작동하는가?
-   - [ ] `sisyphus clean-history` 커맨드가 존재하고 작동하는가?
-   - [ ] 두 커맨드 모두 `sisyphus --help`에 표시되는가?
+- [x] 1. Command Implementation
+   - [x] `sisyphus ignore` 커맨드가 존재하고 작동하는가?
+   - [x] `sisyphus clean-history` 커맨드가 존재하고 작동하는가?
+   - [x] 두 커맨드 모두 `sisyphus --help`에 표시되는가?
 
-- [ ] 2. ignore Command Functionality
-   - [ ] 기본 동작: `.gitignore`에만 패턴 추가
-   - [ ] `--exclude-only`: `.git/info/exclude`에만 추가
-   - [ ] `--both`: 양쪽 모두에 추가
-   - [ ] 중복 패턴 감지 및 건너뛰기
-   - [ ] 추가된 패턴을 사용자에게 명확히 출력
-   - [ ] 모든 Sisyphus 파일 패턴 포함 (ai-todolist.md, sessions/, logs/, etc.)
+- [x] 2. ignore Command Functionality
+   - [x] 기본 동작: `.gitignore`에만 패턴 추가
+   - [x] `--exclude-only`: `.git/info/exclude`에만 추가
+   - [x] `--both`: 양쪽 모두에 추가
+   - [x] 중복 패턴 감지 및 건너뛰기
+   - [x] 추가된 패턴을 사용자에게 명확히 출력
+   - [x] 모든 Sisyphus 파일 패턴 포함 (ai-todolist.md, sessions/, logs/, etc.)
 
-- [ ] 3. clean-history Command Functionality
-   - [ ] 베이스 브랜치 자동 감지 (origin/main → origin/master → origin/develop)
-   - [ ] `--base-branch` 옵션으로 수동 지정 가능
-   - [ ] main/master 브랜치에서 실행 방지
-   - [ ] 사용자 확인 프롬프트 표시
-   - [ ] `--dry-run` 모드 제공
-   - [ ] 명확하고 실행 가능한 rebase 가이드 생성
-   - [ ] Sisyphus 파일 포함 커밋 정확히 탐지 (glob 패턴 지원)
+- [x] 3. clean-history Command Functionality
+   - [x] 베이스 브랜치 자동 감지 (origin/main → origin/master → origin/develop)
+   - [x] `--base-branch` 옵션으로 수동 지정 가능
+   - [x] main/master 브랜치에서 실행 방지
+   - [x] 사용자 확인 프롬프트 표시
+   - [x] `--dry-run` 모드 제공
+   - [x] 명확하고 실행 가능한 rebase 가이드 생성
+   - [x] Sisyphus 파일 포함 커밋 정확히 탐지 (glob 패턴 지원)
 
-- [ ] 4. Git Utilities (sisyphus/utils/git.py)
-   - [ ] `detect_base_branch()` 함수 구현 및 작동
-   - [ ] `is_on_main_branch()` 함수 구현 및 작동
-   - [ ] `find_commits_with_files()` 함수 구현 및 작동
-   - [ ] `generate_rebase_guide()` 함수 구현 및 작동
-   - [ ] `_matches_pattern()` helper가 glob 패턴 지원 (fnmatch)
-   - [ ] 모든 함수에 type hints와 docstring 존재
-   - [ ] subprocess를 통한 git 명령 실행 구현
-   - [ ] Git 명령에 `--no-merges`와 `-z` 플래그 사용
+- [x] 4. Git Utilities (sisyphus/utils/git.py)
+   - [x] `detect_base_branch()` 함수 구현 및 작동
+   - [x] `is_on_main_branch()` 함수 구현 및 작동
+   - [x] `find_commits_with_files()` 함수 구현 및 작동
+   - [x] `generate_rebase_guide()` 함수 구현 및 작동
+   - [x] `_matches_pattern()` helper가 glob 패턴 지원 (fnmatch)
+   - [x] 모든 함수에 type hints와 docstring 존재
+   - [x] subprocess를 통한 git 명령 실행 구현
+   - [x] Git 명령에 `--no-merges`와 `-z` 플래그 사용
 
-- [ ] 5. Testing
-   - [ ] `sisyphus/utils/tests/test_git.py` 존재하고 통과
-   - [ ] `sisyphus/tests/test_cli_ignore.py` 존재하고 통과
-   - [ ] `sisyphus/tests/test_cli_clean_history.py` 존재하고 통과
-   - [ ] 모든 테스트가 `#given`, `#when`, `#then` 패턴 사용
-   - [ ] Tests가 `monkeypatch.chdir()` 사용 (not `os.chdir()`)
-   - [ ] Edge cases와 error cases 테스트 커버
-   - [ ] 전체 test suite 통과 (`pytest -xvs`)
+- [x] 5. Testing
+   - [x] `sisyphus/utils/tests/test_git.py` 존재하고 통과
+   - [x] `sisyphus/tests/test_cli_ignore.py` 존재하고 통과
+   - [x] `sisyphus/tests/test_cli_clean_history.py` 존재하고 통과
+   - [x] 모든 테스트가 `#given`, `#when`, `#then` 패턴 사용
+   - [x] Tests가 `monkeypatch.chdir()` 사용 (not `os.chdir()`)
+   - [x] Edge cases와 error cases 테스트 커버
+   - [x] 전체 test suite 통과 (`pytest -xvs`)
 
-- [ ] 6. Code Quality
-   - [ ] `ruff check` 통과 (no lint errors)
-   - [ ] `basedpyright` 통과 (no type errors)
-   - [ ] 기존 코드 스타일과 패턴 일치
-   - [ ] 불필요한 리팩토링이나 수정 없음
-   - [ ] Rich Console 사용하여 명확한 출력 포맷팅
+- [x] 6. Code Quality
+   - [x] `ruff check` 통과 (no lint errors)
+   - [x] `basedpyright` 통과 (no type errors)
+   - [x] 기존 코드 스타일과 패턴 일치
+   - [x] 불필요한 리팩토링이나 수정 없음
+   - [x] Rich Console 사용하여 명확한 출력 포맷팅
 
-- [ ] 7. Documentation
-   - [ ] README.md에 새 커맨드 사용법 추가
-   - [ ] `sisyphus ignore --help` 출력이 명확함
-   - [ ] `sisyphus clean-history --help` 출력이 명확함
-   - [ ] CLAUDE.md 업데이트 (필요시)
-   - [ ] 사용 예제와 best practices 포함
+- [x] 7. Documentation
+   - [x] README.md에 새 커맨드 사용법 추가
+   - [x] `sisyphus ignore --help` 출력이 명확함
+   - [x] `sisyphus clean-history --help` 출력이 명확함
+   - [x] CLAUDE.md 업데이트 (필요시)
+   - [x] 사용 예제와 best practices 포함
 
-- [ ] 8. UX Quality
-   - [ ] ignore 커맨드의 출력이 명확하고 유용함
-   - [ ] clean-history 커맨드의 위험 경고가 적절함
-   - [ ] rebase 가이드가 실제로 따라할 수 있을 정도로 명확함
-   - [ ] 에러 메시지가 명확하고 실행 가능한 해결책 제시
-   - [ ] 색상 코딩이 적절하게 사용됨 (Rich)
+- [x] 8. UX Quality
+   - [x] ignore 커맨드의 출력이 명확하고 유용함
+   - [x] clean-history 커맨드의 위험 경고가 적절함
+   - [x] rebase 가이드가 실제로 따라할 수 있을 정도로 명확함
+   - [x] 에러 메시지가 명확하고 실행 가능한 해결책 제시
+   - [x] 색상 코딩이 적절하게 사용됨 (Rich)
 
-- [ ] 9. Safety and Edge Cases
-   - [ ] main/master 브랜치 보호 작동
-   - [ ] 파일 권한 에러 적절히 처리
-   - [ ] `.git` 디렉토리 부재 시 적절한 에러
-   - [ ] 베이스 브랜치 없음 시 적절한 에러
-   - [ ] 사용자 취소 시 정상 종료
-   - [ ] dry-run 모드가 실제 변경하지 않음
+- [x] 9. Safety and Edge Cases
+   - [x] main/master 브랜치 보호 작동
+   - [x] 파일 권한 에러 적절히 처리
+   - [x] `.git` 디렉토리 부재 시 적절한 에러
+   - [x] 베이스 브랜치 없음 시 적절한 에러
+   - [x] 사용자 취소 시 정상 종료
+   - [x] dry-run 모드가 실제 변경하지 않음
 
-- [ ] 10. Git Commits
-   - [ ] Commit 1: git utilities 추가
-   - [ ] Commit 2: ignore 커맨드 추가
-   - [ ] Commit 3: clean-history 커맨드 추가
-   - [ ] Commit 4: documentation 업데이트
-   - [ ] 모든 커밋 메시지가 프로젝트 컨벤션 준수
-   - [ ] Git status clean (uncommitted changes 없음)
+- [x] 10. Git Commits
+   - [x] Commit 1: git utilities 추가
+   - [x] Commit 2: ignore 커맨드 추가
+   - [x] Commit 3: clean-history 커맨드 추가
+   - [x] Commit 4: documentation 업데이트
+   - [x] 모든 커밋 메시지가 프로젝트 컨벤션 준수
+   - [x] Git status clean (uncommitted changes 없음)

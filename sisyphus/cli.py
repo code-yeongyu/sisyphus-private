@@ -34,6 +34,56 @@ app = typer.Typer(name="sisyphus", help="Sisyphus Multi-Agent System")
 console = Console()
 error_console = Console(stderr=True)
 
+# Sisyphus generated files patterns for .gitignore / .git/info/exclude
+SISYPHUS_IGNORE_PATTERNS = [
+    "# Sisyphus generated files",
+    "ai-todolist.md",
+    "notepad.md",
+    "sessions/",
+    "logs/",
+    "agentloop.json",
+    "claude_session_*.log",
+]
+
+
+def _is_duplicate_pattern(existing_content: str, pattern: str) -> bool:
+    """Check if pattern already exists (exact match only).
+
+    Args:
+        existing_content: Full file content
+        pattern: Pattern to check
+
+    Returns:
+        True if pattern exists, False otherwise
+    """
+    # Check exact line match (with or without trailing newline)
+    lines = existing_content.splitlines()
+    return pattern in lines or pattern.strip() in lines
+
+
+def _add_patterns_to_file(file_path: Path, patterns: list[str]) -> list[str]:
+    """Add patterns to file, return list of added patterns."""
+    # Read existing content
+    if file_path.exists():
+        existing_content = file_path.read_text()
+    else:
+        existing_content = ""
+
+    # Filter out duplicates
+    new_patterns = [p for p in patterns if not _is_duplicate_pattern(existing_content, p)]
+
+    if not new_patterns:
+        return []
+
+    # Append new patterns (with newline before if file doesn't end with one)
+    content_to_add = ""
+    if existing_content and not existing_content.endswith("\n"):
+        content_to_add = "\n"
+    content_to_add += "\n".join(new_patterns) + "\n"
+
+    file_path.write_text(existing_content + content_to_add)
+    return new_patterns
+
 
 class ThemeOption(str, Enum):
     """TUI theme options."""
@@ -431,6 +481,68 @@ def reset(
             error_console.print(f"[red]✗[/red] Failed to delete {target}: {e}")
 
     console.print("\n[bold green]Reset complete![/bold green]")
+
+
+@app.command(name="ignore")
+def ignore(
+    exclude_only: bool = typer.Option(False, "--exclude-only", help="Add only to .git/info/exclude (local)"),
+    both: bool = typer.Option(False, "--both", help="Add to both .gitignore and .git/info/exclude"),
+) -> None:
+    """Add Sisyphus-generated files to git ignore configuration."""
+    if exclude_only and both:
+        error_console.print("[red]Error: Cannot use both --exclude-only and --both flags[/red]")
+        raise typer.Exit(1)
+
+    git_dir = Path(".git")
+    if not git_dir.exists():
+        error_console.print("[red]Error: Not in a git repository (.git directory not found)[/red]")
+        raise typer.Exit(1)
+
+    target_files: list[Path] = []
+    if exclude_only:
+        exclude_path = git_dir / "info" / "exclude"
+        target_files.append(exclude_path)
+    elif both:
+        target_files.append(Path(".gitignore"))
+        exclude_path = git_dir / "info" / "exclude"
+        target_files.append(exclude_path)
+    else:
+        target_files.append(Path(".gitignore"))
+
+    all_added: dict[str, list[str]] = {}
+
+    for target_file in target_files:
+        if target_file.name == "exclude":
+            exclude_dir = target_file.parent
+            if not exclude_dir.exists():
+                try:
+                    exclude_dir.mkdir(parents=True, exist_ok=True)
+                except (PermissionError, OSError) as e:
+                    error_console.print(f"[red]Error: Failed to create {exclude_dir}: {e}[/red]")
+                    raise typer.Exit(1)
+
+        try:
+            added_patterns = _add_patterns_to_file(target_file, SISYPHUS_IGNORE_PATTERNS)
+            all_added[str(target_file)] = added_patterns
+        except (PermissionError, OSError) as e:
+            error_console.print(f"[red]Error: Failed to write to {target_file}: {e}[/red]")
+            raise typer.Exit(1)
+
+    total_added = sum(len(patterns) for patterns in all_added.values())
+
+    if total_added == 0:
+        console.print("[yellow]ℹ[/yellow] All Sisyphus patterns already present")
+        console.print("[dim]No changes made[/dim]")
+    else:
+        for target_file, added_patterns in all_added.items():
+            if added_patterns:
+                console.print(f"[green]✓[/green] Added to {target_file}:")
+                for pattern in added_patterns:
+                    if pattern.startswith("#"):
+                        console.print(f"  [dim]{pattern}[/dim]")
+                    else:
+                        console.print(f"  • {pattern}")
+        console.print("\n[bold green]Successfully configured git to ignore Sisyphus files![/bold green]")
 
 
 if __name__ == "__main__":

@@ -70,6 +70,36 @@ Activate when users:
 
 ## Work Process
 
+### Phase 0: Repository Preparation (ALWAYS EXECUTE FIRST)
+
+Before starting any plan creation work, ALWAYS execute these steps in order:
+
+1. **Create New Branch**
+   ```bash
+   # Generate branch name with timestamp
+   BRANCH_NAME="plan-writer/$(date +%Y%m%d-%H%M%S)"
+   git checkout -b "$BRANCH_NAME"
+   ```
+   - Branch naming: `plan-writer/YYYYMMDD-HHMMSS`
+   - This ensures each plan creation is on a fresh branch
+
+2. **Reset Work Environment**
+   ```bash
+   uv run sisyphus reset --include-task-specs
+   ```
+   - Removes: `sessions/`, `logs/`, `ai-todolist.md`, `notepad.md`
+   - Ensures clean slate for new work plan
+
+3. **Commit Reset State**
+   ```bash
+   git add -A
+   git commit -m "chore: reset work environment for new plan"
+   ```
+   - Commits the cleaned state
+   - Provides baseline for plan generation
+
+**CRITICAL**: These steps are MANDATORY before proceeding to Phase 1. Do NOT skip or reorder them.
+
 ### Phase 1: Initial Analysis and Information Gathering
 
 #### 1.1 Determine Mode

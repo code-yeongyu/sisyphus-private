@@ -23,6 +23,7 @@ from sisyphus.core.session import SessionStore
 from sisyphus.core.tasks import TaskValidator
 from sisyphus.ui.base import create_ui
 from sisyphus.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
+from sisyphus.utils.git import detect_base_branch, find_commits_with_files, generate_rebase_guide, is_on_main_branch
 from sisyphus.utils.logging import LoggerFactory
 from sisyphus.utils.theme import ThemeName, detect_system_theme
 
@@ -543,6 +544,60 @@ def ignore(
                     else:
                         console.print(f"  • {pattern}")
         console.print("\n[bold green]Successfully configured git to ignore Sisyphus files![/bold green]")
+
+
+@app.command(name="clean-history")
+def clean_history(
+    base_branch: str | None = typer.Option(None, "--base-branch", help="Base branch (auto-detect if not specified)"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be done without making changes"),
+) -> None:
+    """Remove Sisyphus-generated files from git history (current branch only)."""
+    if is_on_main_branch():
+        error_console.print("[red]Error: Cannot clean history on main/master branch[/red]")
+        error_console.print("[yellow]Please switch to a feature branch first[/yellow]")
+        raise typer.Exit(1)
+
+    detected_base = detect_base_branch()
+    if base_branch is None:
+        base_branch = detected_base
+
+    if base_branch is None:
+        error_console.print("[red]Error: No base branch found[/red]")
+        error_console.print("[yellow]Tried: origin/main, origin/master, origin/develop[/yellow]")
+        error_console.print("[yellow]Specify one with --base-branch flag[/yellow]")
+        raise typer.Exit(1)
+
+    file_patterns = [
+        "ai-todolist.md",
+        "notepad.md",
+        "sessions/",
+        "logs/",
+        "agentloop.json",
+        "claude_session_*.log",
+    ]
+
+    commits = find_commits_with_files(base_branch, file_patterns)
+
+    if not commits:
+        console.print("[green]✓[/green] No commits containing Sisyphus files found")
+        console.print(f"[dim]Git history is clean since {base_branch}[/dim]")
+        return
+
+    console.print("\n[bold yellow]⚠ Warning: Git History Modification[/bold yellow]")
+    console.print(f"Found [bold]{len(commits)}[/bold] commit(s) with Sisyphus files since [cyan]{base_branch}[/cyan]")
+    console.print("[yellow]This operation will rewrite git history.[/yellow]")
+    console.print("[yellow]If these commits are already pushed, you'll need force-push.[/yellow]\n")
+
+    if not dry_run:
+        if not typer.confirm("Do you want to proceed?"):
+            console.print("[yellow]Operation cancelled[/yellow]")
+            raise typer.Exit(0)
+
+    guide = generate_rebase_guide(commits, base_branch)
+    console.print(guide)
+
+    if dry_run:
+        console.print("\n[dim]DRY RUN - no changes made[/dim]")
 
 
 if __name__ == "__main__":

@@ -14,6 +14,26 @@
         "name": "YeonGyu Kim",
         "email": "public.kim.yeon.gyu@gmail.com"
       }
+    },
+    {
+      "name": "basic-web-development",
+      "source": "./claude-code-plugins/basic-web-development",
+      "description": "Web development tools with Playwright browser automation via MCP",
+      "version": "0.1.0",
+      "author": {
+        "name": "YeonGyu Kim",
+        "email": "public.kim.yeon.gyu@gmail.com"
+      }
+    },
+    {
+      "name": "svelte-web-development",
+      "source": "./claude-code-plugins/svelte-web-development",
+      "description": "Svelte 5 development with official MCP, runes, and best practices",
+      "version": "0.1.0",
+      "author": {
+        "name": "YeonGyu Kim",
+        "email": "public.kim.yeon.gyu@gmail.com"
+      }
     }
   ]
 }

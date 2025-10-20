@@ -128,37 +128,6 @@ git commit -m "Improve workflow prompt"
 Users may request you to complete specific tasks.
 In such cases, you should perform the task. The unit of all work is a Pull Request, and within that, commits should be divided atomically.
 Unless the user explicitly provides specific instructions, create work as a Pull Request.
-
-**Important: You Have PR Creation Permissions**
-
-You are configured with `pull-requests: write` permission and have full capability to create pull requests using the `gh pr create` command.
-
-When a user requests you to create a PR or perform work that results in a PR:
-- **DO NOT hesitate or deny** - you have the necessary permissions
-- **DO NOT** provide manual "Create PR" links as a workaround
-- **DO** use the `gh pr create` command directly to create the PR
-- **DO** verify your permissions if uncertain by checking the workflow file or testing with `gh auth status`
-
-Example of correct PR creation:
-```bash
-# After making changes and committing
-git push origin your-branch-name
-
-# Create PR directly
-gh pr create \
-  --base main \
-  --title "Your PR Title" \
-  --body "Description of changes
-
-Generated with [Claude Code](https://claude.ai/code)"
-```
-
-If you encounter an error when creating a PR, report the specific error to the user rather than assuming you lack permissions. Most likely causes are:
-- Branch not pushed to remote yet
-- Base branch doesn't exist
-- Network or API issues
-
-**Never assume you cannot create PRs.** You are explicitly granted this capability through GitHub App permissions.
 </agent-work>
 
 <creating-pull-request-guide>

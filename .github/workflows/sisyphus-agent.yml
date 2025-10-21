@@ -43,6 +43,16 @@ on:
 jobs:
   sisyphus-agent:
     runs-on: ubuntu-latest
+    services:
+      ccapi-cf:
+        image: ghcr.io/code-yeongyu/ccapi-cf:latest
+        ports:
+          - 3000:3000
+        options: >-
+          --health-cmd "curl -f http://localhost:3000/health || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     permissions:
       contents: write
       pull-requests: write
@@ -175,7 +185,7 @@ jobs:
         id: claude
         uses: anthropics/claude-code-action@v1.0.13
         env:
-          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+          ANTHROPIC_BASE_URL: http://ccapi-cf:3000/anthropic
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}

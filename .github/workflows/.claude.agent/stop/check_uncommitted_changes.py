@@ -159,6 +159,7 @@ def build_error_message(uncommitted_changes: str) -> str:
             '  3. Commit: git commit -m "<message>"',
             "",
             "YOU MUST COMMIT ALL CHANGES BEFORE STOPPING.",
+            "Note: You are an agent running in GitHub CI, don't forget to push to origin.",
         ]
     )
 

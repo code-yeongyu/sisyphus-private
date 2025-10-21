@@ -1,0 +1,967 @@
+# Complex Task Plan Example
+# Demonstrates: nested subtasks, critical tasks, external references,
+# complex verification, runtime task discovery, parallel execution
+
+schema_version: "1.0.0"
+
+project:
+  id: "proj_ecommerce_cart"
+  name: "E-Commerce Shopping Cart"
+  description: "Implement shopping cart with payment integration"
+  repository: "https://github.com/company/ecommerce"
+  created_at: "2025-10-20T00:00:00Z"
+  updated_at: "2025-10-21T14:30:00Z"
+
+config:
+  auto_split:
+    enabled: true
+    max_tasks: 30
+    max_depth: 3
+    strategy: "milestone"
+
+  verification:
+    verify_on_task_complete: true
+    verify_on_project_complete: true
+    cache_results: true
+    cache_ttl_seconds: 3600
+
+  agent:
+    parallel_execution: true
+    max_concurrent_tasks: 3
+    retry_failed_tasks: true
+    max_retries: 3
+
+goal:
+  description: "Complete shopping cart with Stripe payment integration"
+  success_criteria:
+    - "Cart CRUD operations work"
+    - "Stripe payment flow complete"
+    - "Security audit passed"
+    - "Load tests pass (100 RPS)"
+    - "All tests >90% coverage"
+  is_accomplished: false
+
+milestones:
+  - id: "m1"
+    name: "Cart Backend"
+    description: "Database and API for cart"
+    status: "completed"
+    completion: 1.0
+    tasks: ["t1", "t2"]
+
+  - id: "m2"
+    name: "Payment Integration"
+    description: "Stripe payment processing"
+    status: "in_progress"
+    completion: 0.6
+    depends_on: ["m1"]
+    tasks: ["t3", "t4"]
+
+  - id: "m3"
+    name: "Security & Performance"
+    description: "Security hardening and load testing"
+    status: "pending"
+    completion: 0.0
+    depends_on: ["m2"]
+    tasks: ["t5"]
+
+tasks:
+  # ============================================================================
+  # TASK 1: Cart Database (COMPLETED)
+  # ============================================================================
+  - id: "t1"
+    title: "Cart database schema"
+    description: "Design and implement cart tables"
+    status: "completed"
+    completion: 1.0
+    priority: "high"
+    milestone: "m1"
+    estimated_time_hours: 3.0
+    actual_time_hours: 2.8
+    started_at: "2025-10-20T09:00:00Z"
+    completed_at: "2025-10-20T11:48:00Z"
+    assignee: "agent_claude"
+    session_id: "sess_20251020_090000"
+    depends_on: []
+    blocks: ["t2"]
+
+    verification:
+      type: "composite"
+      operator: "AND"
+      checks:
+        - type: "command"
+          name: "migration"
+          command: "alembic upgrade head"
+          expected_exit_code: 0
+
+        - type: "command"
+          name: "tests"
+          command: "pytest tests/test_cart_schema.py -v"
+          expected_exit_code: 0
+
+      passed: true
+      verified_at: "2025-10-20T11:50:00Z"
+
+    notes:
+      - timestamp: "2025-10-20T09:00:00Z"
+        author: "agent_claude"
+        content: "Starting cart schema design"
+
+      - timestamp: "2025-10-20T11:48:00Z"
+        author: "agent_claude"
+        content: "Schema complete. Tables: carts, cart_items, products"
+
+  # ============================================================================
+  # TASK 2: Cart API (COMPLETED)
+  # ============================================================================
+  - id: "t2"
+    title: "Cart REST API endpoints"
+    description: "CRUD operations for shopping cart"
+    status: "completed"
+    completion: 1.0
+    priority: "high"
+    milestone: "m1"
+    estimated_time_hours: 4.0
+    actual_time_hours: 4.2
+    started_at: "2025-10-20T12:00:00Z"
+    completed_at: "2025-10-20T16:12:00Z"
+    assignee: "agent_claude"
+    depends_on: ["t1"]
+    blocks: ["t3", "t4"]
+
+    # Complex subtasks - reference external file
+    subtasks_ref:
+      file: "tasks/t2_cart_api_subtasks.yaml"
+      task_count: 8
+      total_depth: 2
+      description: "Detailed breakdown: GET/POST/PUT/DELETE endpoints"
+
+    verification:
+      type: "composite"
+      operator: "AND"
+      checks:
+        - type: "subtasks_complete"
+          weight: 0.3
+
+        - type: "command"
+          name: "unit_tests"
+          command: "pytest tests/test_cart_api.py -v --cov=src/api/cart"
+          expected_exit_code: 0
+          weight: 0.3
+
+        - type: "command"
+          name: "integration_tests"
+          command: "pytest tests/integration/test_cart_flow.py -v"
+          expected_exit_code: 0
+          weight: 0.2
+
+        - type: "prompt"
+          name: "api_design_review"
+          prompt: |
+            Review cart API design:
+            1. RESTful conventions followed
+            2. Proper HTTP status codes
+            3. Error handling comprehensive
+            4. Input validation present
+            5. API documented (OpenAPI)
+          llm_check: true
+          llm_model: "claude-sonnet-4.5"
+          weight: 0.2
+
+      passed: true
+      verified_at: "2025-10-20T16:15:00Z"
+
+  # ============================================================================
+  # TASK 3: Stripe Integration (IN PROGRESS)
+  # ============================================================================
+  - id: "t3"
+    title: "Stripe payment integration"
+    description: "Implement Stripe checkout and webhooks"
+    status: "in_progress"
+    completion: 0.6
+    priority: "critical"
+    milestone: "m2"
+    estimated_time_hours: 6.0
+    actual_time_hours: 3.5
+    started_at: "2025-10-21T09:00:00Z"
+    completed_at: null
+    assignee: "agent_claude"
+    session_id: "sess_20251021_090000"
+    depends_on: ["t2"]
+    blocks: ["t5"]
+    tags: ["payment", "stripe", "integration"]
+
+    subtasks:
+      - id: "t3.1"
+        title: "Set up Stripe SDK"
+        status: "completed"
+        completion: 1.0
+        verification:
+          type: "command"
+          command: "python -c 'import stripe; print(stripe.api_version)'"
+          expected_exit_code: 0
+          passed: true
+
+      - id: "t3.2"
+        title: "Create payment intent endpoint"
+        description: "POST /payments/create-intent"
+        status: "completed"
+        completion: 1.0
+        depends_on: ["t3.1"]
+
+        verification:
+          type: "composite"
+          operator: "AND"
+          checks:
+            - type: "http"
+              name: "endpoint_works"
+              method: "POST"
+              url: "http://localhost:8000/payments/create-intent"
+              headers:
+                Content-Type: "application/json"
+              body:
+                cart_id: "cart_123"
+                amount: 9999
+                currency: "usd"
+              expected_status: 200
+              expected_response_schema:
+                type: "object"
+                required: ["client_secret", "payment_intent_id"]
+
+            - type: "command"
+              name: "tests"
+              command: "pytest tests/test_stripe_intent.py -v"
+              expected_exit_code: 0
+
+          passed: true
+
+      - id: "t3.3"
+        title: "Handle payment success webhook"
+        description: "POST /webhooks/stripe (payment_intent.succeeded)"
+        status: "completed"
+        completion: 1.0
+        depends_on: ["t3.2"]
+
+        verification:
+          type: "composite"
+          operator: "AND"
+          checks:
+            - type: "command"
+              name: "webhook_tests"
+              command: "pytest tests/test_stripe_webhooks.py::test_payment_success -v"
+              expected_exit_code: 0
+
+            - type: "prompt"
+              name: "webhook_security"
+              prompt: |
+                Verify webhook security:
+                1. Signature verification implemented (Stripe-Signature header)
+                2. Replay attack prevention (event ID tracking)
+                3. Proper error handling and logging
+                4. Idempotency handling
+              llm_check: true
+
+          passed: true
+
+      - id: "t3.4"
+        title: "Handle payment failure webhook"
+        description: "POST /webhooks/stripe (payment_intent.payment_failed)"
+        status: "in_progress"
+        completion: 0.7
+        depends_on: ["t3.2"]
+
+        verification:
+          type: "command"
+          command: "pytest tests/test_stripe_webhooks.py::test_payment_failure -v"
+          expected_exit_code: 0
+          passed: null
+
+      - id: "t3.5"
+        title: "Implement refund endpoint"
+        description: "POST /payments/refund"
+        status: "pending"
+        completion: 0.0
+        depends_on: ["t3.3"]
+
+        verification:
+          type: "composite"
+          operator: "AND"
+          checks:
+            - type: "http"
+              method: "POST"
+              url: "http://localhost:8000/payments/refund"
+              body:
+                payment_intent_id: "pi_test_123"
+                amount: 5000
+              expected_status: 200
+
+            - type: "command"
+              command: "pytest tests/test_refunds.py -v"
+              expected_exit_code: 0
+
+    verification:
+      type: "composite"
+      operator: "AND"
+      checks:
+        - type: "subtasks_complete"
+          description: "All payment flows implemented"
+          weight: 0.4
+
+        - type: "command"
+          name: "integration_tests"
+          command: "pytest tests/integration/test_payment_flow.py -v"
+          expected_exit_code: 0
+          weight: 0.3
+
+        - type: "static_analysis"
+          name: "security_scan"
+          tools:
+            - name: "bandit"
+              command: "bandit -r src/payments/ -ll"
+              expected_exit_code: 0
+          weight: 0.3
+
+      passed: null
+
+    notes:
+      - timestamp: "2025-10-21T09:00:00Z"
+        author: "agent_claude"
+        content: "Starting Stripe integration"
+
+      - timestamp: "2025-10-21T11:30:00Z"
+        author: "agent_claude"
+        content: "Payment success flow complete and tested"
+
+  # ============================================================================
+  # TASK 4: Frontend payment form (PARALLEL with t3)
+  # ============================================================================
+  - id: "t4"
+    title: "Payment form UI"
+    description: "React checkout form with Stripe Elements"
+    status: "pending"
+    completion: 0.0
+    priority: "high"
+    milestone: "m2"
+    estimated_time_hours: 4.0
+    depends_on: ["t2"]  # Can run parallel with t3
+    blocks: ["t5"]
+    tags: ["frontend", "react", "stripe"]
+
+    subtasks:
+      - id: "t4.1"
+        title: "Install Stripe React components"
+        status: "pending"
+
+        verification:
+          type: "command"
+          command: "npm list @stripe/react-stripe-js @stripe/stripe-js"
+          expected_exit_code: 0
+
+      - id: "t4.2"
+        title: "Create CheckoutForm component"
+        status: "pending"
+        depends_on: ["t4.1"]
+
+        verification:
+          type: "composite"
+          operator: "AND"
+          checks:
+            - type: "command"
+              name: "component_exists"
+              command: "ls src/components/CheckoutForm.tsx"
+              expected_exit_code: 0
+
+            - type: "command"
+              name: "tests"
+              command: "npm test -- CheckoutForm.test.tsx"
+              expected_exit_code: 0
+
+            - type: "prompt"
+              name: "component_review"
+              prompt: |
+                Review CheckoutForm component:
+                1. Uses Stripe Elements properly
+                2. Handles loading states
+                3. Error handling and display
+                4. Accessible (WCAG 2.1 AA)
+                5. Mobile responsive
+              llm_check: true
+
+      - id: "t4.3"
+        title: "Integrate with backend API"
+        status: "pending"
+        depends_on: ["t4.2"]
+
+        verification:
+          type: "command"
+          command: "npm run test:e2e -- checkout.spec.ts"
+          expected_exit_code: 0
+
+    verification:
+      type: "composite"
+      operator: "AND"
+      checks:
+        - type: "subtasks_complete"
+
+        - type: "command"
+          name: "e2e_tests"
+          command: "npm run test:e2e"
+          expected_exit_code: 0
+
+  # ============================================================================
+  # TASK 5: Security & Performance (BLOCKED until t3, t4 complete)
+  # ============================================================================
+  - id: "t5"
+    title: "Security audit and load testing"
+    description: "Comprehensive security review and performance testing"
+    status: "pending"
+    completion: 0.0
+    priority: "critical"
+    milestone: "m3"
+    estimated_time_hours: 5.0
+    depends_on: ["t3", "t4"]
+    tags: ["security", "performance", "audit"]
+
+    subtasks:
+      - id: "t5.1"
+        title: "OWASP security scan"
+        status: "pending"
+
+        verification:
+          type: "composite"
+          operator: "AND"
+          checks:
+            - type: "command"
+              name: "bandit"
+              command: "bandit -r src/ -ll -f json -o reports/bandit.json"
+              expected_exit_code: 0
+
+            - type: "command"
+              name: "safety"
+              command: "safety check --json --output reports/safety.json"
+              expected_exit_code: 0
+
+            - type: "prompt"
+              name: "manual_review"
+              prompt: |
+                Manual security review checklist:
+                1. A01 Broken Access Control - proper authorization
+                2. A02 Cryptographic Failures - secrets encrypted at rest
+                3. A03 Injection - parameterized queries only
+                4. A04 Insecure Design - threat modeling done
+                5. A05 Security Misconfiguration - secure defaults
+                6. A06 Vulnerable Components - dependencies updated
+                7. A07 Auth Failures - session management secure
+                8. A08 Integrity Failures - signed webhooks verified
+                9. A09 Logging Failures - security events logged
+                10. A10 SSRF - URL validation present
+              llm_check: true
+              llm_model: "claude-sonnet-4.5"
+
+      - id: "t5.2"
+        title: "Load testing (100 RPS)"
+        description: "Verify system handles 100 requests/second"
+        status: "pending"
+        depends_on: ["t5.1"]
+
+        verification:
+          type: "composite"
+          operator: "AND"
+          checks:
+            - type: "command"
+              name: "locust_load_test"
+              command: |
+                locust -f tests/load/locustfile.py \
+                  --headless \
+                  --users 100 \
+                  --spawn-rate 10 \
+                  --run-time 5m \
+                  --expect-workers 1 \
+                  --check-avg-response-time 500 \
+                  --check-fail-ratio 0.01
+              expected_exit_code: 0
+              timeout_seconds: 400
+
+            - type: "prompt"
+              name: "performance_review"
+              prompt: |
+                Review load test results:
+                1. P50 latency < 200ms
+                2. P95 latency < 500ms
+                3. P99 latency < 1000ms
+                4. Error rate < 0.1%
+                5. No memory leaks
+                6. Database connection pool healthy
+              llm_check: true
+
+    verification:
+      type: "composite"
+      operator: "AND"
+      checks:
+        - type: "subtasks_complete"
+
+        - type: "prompt"
+          name: "production_readiness"
+          prompt: |
+            Final production readiness checklist:
+            1. Security audit passed
+            2. Load tests passed
+            3. Monitoring/alerting configured
+            4. Runbooks documented
+            5. Rollback plan exists
+            6. Incident response plan ready
+          llm_check: true
+          required: true
+
+# ==============================================================================
+# CRITICAL TASKS (discovered during execution)
+# ==============================================================================
+critical_tasks:
+  - id: "ct1"
+    title: "FIX: Webhook signature verification missing"
+    description: |
+      SECURITY VULNERABILITY - HIGH SEVERITY
+
+      The Stripe webhook handler does not verify webhook signatures.
+      This allows attackers to forge webhook events and manipulate payment status.
+
+      Location: src/payments/webhooks.py:line 34
+      Discovered during security review in iteration 2.
+
+      Attack scenario:
+      1. Attacker sends fake payment_intent.succeeded event
+      2. System marks order as paid without actual payment
+      3. Order fulfilled without payment
+
+      Fix required:
+      - Use stripe.Webhook.construct_event() with signature verification
+      - Validate Stripe-Signature header
+      - Implement replay attack prevention
+
+    priority: "critical"
+    severity: "high"
+    security_impact: true
+    blocks_release: true
+
+    discovered_at: "2025-10-21T13:30:00Z"
+    discovered_by: "agent_architect"
+    discovery_method: "verify_phase_security_review"
+    discovery_context: "iteration_2_security_audit"
+
+    status: "completed"
+    completion: 1.0
+    completed_at: "2025-10-21T14:00:00Z"
+
+    related_task: "t3.3"
+    blocks: []
+
+    assignee: "agent_claude"
+    estimated_time_hours: 1.0
+    actual_time_hours: 0.5
+
+    verification:
+      type: "composite"
+      operator: "AND"
+      checks:
+        - type: "command"
+          name: "security_test"
+          command: "pytest tests/security/test_webhook_signature.py -v"
+          expected_exit_code: 0
+
+        - type: "prompt"
+          name: "code_review"
+          prompt: |
+            Verify webhook signature verification:
+            1. Uses stripe.Webhook.construct_event()
+            2. WEBHOOK_SECRET environment variable required
+            3. Signature validation before any processing
+            4. Test coverage for signature validation
+            5. Test coverage for invalid signature rejection
+          llm_check: true
+
+      passed: true
+      verified_at: "2025-10-21T14:05:00Z"
+
+    notes:
+      - timestamp: "2025-10-21T13:30:00Z"
+        author: "agent_architect"
+        content: |
+          Critical security issue found during verify phase.
+          This is a CVSS 8.1 vulnerability (High severity).
+          MUST be fixed before release.
+
+      - timestamp: "2025-10-21T13:45:00Z"
+        author: "agent_claude"
+        content: "Starting fix - implementing signature verification"
+
+      - timestamp: "2025-10-21T14:00:00Z"
+        author: "agent_claude"
+        content: |
+          Fix complete:
+          - Added stripe.Webhook.construct_event() call
+          - Validates Stripe-Signature header
+          - Tests added for valid/invalid signatures
+          - Event ID tracking for replay prevention
+
+  - id: "ct2"
+    title: "FIX: Missing idempotency key for Stripe API calls"
+    description: |
+      RELIABILITY ISSUE - MEDIUM SEVERITY
+
+      Payment intent creation does not use idempotency keys.
+      Network retries could cause duplicate charges.
+
+      Location: src/payments/stripe_client.py:line 56
+
+      Fix required:
+      - Generate idempotency key from cart_id
+      - Pass idempotency-key header to Stripe API
+      - Store processed keys to prevent duplicates
+
+    priority: "high"
+    severity: "medium"
+    security_impact: false
+    blocks_release: true
+
+    discovered_at: "2025-10-21T13:35:00Z"
+    discovered_by: "agent_architect"
+    discovery_method: "verify_phase_code_review"
+
+    status: "in_progress"
+    completion: 0.3
+
+    related_task: "t3.2"
+    assignee: "agent_claude"
+    estimated_time_hours: 1.5
+
+    verification:
+      type: "composite"
+      operator: "AND"
+      checks:
+        - type: "command"
+          command: "pytest tests/test_idempotency.py -v"
+          expected_exit_code: 0
+
+        - type: "prompt"
+          prompt: |
+            Verify idempotency implementation:
+            1. Idempotency key generated from cart_id + timestamp
+            2. Key passed in Idempotency-Key header
+            3. Duplicate request returns cached result
+            4. Keys expire after 24 hours
+          llm_check: true
+
+      passed: null
+
+# ==============================================================================
+# PROJECT-LEVEL VERIFICATION
+# ==============================================================================
+project_verification:
+  description: "Project completion verification checklist"
+
+  checks:
+    # Structural
+    - type: "all_tasks_complete"
+      required: true
+      weight: 0.15
+
+    - type: "no_critical_tasks"
+      required: true
+      weight: 0.15
+
+    - type: "milestones_complete"
+      required: true
+      weight: 0.1
+
+    # Testing
+    - type: "command"
+      name: "backend_tests"
+      command: "pytest --maxfail=0 -v"
+      expected_exit_code: 0
+      required: true
+      weight: 0.1
+
+    - type: "command"
+      name: "frontend_tests"
+      command: "npm test -- --coverage --watchAll=false"
+      expected_exit_code: 0
+      required: true
+      weight: 0.1
+
+    - type: "coverage"
+      name: "backend_coverage"
+      command: "pytest --cov=src --cov-report=term --cov-fail-under=90"
+      expected_exit_code: 0
+      min_coverage: 90
+      required: true
+      weight: 0.1
+
+    # Security
+    - type: "command"
+      name: "security_scan"
+      command: "bandit -r src/ -ll"
+      expected_exit_code: 0
+      required: true
+      weight: 0.1
+
+    - type: "command"
+      name: "dependency_audit"
+      command: "safety check"
+      expected_exit_code: 0
+      required: true
+      weight: 0.05
+
+    # Performance
+    - type: "command"
+      name: "load_test"
+      command: "locust -f tests/load/locustfile.py --headless --users 100 --run-time 2m"
+      expected_exit_code: 0
+      required: true
+      weight: 0.1
+
+    # Final review
+    - type: "prompt"
+      name: "production_readiness"
+      prompt: |
+        Final production readiness assessment:
+
+        **Functionality:**
+        1. All features work as specified
+        2. Edge cases handled
+        3. Error handling comprehensive
+
+        **Security:**
+        4. OWASP Top 10 mitigations in place
+        5. Webhook signatures verified
+        6. Payment data encrypted
+        7. PCI DSS requirements considered
+        8. Rate limiting on payment endpoints
+
+        **Reliability:**
+        9. Idempotency implemented
+        10. Retry logic with exponential backoff
+        11. Circuit breakers for external APIs
+        12. Database transactions used correctly
+
+        **Observability:**
+        13. Logging comprehensive
+        14. Metrics exported
+        15. Alerts configured
+        16. Dashboards created
+
+        **Operations:**
+        17. Deployment process documented
+        18. Rollback procedure tested
+        19. Runbooks complete
+        20. On-call rotation established
+
+        Is the system production-ready?
+      llm_check: true
+      llm_model: "claude-sonnet-4.5"
+      required: true
+      weight: 0.05
+
+  passed: false
+  last_verified: null
+
+# ==============================================================================
+# EXECUTION HISTORY
+# ==============================================================================
+execution_history:
+  - session_id: "sess_20251020_090000"
+    agent: "agent_claude"
+    phase: "execute"
+    task_id: "t1"
+    started_at: "2025-10-20T09:00:00Z"
+    ended_at: "2025-10-20T12:00:00Z"
+    status: "completed"
+
+  - session_id: "sess_20251020_120000"
+    agent: "agent_claude"
+    phase: "execute"
+    task_id: "t2"
+    started_at: "2025-10-20T12:00:00Z"
+    ended_at: "2025-10-20T17:00:00Z"
+    status: "completed"
+
+  - session_id: "sess_20251020_170000"
+    agent: "agent_architect"
+    phase: "verify"
+    task_id: null
+    started_at: "2025-10-20T17:00:00Z"
+    ended_at: "2025-10-20T17:30:00Z"
+    status: "completed"
+    feedback_given: true
+
+  - session_id: "sess_20251021_090000"
+    agent: "agent_claude"
+    phase: "execute"
+    task_id: "t3"
+    started_at: "2025-10-21T09:00:00Z"
+    ended_at: null
+    status: "in_progress"
+
+# ==============================================================================
+# FEEDBACK HISTORY
+# ==============================================================================
+feedback_history:
+  - iteration: 1
+    timestamp: "2025-10-20T17:30:00Z"
+    agent: "agent_architect"
+    session_id: "sess_20251020_170000"
+
+    feedback: |
+      **ITERATION 1 FEEDBACK**
+
+      ## Progress
+      ✓ t1: Cart database schema complete
+      ✓ t2: Cart API complete
+      - t3: Not started
+      - t4: Not started
+      - t5: Not started
+
+      ## Code Quality
+      - Good test coverage (85%)
+      - API design follows REST conventions
+      - Database schema normalized
+
+      ## Issues
+      None found in completed tasks.
+
+      ## Next Steps
+      1. Start t3 (Stripe integration)
+      2. Can run t4 (Frontend) in parallel
+      3. Continue as planned
+
+      **VERDICT:** CONTINUE EXECUTION
+
+    tasks_affected: ["t1", "t2"]
+    critical_tasks_created: []
+    requires_rework: false
+
+  - iteration: 2
+    timestamp: "2025-10-21T13:45:00Z"
+    agent: "agent_architect"
+    session_id: "sess_20251021_130000"
+
+    feedback: |
+      **ITERATION 2 FEEDBACK**
+
+      ## Progress
+      ✓ t1: Complete
+      ✓ t2: Complete
+      ⚠ t3: 60% complete - CRITICAL ISSUES FOUND
+      - t4: Not started
+      - t5: Not started
+
+      ## Critical Security Issues (2)
+
+      ### 1. Missing Webhook Signature Verification (HIGH)
+      - **Task:** t3.3
+      - **Impact:** Payment fraud possible
+      - **Action:** Created ct1 - MUST FIX IMMEDIATELY
+
+      ### 2. Missing Idempotency Keys (MEDIUM)
+      - **Task:** t3.2
+      - **Impact:** Duplicate charges possible
+      - **Action:** Created ct2 - FIX BEFORE RELEASE
+
+      ## Code Quality
+      - Tests passing for completed subtasks
+      - Good error handling in most areas
+      - Documentation needs improvement
+
+      ## Required Actions
+      1. Fix ct1 immediately (security blocker)
+      2. Fix ct2 before release
+      3. Add idempotency tests
+      4. Update payment documentation
+
+      **VERDICT:** REWORK REQUIRED (security issues)
+
+    tasks_affected: ["t3"]
+    critical_tasks_created: ["ct1", "ct2"]
+    requires_rework: true
+
+# ==============================================================================
+# METRICS
+# ==============================================================================
+metrics:
+  total_tasks: 5
+  completed_tasks: 2
+  in_progress_tasks: 1
+  pending_tasks: 2
+  blocked_tasks: 0
+  failed_tasks: 0
+  skipped_tasks: 0
+
+  critical_tasks_total: 2
+  critical_tasks_resolved: 1
+  critical_tasks_pending: 1
+
+  total_subtasks: 21
+  completed_subtasks: 7
+
+  estimated_total_hours: 22.0
+  actual_total_hours: 10.5
+  time_efficiency: 0.477
+
+  completion_percentage: 42.3
+  on_track: true
+  projected_completion: "2025-10-22T18:00:00Z"
+
+  verify_iterations: 2
+  critical_issues_found: 2
+  critical_issues_resolved: 1
+
+  tests_passing: true
+  coverage_percentage: 87.5
+
+# ==============================================================================
+# GRAPH ANALYSIS
+# ==============================================================================
+graph_analysis:
+  is_dag: true
+  has_cycles: false
+  cycle_paths: []
+
+  critical_path: ["t1", "t2", "t3", "t5"]
+  critical_path_duration_hours: 18.0
+
+  topological_order: ["t1", "t2", "t3", "t4", "t5"]
+
+  # Tasks that can run in parallel
+  parallel_groups:
+    - ["t1"]
+    - ["t2"]
+    - ["t3", "t4"]  # These can run in parallel
+    - ["t5"]
+
+  max_depth: 4
+  max_dependencies_per_task: 2
+  isolated_tasks: 0
+  leaf_tasks: ["t5"]
+  root_tasks: ["t1"]
+
+# ==============================================================================
+# AUTO-SPLIT METADATA
+# ==============================================================================
+splits:
+  enabled: true
+  strategy: "milestone"
+
+  split_files:
+    - file: "tasks/milestone_m1_cart_backend.yaml"
+      milestone: "m1"
+      task_ids: ["t1", "t2"]
+      status: "completed"
+
+    - file: "tasks/milestone_m2_payment.yaml"
+      milestone: "m2"
+      task_ids: ["t3", "t4"]
+      status: "active"
+
+    - file: "tasks/milestone_m3_security.yaml"
+      milestone: "m3"
+      task_ids: ["t5"]
+      status: "pending"

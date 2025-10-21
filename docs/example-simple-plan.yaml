@@ -1,0 +1,205 @@
+# Simple Task Plan Example
+# This is a minimal example showing the core concepts
+
+schema_version: "1.0.0"
+
+project:
+  id: "proj_simple_api"
+  name: "Simple REST API"
+  description: "Build a basic user API"
+  created_at: "2025-10-21T00:00:00Z"
+  updated_at: "2025-10-21T00:00:00Z"
+
+config:
+  auto_split:
+    enabled: false
+  verification:
+    verify_on_task_complete: true
+    verify_on_project_complete: true
+  agent:
+    parallel_execution: true
+    max_concurrent_tasks: 2
+
+goal:
+  description: "Create a working user API with CRUD operations"
+  success_criteria:
+    - "All endpoints implemented"
+    - "Tests passing"
+    - "Documentation complete"
+  is_accomplished: false
+
+milestones:
+  - id: "m1"
+    name: "Setup"
+    status: "pending"
+
+  - id: "m2"
+    name: "Implementation"
+    status: "pending"
+    depends_on: ["m1"]
+
+tasks:
+  # Task 1: Project setup
+  - id: "t1"
+    title: "Initialize FastAPI project"
+    description: "Set up project structure and dependencies"
+    status: "pending"
+    priority: "high"
+    milestone: "m1"
+    estimated_time_hours: 1.0
+    depends_on: []
+    blocks: ["t2", "t3"]
+
+    subtasks:
+      - id: "t1.1"
+        title: "Create project structure"
+        status: "pending"
+        verification:
+          type: "command"
+          command: "ls -la src/ tests/ pyproject.toml"
+          expected_exit_code: 0
+
+      - id: "t1.2"
+        title: "Install dependencies"
+        status: "pending"
+        depends_on: ["t1.1"]
+        verification:
+          type: "command"
+          command: "uv pip list | grep fastapi"
+          expected_exit_code: 0
+
+    verification:
+      type: "composite"
+      operator: "AND"
+      checks:
+        - type: "subtasks_complete"
+        - type: "command"
+          name: "run_fastapi"
+          command: "python -c 'import fastapi; print(fastapi.__version__)'"
+          expected_exit_code: 0
+
+  # Task 2: User model
+  - id: "t2"
+    title: "Create User model"
+    description: "Implement Pydantic user model"
+    status: "pending"
+    priority: "high"
+    milestone: "m2"
+    estimated_time_hours: 1.5
+    depends_on: ["t1"]
+    blocks: ["t3"]
+
+    verification:
+      type: "composite"
+      operator: "AND"
+      checks:
+        - type: "command"
+          name: "tests"
+          command: "pytest tests/test_models.py -v"
+          expected_exit_code: 0
+
+        - type: "prompt"
+          name: "code_review"
+          prompt: |
+            Review User model:
+            1. Has proper field validation
+            2. Includes id, email, name fields
+            3. Email validation works
+          llm_check: true
+
+  # Task 3: API endpoints
+  - id: "t3"
+    title: "Implement CRUD endpoints"
+    description: "Create user CRUD API endpoints"
+    status: "pending"
+    priority: "critical"
+    milestone: "m2"
+    estimated_time_hours: 3.0
+    depends_on: ["t2"]
+
+    subtasks:
+      - id: "t3.1"
+        title: "GET /users"
+        status: "pending"
+        verification:
+          type: "http"
+          method: "GET"
+          url: "http://localhost:8000/users"
+          expected_status: 200
+
+      - id: "t3.2"
+        title: "POST /users"
+        status: "pending"
+        verification:
+          type: "http"
+          method: "POST"
+          url: "http://localhost:8000/users"
+          body:
+            email: "test@example.com"
+            name: "Test User"
+          expected_status: 201
+
+      - id: "t3.3"
+        title: "GET /users/{id}"
+        status: "pending"
+        depends_on: ["t3.2"]
+        verification:
+          type: "http"
+          method: "GET"
+          url: "http://localhost:8000/users/1"
+          expected_status: 200
+
+      - id: "t3.4"
+        title: "DELETE /users/{id}"
+        status: "pending"
+        depends_on: ["t3.3"]
+        verification:
+          type: "http"
+          method: "DELETE"
+          url: "http://localhost:8000/users/1"
+          expected_status: 204
+
+    verification:
+      type: "composite"
+      operator: "AND"
+      checks:
+        - type: "subtasks_complete"
+        - type: "command"
+          command: "pytest tests/test_api.py -v"
+          expected_exit_code: 0
+
+critical_tasks: []
+
+project_verification:
+  checks:
+    - type: "all_tasks_complete"
+      required: true
+
+    - type: "no_critical_tasks"
+      required: true
+
+    - type: "command"
+      name: "full_tests"
+      command: "pytest -v"
+      expected_exit_code: 0
+      required: true
+
+feedback_history: []
+execution_history: []
+
+metrics:
+  total_tasks: 3
+  completed_tasks: 0
+  pending_tasks: 3
+  completion_percentage: 0.0
+  estimated_total_hours: 5.5
+
+graph_analysis:
+  is_dag: true
+  has_cycles: false
+  critical_path: ["t1", "t2", "t3"]
+  topological_order: ["t1", "t2", "t3"]
+  parallel_groups:
+    - ["t1"]
+    - ["t2"]
+    - ["t3"]

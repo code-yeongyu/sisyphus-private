@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import sys
-import time
 from typing import TYPE_CHECKING
 
 import anyio
@@ -64,7 +63,7 @@ class ExecutionLoop:
         self._current_cancel_scope: anyio.CancelScope | None = None
         self._resume_event: anyio.Event | None = None
         self._resumed_once = False
-        self._execute_timestamps: list[float] = []
+        self._consecutive_execute_count: int = 0
         self._execute_resume_fail_count: int = 0
         self._should_exit_execute_phase = False
 
@@ -133,23 +132,18 @@ class ExecutionLoop:
         iteration = 0
         verify_feedback_history: list[str] = []
 
-        execute_throttle_window_seconds = 60.0
         execute_throttle_max_count = 10
 
         while True:
             iteration += 1
 
-            current_time = time.time()
-            self._execute_timestamps.append(current_time)
-            self._execute_timestamps = [
-                t for t in self._execute_timestamps if current_time - t <= execute_throttle_window_seconds
-            ]
+            self._consecutive_execute_count += 1
 
-            force_verify = len(self._execute_timestamps) >= execute_throttle_max_count
+            force_verify = self._consecutive_execute_count >= execute_throttle_max_count
 
             if force_verify:
                 await self.ui.show_status(
-                    f"⚠️  Execute repeated {len(self._execute_timestamps)} times in 1 minute. "
+                    f"⚠️  Execute phase repeated {self._consecutive_execute_count} times consecutively. "
                     f"Forcing Verify phase to break potential infinite loop."
                 )
 
@@ -193,6 +187,9 @@ class ExecutionLoop:
                 break
 
             if should_verify and self.verify_agent:
+                # Reset consecutive execute counter when entering verify phase
+                self._consecutive_execute_count = 0
+
                 actual_verify_prompt = verify_prompt if verify_prompt is not None else DEFAULT_VERIFY_PROMPT
 
                 if verify_feedback_history:

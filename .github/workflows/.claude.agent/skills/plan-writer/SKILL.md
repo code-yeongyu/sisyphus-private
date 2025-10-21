@@ -83,7 +83,9 @@ Use TodoWrite to create todos for the following:
 5. Incorporate reviewer feedback (iterative)
 6. Save final plan to ./ai-todolist.md
 7. (GitHub CI only) Push branch to remote
-8. (GitHub CI only) Report success to user by comment, with branch name and its link included
+8. (GitHub CI only) Report success to user by comment that includes:
+- Branch Name
+- file permalink (make sure it is from that actual branch's permallink)
 
 Mark each step as 'pending' initially, then update to 'in_progress' and 'completed' as you work through them.
 ```

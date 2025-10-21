@@ -125,6 +125,16 @@
                     }
                 ]
             }
+        ],
+        "Stop": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "uv run .github/workflows/.claude.agent/stop/check_uncommitted_changes.py"
+                    }
+                ]
+            }
         ]
     },
     "alwaysThinkingEnabled": false,

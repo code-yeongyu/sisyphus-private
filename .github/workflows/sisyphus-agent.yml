@@ -102,14 +102,14 @@ jobs:
 
       - name: Setup Claude Code configuration
         run: |
-          if [ -d ".github/workflows/.claude" ]; then
+          if [ -d ".github/workflows/.claude.agent" ]; then
             # Copy to user config (~/.claude)
             mkdir -p ~/.claude
             cp -r .github/workflows/.claude.agent/* ~/.claude/
             echo "Copied .claude.agent configuration to ~/.claude"
             ls -la ~/.claude
           else
-            echo "No .github/workflows/.claude directory found, skipping configuration copy"
+            echo "No .github/workflows/.claude.agent directory found, skipping configuration copy"
           fi
 
 

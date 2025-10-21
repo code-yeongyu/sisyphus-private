@@ -345,7 +345,7 @@ git log --oneline -20 --no-merges
    - TUI 실행 방법: `sisyphus/cli.py` 또는 프로젝트 README의 실행 가이드
    - 테스트 시나리오: Issue #38의 요구사항
 
-   - [ ] 3.1 TUI 수동 테스트 실행
+   - [x] 3.1 TUI 수동 테스트 실행
 
       **실행 명령**:
       ```bash
@@ -378,17 +378,17 @@ git log --oneline -20 --no-merges
       - 사용자가 이전 로그를 읽을 때 스크롤이 방해받지 않음
       - 맨 밑으로 돌아오면 자동 스크롤 자연스럽게 재개
 
-   - [ ] 3.2 회귀 테스트: 기존 기능 영향 확인
+   - [x] 3.2 회귀 테스트: 기존 기능 영향 확인
 
       **확인 항목**:
-      - [ ] Execute 메시지가 노란색으로 표시되는가? (`write_execute_message`)
-      - [ ] Verify 메시지가 청록색으로 표시되는가? (`write_verify_message`)
-      - [ ] User 메시지가 초록색으로 표시되는가? (`write_user_message`)
-      - [ ] 완료 메시지가 볼드 초록색으로 표시되는가? (`write_completion_message`)
-      - [ ] 타임스탬프가 모든 메시지에 표시되는가?
-      - [ ] 메시지 내용이 올바르게 출력되는가?
+      - [x] Execute 메시지가 노란색으로 표시되는가? (`write_execute_message`)
+      - [x] Verify 메시지가 청록색으로 표시되는가? (`write_verify_message`)
+      - [x] User 메시지가 초록색으로 표시되는가? (`write_user_message`)
+      - [x] 완료 메시지가 볼드 초록색으로 표시되는가? (`write_completion_message`)
+      - [x] 타임스탬프가 모든 메시지에 표시되는가?
+      - [x] 메시지 내용이 올바르게 출력되는가?
 
-   - [ ] 3.3 최종 검증 및 문서화
+   - [x] 3.3 최종 검증 및 문서화
 
       **검증 명령**:
       ```bash
@@ -403,19 +403,19 @@ git log --oneline -20 --no-merges
       - ChatLog 클래스 docstring 업데이트 (스크롤 동작 설명 정확히 반영)
       - `_user_scrolled_up` 플래그와 `on_scroll` 이벤트 핸들러에 docstring 추가
 
-   - [ ] 3.4 최종 커밋
+   - [x] 3.4 최종 커밋
       - 예시: `git add sisyphus/ui/tui/components/chat_log.py && git commit -m "test: verify ChatLog scroll behavior with manual testing"`
       - 또는 docstring 업데이트만 했다면: `git commit -m "docs: update ChatLog docstring to reflect new scroll behavior"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] 시나리오 1-4가 모두 통과했는가?
-      - [ ] 회귀 테스트 항목이 모두 통과했는가?
-      - [ ] 스크롤바 잠김 문제가 발생하지 않는가?
-      - [ ] 사용자가 위로 스크롤했을 때 자동 스크롤이 중지되는가?
-      - [ ] 다시 맨 밑으로 스크롤하면 자동 스크롤이 재개되는가?
-      - [ ] `ruff check` → 0 에러 확인
-      - [ ] `basedpyright` → 0 에러 확인
-      - [ ] 최종 git 커밋 완료
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] 시나리오 1-4가 모두 통과했는가?
+      - [x] 회귀 테스트 항목이 모두 통과했는가?
+      - [x] 스크롤바 잠김 문제가 발생하지 않는가?
+      - [x] 사용자가 위로 스크롤했을 때 자동 스크롤이 중지되는가?
+      - [x] 다시 맨 밑으로 스크롤하면 자동 스크롤이 재개되는가?
+      - [x] `ruff check` → 0 에러 확인
+      - [x] `basedpyright` → 0 에러 확인
+      - [x] 최종 git 커밋 완료
 
 # 성공 비전
 
@@ -438,11 +438,11 @@ git log --oneline -20 --no-merges
 - **린트/타입 체크**: `ruff check` 0 에러, `basedpyright` 0 에러
 
 # 최종 작업 검증 체크리스트
-- [ ] 1. **기능 동작 확인**
+- [x] 1. **기능 동작 확인**
   - [시나리오 1-4 모두 통과 - 위 TODOs Task 3.1 참고]
   - [실행 명령: `python -m sisyphus run`]
 
-- [ ] 2. **잘못된 구현 방지**
+- [x] 2. **잘못된 구현 방지**
   - [사용자가 하지 말라고 한 것 체크]
     - 스크롤바가 완전히 고정되어 작동하지 않는 문제 없음 ✅
     - 사용자가 읽고 있을 때 갑자기 스크롤이 내려가는 문제 없음 ✅
@@ -451,14 +451,14 @@ git log --oneline -20 --no-merges
     - 더블 쿼트 사용 (`"` not `'`)
     - 줄 길이 119자 이내
 
-- [ ] 3. **범위 준수 확인**
+- [x] 3. **범위 준수 확인**
   - [초기 계획과 다르게 구현된 부분 체크]
     - ChatLog 컴포넌트만 수정 (app.py, 다른 컴포넌트 변경 없음)
   - [과도하게 구현된 부분 체크]
     - 자동화된 유닛 테스트 추가 안 함 (수동 테스트만 수행)
     - 다른 스크롤 관련 기능 추가 안 함
 
-- [ ] 4. **기존 기능 회귀 테스트**
+- [x] 4. **기존 기능 회귀 테스트**
   - [수정된 파일에 영향받을 수 있는 기존 기능 목록]
     - ChatLog의 메시지 표시 기능 (색상, 타임스탬프)
     - Execute/Verify 메시지 구분 표시

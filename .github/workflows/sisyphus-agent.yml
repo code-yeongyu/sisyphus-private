@@ -59,6 +59,7 @@ jobs:
       issues: write
       id-token: write
       actions: read # Required for Claude to read CI results on PRs
+      packages: read # Required to pull private container images from GHCR
     steps:
       - name: Generate GitHub App Token
         id: generate-token

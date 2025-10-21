@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import anyio
 
 from sisyphus.core.prompts import DEFAULT_EXECUTE_PROMPT, DEFAULT_VERIFY_PROMPT
-from sisyphus.utils.errors import SessionLimitError, SessionResumeError
+from sisyphus.utils.errors import RetryRequiredError, SessionLimitError, SessionResumeError
 from sisyphus.utils.session_limit import sleep_until_next_hour, sleep_until_reset
 
 if TYPE_CHECKING:
@@ -165,10 +165,17 @@ class ExecutionLoop:
 
                 current_execute_extra = (execute_extra or "") + feedback_section
 
+            should_retry_execute = False
             try:
                 await self._execute_phase(execute_prompt, current_execute_extra)
-            except SessionLimitError:
-                await self.ui.show_status(f"[Iteration {iteration}] Session limit handled, retrying...")
+            except* RetryRequiredError as exception_group:
+                error = exception_group.exceptions[0]
+                await self.ui.show_status(
+                    f"[Iteration {iteration}] Retry required ({error.__class__.__name__}): {error}"
+                )
+                should_retry_execute = True
+
+            if should_retry_execute:
                 continue
 
             should_verify = False
@@ -201,6 +208,7 @@ class ExecutionLoop:
 
                 await self.ui.show_status(f"[Iteration {iteration}] Starting Verify phase...")
 
+                should_retry_verify = False
                 try:
                     feedback, fully_done = await self._verify_phase(actual_verify_prompt, verify_extra)
 
@@ -212,8 +220,14 @@ class ExecutionLoop:
                     await self.ui.show_status(
                         f"[Iteration {iteration}] Verify FALSE. Feedback received, will execute..."
                     )
-                except SessionLimitError:
-                    await self.ui.show_status(f"[Iteration {iteration}] Verify session limit handled, retrying...")
+                except* RetryRequiredError as exception_group:
+                    error = exception_group.exceptions[0]
+                    await self.ui.show_status(
+                        f"[Iteration {iteration}] Retry required ({error.__class__.__name__}): {error}"
+                    )
+                    should_retry_verify = True
+
+                if should_retry_verify:
                     continue
             elif should_verify and not self.verify_agent:
                 await self.ui.show_status("✅ All tasks completed!")

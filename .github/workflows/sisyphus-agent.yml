@@ -194,7 +194,7 @@ jobs:
         id: claude
         uses: anthropics/claude-code-action@v1.0.13
         env:
-          ANTHROPIC_BASE_URL: http://ccapi-cf:3000/anthropic
+          ANTHROPIC_BASE_URL: http://localhost:3000/anthropic
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}

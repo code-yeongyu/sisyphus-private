@@ -125,6 +125,20 @@
                     }
                 ]
             }
+        ],
+        "Stop": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "uv run ~/.claude/hooks/stop/check_todos_completed.py"
+                    },
+                    {
+                        "type": "command",
+                        "command": "uv run .github/workflows/.claude.agent/stop/check_uncommitted_changes.py"
+                    }
+                ]
+            }
         ]
     },
     "alwaysThinkingEnabled": false,

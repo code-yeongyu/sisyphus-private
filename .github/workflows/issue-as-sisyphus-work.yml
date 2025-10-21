@@ -70,14 +70,14 @@ jobs:
 
       - name: Setup Claude Code configuration
         run: |
-          if [ -d ".github/workflows/.claude" ]; then
+          if [ -d ".github/workflows/.claude.sisyphus" ]; then
             # Copy to user config (~/.claude)
             mkdir -p ~/.claude
-            cp -r .github/workflows/.claude/* ~/.claude/
-            echo "Copied .claude configuration to ~/.claude"
+            cp -r .github/workflows/.claude.sisyphus/* ~/.claude/
+            echo "Copied .claude.sisyphus configuration to ~/.claude"
             ls -la ~/.claude
           else
-            echo "No .github/workflows/.claude directory found, skipping configuration copy"
+            echo "No .github/workflows/.claude.sisyphus directory found, skipping configuration copy"
           fi
 
       - name: Setup GitHub CLI authentication
@@ -131,7 +131,7 @@ jobs:
       - name: Setup Sisyphus Claude Code Plugin
         run: |
           claude plugin marketplace add ./
-          claude plugin install essentials@sisyphus-marketplace
+          claude plugin install sisyphus@sisyphus-marketplace
 
       - name: Run Sisyphus
         run: |

@@ -103,7 +103,7 @@ Then run following commands to setup environments for sisyphus.
 
 ```sh
 claude plugin marketplace add code-yeongyu/sisyphus
-claude plugin install essentials@sisyphus-marketplace
+claude plugin install sisyphus@sisyphus-marketplace
 ```
 
 After installation, you can run Sisyphus directly:

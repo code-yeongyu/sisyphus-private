@@ -63,24 +63,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-global-
 
-      - name: Get cache key for Claude Code
-        id: cache-key
-        run: |
-          DAYS_SINCE_EPOCH=$(( $(date +%s) / 86400 ))
-          CACHE_PERIOD=$(( DAYS_SINCE_EPOCH / 3 ))
-          echo "cache-period=$CACHE_PERIOD" >> $GITHUB_OUTPUT
-
-      - name: Cache Claude Code
-        id: cache-claude
-        uses: actions/cache@v4
-        with:
-          path: ~/.local/bin/claude
-          key: ${{ runner.os }}-claude-${{ steps.cache-key.outputs.cache-period }}
-          restore-keys: |
-            ${{ runner.os }}-claude-
-
       - name: Install Claude Code
-        if: steps.cache-claude.outputs.cache-hit != 'true'
         run: |
           curl -fsSL https://claude.ai/install.sh | bash
           echo "$HOME/.local/bin" >> $GITHUB_PATH

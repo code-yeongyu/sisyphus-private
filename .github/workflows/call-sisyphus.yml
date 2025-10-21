@@ -484,7 +484,7 @@ jobs:
       requested_user: ${{ needs.agent.outputs.REQUESTED_USER }}
       model_name: ${{ inputs.model_name || '' }}
     secrets:
-      ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+      ANTHROPIC_BASE_URL: http://localhost:3000/anthropic
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
       SISYPHUS_APP_ID: ${{ secrets.SISYPHUS_APP_ID }}

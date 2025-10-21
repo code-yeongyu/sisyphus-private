@@ -76,20 +76,33 @@ jobs:
         with:
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
+      - name: Get cache key for Claude Code
+        id: cache-key
+        run: |
+          DAYS_SINCE_EPOCH=$(( $(date +%s) / 86400 ))
+          CACHE_PERIOD=$(( DAYS_SINCE_EPOCH / 3 ))
+          echo "cache-period=$CACHE_PERIOD" >> $GITHUB_OUTPUT
+
+      - name: Cache Claude Code
+        id: cache-claude
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/claude
+          key: ${{ runner.os }}-claude-${{ steps.cache-key.outputs.cache-period }}
+          restore-keys: |
+            ${{ runner.os }}-claude-
+
       - name: Install Claude Code
+        if: steps.cache-claude.outputs.cache-hit != 'true'
         run: |
           curl -fsSL https://claude.ai/install.sh | bash
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          # Verify installation
-          ls -la ~/.local/bin/claude || echo "Claude binary not found!"
-          which claude || echo "Claude not in PATH!"
 
       - name: Ensure Claude Code in PATH
         run: |
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           export PATH="$HOME/.local/bin:$PATH"
-          # Verify claude is accessible
-          claude --version || echo "Claude command failed!"
+          claude --version
 
       - name: Setup Claude Code configuration
         run: |

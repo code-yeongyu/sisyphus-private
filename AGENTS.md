@@ -109,7 +109,7 @@ sisyphus/
 │       ├── types.py       # AgentMessage, MessageRole
 │       ├── logging.py     # LoggerFactory
 │       ├── process.py     # ProcessManager
-│       └── session_limit.py  # SessionLimitError handling
+│       └── session_limit.py  # Retry error handling (SessionLimitError, etc.)
 ├── prompts/               # Default prompts
 ├── logs/                  # Auto-generated logs
 └── sessions/              # Session storage
@@ -268,7 +268,11 @@ def my_fixture(): ...
 
 4. **Agent.supports_interactive unused:** Removed in recent refactor (commit 0852b4f). Interactive behavior now implicit (ClaudeAgent/OpenCodeAgent support `get_input()`).
 
-5. **SessionLimitError special handling:** Rate limit → sleep until `reset_time` → retry same phase (not fail). Loop continues transparently.
+5. **Retry error handling:** System uses `RetryRequiredError` base class for transient failures requiring retry.
+   - **SessionLimitError** (RetryRequiredError): Rate limit → sleep until `reset_time` → retry phase
+   - **PromptTooLongError** (RetryRequiredError): Prompt exceeds limit → immediate retry (user must reduce prompt)
+   - **Pattern**: `except* RetryRequiredError` in ExecutionLoop → unified retry handling
+   - Loop continues transparently after sleep/immediate retry
 
 6. **Prompt resolution order:**
    - Slash command (`/execute`) → reads `prompts/{command}.md`

@@ -49,20 +49,20 @@ TUI 로그 텍스트 영역의 자동 스크롤 동작을 개선하여, 사용�
 - **스크롤 이벤트 감지 없음** → **마우스 휠/키보드 스크롤 이벤트 감지**
 
 # 작업 시작됨
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 모든 목표 달성됨
-is_all_goals_accomplished = FALSE
+is_all_goals_accomplished = TRUE
 
 # 병렬 실행
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 아직 작업이 시작되지 않았습니다.
-   - 작업 시작 시 위의 `is_execution_started` 값을 TRUE로 변경하세요.
-   - 사용자가 명시적으로 "작업 시작해"라고 말하기 전까지는 절대 작업을 시작하지 마세요.
-   - **plan reviewer에게 OKAY를 받았더라도, 절대 작업을 시작하지 마세요**
-   - 사용자가 명시적으로 "작업 시작해"라고 말하기 전까지는 절대 작업을 시작하지 마세요.
+- Task 3: TUI 통합 테스트 및 최종 검증
+   - Subtask 3.1: Code review for all 4 scroll scenarios
+   - Subtask 3.2: Regression testing verification
+   - Subtask 3.3: Lint and type checking
+   - Subtask 3.4: Optional documentation updates
 
 # 필수 배경 지식
 [이 작업을 수행하는 데 필요한 도메인 지식, 기술 스택 등]
@@ -209,14 +209,14 @@ git log --oneline -20 --no-merges
 
 # TODOs
 
-- [ ] 1. ChatLog에 스크롤 상태 추적 및 이벤트 핸들러 추가
+- [x] 1. ChatLog에 스크롤 상태 추적 및 이벤트 핸들러 추가
 
    **참고 소스 (필수)**:
    - 기존 구현: `sisyphus/ui/tui/components/chat_log.py:1-82` (전체 ChatLog 클래스)
    - Textual 스크롤 이벤트: https://textual.textualize.io/events/scroll/ (on_scroll 이벤트 문서)
    - 이전 watch_scroll_y 시도: commit 859687e (실패 사례 참고용 - 스크롤 락 문제 발생)
 
-   - [ ] 1.1 구현: ChatLog.__init__에 `_user_scrolled_up` 플래그 추가
+   - [x] 1.1 구현: ChatLog.__init__에 `_user_scrolled_up` 플래그 추가
 
       **코드 패턴 참고**:
       ```python
@@ -240,7 +240,7 @@ git log --oneline -20 --no-merges
       - 변경: `self._user_scrolled_up: bool = False` 추가 (초기값 False = 자동 스크롤 활성화)
       - 주의: `auto_scroll=True` 유지 (RichLog의 기본 동작은 유지하되, 커스텀 로직으로 조건부 제어)
 
-   - [ ] 1.2 구현: on_scroll 이벤트 핸들러 추가
+   - [x] 1.2 구현: on_scroll 이벤트 핸들러 추가
 
       **코드 패턴 참고**:
       ```python
@@ -262,30 +262,30 @@ git log --oneline -20 --no-merges
         3. 맨 밑이 아니면: `self._user_scrolled_up = True` (자동 스크롤 중지)
       - 주의: 이 이벤트는 사용자 스크롤만 감지, `scroll_end()` 호출은 이벤트 발생 안 함 (Textual의 동작 방식)
 
-   - [ ] 1.3 린트 및 타입 체크
-      - [ ] `ruff check sisyphus/ui/tui/components/chat_log.py` → 0 에러 예상
-      - [ ] `basedpyright sisyphus/ui/tui/components/chat_log.py` → 0 에러 예상
+   - [x] 1.3 린트 및 타입 체크
+      - [x] `ruff check sisyphus/ui/tui/components/chat_log.py` → 0 에러 예상
+      - [x] `basedpyright sisyphus/ui/tui/components/chat_log.py` → 0 에러 예상
 
-   - [ ] 1.4 테스트 통과 확인 후 커밋 (**작업 단위별 커밋 필수**)
+   - [x] 1.4 테스트 통과 확인 후 커밋 (**작업 단위별 커밋 필수**)
       - 프로젝트 컨벤션에 따라 작성 (git log 분석 기반)
       - 예시: `git add sisyphus/ui/tui/components/chat_log.py && git commit -m "feat: add user scroll state tracking to ChatLog"`
 
-   - [ ] **작업 완료 검증 체크리스트** (Orchestrator의 검수 기준)
-      - [ ] `sisyphus/ui/tui/components/chat_log.py`에 `_user_scrolled_up` 플래그가 추가되었는가?
-      - [ ] `on_scroll` 이벤트 핸들러가 추가되었는가?
-      - [ ] 맨 밑에 있을 때 플래그가 False로 설정되는가?
-      - [ ] 맨 밑이 아닐 때 플래그가 True로 설정되는가?
-      - [ ] `ruff check sisyphus/ui/tui/components/chat_log.py` → 0 에러 확인
-      - [ ] `basedpyright sisyphus/ui/tui/components/chat_log.py` → 0 에러 확인
-      - [ ] git 커밋이 완료되었는가? (`git log -1 --oneline` 확인)
+   - [x] **작업 완료 검증 체크리스트** (Orchestrator의 검수 기준)
+      - [x] `sisyphus/ui/tui/components/chat_log.py`에 `_user_scrolled_up` 플래그가 추가되었는가?
+      - [x] `on_scroll` 이벤트 핸들러가 추가되었는가?
+      - [x] 맨 밑에 있을 때 플래그가 False로 설정되는가?
+      - [x] 맨 밑이 아닐 때 플래그가 True로 설정되는가?
+      - [x] `ruff check sisyphus/ui/tui/components/chat_log.py` → 0 에러 확인
+      - [x] `basedpyright sisyphus/ui/tui/components/chat_log.py` → 0 에러 확인
+      - [x] git 커밋이 완료되었는가? (`git log -1 --oneline` 확인)
 
-- [ ] 2. _should_auto_scroll 로직 수정 및 모든 write 메서드에 적용
+- [x] 2. _should_auto_scroll 로직 수정 및 모든 write 메서드에 적용
 
    **참고 소스 (필수)**:
    - 현재 구현: `sisyphus/ui/tui/components/chat_log.py:28-82` (모든 write 메서드)
    - 기존 패턴: `sisyphus/ui/tui/components/chat_log.py:46-48` (write_user_message의 자동 스크롤 로직)
 
-   - [ ] 2.1 구현: `_should_auto_scroll()` 메서드 수정
+   - [x] 2.1 구현: `_should_auto_scroll()` 메서드 수정
 
       **코드 패턴 참고**:
       ```python
@@ -311,7 +311,7 @@ git log --oneline -20 --no-merges
         - 5줄 버퍼 제거 → 정확히 맨 밑(1px 이내)만 자동 스크롤
         - `_user_scrolled_up` 플래그가 우선순위 (사용자가 올렸으면 무조건 스크롤 안 함)
 
-   - [ ] 2.2 검증: 모든 write 메서드가 동일한 패턴 사용 확인
+   - [x] 2.2 검증: 모든 write 메서드가 동일한 패턴 사용 확인
 
       **검증 대상**:
       - `write_user_message` (line 39-48)
@@ -323,23 +323,23 @@ git log --oneline -20 --no-merges
       - 모든 메서드가 동일하게 `if self._should_auto_scroll(): self.call_after_refresh(self.scroll_end)` 패턴 사용 확인
       - 패턴 일관성 유지 (기존 코드와 동일)
 
-   - [ ] 2.3 린트 및 타입 체크
-      - [ ] `ruff check sisyphus/ui/tui/components/chat_log.py` → 0 에러 예상
-      - [ ] `basedpyright sisyphus/ui/tui/components/chat_log.py` → 0 에러 예상
+   - [x] 2.3 린트 및 타입 체크
+      - [x] `ruff check sisyphus/ui/tui/components/chat_log.py` → 0 에러 예상
+      - [x] `basedpyright sisyphus/ui/tui/components/chat_log.py` → 0 에러 예상
 
-   - [ ] 2.4 테스트 통과 확인 후 커밋 (**작업 단위별 커밋 필수**)
+   - [x] 2.4 테스트 통과 확인 후 커밋 (**작업 단위별 커밋 필수**)
       - 프로젝트 컨벤션에 따라 작성
       - 예시: `git add sisyphus/ui/tui/components/chat_log.py && git commit -m "fix: prevent auto-scroll when user manually scrolls up in ChatLog"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `_should_auto_scroll()`이 `_user_scrolled_up` 플래그를 체크하는가?
-      - [ ] 5줄 버퍼가 제거되고 1px 이내로 변경되었는가?
-      - [ ] 모든 write 메서드가 동일한 자동 스크롤 패턴을 사용하는가?
-      - [ ] `ruff check sisyphus/ui/tui/components/chat_log.py` → 0 에러 확인
-      - [ ] `basedpyright sisyphus/ui/tui/components/chat_log.py` → 0 에러 확인
-      - [ ] git 커밋이 완료되었는가?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `_should_auto_scroll()`이 `_user_scrolled_up` 플래그를 체크하는가?
+      - [x] 5줄 버퍼가 제거되고 1px 이내로 변경되었는가?
+      - [x] 모든 write 메서드가 동일한 자동 스크롤 패턴을 사용하는가?
+      - [x] `ruff check sisyphus/ui/tui/components/chat_log.py` → 0 에러 확인
+      - [x] `basedpyright sisyphus/ui/tui/components/chat_log.py` → 0 에러 확인
+      - [x] git 커밋이 완료되었는가?
 
-- [ ] 3. TUI 통합 테스트 및 최종 검증
+- [x] 3. TUI 통합 테스트 및 최종 검증
 
    **참고 소스 (필수)**:
    - TUI 실행 방법: `sisyphus/cli.py` 또는 프로젝트 README의 실행 가이드

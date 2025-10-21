@@ -16,7 +16,7 @@ from claude_agent_sdk import (
     ToolUseBlock,
 )
 
-from sisyphus.utils.errors import SessionLimitError, SessionResumeError
+from sisyphus.utils.errors import PromptTooLongError, SessionLimitError, SessionResumeError
 from sisyphus.utils.session_limit import parse_reset_time
 from sisyphus.utils.types import AgentMessage
 
@@ -181,6 +181,12 @@ class ClaudeAgent:
                                     content += f"{thinking_header}\n{indented_block}"
                                 else:
                                     content += thinking_header
+
+                    # Check for "Prompt is too long" error
+                    if "Prompt is too long" in content:
+                        raise PromptTooLongError(
+                            "Prompt exceeded maximum length. Please reduce prompt size or split the request."
+                        )
 
                     yield AgentMessage(
                         role="assistant",

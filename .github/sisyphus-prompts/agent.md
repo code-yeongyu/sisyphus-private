@@ -1,27 +1,9 @@
-You have been explicitly mentioned and invoked by the user.
+You have been explicitly mentioned and invoked by the user. You must leverage gh cli a lot, think of yourself it is the only when you can print output to the user.
 
 <immediate-acknowledgment>
 **First Action to Perform: User Notification**
 
-Add a :eyes: reaction to the location where the user invoked you.
-
-Commands by case:
-- If invoked in PR description:
-   ```bash
-   gh api /repos/{owner}/{repo}/issues/{pr_number}/reactions -X POST -f content="eyes"
-   ```
-- If invoked in Issue description:
-   ```bash
-   gh api /repos/{owner}/{repo}/issues/{issue_number}/reactions -X POST -f content="eyes"
-   ```
-- If invoked in PR comment or Issue comment:
-   ```bash
-   gh api /repos/{owner}/{repo}/issues/comments/{comment_id}/reactions -X POST -f content="eyes"
-   ```
-- If invoked in PR review comment (file-level code review):
-   ```bash
-   gh api /repos/{owner}/{repo}/pulls/comments/{comment_id}/reactions -X POST -f content="eyes"
-   ```
+Add a :eyes: reaction to the location where the user invoked you, this can be comment, PR description, Issue description, PR comment, Issue comment, or PR review comment.
 
 **Important:**
 - Perform this action as the highest priority to immediately notify the user that the agent has acknowledged the request and started working
@@ -38,49 +20,8 @@ Follow these steps in order:
 1. Remove eyes reaction
    - First query the reaction_id at that location, then remove it.
    - If invoked in PR description or Issue description:
-     ```bash
-     # Query reaction_id
-     gh api /repos/{owner}/{repo}/issues/{pr_or_issue_number}/reactions | jq '.[] | select(.content == "eyes") | .id'
-
-     # Remove reaction (using reaction_id obtained above)
-     gh api /repos/{owner}/{repo}/reactions/{reaction_id} -X DELETE
-     ```
-   - If invoked in PR comment or Issue comment:
-     ```bash
-     # Query reaction_id
-     gh api /repos/{owner}/{repo}/issues/comments/{comment_id}/reactions | jq '.[] | select(.content == "eyes") | .id'
-
-     # Remove reaction (using reaction_id obtained above)
-     gh api /repos/{owner}/{repo}/reactions/{reaction_id} -X DELETE
-     ```
-   - If invoked in PR review comment:
-     ```bash
-     # Query reaction_id
-     gh api /repos/{owner}/{repo}/pulls/comments/{comment_id}/reactions | jq '.[] | select(.content == "eyes") | .id'
-
-     # Remove reaction (using reaction_id obtained above)
-     gh api /repos/{owner}/{repo}/reactions/{reaction_id} -X DELETE
-     ```
 
 2. Add +1 reaction
-
-Commands by case:
-- If invoked in PR description:
-   ```bash
-   gh api /repos/{owner}/{repo}/issues/{pr_number}/reactions -X POST -f 'content=+1'
-   ```
-- If invoked in Issue description:
-   ```bash
-   gh api /repos/{owner}/{repo}/issues/{issue_number}/reactions -X POST -f 'content=+1'
-   ```
-- If invoked in PR comment or Issue comment:
-   ```bash
-   gh api /repos/{owner}/{repo}/issues/comments/{comment_id}/reactions -X POST -f 'content=+1'
-   ```
-- If invoked in PR review comment:
-   ```bash
-   gh api /repos/{owner}/{repo}/pulls/comments/{comment_id}/reactions -X POST -f 'content=+1'
-   ```
 
 **Important:**
 - Only perform this action after successfully completing all requested tasks
@@ -99,16 +40,16 @@ Commands by case:
 uv run --with pyyaml python -c "import yaml; yaml.safe_load(open('.github/workflows/workflow-file.yml'))"
 ```
 
-3. **Validation pass conditions**:
+1. **Validation pass conditions**:
    - Command completes without errors
    - No error messages are output
 
-4. **If validation fails**:
+2. **If validation fails**:
    - Check error messages to identify syntax error location
    - Fix YAML syntax (indentation, quotes, special character escaping, etc.)
    - Repeat validation
 
-5. **Only commit after successful validation**:
+3. **Only commit after successful validation**:
 ```bash
 # Validate
 uv run --with pyyaml python -c "import yaml; yaml.safe_load(open('.github/workflows/workflow-file.yml'))"

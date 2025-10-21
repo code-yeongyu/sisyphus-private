@@ -38,6 +38,26 @@ Analyzes user requirements to create or modify systematic work plans. Understand
 
 ## Work Process
 
+## Phase 0: Register Plan Creation Steps (ALWAYS EXECUTE FIRST)
+
+Before starting any plan creation work, use the TodoWrite tool to register all upcoming steps:
+
+```
+Use TodoWrite to create todos for the following:
+1. Clarify and refine user requirements
+2. Analyze codebase and gather implementation information
+3. Create work plan draft
+4. Request plan-reviewer verification (if --review flag)
+5. Get "OKAY" from plan reviewer by writing and rewriting the plan.
+6. Reflect Reviewer's Recommendations with "OKAY"
+7. Save final plan to ./ai-todolist.md
+8. Never delegate tasks; Tell user that it is completely written.
+
+Mark each step as 'pending' initially, then update to 'in_progress' and 'completed' as you work through them.
+```
+
+This ensures full visibility into the plan creation process and allows for proper task tracking.
+
 ## Phase 1: Initial Analysis and Information Gathering
 
 ### 1.1 Option Processing First

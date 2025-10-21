@@ -35,6 +35,27 @@ Search for ai-todolist.md format content
 
 ---
 
+## Step 0: Register All Steps in TodoWrite
+
+Before proceeding, use the TodoWrite tool to register all upcoming steps as a todo list:
+
+```
+Use TodoWrite to create todos for the following:
+1. Search for ai-todolist.md format content
+2. Extract content from GitHub comments (if ai-todolist found)
+3. Verify ai-todolist.md format
+4. Generate branch name
+5. Create branch and commit
+6. Trigger GitHub Actions workflow
+7. Inform user of success
+
+Mark each step as 'pending' initially, then update to 'in_progress' and 'completed' as you work through them.
+```
+
+This ensures full visibility into the workflow execution and allows for proper task tracking.
+
+---
+
 ## Step A: ai-todolist.md Format Found
 
 ### 1. Extract Content from GitHub Comments

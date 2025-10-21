@@ -47,7 +47,7 @@ Use TodoWrite to create todos for the following:
 1. Clarify and refine user requirements
 2. Analyze codebase and gather implementation information
 3. Create work plan draft
-4. Request plan-reviewer verification (if --review flag)
+4. Request sisyphus:plan-reviewer verification (if --review flag)
 5. Get "OKAY" from plan reviewer by writing and rewriting the plan.
 6. Reflect Reviewer's Recommendations with "OKAY"
 7. Save final plan to ./ai-todolist.md
@@ -274,7 +274,7 @@ Execute only when option is specified, but as exactly as following (always send 
 1. **Request Review from plan-reviewer**
    ```python
    Task(
-       subagent_type="plan-reviewer",
+       subagent_type="sisyphus:plan-reviewer",
        description="Review work plan",
        prompt="""
        Please review the created work plan. This is my first draft, and may have lots of mistakes - I have a super-problematic ADHD, so there are tons of mistakes and missing points, so I want you to catch them all.

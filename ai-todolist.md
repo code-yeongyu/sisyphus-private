@@ -828,20 +828,107 @@ except* RetryRequiredError as exception_group:
         - `test_loop__if_verify_raises_session_limit_error__handles_and_retries()`
 
    - [ ] 3.3 새 테스트 추가: `sisyphus/core/tests/test_loop__retry_required.py` (신규 파일)
-      - 테스트 1: `test_loop__if_execute_raises_prompt_too_long_error__retries_execute()`
-        - Given: Execute agent가 PromptTooLongError 발생
-        - When: ExecutionLoop.run()
-        - Then: Execute phase 재시도 (`continue` 동작)
 
-      - 테스트 2: `test_loop__if_verify_raises_prompt_too_long_error__retries_verify()`
-        - Given: Verify agent가 PromptTooLongError 발생
-        - When: ExecutionLoop.run()
-        - Then: Verify phase 재시도
+      **CREATE NEW FILE**: `sisyphus/core/tests/test_loop__retry_required.py`
 
-      - 테스트 3: `test_loop__if_retry_required_error__shows_error_class_name()`
-        - Given: Generic RetryRequiredError 발생
-        - When: ExecutionLoop.run()
-        - Then: UI에 "RetryRequiredError" 클래스명 표시 확인
+      ```python
+      """Tests for ExecutionLoop RetryRequiredError handling."""
+
+      from __future__ import annotations
+
+      import anyio
+      import pytest
+
+      from sisyphus.utils.errors import PromptTooLongError, RetryRequiredError
+
+      pytestmark = [pytest.mark.anyio]
+
+
+      async def test_except_star_syntax__if_single_retry_required_error__catches_error() -> None:
+          """Test that except* catches single RetryRequiredError."""
+          # given
+          error = RetryRequiredError("Retry needed")
+
+          caught_error = None
+
+          # when
+          try:
+              raise error
+          except* RetryRequiredError as exception_group:
+              caught_error = exception_group.exceptions[0]
+
+          # then
+          assert caught_error is error
+
+
+      async def test_except_star_syntax__if_retry_required_in_task_group__catches_error() -> None:
+          """Test that except* catches RetryRequiredError from TaskGroup."""
+          # given
+          caught_error = None
+
+          # when
+          try:
+              async with anyio.create_task_group() as task_group:
+
+                  async def raise_error() -> None:
+                      raise RetryRequiredError("Retry needed")
+
+                  task_group.start_soon(raise_error)
+          except* RetryRequiredError as exception_group:
+              caught_error = exception_group.exceptions[0]
+
+          # then
+          assert caught_error is not None
+          assert isinstance(caught_error, RetryRequiredError)
+
+
+      async def test_except_star_syntax__if_prompt_too_long_error__catches_as_retry_required() -> None:
+          """Test that PromptTooLongError is caught by except* RetryRequiredError."""
+          # given
+          error = PromptTooLongError("Prompt is too long")
+
+          caught_error = None
+
+          # when
+          try:
+              raise error
+          except* RetryRequiredError as exception_group:
+              caught_error = exception_group.exceptions[0]
+
+          # then
+          assert caught_error is error
+          assert isinstance(caught_error, PromptTooLongError)
+          assert isinstance(caught_error, RetryRequiredError)
+
+
+      async def test_except_star_syntax__if_prompt_too_long_in_task_group__catches_error() -> None:
+          """Test that PromptTooLongError from TaskGroup is caught."""
+          # given
+          caught_error = None
+
+          # when
+          try:
+              async with anyio.create_task_group() as task_group:
+
+                  async def raise_error() -> None:
+                      raise PromptTooLongError("Prompt is too long")
+
+                  task_group.start_soon(raise_error)
+          except* RetryRequiredError as exception_group:
+              caught_error = exception_group.exceptions[0]
+
+          # then
+          assert caught_error is not None
+          assert isinstance(caught_error, PromptTooLongError)
+          assert isinstance(caught_error, RetryRequiredError)
+      ```
+
+      **TEST FILE STRUCTURE**:
+      - Import pattern: matches existing test_loop__session_limit.py
+      - pytestmark: `[pytest.mark.anyio]` at module level
+      - Given-When-Then comments in each test
+      - Tests both bare raise and TaskGroup raise patterns (matches existing tests)
+      - Verifies inheritance: PromptTooLongError instanceof RetryRequiredError
 
    - [ ] 3.4 전체 테스트 실행
       - [ ] `pytest -xvs sisyphus/core/tests/test_loop__session_limit.py`
@@ -874,10 +961,55 @@ except* RetryRequiredError as exception_group:
    - [ ] 4.2 타입 체크 전체 실행
       - [ ] `basedpyright sisyphus/`
 
-   - [ ] 4.3 문서 업데이트: `sisyphus/AGENTS.md` (SessionLimitError 사용 예시 수정)
-      - 현재: SessionLimitError만 언급
-      - 추가: RetryRequiredError 계층 설명, PromptTooLongError 예시
-      - 위치: "Error Handling" 섹션 (있다면 수정, 없다면 추가)
+   - [ ] 4.3 문서 업데이트: `AGENTS.md` (SessionLimitError 사용 예시 수정)
+
+      **CURRENT STATE**: No dedicated "Error Handling" section exists. SessionLimitError is mentioned in:
+      - Line 112: `session_limit.py  # SessionLimitError handling`
+      - Line 271: Point 5 under "NOTES"
+
+      **STEP 1: Update line 112 comment**
+      ```markdown
+      # CURRENT (line 112):
+      │       └── session_limit.py  # SessionLimitError handling
+
+      # NEW (line 112):
+      │       └── session_limit.py  # Retry error handling (SessionLimitError, etc.)
+      ```
+
+      **STEP 2: Update point 5 under NOTES (line 271)**
+      ```markdown
+      # CURRENT (line 271):
+      5. **SessionLimitError special handling:** Rate limit → sleep until `reset_time` → retry same phase (not fail). Loop continues transparently.
+
+      # NEW (line 271):
+      5. **Retry error handling:** System uses `RetryRequiredError` base class for transient failures requiring retry.
+         - **SessionLimitError** (RetryRequiredError): Rate limit → sleep until `reset_time` → retry phase
+         - **PromptTooLongError** (RetryRequiredError): Prompt exceeds limit → immediate retry (user must reduce prompt)
+         - **Pattern**: `except* RetryRequiredError` in ExecutionLoop → unified retry handling
+         - Loop continues transparently after sleep/immediate retry
+      ```
+
+      **STEP 3 (OPTIONAL): Add new "ERROR HIERARCHY" subsection under CONVENTIONS**
+      Insert after line 233 (after "CONVENTIONS" section):
+
+      ```markdown
+      **Error Hierarchy:**
+      ```
+      SisyphusError (base)
+        └── RetryRequiredError (transient failures)
+            ├── SessionLimitError (reset_time attribute)
+            └── PromptTooLongError
+      ```
+
+      - `RetryRequiredError`: Base for all retry-able errors
+      - `SessionLimitError`: Inherits RetryRequiredError, preserves `reset_time` attribute
+      - `PromptTooLongError`: New error for Claude SDK "Prompt is too long" messages
+      ```
+
+      **RATIONALE**:
+      - No dedicated "Error Handling" section exists in AGENTS.md (it's a PROJECT KNOWLEDGE BASE, not API docs)
+      - Update existing mentions (line 112, 271) to reflect new error hierarchy
+      - Optional subsection provides quick reference for developers
 
    - [ ] 4.4 커밋: `git add . && git commit -m "test: add comprehensive retry error handling tests"`
 
@@ -890,7 +1022,37 @@ except* RetryRequiredError as exception_group:
         - SessionLimitError 인스턴스에서 `reset_time` 접근 가능?
       - [ ] 커밋 완료: git log에서 test: 커밋 확인 가능한가?
       - [ ] 실제 동작 검증: Claude Agent를 직접 실행하여 "Prompt is too long" 메시지 발생 시 재시도 동작 확인
-        - 방법: 매우 긴 프롬프트로 `uv run sisyphus run` 실행 → PromptTooLongError 발생 → 재시도 확인
+
+        **VERIFICATION METHOD**:
+
+        **Option 1: Create a large prompt file (recommended)**
+        ```bash
+        # Create a file with ~200,000 characters (exceeds typical model limits)
+        python3 -c "print('A' * 200000)" > test_long_prompt.txt
+
+        # Run sisyphus with this prompt
+        uv run sisyphus run --execute-prompt test_long_prompt.txt --no-tui
+
+        # Expected output:
+        # [Iteration 1] Retry required (PromptTooLongError): Prompt exceeded maximum length...
+        # [Iteration 2] Starting Execute phase...
+        ```
+
+        **Option 2: Manual testing (if Claude SDK returns "Prompt is too long")**
+        - Trigger actual "Prompt is too long" from Claude SDK (requires very large real prompt)
+        - Observe retry behavior in logs
+
+        **Verification criteria**:
+        - [ ] System detects "Prompt is too long" in AssistantMessage
+        - [ ] PromptTooLongError is raised
+        - [ ] Loop retries Execute phase (iteration counter increases)
+        - [ ] UI shows "Retry required (PromptTooLongError)" message
+        - [ ] NO "Prompt is too long" message shown to user (error caught before yield)
+
+        **Cleanup**:
+        ```bash
+        rm test_long_prompt.txt
+        ```
 
 # Final Work Verification Checklist
 

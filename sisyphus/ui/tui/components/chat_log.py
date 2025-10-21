@@ -30,13 +30,16 @@ class ChatLog(RichLog):
     def _should_auto_scroll(self) -> bool:
         """Check if auto-scroll should be active.
 
-        Returns True if scroll position is near bottom (within 5-line buffer).
-        This allows slight scroll-up without disabling auto-scroll.
+        Returns True only if user has not manually scrolled up AND scroll position
+        is at the bottom (within 1px). This ensures auto-scroll is disabled when
+        the user is reading previous messages and enabled when scrolled to bottom.
 
         Returns:
             bool: True if should auto-scroll, False otherwise
         """
-        return self.scroll_offset.y >= self.max_scroll_y - 5
+        if self._user_scrolled_up:
+            return False
+        return self.scroll_offset.y >= self.max_scroll_y - 1
 
     def on_scroll(self, event: Message) -> None:
         """Handle scroll events to track user-initiated scrolling.

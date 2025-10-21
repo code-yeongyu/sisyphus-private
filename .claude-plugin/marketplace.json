@@ -6,8 +6,8 @@
   },
   "plugins": [
     {
-      "name": "essentials",
-      "source": "./claude-code-plugins/essentials",
+      "name": "sisyphus",
+      "source": "./claude-code-plugins/sisyphus",
       "description": "Essential setups for sisyphus, for making work plans and manual executions",
       "version": "0.1.0",
       "author": {

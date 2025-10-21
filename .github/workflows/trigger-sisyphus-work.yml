@@ -133,7 +133,7 @@ jobs:
       - name: Setup Sisyphus Claude Code Plugin
         run: |
           claude plugin marketplace add ./
-          claude plugin install essentials@sisyphus-marketplace
+          claude plugin install sisyphus@sisyphus-marketplace
 
       - name: Configure git
         run: |

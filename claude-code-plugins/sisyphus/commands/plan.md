@@ -30,11 +30,43 @@ Analyzes user requirements to create or modify systematic work plans. Understand
 
 ## Core Principles
 
+### The 90% Confidence Threshold
+
+**Every task must enable workers to proceed with ≥90% confidence using ONLY the plan document.**
+
+This means:
+- Workers should NOT need external research or guesswork
+- All necessary context, references, and examples are embedded in the plan
+- Ambiguity is minimized to ≤10% uncertainty per task
+- The plan is self-contained and complete
+
 ### Planning Standards
-- **Specific Direction**: Concrete guidelines that workers can directly follow
-- **Code Snippet Citations**: Include all relevant code and patterns found during analysis
-- **Balanced Detail**: Omit excessive explanation for contextually obvious parts
-- **Practical Focus**: Concentrate on actual implementation, exclude unnecessary theory
+
+1. **Big Picture First (WHY, WHAT, HOW)**
+   - **WHY**: Purpose statement (business value, user problem to solve)
+   - **WHAT**: Background context (current state → what we're changing)
+   - **HOW**: Task flow (dependencies, sequence, logical connections)
+   - **Success Vision**: End state from product/user perspective (not just "code works")
+
+2. **Clarity Through Concrete References**
+   - Every task MUST cite specific sources:
+     - File paths with line numbers (e.g., `src/auth.ts:45-67`)
+     - URLs with sections (e.g., `https://example.com/docs#section-3`)
+     - Code snippets showing exact patterns to follow
+   - No vague instructions like "add authentication" without reference sources
+
+3. **Verifiability Through Measurable Criteria**
+   - Every task MUST have objective completion criteria:
+     - Executable commands (e.g., `npm test -- AuthModule`)
+     - Expected outputs (e.g., "3/3 tests pass", "API returns 201 status")
+     - Observable outcomes (e.g., "Dark mode toggle appears in header")
+   - NEVER use subjective terms like "properly", "correctly", "good enough"
+
+4. **Completeness Through Explicit Context**
+   - State all implicit assumptions explicitly
+   - Document data flows, state management, error handling strategies
+   - Provide edge case handling guidance
+   - Clarify architectural constraints (SSR vs client, sync vs async, etc.)
 
 ## Work Process
 
@@ -70,7 +102,7 @@ Check command options to determine workflow:
 1. **Identify Work Goals**
    - Clarify final objectives user wants to achieve
    - Distinguish functional and non-functional requirements
-   - Define success criteria
+   - Define success criteria (product/user outcomes, not just technical)
 
 2. **Scope Setting**
    - Separate what's included vs excluded
@@ -82,11 +114,13 @@ Check command options to determine workflow:
    - Search for similar functionality already implemented
    - Identify existing patterns that can be reused or extended
    - Look for related modules and components
+   - **CRITICAL**: Capture file paths + line numbers for every relevant pattern found
 
 2. **Analyze Implementation Context**
    - Find where similar features are implemented
    - Understand how existing code handles similar requirements
    - Identify integration points and dependencies
+   - **CRITICAL**: Note down code snippets showing exact patterns
 
 3. **Extract Project Conventions**
    ```bash
@@ -106,6 +140,7 @@ Check command options to determine workflow:
    - Identify existing implementation patterns in project
    - Find reusable components and conventions
    - Map architectural decisions from actual code
+   - **CRITICAL**: Extract code snippets to include in plan
 
 ## Phase 2: Plan Creation
 
@@ -114,147 +149,346 @@ Check command options to determine workflow:
 Use this comprehensive template for all work plans:
 
    ```markdown
-   # 사용자의 최초 요청 (기록용)
-   [사용자가 최초 계획서 생성시에 말 한 내용 literally 그대로 적어두기.]
+   # User's Original Request (For Record)
+   [Write exactly what the user said when initially requesting the plan]
 
-   ## 사용자가 이후에 추가 요청한 내용들 (기록용)
-   [사용자가 최초 계획서 생성시에 말 한 내용 제외하고 전부 적어두기]
+   ## Additional User Requests (For Record)
+   [Write all subsequent requests excluding the initial request]
 
-   # 작업 목표
-   [tl;dr 처럼 짧게 무엇이 목표인지 나열]
-   [구체적으로 달성해야 할 목표들을 나열]
+   # Work Objectives (WHAT & WHY)
 
-   # 작업 배경
-   [왜 이 작업이 필요한지, 현재 상황은 어떤지 설명]
+   ## Core Objective (TL;DR)
+   [One or two sentences clearly explaining what we want to achieve]
 
-   # 작업 시작 여부
+   ## Detailed Objectives
+   [List specific objectives to accomplish]
+   - Describe from business value or user problem-solving perspective
+   - Include measurable success metrics
+
+   # Work Background (WHY & WHAT - Current State)
+
+   ## Current Situation
+   [Current state of the system, what problems exist]
+
+   ## Reason for Change
+   [Why this work is necessary, what problem it solves]
+
+   ## Changes to Make
+   [Clearly contrast current state → future state]
+
+   # Work Started
    is_execution_started = FALSE
 
-   # 모든 목표 달성 여부
+   # All Goals Accomplished
    is_all_goals_accomplished = FALSE
 
-   # 병렬 실행 여부
+   # Parallel Execution
    parallel_requested = FALSE
 
-   # 현재 진행 중인 작업
-   - 작업 시작 전입니다.
-      - 작업을 시작하면 위의 `is_execution_started` 의 값을 TRUE 로 바꾸세요.
-      - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
-      - **plan reviewer 에게 OKAY 사인을 받았더라도 절대 시작하지마십시오**
-      - 사용자가 명시적으로 "작업을 시작하라" 라고 말하기 전까지는 절대로 작업하지 않습니다.
+   # Current Work in Progress
+   - Work has not started yet.
+      - When starting work, change the value of `is_execution_started` above to TRUE.
+      - Never start work until the user explicitly says "start the work".
+      - **Even if you receive OKAY from plan reviewer, NEVER start work**
+      - Never start work until the user explicitly says "start the work".
 
 
-   # 필요한 사전 지식
-   [이 작업을 수행하기 위해 알아야 할 도메인 지식, 기술 스택 등]
+   # Required Background Knowledge
+   [Domain knowledge, tech stack, etc. needed to perform this work]
 
-   ## 파일 구조 및 역할
-   [작업에 영향을 받는 파일들과 각 파일의 역할 설명]
+   ## File Structure and Roles
+   [Files affected by the work and each file's role]
 
-   ## 맥락 이해를 위해 참고해야 할 파일들
-   ### 1. [파일 경로]
-   - **역할**: [이 파일이 하는 일]
-   - **참고할 부분**: [어떤 부분을 봐야 하는지]
-   - **예상 코드 구조**:
+   ## Reference Files for Context Understanding
+   ### 1. [File path:start-line-end-line]
+   - **Role**: [What this file does]
+   - **Reference section**: [Which part to look at - specific line numbers or function names]
+   - **Key Code Snippet**:
       ```python
-      # 작업자가 찾아볼 코드의 대략적인 구조
+      # Code extracted from actual project
       class SomeClass:
          def method_to_check(self):
-               # 이 부분의 로직을 확인해야 함
+               # Must follow this pattern
                pass
       ```
 
-   ### 2. [다른 파일 경로]
-   - **역할**: [이 파일의 역할]
-   - **주의사항**: [특별히 주의해서 봐야 할 점]
+   ### 2. [Another file path:start-line-end-line]
+   - **Role**: [This file's role]
+   - **Notes**: [Special points to pay attention to]
+   - **Reference URL**: [Related documentation URL + section if available]
 
-   [참고: 이 파일들 리스트의 경우에는 'global context' 로써, 대다수의 작업을 진행할때에 꼭 필요하고 참고해야할 내용들만 넣어야 합니다. 각 개별 작업을 위해 필요한 context 는 'todo' 안에 넣어주세요.]
+   [Note: This file list should be 'global context' - include only essential content needed for most tasks. Context needed for individual tasks should go inside 'todo' items.]
 
+   # Work Flow (HOW - Task Flow & Dependencies)
 
-   # 작업 계획
+   ## Task Dependency Diagram
+   ```
+   Task 1 (Foundation)
+      ↓
+   Task 2 (depends on 1's output)
+      ↓
+   Task 3 || Task 4 (parallel, both depend on 2)
+      ↓
+   Task 5 (integration, depends on 3 & 4)
+   ```
+
+   ## Phase-by-Phase Explanation
+   - **Phase 1 (Task 1-2)**: [What this phase does, why it must come first]
+   - **Phase 2 (Task 3-4)**: [Reason for parallel execution: different files, no dependencies]
+   - **Phase 3 (Task 5)**: [Final integration phase]
+
+   # Work Plan
 
    ## PRDs & Structures
-   [To Understand the big picture easily, write followings:]
-   [작업을 통해 만들고자 하는 PRD, how each components and elements interacts to each other, in mermaid]
-   [작업을 통해 만들고자 하는 Structures Overview, in mermaid]
+   [To understand the big picture easily, write the following:]
+   [PRD for what we want to build through this work, how each component and element interacts with each other, in mermaid]
+   [Structures Overview for what we want to build, in mermaid]
 
-   ## 구현 세부사항
-   [어떤 방식으로 구현해야 하는지, 주의사항은 무엇인지]
+   ## Implementation Details
 
-   ## 프로젝트 커밋 메시지 스타일
-   [git log 분석 결과를 바탕으로 이 프로젝트의 커밋 메시지 패턴 요약]
+   ### Architecture Constraints
+   - [Specify SSR vs Client-side, Sync vs Async, etc.]
+   - [State management approach: Redux/Context/Local state, etc.]
+   - [Error handling strategy: Toast/Inline/Redirect, etc.]
+
+   ### Edge Case Handling
+   - [When list is empty: what UI to show?]
+   - [When loading: what state to show?]
+   - [When error occurs: how to handle?]
+   - [Concurrent edit conflicts: how to resolve?]
+
+   ### Making Implicit Assumptions Explicit
+   - [Example: "User is already authenticated (session context exists)"]
+   - [Example: "Payment processing is handled asynchronously via background job"]
+
+   ## Project Commit Message Style
+   [Summary of this project's commit message pattern based on git log analysis]
 
    # TODOs
 
-   - [ ] 1. [기능 1 - 예: User 모델 수정 및 테스트. 구현과 테스트는 항상 한 Task 여야 함]
-      - [ ] 1.1 구현: [구체적인 파일명]에서 [구체적인 함수/클래스명] 수정
+   - [ ] 1. [Feature 1 - Example: Modify User model and test. Implementation and testing should always be one Task]
+
+      **Reference Sources (REQUIRED)**:
+      - Existing pattern: `models/Product.ts:23-45` (similar model field addition pattern)
+      - Test example: `tests/models/Product.test.ts:78-95` (model test writing pattern)
+      - Documentation: https://docs.example.com/models#adding-fields (official guide)
+
+      - [ ] 1.1 Implementation: Modify [specific function/class name] in [specific file name:line number]
+
+         **Code Pattern Reference**:
          ```python
-         {이 작업을 위해 참고해야 할 코드}
+         # Actual code extracted from project (models/Product.ts:23-45)
+         class Product extends BaseModel {
+            @Column({ type: "timestamp", nullable: true })
+            last_updated: Date | null;
+         }
          ```
-         - 현재: [현재 코드 또는 상태]
-         - 변경: [변경될 코드 또는 상태]
-      - [ ] 1.2 테스트 작성: [test_파일명.py]에 해당 기능 테스트 추가
-      - [ ] 1.3 테스트 실행: `pytest -xvs test_파일명.py::test_함수명`
-      - [ ] 1.4 린트 및 타입 체크
-         - [ ] `ruff check [수정한 파일들]`
-         - [ ] `basedpyright [수정한 파일들]`
-      - [ ] 1.5 테스트 통과 확인 후 커밋 (**각 작업 단위 별 커밋은 필수**)
-         - 프로젝트 컨벤션에 맞춰 작성 (git log 분석 기반)
-         - 예시: `git add [구현 파일 + 테스트 파일] && git commit -m "User 모델에 last_login 필드 추가"`
-      - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 1번 작업 검증 성공 여부
-         - [Orchestrator 를 위한 작업 인수 기준: 이 작업이 완료되었는지를 검증할 수 있는 구체적이고 자세한 방법 및 가이드.]
-         - [ ] [예시: 실제로 해당 코드가 잘 작성되었는가?]
-         - [ ] [예시: 기존 코드베이스를 전부 뒤져보았을때, 기존 코드베이스 스타일 대로 작업된것이 정말 확실한가?]
-         - [ ] [예시: 실제로 커밋이 되었는가?]
-         - [ ] [예시: 정말 테스트&타입체크가 통과하는가?]
-         - [ ] [예시: 실제로 해당 기능을 python & playwright & terminalcp 등을 활용하여 직접 호출했을때 (처음에 의도한 기능 구체적으로 명시) 기능이 처음에 의도한대로 작동하는가?]
 
-   - [ ] 2. [기능 2 - 예: 로그인 API 구현 및 테스트]
-      - [ ] 2.1. 레퍼런스 살펴보기
-         - [ ] https://example.com 살펴보기 [사용자가 제공한, 특정 작업을 진행할 때에 참조할 내용]
-         - [ ] ./foo/bar/amazing.py 파일 살펴보기 [사용자가 제공한, 특정 작업을 진행할 때에 참조할 내용]
-         - [ ] [이후 진행할 일들]
+         **Implementation Details**:
+         - Current: [Current code or state]
+         - Change: [Code or state to change to]
+         - Note: [Project convention notes]
 
-      - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 2번 작업 검증 성공 여부
-         - [이 작업이 완료되었는지를 검증할 수 있는 구체적이고 자세한 방법 및 가이드.]
+      - [ ] 1.2 Write test: Add test for this feature to [test_filename.py:line to add]
+
+         **Test Pattern Reference**: `tests/models/Product.test.ts:78-95`
+         ```typescript
+         // Existing test pattern
+         describe("Product model", () => {
+            it("should update timestamp on modification", () => {
+               // Write following this pattern
+            });
+         });
+         ```
+
+      - [ ] 1.3 Run and verify tests
+
+         **Execute Command**: `pytest -xvs test_filename.py::test_function_name`
+
+         **Expected Output**:
+         ```
+         test_user_last_login ... PASSED
+         ===================== 1 passed in 0.23s =====================
+         ```
+
+         **If Fails**:
+         - Timestamp type error → Check `datetime` import
+         - Null value error → Check `nullable=True` option
+
+      - [ ] 1.4 Lint and type check
+         - [ ] `ruff check [modified files]` → 0 errors expected
+         - [ ] `basedpyright [modified files]` → 0 errors expected
+
+      - [ ] 1.5 Commit after confirming tests pass (**commit per work unit is mandatory**)
+         - Write according to project convention (based on git log analysis)
+         - Example: `git add [implementation file + test file] && git commit -m "Add last_login field to User model"`
+
+      - [ ] **Work Completion Verification Checklist** (Acceptance criteria for Orchestrator)
+         - [ ] Is code accurately added to `models/User.ts`?
+         - [ ] Is it written in the same style as existing Product model pattern?
+         - [ ] Is test added to test file `tests/models/User.test.ts`?
+         - [ ] Run `pytest -xvs tests/models/User.test.ts::test_user_last_login` → Confirm PASSED
+         - [ ] Run `ruff check models/User.ts tests/models/User.test.ts` → Confirm 0 errors
+         - [ ] Run `basedpyright models/User.ts` → Confirm 0 errors
+         - [ ] Is git commit completed? (Check with `git log -1 --oneline`)
+         - [ ] Verify actual feature works:
+           ```python
+           # Test directly with Python REPL
+           from models import User
+           user = User.create(email="test@example.com")
+           user.update_last_login()
+           assert user.last_login is not None
+           ```
+
+   - [ ] 2. [Feature 2 - Example: Implement and test login API]
+
+      **Reference Sources (REQUIRED)**:
+      - API pattern: `api/auth/register.ts:15-45` (similar authentication API structure)
+      - Validation logic: `utils/validators.ts:67-89` (email/password validation pattern)
+      - Documentation: https://fastapi.tiangolo.com/tutorial/security/ (FastAPI authentication guide)
+
+      - [ ] 2.1. Review references
+         - [ ] Review https://example.com/docs#section-3
+           - Especially check "JWT token creation" section
+           - Learn `create_access_token` function pattern from example code
+         - [ ] Review `./api/auth/register.ts:15-45` file
+           - Check request body validation method
+           - Check response format (201 status, body structure)
+         - [ ] [Subsequent tasks]
+
+      - [ ] **Work Completion Verification Checklist**
+         - [ ] Confirm API endpoint `/api/auth/login` exists
+         - [ ] Manual test:
+           ```bash
+           curl -X POST http://localhost:8000/api/auth/login \
+             -H "Content-Type: application/json" \
+             -d '{"email": "test@example.com", "password": "password123"}'
+           ```
+           Expected response:
+           ```json
+           {
+             "access_token": "eyJ...",
+             "token_type": "bearer",
+             "user": {"id": 1, "email": "test@example.com"}
+           }
+           ```
+         - [ ] Automated test: `pytest tests/api/auth/test_login.py` → 5/5 PASSED
+         - [ ] Confirm 401 returned for wrong password
+         - [ ] Confirm 404 returned for non-existent email
 
 
-   - [ ] 3 parallel. [기능 3 - 예: 인증이 필요한 게시판 글 생성 api 구현 및 테스트. 단, parallelable 옵션이 없다면 이것은 3번 태스크임.]
-      **※ 병렬 실행 조건**: 기능 4와 완전히 독립적이며, 서로 다른 파일을 수정하고, 의존성이 전혀 없음
-      - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 1번 작업 검증 성공 여부
-         - [이 작업이 완료되었는지를 검증할 수 있는 구체적이고 자세한 방법 및 가이드.]
+   - [ ] 3 parallel. [Feature 3 - Example: Implement and test board post creation API requiring authentication. If parallelable option is not set, this is task 3.]
+
+      **※ Parallel Execution Condition**: Completely independent from Feature 4, modifies different files, no dependencies at all
+      - Task 3: Modifies `api/posts/create.ts`
+      - Task 4: Modifies `api/posts/delete.ts`
+      - No common dependencies (each independent endpoint)
+
+      **Reference Sources (REQUIRED)**:
+      - [file:line + code snippet + URL]
+
+      - [ ] **Work Completion Verification Checklist**
+         - [Specific and measurable verification methods]
 
 
-   - [ ] 3 parallel. [기능 4 - 예: 인증이 필요한 게시판 삭제 api 구현 및 테스트. 단, parallelable 옵션이 없다면 이것은 4번 태스크임.]
-      **※ 병렬 실행 조건**: 기능 3과 완전히 독립적이며, 서로 다른 파일을 수정하고, 의존성이 전혀 없음
-      - [ ] 아래의 가이드대로 진행했을 때 Orchestrator 1번 작업 검증 성공 여부
-         - [이 작업이 완료되었는지를 검증할 수 있는 구체적이고 자세한 방법 및 가이드.]
+   - [ ] 3 parallel. [Feature 4 - Example: Implement and test board post deletion API requiring authentication. If parallelable option is not set, this is task 4.]
+
+      **※ Parallel Execution Condition**: Completely independent from Feature 3, modifies different files, no dependencies at all
+
+      **Reference Sources (REQUIRED)**:
+      - [file:line + code snippet + URL]
+
+      - [ ] **Work Completion Verification Checklist**
+         - [Specific and measurable verification methods]
 
 
-   # 최종 작업 검증 체크리스트
-   - [ ] 1. [어떤 부분이 동작하는지 - 어떻게 검증해야하는지에 관한 내용]
-   - [ ] 2. [잘못 구현되었는지 아닌지를 확인하는것을 돕는 체크리스트: 사용자가 하지말라고 한 내용이나, 프로젝트 컨벤션 상 실수하기 쉬울만한 부분인데 작업하며 주의해야 할 부분 등]
-   - [ ] 3. [어떤 부분이 바뀌었는지, 최초 계획서와 다르게 구현되거나 과하게 추가 구현되진 않았는지]
-   - [ ] 4. [수정된 파일을 바탕으로 영향받았을 기존 기능들이 여전히 잘 작동하는지 검증]
+   # Success Vision
+
+   ## Success from User Perspective
+   - [Changes users will experience: "Can now log in with one-click OAuth"]
+   - [User journey: Access login page → Click Google button → Immediately logged in]
+
+   ## Success from Business Perspective
+   - [Measurable metrics: "OAuth login accounts for 80% of total logins"]
+   - [Expected effect: "Password reset support tickets decrease by 30%"]
+
+   ## Technical Success Criteria
+   - [All tests pass: `npm test` → 45/45 PASSED]
+   - [Performance criteria: "Login API response time < 200ms (95th percentile)"]
+   - [Security criteria: "OAuth token expiration handling works correctly"]
+
+   # Final Work Verification Checklist
+   - [ ] 1. **Verify Feature Works**
+     - [What parts work - how to verify them]
+     - [Executable commands and expected outputs]
+
+   - [ ] 2. **Prevent Incorrect Implementation**
+     - [Check what user said not to do]
+     - [Check easily mistaken parts according to project conventions]
+
+   - [ ] 3. **Verify Scope Compliance**
+     - [Check if implemented differently from initial plan]
+     - [Check if over-implemented]
+
+   - [ ] 4. **Existing Feature Regression Test**
+     - [List of existing features that may be affected by modified files]
+     - [Verification method for each feature: execution command + expected result]
    ```
 
 ### 2.2 Plan Creation Strategy
 
-1. **Adaptive Detail Level**
-   - Small task: Focus on WHAT and WHERE
-   - Medium task: Add HOW with examples
-   - Large task: Include WHY and full context
+**Core Strategy: Maximize Clarity and Minimize Ambiguity**
 
-2. **Use TodoWrite for Final Plan**
+The goal is to achieve ≥90% worker confidence at every step. This means:
+
+1. **Every Task Must Have Clear Reference Sources**
+
+   For each task, provide AT LEAST ONE of:
+   - **File reference with line numbers**: `src/auth/oauth.ts:45-67`
+   - **URL with section**: `https://stripe.com/docs/api/payment_intents#create`
+   - **Code snippet from project**: Show actual code pattern to follow
+
+   ❌ **BAD**: "Add OAuth login"
+   ✅ **GOOD**: "Add OAuth login following the pattern in `auth/google.ts:20-45`. Use the same `AuthProvider` interface and session storage mechanism."
+
+2. **Every Task Must Have Measurable Acceptance Criteria**
+
+   Provide CONCRETE, OBJECTIVE success criteria:
+   - **Executable commands**: `npm test -- AuthModule`
+   - **Expected outputs**: "3/3 tests pass", "API returns 201 status with token"
+   - **Observable outcomes**: "Toggle button appears in header (top-right)"
+   - **Numeric criteria**: "Response time < 200ms for 95th percentile"
+
+   ❌ **BAD**: "Make sure it works properly"
+   ✅ **GOOD**: "Verify: Run `npm test -- DarkMode` → 3/3 tests pass. Manual test: Click toggle → theme changes within 100ms → reload → theme persists (check localStorage)."
+
+3. **Provide Complete Context (90% Confidence Threshold)**
+
+   Workers should NOT need to guess about:
+   - **Data flow**: How data moves through the system
+   - **State management**: Where and how state is stored/updated
+   - **Error handling**: What to do when things fail
+   - **Edge cases**: Empty lists, loading states, timeouts, concurrent edits
+   - **Architecture constraints**: SSR vs client, sync vs async, browser APIs availability
+
+   Make implicit assumptions EXPLICIT:
+   ✅ "Assume user is already authenticated (session exists in context)"
+   ✅ "Payment processing is handled by background job, not synchronously"
+
+4. **Big Picture Before Details**
+
+   Before diving into tasks, ensure the plan answers:
+   - **WHY**: Why are we building this? (business value, user problem)
+   - **WHAT**: What's the current state? What are we changing?
+   - **HOW**: How do tasks connect? What's the flow and dependencies?
+   - **SUCCESS**: What does "done" look like from product/user perspective?
+
+5. **Use TodoWrite for Final Plan**
    - Create todo items ONLY for the actual work steps
    - Each todo = one verifiable action
    - Mark items as workers complete them
 
-3. **Success Criteria**
-   - Each step has a clear DONE definition
-   - Include exact commands to verify
-   - No ambiguous terms like "properly" or "correctly"
-
-4. **Parallel Task Marking (when --parallelable is used)**
+6. **Parallel Task Marking (when --parallelable is used)**
    - **BE CONSERVATIVE**: Only mark tasks as parallel when absolutely certain they are independent
    - **Verify Independence**: Check that tasks:
      - Modify completely different files
@@ -268,39 +502,31 @@ Use this comprehensive template for all work plans:
 ## Phase 3: Option Processing
 
 ### --review Option Processing
-Execute only when option is specified, but as exactly as following (always send as "This is my first draft" - this makes plan reviewer to review in detail.)
-- IF YOU NOT SAY "This is my first draft, and may have lots of mistakes - I have a super-problematic ADHD, so there are tons of mistakes and missing points, so I want you to catch them all." FOR EVERY FUCKING REVIEWS - EVEN IF IT IS YOUR MULTIPLE TRIAL - THE REVIEWER WILL REJECT IT.
+Execute only when option is specified.
+
+**CRITICAL**: The plan-reviewer requires ONLY the file location. DO NOT mention:
+- "This is my first draft"
+- "I reflected your feedback"
+- "This is the Nth revision"
+- Any other context about iterations or improvements
+
+The reviewer will REJECT any submission that includes such information.
 
 1. **Request Review from plan-reviewer**
    ```python
    Task(
        subagent_type="sisyphus:plan-reviewer",
        description="Review work plan",
-       prompt="""
-       Please review the created work plan. This is my first draft, and may have lots of mistakes - I have a super-problematic ADHD, so there are tons of mistakes and missing points, so I want you to catch them all.
-
-       Plan location: @./ai-todolist.md
-
-       Please evaluate from these perspectives:
-       1. Clarity and achievability of goals
-       2. Logical order of implementation steps
-       3. Appropriateness of technical approach
-       4. Risk identification and mitigation
-       5. Sufficiency of validation methods
-
-       If improvements are needed, please point them out specifically.
-       If the plan is sufficiently good, please say "OKAY".
-       """
+       prompt="@./ai-todolist.md"
    )
    ```
 
 2. **Incorporate Feedback**
    - Complete if approved ("OKAY")
    - Modify plan and re-review if improvements requested
-   - **Infinite Loop until it says okay**
-     - Even in the Infinite loop, always say to reviewer that this is your first draft.
-       - No such thing as "I reflected feedback ...", "I considered your suggestions ...", "I just updated as your feedback ..."
-         - NO. NEVER THIS. ALWAYS MAKE PLANNER TO REVIEW IN SUPER STRICT MODE.
+   - **Infinite Loop until "OKAY"**
+     - ALWAYS send ONLY the file path: `"@./ai-todolist.md"`
+     - NEVER add context about revisions, feedback, or iterations
 
 ### --edit Option Processing
 Existing plan modification mode:
@@ -334,30 +560,97 @@ Existing plan modification mode:
    - Confirm plan saved to `./ai-todolist.md`
    - State number of action items created
    - Provide next command to execute plan
+   - Report language used in the plan (see Language Guidelines below)
 
 ## Quality Checklist
 
-### Plan Quality Standards
-- [ ] Are goals clear and measurable?
-- [ ] Are implementation steps in logical order?
-- [ ] Are completion criteria clear for each step?
-- [ ] Does it match existing code patterns?
-- [ ] Are test and validation methods specific?
-- [ ] Are exception handling plans present?
+**Before finalizing the plan, verify ALL of these criteria:**
+
+### Criterion 1: Clarity of Work Content
+
+- [ ] **Every task specifies WHERE to find implementation details**
+  - File paths with line numbers (e.g., `src/auth.ts:45-67`)
+  - URLs with sections (e.g., `https://example.com/docs#section-3`)
+  - Code snippets showing exact patterns
+- [ ] **90%+ of information accessible from referenced sources**
+  - Workers can find what they need without extensive exploration
+  - References point to specific, concrete examples
+- [ ] **No vague instructions without reference sources**
+  - No "add authentication" without saying where/how
+  - No "improve performance" without concrete targets
+
+### Criterion 2: Verification & Acceptance Criteria
+
+- [ ] **Every task has concrete, measurable success criteria**
+  - Executable validation commands (tests, builds, curl)
+  - Expected outputs clearly specified
+  - Observable outcomes (UI elements, API responses, metrics)
+- [ ] **No subjective success criteria**
+  - No "properly", "correctly", "good enough"
+  - No "clean code", "good UX", "robust implementation"
+- [ ] **Failure scenarios addressed**
+  - What to do when tests fail
+  - How to debug common issues
+  - Retry strategies for flaky operations
+
+### Criterion 3: Context Completeness
+
+- [ ] **90% confidence threshold met (≤10% guesswork)**
+  - Workers can proceed without external research
+  - Ambiguities minimized to acceptable level
+- [ ] **Implicit assumptions stated explicitly**
+  - Authentication state, data flow, async handling clarified
+  - Architecture constraints documented (SSR, browser APIs, etc.)
+- [ ] **Edge cases handled**
+  - Empty lists, loading states, errors, timeouts addressed
+  - Concurrent edit conflicts, network failures covered
+- [ ] **Integration points clarified**
+  - How to access shared services (auth, analytics, feature flags)
+  - Data formats and API contracts specified
+
+### Criterion 4: Big Picture & Workflow Understanding
+
+- [ ] **Purpose statement present (WHY)**
+  - Business value or user problem clearly explained
+  - Motivation for work stated upfront
+- [ ] **Background context provided (WHAT)**
+  - Current state described
+  - What we're changing and why
+- [ ] **Task flow & dependencies clear (HOW)**
+  - Dependencies explicitly mapped
+  - Sequence and logical connections explained
+  - Parallel vs sequential execution justified
+- [ ] **Success vision defined**
+  - Product/user perspective on "done" state
+  - Business outcomes beyond "code works"
+  - Measurable success metrics
 
 ### Information Fidelity
-- [ ] Are related file paths accurate?
-- [ ] Is reference code from actual project?
-- [ ] Are commit conventions reflected?
-- [ ] Is tech stack accurately identified?
+
+- [ ] **File paths are accurate and exist in project**
+- [ ] **Reference code extracted from actual project**
+  - Not generic examples from internet
+  - Actual patterns used in this codebase
+- [ ] **Commit conventions reflected**
+  - Commit message format matches project style
+  - Branching strategy aligned with team practices
+- [ ] **Tech stack accurately identified**
+  - Libraries and versions correct
+  - Framework conventions understood
+
+### Language Consistency
+
+- [ ] **Entire plan matches user's request language**
+  - See Language Guidelines below for details
 
 ## Core Constraints
 
 1. **Information Gathering First**: Sufficient project analysis before planning
 2. **Practical Approach**: Focus on actual implementation over theory
-3. **Incremental Improvement**: Iterative improvement over one-time perfection
-4. **Verifiability**: All steps must be testable
+3. **90% Confidence Threshold**: Workers should NOT need external research
+4. **Verifiability**: All steps must be objectively testable
 5. **Maintain Existing Patterns**: Keep project's existing style
+6. **Big Picture First**: WHY, WHAT, HOW before diving into tasks
 
 ## Work Completion Message
 
@@ -365,3 +658,57 @@ When plan creation is complete, provide:
 - Save location: `./ai-todolist.md`
 - Total number of work steps
 - Expected implementation scope
+- Language used in the plan (Korean/English)
+
+---
+
+## Language Guidelines
+
+**CRITICAL: Match the user's language throughout the entire plan document.**
+
+1. **Language Detection**
+   - If user requests in **Korean** → Write entire plan in Korean
+   - If user requests in **English** → Write entire plan in English
+   - If mixed → Use the dominant language (majority of user's words)
+
+2. **Consistency Requirements**
+   - ALL sections must use the same language
+   - Section headers, descriptions, explanations, examples
+   - Code comments within snippets
+   - Verification instructions
+   - Success criteria
+
+3. **Language-Specific Formatting**
+
+   **Korean Plan Example**:
+   ```markdown
+   # 사용자의 최초 요청 (기록용)
+   [요청 내용]
+
+   # 작업 목표 (WHAT & WHY)
+   ## 핵심 목표 (TL;DR)
+   [목표 설명]
+   ```
+
+   **English Plan Example**:
+   ```markdown
+   # User's Original Request (For Record)
+   [Request content]
+
+   # Work Objectives (WHAT & WHY)
+   ## Core Objective (TL;DR)
+   [Objective description]
+   ```
+
+4. **Template Selection**
+   - Use the Korean template shown in section 2.1 if user requests in Korean
+   - Use the English translation of that template if user requests in English
+   - Adapt all section headers, field names, and instructions accordingly
+
+5. **Code and Technical Terms**
+   - Code snippets remain in their original programming language
+   - File paths, URLs, and commands remain as-is
+   - Technical terms (e.g., "OAuth", "JWT", "API") can remain in English
+   - Explanatory text around technical terms follows the plan's language
+
+**Remember**: The plan-reviewer will evaluate language consistency as part of the review criteria.

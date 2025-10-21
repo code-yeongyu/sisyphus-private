@@ -70,7 +70,27 @@ Activate when users:
 
 ## Work Process
 
-### Phase 0: Repository Preparation (ALWAYS EXECUTE FIRST)
+### Phase 0: Register Plan Creation Steps (ALWAYS EXECUTE FIRST)
+
+Before starting any plan creation work, use the TodoWrite tool to register all upcoming steps:
+
+```
+Use TodoWrite to create todos for the following:
+1. Clarify and refine user requirements
+2. Analyze codebase and gather implementation information
+3. Create work plan draft
+4. Request plan-reviewer verification
+5. Incorporate reviewer feedback (iterative)
+6. Save final plan to ./ai-todolist.md
+7. (GitHub CI only) Push branch to remote
+8. (GitHub CI only) Report success to user
+
+Mark each step as 'pending' initially, then update to 'in_progress' and 'completed' as you work through them.
+```
+
+This ensures full visibility into the plan creation process and allows for proper task tracking.
+
+### Phase 0.5: Repository Preparation (ALWAYS EXECUTE AFTER TODOWRITE)
 
 Before starting any plan creation work, ALWAYS execute these steps in order:
 
@@ -362,10 +382,45 @@ When modifying existing plan:
    - Format: Clear, actionable items
    - Workers will check these off during execution
 
-3. **Success Report**
+3. **Commit Plan to Git**
+   ```bash
+   git add ai-todolist.md
+   git commit -m "plan: create work plan"
+   ```
+   - Commits the finalized plan to the branch
+
+4. **GitHub CI: Push Branch to Remote**
+
+   **Only execute this step if running in GitHub CI environment** (check for `GITHUB_ACTIONS` or `CI` environment variables):
+
+   ```bash
+   # Get current branch name
+   BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+
+   # Push branch to remote
+   git push -u origin "$BRANCH_NAME"
+   ```
+
+   - Pushes the plan-writer branch to remote for further processing
+   - This allows the subsequent workflow (sisyphus-trigger) to access the plan
+
+5. **Success Report**
    - Confirm plan saved to `./ai-todolist.md`
    - State number of action items created
+   - **GitHub CI only**: Report branch name and push status
    - Provide next steps for execution
+
+   Example report:
+   ```
+   Plan creation complete!
+
+   * Plan file: ./ai-todolist.md
+   * Total action items: N
+   * Branch: plan-writer/YYYYMMDD-HHMMSS
+   * Status: ✅ Pushed to remote
+
+   The plan is ready for execution.
+   ```
 
 ## Quality Checklist
 

@@ -26,6 +26,7 @@ class ChatLog(RichLog):
             wrap=True,
         )
         self._user_scrolled_up: bool = False
+        self._programmatic_scrolling: bool = False
 
     def _should_auto_scroll(self) -> bool:
         """Check if auto-scroll should be active.
@@ -53,9 +54,16 @@ class ChatLog(RichLog):
         reaches the bottom (within 1px), and set to True (disabling auto-scroll)
         when scrolled up from the bottom.
 
+        Ignores scroll events caused by programmatic scrolling (e.g., scroll_end())
+        to prevent interfering with user's scroll position preference.
+
         Args:
             event: The scroll event triggered by user input
         """
+        # Ignore scroll events from programmatic scrolling
+        if self._programmatic_scrolling:
+            return
+
         # Check if scroll position is at the bottom (within 1px tolerance)
         if self.scroll_offset.y >= self.max_scroll_y - 1:
             # At bottom: enable auto-scroll
@@ -63,6 +71,16 @@ class ChatLog(RichLog):
         else:
             # Scrolled up: disable auto-scroll
             self._user_scrolled_up = True
+
+    def _safe_scroll_end(self) -> None:
+        """Scroll to the end without triggering user scroll detection.
+
+        This method sets the programmatic scrolling flag to prevent on_scroll
+        from misinterpreting the programmatic scroll as a user action.
+        """
+        self._programmatic_scrolling = True
+        self.scroll_end()
+        self._programmatic_scrolling = False
 
     def write_user_message(self, content: str) -> None:
         """Display user message.
@@ -73,7 +91,7 @@ class ChatLog(RichLog):
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [green]👤 USER:[/green] {content}")
         if self._should_auto_scroll():
-            self.call_after_refresh(self.scroll_end)
+            self.call_after_refresh(self._safe_scroll_end)
 
     def write_execute_message(self, content: str) -> None:
         """Write Execute message.
@@ -84,7 +102,7 @@ class ChatLog(RichLog):
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [yellow]▶ EXECUTE:[/yellow] {content}")
         if self._should_auto_scroll():
-            self.call_after_refresh(self.scroll_end)
+            self.call_after_refresh(self._safe_scroll_end)
 
     def write_verify_message(self, content: str) -> None:
         """Write Verify message.
@@ -95,7 +113,7 @@ class ChatLog(RichLog):
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [cyan]✓ VERIFY:[/cyan] {content}")
         if self._should_auto_scroll():
-            self.call_after_refresh(self.scroll_end)
+            self.call_after_refresh(self._safe_scroll_end)
 
     def write_completion_message(self, content: str) -> None:
         """Write task completion message.
@@ -106,4 +124,4 @@ class ChatLog(RichLog):
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.write(f"[dim]{timestamp}[/dim] [bold green]✅ COMPLETED:[/bold green] {content}")
         if self._should_auto_scroll():
-            self.call_after_refresh(self.scroll_end)
+            self.call_after_refresh(self._safe_scroll_end)

@@ -48,11 +48,11 @@ This means:
    - **HOW**: Task flow (dependencies, sequence, logical connections)
    - **Success Vision**: End state from product/user perspective (not just "code works")
 
-2. **Clarity Through Concrete References**
-   - Every task MUST cite specific sources:
-     - File paths with line numbers (e.g., `src/auth.ts:45-67`)
-     - URLs with sections (e.g., `https://example.com/docs#section-3`)
-     - Code snippets showing exact patterns to follow
+2. **Clarity Through Logical References**
+   - Every task MUST provide clear navigation paths:
+     - File paths with searchable concepts (e.g., `models/User.ts` - search for `@Column` decorator patterns)
+     - URLs with searchable sections (e.g., `https://example.com/docs` - find "JWT token creation" section)
+     - Code snippets when patterns are complex or non-obvious
    - No vague instructions like "add authentication" without reference sources
 
 3. **Verifiability Through Measurable Criteria**
@@ -67,6 +67,70 @@ This means:
    - Document data flows, state management, error handling strategies
    - Provide edge case handling guidance
    - Clarify architectural constraints (SSR vs client, sync vs async, etc.)
+
+### Worker-Centric Writing Philosophy
+
+**CRITICAL: Always write from the worker's perspective. The test is: "Can a competent developer execute this task with ≥90% confidence using ONLY what's written?"**
+
+#### The Core Test: "Can I Start and Trace?"
+
+For every task you write, simulate being the worker:
+
+1. **Can I find the starting point?**
+   - Is there a clear file path and searchable concept to begin?
+   - Do I know which file to open and what to search for?
+
+2. **Can I trace the information I need?**
+   - If I read the referenced file and search for the concept, will I find the pattern?
+   - If I follow imports and related code, will I understand the full context?
+   - Are there logical breadcrumbs that lead me to all necessary information?
+
+3. **Do I know WHAT to build?**
+   - Is the business logic clear? (What should this feature do?)
+   - Is the desired behavior explicit? (How should it work from user's perspective?)
+
+4. **Do I know HOW to build it?**
+   - Is the architectural approach specified? (Which pattern, which library, which method?)
+   - Are integration points clear? (How does this connect to existing systems?)
+
+5. **Do I know WHEN it's done?**
+   - Are success criteria measurable and objective?
+   - Can I verify completion without subjective judgment?
+
+#### What Workers Need vs What They Can Discover
+
+**Workers MUST get from the plan (not through exploration):**
+- **Business requirements**: What feature does, why it works certain way
+- **Architectural decisions**: Which pattern to use, how systems integrate
+- **Starting points**: Where to begin, which files contain relevant patterns, what to search for
+- **Edge case handling**: How to handle errors, empty states, concurrent edits
+- **Project-specific conventions**: Custom patterns unique to this codebase
+
+**Workers CAN discover through natural exploration (10% allowance):**
+- **Technical details**: Exact function signatures, import statements
+- **Framework conventions**: Standard React hooks usage, Django ORM patterns
+- **Type definitions**: Following type references to understand data structures
+- **Related utilities**: Helper functions imported by referenced code
+
+#### Avoiding Implicit Knowledge
+
+Before writing each task, ask yourself:
+
+- [ ] **Am I assuming the worker knows the business logic?**
+  - If yes → Document it explicitly
+  - Example: Don't assume worker knows "payment is async via background job"
+
+- [ ] **Am I assuming the worker knows which approach to use?**
+  - If yes → Specify the architectural decision
+  - Example: Don't say "add state" → Say "add to Redux store following pattern in store/auth.ts (search for `createSlice` usage)"
+
+- [ ] **Am I assuming the worker knows project conventions?**
+  - If yes → Either cite where convention is documented OR explain it
+  - Example: Don't assume worker knows "we always colocate tests with implementation"
+
+- [ ] **Am I leaving edge cases undefined?**
+  - If yes → Document how to handle them
+  - Example: Don't leave empty state handling to worker's judgment
 
 ## Work Process
 
@@ -114,13 +178,13 @@ Check command options to determine workflow:
    - Search for similar functionality already implemented
    - Identify existing patterns that can be reused or extended
    - Look for related modules and components
-   - **CRITICAL**: Capture file paths + line numbers for every relevant pattern found
+   - **CRITICAL**: Capture file paths + searchable concepts for every relevant pattern found
 
 2. **Analyze Implementation Context**
    - Find where similar features are implemented
    - Understand how existing code handles similar requirements
    - Identify integration points and dependencies
-   - **CRITICAL**: Note down code snippets showing exact patterns
+   - **CRITICAL**: Note down patterns with searchable keywords (prepare to cite file paths with search terms)
 
 3. **Extract Project Conventions**
    ```bash
@@ -140,7 +204,7 @@ Check command options to determine workflow:
    - Identify existing implementation patterns in project
    - Find reusable components and conventions
    - Map architectural decisions from actual code
-   - **CRITICAL**: Extract code snippets to include in plan
+   - **CRITICAL**: Assess pattern complexity → determine if code snippets needed in plan
 
 ## Phase 2: Plan Creation
 
@@ -200,22 +264,24 @@ Use this comprehensive template for all work plans:
    [Files affected by the work and each file's role]
 
    ## Reference Files for Context Understanding
-   ### 1. [File path:start-line-end-line]
+   ### 1. [File path]
    - **Role**: [What this file does]
-   - **Reference section**: [Which part to look at - specific line numbers or function names]
-   - **Key Code Snippet**:
+   - **What to search for**: [Searchable concepts, function names, class names, patterns to look for]
+   - **Key pattern to understand**: [Brief description of what pattern looks like - e.g., "decorator usage with nullable option", "middleware chain pattern"]
+   - **Code Snippet** [OPTIONAL - include only when pattern is complex or multi-step]:
       ```python
-      # Code extracted from actual project
+      # Code extracted from actual project showing the key pattern
       class SomeClass:
          def method_to_check(self):
                # Must follow this pattern
                pass
       ```
 
-   ### 2. [Another file path:start-line-end-line]
+   ### 2. [Another file path]
    - **Role**: [This file's role]
+   - **What to search for**: [Searchable keywords or concepts]
    - **Notes**: [Special points to pay attention to]
-   - **Reference URL**: [Related documentation URL + section if available]
+   - **Reference URL**: [Related documentation URL + searchable section keyword if available]
 
    [Note: This file list should be 'global context' - include only essential content needed for most tasks. Context needed for individual tasks should go inside 'todo' items.]
 
@@ -269,15 +335,17 @@ Use this comprehensive template for all work plans:
    - [ ] 1. [Feature 1 - Example: Modify User model and test. Implementation and testing should always be one Task]
 
       **Reference Sources (REQUIRED)**:
-      - Existing pattern: `models/Product.ts:23-45` (similar model field addition pattern)
-      - Test example: `tests/models/Product.test.ts:78-95` (model test writing pattern)
-      - Documentation: https://docs.example.com/models#adding-fields (official guide)
+      - Pattern file: `models/Product.ts` (search for `@Column` decorator, look at timestamp field patterns like `last_updated`)
+      - Test file: `tests/models/Product.test.ts` (search for model test structure, find tests for timestamp fields)
+      - Documentation: https://docs.example.com/models (search for "adding fields" section)
 
-      - [ ] 1.1 Implementation: Modify [specific function/class name] in [specific file name:line number]
+      - [ ] 1.1 Implementation: Modify [specific function/class name] in [specific file name]
 
-         **Code Pattern Reference**:
+         **What to search in reference file**: [e.g., "Search for `@Column` decorator usage with `nullable: true`, examine how timestamp fields are defined"]
+
+         **Code Pattern Reference** [OPTIONAL - include only if pattern is complex or non-obvious]:
          ```python
-         # Actual code extracted from project (models/Product.ts:23-45)
+         # Actual code extracted from project showing the pattern
          class Product extends BaseModel {
             @Column({ type: "timestamp", nullable: true })
             last_updated: Date | null;
@@ -287,19 +355,12 @@ Use this comprehensive template for all work plans:
          **Implementation Details**:
          - Current: [Current code or state]
          - Change: [Code or state to change to]
-         - Note: [Project convention notes]
+         - Note: [Project convention notes, architectural decisions]
 
-      - [ ] 1.2 Write test: Add test for this feature to [test_filename.py:line to add]
+      - [ ] 1.2 Write test: Add test for this feature to [test_filename.py]
 
-         **Test Pattern Reference**: `tests/models/Product.test.ts:78-95`
-         ```typescript
-         // Existing test pattern
-         describe("Product model", () => {
-            it("should update timestamp on modification", () => {
-               // Write following this pattern
-            });
-         });
-         ```
+         **Test Pattern Reference**: `tests/models/Product.test.ts` (search for `describe("Product model")`, examine timestamp field test structure)
+         [Code snippet OPTIONAL - include only if test pattern is non-standard]
 
       - [ ] 1.3 Run and verify tests
 
@@ -343,17 +404,16 @@ Use this comprehensive template for all work plans:
    - [ ] 2. [Feature 2 - Example: Implement and test login API]
 
       **Reference Sources (REQUIRED)**:
-      - API pattern: `api/auth/register.ts:15-45` (similar authentication API structure)
-      - Validation logic: `utils/validators.ts:67-89` (email/password validation pattern)
-      - Documentation: https://fastapi.tiangolo.com/tutorial/security/ (FastAPI authentication guide)
+      - API pattern: `api/auth/register.ts` (search for authentication endpoint structure, examine request validation and response format)
+      - Validation: `utils/validators.ts` (search for email/password validation functions)
+      - Documentation: https://fastapi.tiangolo.com/tutorial/security/ (find "OAuth2 with Password" section)
 
       - [ ] 2.1. Review references
-         - [ ] Review https://example.com/docs#section-3
-           - Especially check "JWT token creation" section
+         - [ ] Review https://example.com/docs (search for "JWT token creation" section)
            - Learn `create_access_token` function pattern from example code
-         - [ ] Review `./api/auth/register.ts:15-45` file
-           - Check request body validation method
-           - Check response format (201 status, body structure)
+         - [ ] Review `./api/auth/register.ts` file
+           - Search for request body validation method
+           - Check response format (status code, body structure)
          - [ ] [Subsequent tasks]
 
       - [ ] **Work Completion Verification Checklist**
@@ -385,7 +445,9 @@ Use this comprehensive template for all work plans:
       - No common dependencies (each independent endpoint)
 
       **Reference Sources (REQUIRED)**:
-      - [file:line + code snippet + URL]
+      - [file path + what to search for in that file]
+      - [URL + searchable section keyword if applicable]
+      - [Code snippet only if pattern is complex]
 
       - [ ] **Work Completion Verification Checklist**
          - [Specific and measurable verification methods]
@@ -396,7 +458,7 @@ Use this comprehensive template for all work plans:
       **※ Parallel Execution Condition**: Completely independent from Feature 3, modifies different files, no dependencies at all
 
       **Reference Sources (REQUIRED)**:
-      - [file:line + code snippet + URL]
+      - [file path + searchable concept/keyword]
 
       - [ ] **Work Completion Verification Checklist**
          - [Specific and measurable verification methods]
@@ -444,12 +506,12 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
 1. **Every Task Must Have Clear Reference Sources**
 
    For each task, provide AT LEAST ONE of:
-   - **File reference with line numbers**: `src/auth/oauth.ts:45-67`
-   - **URL with section**: `https://stripe.com/docs/api/payment_intents#create`
-   - **Code snippet from project**: Show actual code pattern to follow
+   - **File reference with searchable concepts**: `models/User.ts` (search for `@Column` decorator, examine timestamp field patterns)
+   - **URL with searchable section**: `https://stripe.com/docs/api/payment_intents` (find "Creating a PaymentIntent" section)
+   - **Code snippet when pattern is complex**: Show actual code pattern when it's not obvious from reading the file
 
-   ❌ **BAD**: "Add OAuth login"
-   ✅ **GOOD**: "Add OAuth login following the pattern in `auth/google.ts:20-45`. Use the same `AuthProvider` interface and session storage mechanism."
+   [FAIL] **BAD**: "Add OAuth login"
+   [PASS] **GOOD**: "Add OAuth login following the pattern in `auth/google.ts` (search for `AuthProvider` interface implementation, examine session storage mechanism usage)"
 
 2. **Every Task Must Have Measurable Acceptance Criteria**
 
@@ -459,12 +521,13 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
    - **Observable outcomes**: "Toggle button appears in header (top-right)"
    - **Numeric criteria**: "Response time < 200ms for 95th percentile"
 
-   ❌ **BAD**: "Make sure it works properly"
-   ✅ **GOOD**: "Verify: Run `npm test -- DarkMode` → 3/3 tests pass. Manual test: Click toggle → theme changes within 100ms → reload → theme persists (check localStorage)."
+   [FAIL] **BAD**: "Make sure it works properly"
+   [PASS] **GOOD**: "Verify: Run `npm test -- DarkMode` → 3/3 tests pass. Manual test: Click toggle → theme changes within 100ms → reload → theme persists (check localStorage)."
 
 3. **Provide Complete Context (90% Confidence Threshold)**
 
    Workers should NOT need to guess about:
+   - **Business logic**: What feature does, why it works certain way
    - **Data flow**: How data moves through the system
    - **State management**: Where and how state is stored/updated
    - **Error handling**: What to do when things fail
@@ -472,8 +535,8 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
    - **Architecture constraints**: SSR vs client, sync vs async, browser APIs availability
 
    Make implicit assumptions EXPLICIT:
-   ✅ "Assume user is already authenticated (session exists in context)"
-   ✅ "Payment processing is handled by background job, not synchronously"
+   [PASS] "Assume user is already authenticated (session exists in context)"
+   [PASS] "Payment processing is handled by background job, not synchronously"
 
 4. **Big Picture Before Details**
 
@@ -483,12 +546,56 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
    - **HOW**: How do tasks connect? What's the flow and dependencies?
    - **SUCCESS**: What does "done" look like from product/user perspective?
 
-5. **Use TodoWrite for Final Plan**
+5. **Reference-First Approach (Code Snippets Only When Complex)**
+
+   **Default: File paths + searchable concepts + brief description**
+   - Most tasks: Workers can read the file and understand the pattern
+   - Provide file path, what to search for, and what pattern looks like
+   - Trust workers to follow imports and trace related code
+
+   **When to add code snippets:**
+   - Pattern is complex or has multiple steps
+   - Pattern is non-obvious even when reading the source file
+   - Pattern involves subtle details that might be missed
+   - Pattern requires understanding interaction between multiple pieces
+
+   **Decision Framework:**
+   ```
+   Ask yourself: "If I open this file and search for this concept, is it obvious what pattern to follow?"
+   - YES → File path + searchable concept is sufficient
+   - NO → Add code snippet showing the key pattern
+   ```
+
+6. **Worker Simulation: Test Sufficiency**
+
+   After writing each task, simulate being the worker:
+
+   - [ ] "Can I find where to start?" (Clear file path + searchable concept?)
+   - [ ] "Do I know WHAT to build?" (Business logic clear? Desired behavior explicit?)
+   - [ ] "Do I know HOW to build it?" (Architectural approach specified? Pattern clear?)
+   - [ ] "Can I trace necessary information?" (References lead to full context? Can follow breadcrumbs?)
+   - [ ] "Do I know WHEN it's done?" (Success criteria measurable? Verification method clear?)
+
+   If ANY answer is uncertain → Add more context, references, or explanations.
+
+7. **Implicit Knowledge Elimination**
+
+   Before finalizing, check for implicit assumptions:
+
+   - [ ] **Business Logic**: Did I document WHAT feature does and WHY?
+   - [ ] **Architectural Decisions**: Did I specify WHICH approach to use?
+   - [ ] **Integration Points**: Did I clarify HOW systems connect?
+   - [ ] **Edge Cases**: Did I define WHAT to do in error scenarios?
+   - [ ] **Project Conventions**: Did I cite WHERE conventions are documented?
+
+   If you find yourself thinking "the worker should know this" → **Stop. Document it.**
+
+8. **Use TodoWrite for Final Plan**
    - Create todo items ONLY for the actual work steps
    - Each todo = one verifiable action
    - Mark items as workers complete them
 
-6. **Parallel Task Marking (when --parallelable is used)**
+9. **Parallel Task Marking (when --parallelable is used)**
    - **BE CONSERVATIVE**: Only mark tasks as parallel when absolutely certain they are independent
    - **Verify Independence**: Check that tasks:
      - Modify completely different files
@@ -498,6 +605,141 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
    - **When Uncertain**: Default to sequential execution - it's safer
    - **Mark Pattern**: Use `- [ ] N parallel.` where N is the same number for all tasks in the parallel group
    - **Document Reasoning**: Add a note explaining WHY tasks can run in parallel
+
+### 2.3 Reference Quality Guidelines
+
+**The key question: "Can a worker open this file, search for this concept, and trace to everything they need?"**
+
+#### Reference Quality Levels
+
+**Level 1: Minimal (File Path Only) - [FAIL] Usually Insufficient**
+```
+- [ ] Add authentication
+  - Reference: See `auth/login.ts`
+```
+**Problem**: No starting point within file, no guidance on what to look for.
+
+**Level 2: Basic (File Path + Searchable Concept) - [PASS] Sufficient for Simple Tasks**
+```
+- [ ] Add timestamp field to User model
+  - Reference: `models/Product.ts` (search for `@Column` decorator, look at timestamp field like `last_updated`)
+  - Follow the same decorator approach with `nullable: true` option
+```
+**Good for**: Straightforward patterns, standard framework usage, simple modifications.
+**Worker can**: Read the file, search for the concept, see the pattern, copy and adapt.
+
+**Level 3: Detailed (File Path + Searchable Concept + Context) - [PASS] Recommended for Most Tasks**
+```
+- [ ] Implement JWT authentication for API endpoints
+  - Reference: `auth/oauth.ts` (search for token validation middleware, find error handling for expired tokens)
+  - What to understand: Middleware chain pattern, token refresh logic
+  - Adaptation needed: Use JWT instead of OAuth2, shorter token expiry (15min vs 1hr)
+  - Integration: Apply middleware to routes in `api/routes.ts` (search for `router.use` middleware patterns)
+```
+**Good for**: Standard features with some complexity, common patterns that need adaptation.
+**Worker can**: Read file, search concept, understand pattern, see how to integrate, know what to adapt.
+
+**Level 4: Comprehensive (File + Context + Code Snippet) - [PASS] Required for Complex Tasks**
+```
+- [ ] Implement optimistic UI update with rollback on error
+  - Reference: `store/posts.ts` (search for `deletePost` function, examine optimistic update pattern)
+  - Business logic: Update UI immediately, show success state, but rollback if API fails
+  - Code pattern to follow:
+    ```typescript
+    // From store/posts.ts deletePost function
+    async function deletePost(id: string) {
+      // 1. Optimistically remove from UI
+      dispatch({ type: 'POST_DELETE_OPTIMISTIC', payload: id });
+
+      try {
+        // 2. Call API
+        await api.deletePost(id);
+        // 3. Confirm deletion
+        dispatch({ type: 'POST_DELETE_SUCCESS', payload: id });
+      } catch (error) {
+        // 4. Rollback on error
+        dispatch({ type: 'POST_DELETE_ROLLBACK', payload: id });
+        showErrorToast(error.message);
+      }
+    }
+    ```
+  - Why snippet needed: Multi-step flow, error handling, state synchronization not obvious from file alone
+```
+**Good for**: Complex interactions, multi-step flows, non-obvious patterns, subtle details.
+**Worker can**: See complete pattern, understand all steps, copy structure, adapt details.
+
+#### When to Include Code Snippets
+
+**Include code snippet when:**
+- Pattern involves multiple coordinated steps
+- Pattern has subtle details that might be missed
+- Pattern requires understanding interaction between pieces
+- Pattern is project-specific and non-standard
+- Worker needs to see exact structure to replicate
+
+**Skip code snippet when:**
+- Pattern is straightforward (single function, simple change)
+- Pattern follows standard framework conventions
+- File reference + searchable concept makes pattern obvious
+- Worker can trace pattern by reading file naturally
+
+**Decision Matrix:**
+
+| Task Complexity | File Reference | Searchable Concept | Code Snippet |
+|----------------|----------------|-------------------|--------------|
+| Simple (add field, import module) | Required | Required | Skip |
+| Moderate (implement endpoint, add validation) | Required | Required | Optional |
+| Complex (optimistic updates, multi-step flow) | Required | Required | Required |
+
+#### Examples: Good vs Bad References
+
+**Example 1: Simple Task - Good Reference**
+```
+- [ ] Add `last_login` field to User model
+  - Reference: `models/Product.ts` (search for `@Column` decorator usage, examine timestamp field patterns like `last_updated`)
+  - Use same pattern: decorator with `{ type: "timestamp", nullable: true }` options
+  - Test pattern: `tests/models/Product.test.ts` (search for timestamp field tests)
+```
+[PASS] **Why good**: Worker can search file, find pattern, understand approach. No snippet needed.
+
+**Example 2: Simple Task - Bad Reference**
+```
+- [ ] Add authentication to the API
+  - Reference: Various files in `auth/` directory
+```
+[FAIL] **Why bad**: No specific file, no search keyword, no guidance. Worker must search and guess.
+
+**Example 3: Complex Task - Good Reference**
+```
+- [ ] Implement webhook event handling with retry logic
+  - Reference: `webhooks/github.ts` (search for `handleWebhook` function, examine signature verification and retry pattern)
+  - Business logic: Verify signature, process event, retry on failure (3 attempts, exponential backoff)
+  - Key pattern:
+    ```typescript
+    async function handleWebhook(req: Request) {
+      // 1. Verify signature (critical for security)
+      if (!verifySignature(req.headers, req.body)) {
+        return res.status(401).json({ error: 'Invalid signature' });
+      }
+
+      // 2. Process with retry
+      await retryWithBackoff(
+        () => processEvent(req.body),
+        { attempts: 3, baseDelay: 1000 }
+      );
+    }
+    ```
+  - Adaptation: Use Stripe signature verification instead of GitHub's
+  - Integration: Add route in `api/webhooks/stripe.ts`, use existing `retryWithBackoff` from `utils/retry.ts`
+```
+[PASS] **Why good**: Complex flow, security-critical, non-obvious steps → snippet clarifies. Searchable concept provided.
+
+**Example 4: Complex Task - Bad Reference**
+```
+- [ ] Implement webhooks properly
+  - Reference: `webhooks/github.ts`
+```
+[FAIL] **Why bad**: No searchable concept, no explanation of what "properly" means, no business logic documented.
 
 ## Phase 3: Option Processing
 
@@ -569,12 +811,13 @@ Existing plan modification mode:
 ### Criterion 1: Clarity of Work Content
 
 - [ ] **Every task specifies WHERE to find implementation details**
-  - File paths with line numbers (e.g., `src/auth.ts:45-67`)
-  - URLs with sections (e.g., `https://example.com/docs#section-3`)
-  - Code snippets showing exact patterns
+  - File paths with searchable concepts (e.g., `models/User.ts` - search for `@Column` decorator patterns)
+  - URLs with searchable sections (e.g., `https://example.com/docs` - find "JWT creation" section)
+  - Code snippets when patterns are complex or non-obvious
 - [ ] **90%+ of information accessible from referenced sources**
-  - Workers can find what they need without extensive exploration
-  - References point to specific, concrete examples
+  - Workers can find what they need by searching referenced files
+  - References provide clear search keywords and concepts
+  - Referenced files contain the claimed patterns
 - [ ] **No vague instructions without reference sources**
   - No "add authentication" without saying where/how
   - No "improve performance" without concrete targets
@@ -598,6 +841,19 @@ Existing plan modification mode:
 - [ ] **90% confidence threshold met (≤10% guesswork)**
   - Workers can proceed without external research
   - Ambiguities minimized to acceptable level
+- [ ] **Worker can START work from provided references (no extensive searching needed)**
+  - Each task provides clear file path + searchable concept
+  - Worker can open file and search to find starting point
+  - Referenced patterns are findable through logical search
+- [ ] **Business logic is explicit (not implicit)**
+  - What feature does, why it works certain way is documented
+  - Desired behavior from user perspective is clear
+  - No assumptions about requirements or expected outcomes
+- [ ] **Architectural decisions are stated (not assumed)**
+  - Which pattern to use, how systems integrate is clear
+  - State management approach specified (Redux/Context/Local)
+  - Error handling strategy documented (Toast/Inline/Redirect)
+  - No guessing about which approach to take
 - [ ] **Implicit assumptions stated explicitly**
   - Authentication state, data flow, async handling clarified
   - Architecture constraints documented (SSR, browser APIs, etc.)
@@ -607,6 +863,10 @@ Existing plan modification mode:
 - [ ] **Integration points clarified**
   - How to access shared services (auth, analytics, feature flags)
   - Data formats and API contracts specified
+- [ ] **No project-specific conventions left undocumented**
+  - Custom patterns unique to this codebase are explained
+  - References to "how we do things here" are backed by file citations with search concepts
+  - Commit message style, testing conventions, code organization documented
 
 ### Criterion 4: Big Picture & Workflow Understanding
 
@@ -628,9 +888,9 @@ Existing plan modification mode:
 ### Information Fidelity
 
 - [ ] **File paths are accurate and exist in project**
-- [ ] **Reference code extracted from actual project**
-  - Not generic examples from internet
-  - Actual patterns used in this codebase
+- [ ] **Searchable concepts are findable in referenced files**
+  - Keywords/concepts mentioned actually exist in the files
+  - Worker can grep/search for them successfully
 - [ ] **Commit conventions reflected**
   - Commit message format matches project style
   - Branching strategy aligned with team practices
@@ -647,7 +907,7 @@ Existing plan modification mode:
 
 1. **Information Gathering First**: Sufficient project analysis before planning
 2. **Practical Approach**: Focus on actual implementation over theory
-3. **90% Confidence Threshold**: Workers should NOT need external research
+3. **90% Confidence Threshold**: Workers should NOT need external research beyond natural code exploration
 4. **Verifiability**: All steps must be objectively testable
 5. **Maintain Existing Patterns**: Keep project's existing style
 6. **Big Picture First**: WHY, WHAT, HOW before diving into tasks

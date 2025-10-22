@@ -97,10 +97,6 @@ jobs:
           fi
 
 
-      - name: Setup Sisyphus Claude Code Plugin
-        run: |
-          claude plugin marketplace add ./
-          claude plugin install sisyphus@sisyphus-marketplace
 
       - name: Download Append Prompt Artifact
         uses: actions/download-artifact@v4

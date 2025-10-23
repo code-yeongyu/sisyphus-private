@@ -6,6 +6,7 @@ CURRENT_TIME=$(date '+%Y-%m-%dT%H:%M:%S%z' | sed 's/\([0-9][0-9]\)$/:\1/')
 # Print the system reminder
 echo "" >&2
 echo "[system-reminder]" >&2
+echo "Context Window Left: 1,000,000 Tokens (Only 10% Used, 90% Left) - automatically managed now. Okay to Process remaining works."
 echo "CURRENT SYSTEM TIME: $CURRENT_TIME (IT IS NOT 2024)" >&2
 echo "User Lanuage: 한국어 (Korean)" >&2
 echo "**사용자에게 항상, 무조건 한국어로 답변하세요.**" >&2

@@ -93,10 +93,40 @@ class LanguageGuideChecker:
     """Checks language-specific guide compliance when reading code files."""
 
     MODULAR_PROMPTS_DIR = Path.home() / ".claude" / "modular-prompts" / "languages"
+    TODOS_DIR = Path.home() / ".claude" / "todos"
 
-    def __init__(self, cwd: str, transcript_path: str) -> None:
+    def __init__(self, cwd: str, transcript_path: str, session_id: str) -> None:
         self.cwd = Path(cwd)
         self.transcript_path = Path(transcript_path)
+        self.session_id = session_id
+
+    def _generate_todo_id(self, file_extension: str) -> str:
+        """Generate todo ID for a language guide."""
+        return f"read-guide-{file_extension.lower()}"
+
+    def _mark_todo_completed(self, todo_id: str) -> None:
+        """Mark an existing todo item as completed."""
+        self.TODOS_DIR.mkdir(parents=True, exist_ok=True)
+        todo_file = self.TODOS_DIR / f"{self.session_id}-agent-{self.session_id}.json"
+
+        if not todo_file.exists():
+            return
+
+        try:
+            todos = orjson.loads(todo_file.read_bytes())
+        except (orjson.JSONDecodeError, OSError):
+            return
+
+        for todo in todos:
+            if todo.get("id") == todo_id:
+                if todo.get("status") != "completed":
+                    todo["status"] = "completed"
+                break
+
+        try:
+            todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+        except OSError:
+            pass
 
     def _get_guide_path(self, extension: str) -> Path | None:
         if not extension or not extension.startswith("."):
@@ -124,7 +154,7 @@ class LanguageGuideChecker:
             return False
 
         try:
-            guide_path_str = str(guide_path)
+            guide_path_str = str(guide_path.resolve())
             transcript_content = self.transcript_path.read_text(encoding="utf-8")
 
             for line in transcript_content.splitlines():
@@ -175,6 +205,38 @@ class LanguageGuideChecker:
         except OSError:
             return False
 
+    def _add_todo_item(self, guide_path: Path, file_extension: str) -> None:
+        self.TODOS_DIR.mkdir(parents=True, exist_ok=True)
+        todo_file = self.TODOS_DIR / f"{self.session_id}-agent-{self.session_id}.json"
+
+        try:
+            if todo_file.exists():
+                todos = orjson.loads(todo_file.read_bytes())
+            else:
+                todos = []
+        except (orjson.JSONDecodeError, OSError):
+            todos = []
+
+        todo_id = self._generate_todo_id(file_extension)
+
+        todo_item = {
+            "content": f"Read {file_extension} language guide: {guide_path}",
+            "status": "pending",
+            "priority": "high",
+            "id": todo_id,
+        }
+
+        for existing_todo in todos:
+            if existing_todo.get("id") == todo_item["id"]:
+                return
+
+        todos.insert(0, todo_item)
+
+        try:
+            todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+        except OSError:
+            pass
+
     def check_and_inject(self, file_path: str) -> str:
         path = Path(file_path)
         extension = path.suffix
@@ -187,15 +249,20 @@ class LanguageGuideChecker:
         if not guide_content:
             return ""
 
+        file_extension = extension[1:].upper()
+
         if self._has_guide_been_read(guide_path):
+            todo_id = self._generate_todo_id(file_extension)
+            self._mark_todo_completed(todo_id)
             return ""
 
-        file_extension = extension[1:].upper()
+        self._add_todo_item(guide_path, file_extension)
 
         warning_message = (
             f"ACTION REQUIRED: Use Read tool to read guide for {file_extension} immediately. READ NOW."
             f"You MUST read the following guide before proceeding with {path.name}:\n"
             f"{guide_path}\n\n"
+            f"[Todo added to ~/.claude/todos/{self.session_id}-agent-{self.session_id}.json]\n"
         )
 
         return warning_message
@@ -230,8 +297,9 @@ def main() -> None:
 
     cwd = data["cwd"]
     transcript_path = data["transcript_path"]
+    session_id = data["session_id"]
 
-    checker = LanguageGuideChecker(cwd, transcript_path)
+    checker = LanguageGuideChecker(cwd, transcript_path, session_id)
     message = checker.check_and_inject(file_path)
 
     if message:

@@ -115,11 +115,11 @@ async def test_claude__if_assistant_message_without_prompt_too_long__yields_norm
     assert messages[0].content == "Hello, world!"
 
 
-async def test_claude__if_prompt_too_long_in_middle_of_content__raises_error(
+async def test_claude__if_prompt_too_long_in_middle_of_content__yields_normally(
     mock_sdk_client: MagicMock,
     mock_sdk_options: MagicMock,
 ) -> None:
-    """Test that error is detected even when string appears in middle of content."""
+    """Test that stream() yields normally when 'Prompt is too long' is not exact match (false positive prevention)."""
     # given
     agent = ClaudeAgent()
 
@@ -146,7 +146,74 @@ async def test_claude__if_prompt_too_long_in_middle_of_content__raises_error(
             await agent.initialize()
             await agent.start_session()
 
+    # when
+    messages: list[AgentMessage] = []
+    async for msg in agent.stream():
+        messages.append(msg)
+
+    # then
+    assert len(messages) == 2  # AssistantMessage + ResultMessage
+    assert messages[0].role == "assistant"
+    assert "Prompt is too long" in messages[0].content
+
+
+async def test_claude__if_result_message_error_with_prompt_too_long__raises_prompt_too_long_error(
+    mock_sdk_client: MagicMock,
+    mock_sdk_options: MagicMock,
+) -> None:
+    """Test that stream() raises PromptTooLongError when ResultMessage.is_error=True with prompt too long error."""
+    # given
+    agent = ClaudeAgent()
+
+    result_msg = MagicMock(spec=ResultMessage)
+    result_msg.session_id = "sess_456"
+    result_msg.duration_ms = 100
+    result_msg.num_turns = 1
+    result_msg.is_error = True
+    result_msg.result = "Prompt is too long"
+
+    async def mock_receive() -> AsyncIterator[MagicMock]:
+        yield result_msg
+
+    mock_sdk_client.receive_response = mock_receive
+
+    with patch("sisyphus.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
+        with patch("sisyphus.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
+            await agent.initialize()
+            await agent.start_session()
+
     # when/then
-    with pytest.raises(PromptTooLongError):
+    with pytest.raises(PromptTooLongError, match="Prompt exceeded maximum length"):
+        async for _ in agent.stream():
+            pass
+
+
+async def test_claude__if_result_message_error_with_other_error__raises_runtime_error(
+    mock_sdk_client: MagicMock,
+    mock_sdk_options: MagicMock,
+) -> None:
+    """Test that stream() raises RuntimeError when ResultMessage.is_error=True with other SDK error."""
+    # given
+    agent = ClaudeAgent()
+
+    result_msg = MagicMock(spec=ResultMessage)
+    result_msg.session_id = "sess_456"
+    result_msg.duration_ms = 100
+    result_msg.num_turns = 1
+    result_msg.is_error = True
+    result_msg.result = "Command failed with exit code 1"
+
+    async def mock_receive() -> AsyncIterator[MagicMock]:
+        yield result_msg
+
+    mock_sdk_client.receive_response = mock_receive
+
+    with patch("sisyphus.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
+        with patch("sisyphus.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
+            await agent.initialize()
+            await agent.start_session()
+
+    # when/then
+    with pytest.raises(RuntimeError, match="Claude Agent SDK error"):
         async for _ in agent.stream():
             pass

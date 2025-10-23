@@ -248,9 +248,7 @@ class ExecutionLoop:
                 # Verify returned FALSE - maintain counter to ensure immediate verify re-entry on next iteration
                 if feedback:
                     verify_feedback_history.append(feedback)
-                await self.ui.show_status(
-                    f"[Iteration {iteration}] Verify FALSE. Feedback received, will execute..."
-                )
+                await self.ui.show_status(f"[Iteration {iteration}] Verify FALSE. Feedback received, will execute...")
             elif should_verify and not self.verify_agent:
                 await self.ui.show_status("✅ All tasks completed!")
                 break
@@ -324,7 +322,17 @@ class ExecutionLoop:
 
         self._resumed_once = False
 
+        should_retry_with_new_session = False
+
         while True:
+            if should_retry_with_new_session:
+                self.execute_logger.info("Restarting with new session...")
+                session_id = None
+                actual_session_id = await self.execute_agent.start_session(None)
+                await self.session_store.save_session(agent_type, actual_session_id)
+                await self.execute_agent.send(final_prompt)
+                should_retry_with_new_session = False
+
             # Create new CancelScope for each loop iteration
             self._current_cancel_scope = anyio.CancelScope()
             monitor_scope = self._current_cancel_scope
@@ -384,22 +392,37 @@ class ExecutionLoop:
                 raise session_limit_error
             except* Exception as exception_group:
                 self._execute_resume_fail_count += 1
+                sdk_error_detected = False
+
                 for exception in exception_group.exceptions:
                     attempt_msg = f"(attempt {self._execute_resume_fail_count}/3)"
                     self.execute_logger.error(
-                        f"Unexpected error in execute phase: {exception} {attempt_msg}",
+                        f"SDK error in execute phase: {exception} {attempt_msg}",
                         exc_info=exception,
                     )
 
+                    error_str = str(exception).lower()
+                    is_sdk_error = (
+                        "command failed" in error_str or "sdk" in error_str or isinstance(exception, RuntimeError)
+                    )
+
+                    if is_sdk_error and not sdk_error_detected:
+                        self.execute_logger.info("SDK error detected. Deleting invalid session.")
+                        await self.session_store.delete_session(agent_type)
+                        sdk_error_detected = True
+
                 if self._execute_resume_fail_count >= 3:
-                    self.execute_logger.info("Exception occurred 3 times. Resetting session store.")
-                    await self.session_store.delete_session(agent_type)
-                    self._execute_resume_fail_count = 0
+                    self.execute_logger.error("SDK error occurred 3 times. Exiting execute phase.")
                     self._should_exit_execute_phase = True
+                elif sdk_error_detected:
+                    should_retry_with_new_session = True
                 else:
                     raise
 
             # Task Group completed normally - check interrupt status
+            if should_retry_with_new_session:
+                continue
+
             if self._interrupt_flag:
                 assert self._resume_event is not None
                 assert self.execute_logger is not None

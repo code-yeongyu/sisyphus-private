@@ -213,7 +213,6 @@ class ExecutionLoop:
                 verify_succeeded = False
 
                 while verify_retry_count < max_verify_retries and not verify_succeeded:
-                    should_retry = False
                     try:
                         feedback, fully_done = await self._verify_phase(actual_verify_prompt, verify_extra)
                         # Verify succeeded - exit retry loop
@@ -237,9 +236,7 @@ class ExecutionLoop:
                                 f"(attempt {verify_retry_count}/{max_verify_retries})"
                             )
                             # RetryRequiredError handling (sleep_until_reset) already done in error class
-                            should_retry = True
-
-                    # Loop will continue if should_retry is True and verify_retry_count < max_verify_retries
+                            # Loop will continue to retry verify phase
 
                 # Process verify results after retry loop completes
                 if fully_done:

@@ -2,15 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from sisyphus.core.loop import ExecutionLoop
-from sisyphus.utils.errors import SessionLimitError, SessionResumeError
-from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:
     pass

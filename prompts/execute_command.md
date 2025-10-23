@@ -686,7 +686,7 @@ When ALL tasks are truly completed and verified, you MUST do BOTH of these:
 
 ## How to Find Unchecked Items
 
-⚠️ **WARNING**: Do NOT rely ONLY on searching the file with rg/grep!
+⚠️ **WARNING**: Do NOT rely ONLY on searching the file with grep!
 
 ⚠️ The uncompleted tasks may be EXPLICITLY LISTED in the prompt you receive.
 
@@ -695,7 +695,7 @@ When ALL tasks are truly completed and verified, you MUST do BOTH of these:
 You can also use this command to find unchecked checkboxes IN THE FILE:
 
 ```bash
-rg '- \[ \]' ai-todolist.md
+grep '- \[ \]' ai-todolist.md
 ```
 
 But if this returns 0 results, it does NOT necessarily mean you're done. Always check the task list in your current prompt first!

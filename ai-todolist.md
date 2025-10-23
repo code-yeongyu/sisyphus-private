@@ -73,6 +73,30 @@ parallel_requested = FALSE
    - **plan-reviewer로부터 OKAY를 받았다고 해도, 절대 작업을 시작하지 마세요**
    - 사용자가 명시적으로 "작업을 시작해"라고 말할 때까지 절대 작업을 시작하지 마세요.
 
+# 작업 실행 시 중요 참고사항
+
+## 코드 라인 번호 참조에 대하여
+
+**중요**: 이 계획서에서 언급하는 라인 번호(예: line 198, line 215-217)는 **현재 코드 기준**입니다.
+- Task 1 실행 후 라인 번호가 변경될 수 있음
+- 각 Task에서 제공하는 **검색 패턴**(예: `search for "_consecutive_execute_count = 0"`)을 우선 사용하세요
+- 라인 번호는 대략적인 위치 참고용이며, 정확한 코드는 검색 패턴으로 찾아야 함
+
+## Task 간 의존성 및 실행 순서
+
+**Task 1과 Task 2의 관계**:
+- Task 1.1: Counter reset 위치 이동 (현재 코드의 line 198 → line 215-217 근처)
+- Task 2.1: Verify retry loop 추가 → 이 작업 후 counter reset은 retry loop 내부에 위치하게 됨
+- **결과**: Task 1.1과 Task 2.1은 동일한 코드 조각(counter reset)을 다루지만, Task 2.1이 구조를 변경함
+- **권장 실행 방식**: Task 1과 2를 연속으로 실행한 후 통합 테스트
+
+**Incremental 검증 전략**:
+각 Task의 개별 테스트 외에도, 주요 Task 완료 후 전체 test suite 실행 권장:
+- Task 1 완료 후: `pytest sisyphus/core/tests/test_loop.py -v` (loop 관련 테스트)
+- Task 2 완료 후: `pytest sisyphus/core/tests/test_loop.py -v` (regression 확인)
+- Task 4 완료 후: `pytest sisyphus/core/tests/test_session.py -v` (session 관련 테스트)
+- Task 6 완료 후: `pytest sisyphus/core/tests/ -v` (전체 test suite)
+
 # 필요 배경 지식
 
 ## 기술 스택
@@ -229,6 +253,22 @@ graph TB
 - **가정 4**: Counter는 loop 시작 시점(line 140)에 무조건 증가함 - verify 결과와 무관
 - **가정 5**: 수정 후에도 "10번 execute → verify FALSE → 1번 execute → verify" 패턴은 발생 (counter 11이 되므로)
   - 하지만 기존 버그 "10번 → verify → 9번 → verify"는 수정됨 (counter 리셋 안되므로)
+
+## 이 수정의 성공 기준 명확화
+
+**무엇이 수정되는가?**
+- ❌ 수정 전: Counter reset으로 인해 **9번 더** execute 가능 (10 + 9 = 19번)
+- ✅ 수정 후: Counter reset 방지로 **1번만 더** execute (10 + 1 = 11번)
+
+**왜 1번은 허용하는가?**
+- 현재 loop 구조: `counter++` → `execute` → `check should_verify` → `verify`
+- Verify FALSE 후 loop 재진입 시 counter는 무조건 증가 (line 140)
+- 완전히 막으려면 loop 구조 재설계 필요 (should_verify를 execute 전에 체크)
+- 하지만 이는 **scope 외** - 이번 수정은 "9번 반복"만 차단하는 것이 목표
+
+**비즈니스 가치**:
+- 9번 반복 → 1번 반복: 실질적으로 무한 루프 방지 효과
+- 사용자 보고(Issue #44)의 핵심 문제("execute로 계속 돌아감") 해결
 
 ## 프로젝트 Commit Message 스타일
 ```bash

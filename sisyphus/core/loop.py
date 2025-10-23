@@ -194,9 +194,6 @@ class ExecutionLoop:
                 break
 
             if should_verify and self.verify_agent:
-                # Reset consecutive execute counter when entering verify phase
-                self._consecutive_execute_count = 0
-
                 actual_verify_prompt = verify_prompt if verify_prompt is not None else DEFAULT_VERIFY_PROMPT
 
                 if verify_feedback_history:
@@ -213,9 +210,12 @@ class ExecutionLoop:
                     feedback, fully_done = await self._verify_phase(actual_verify_prompt, verify_extra)
 
                     if fully_done:
+                        # Reset consecutive execute counter only when verify phase completes successfully
+                        self._consecutive_execute_count = 0
                         await self.ui.show_status("✅ Architect confirmed FULLY_DONE. All work verified!")
                         break
 
+                    # Verify returned FALSE - maintain counter to ensure immediate verify re-entry on next iteration
                     verify_feedback_history.append(feedback)
                     await self.ui.show_status(
                         f"[Iteration {iteration}] Verify FALSE. Feedback received, will execute..."

@@ -16,7 +16,14 @@ Sisyphus Work 워크플로우 (`trigger-sisyphus-work.yml`)가 실패, 취소, �
 - **WIP Commit on Any Termination**: 정상 종료, 실패, 사용자 취소, 타임아웃 모든 상황에서 WIP 커밋 생성
 - **Always Push to Origin**: 로컬에만 남지 않고 반드시 origin에 푸시되어야 함
 - **Session State Preservation**: sessions/, logs/, ai-todolist.md, notepad.md 등 세션 상태 보존
-- **GitHub Actions Post-Run Hook**: `post:` step을 활용하여 workflow 종료 시 항상 실행되는 cleanup step 구현
+- **Always-Run Cleanup Step**: `if: always()` 조건을 활용하여 workflow 종료 시 항상 실행되는 cleanup step 구현
+
+## Terminology Standards (Used Throughout This Plan)
+- **"Cleanup step with `if: always()`"**: Workflow-level step that always runs (regardless of success/failure/cancel)
+- **"Timeout guard"** or **"Guard script"**: Bash script that monitors elapsed time and commits at 55 minutes
+- **"WIP commit"**: Work-In-Progress commit created to preserve partial work
+- **"Composite action"**: Reusable GitHub Actions action defined in `.github/actions/save-wip-commit/`
+- **NOT USED: "post step"** - This term is reserved for composite action `post:` keyword only
 
 # Work Background (WHY & WHAT - Current State)
 
@@ -69,9 +76,14 @@ Sisyphus Work 워크플로우 (`trigger-sisyphus-work.yml`)가 실패, 취소, �
 
 **변경 후 상태**:
 - **Composite Action 패턴**: WIP commit 로직을 재사용 가능한 composite action으로 분리
-- **`post:` step 활용**: workflow 종료 시 항상 실행되는 cleanup step 추가
-- **Timeout guard**: `timeout-minutes` 직전에 자동으로 WIP commit 생성
-- **Signal handling**: SIGTERM, SIGINT 등 취소 시그널을 trap하여 WIP commit 실행
+- **`if: always()` cleanup step**: workflow 종료 시 항상 실행되는 cleanup step 추가 (success/failure/cancel/timeout 무관)
+- **Timeout guard**: 55분 경과 시 자동으로 WIP commit 생성 (60분 workflow timeout의 5분 전)
+- **Unified WIP Handling**: 모든 WIP commit은 cleanup step 또는 guard script가 처리 (중간 step에서는 처리하지 않음)
+
+**Critical Design Decision**:
+- WIP commits는 "Check Sisyphus Result" step에서 **즉시 생성하지 않음**
+- 대신 **cleanup step (if: always())** 가 모든 종료 시나리오를 통합 처리
+- 이유: 실패, 취소, timeout 모든 경우를 하나의 메커니즘으로 일관되게 처리
 
 # Work Started
 is_execution_started = FALSE
@@ -407,9 +419,10 @@ chore: CCC maintenance
               COMMIT_SHA=$(git rev-parse HEAD)
 
               # Push with retry logic (3 attempts)
+              # Use -u flag to set upstream on first push
               for i in 1 2 3; do
                 echo "📤 Pushing to origin (attempt $i/3)..."
-                if git push origin "${{ inputs.branch_name }}"; then
+                if git push -u origin "${{ inputs.branch_name }}"; then
                   echo "✅ WIP commit pushed successfully"
                   echo "wip_committed=true" >> $GITHUB_OUTPUT
                   echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
@@ -426,7 +439,9 @@ chore: CCC maintenance
               exit 1
       ```
 
-      Note: Composite action은 `uses` 대신 `shell: bash` 사용
+      **Note**:
+      - Composite action uses `shell: bash` (not Docker or JavaScript)
+      - `git push -u` sets upstream on first push (handles new branches)
 
    - [ ] 1.2 README.md 생성 (Action 사용법 문서화)
 
@@ -489,11 +504,25 @@ chore: CCC maintenance
    - GitHub Actions `always()` 함수: https://docs.github.com/en/actions/learn-github-actions/expressions#always
    - 기존 workflow: `.github/workflows/trigger-sisyphus-work.yml` (전체 구조 이해)
 
-   - [ ] 2.1 기존 WIP commit step 제거 준비
+   - [ ] 2.1 기존 WIP commit step 수정 (WIP 로직 제거, 상태 기록만 유지)
+
+      **CRITICAL DESIGN DECISION**:
+      이 변경은 WIP commits를 **즉시 생성하지 않고** cleanup step (if: always())으로 통합 처리하는 것입니다.
+
+      **Why This Design**:
+      - **Unified Handling**: 실패, 취소, timeout 모든 경우를 하나의 cleanup step이 일관되게 처리
+      - **Simplicity**: 여러 곳에서 WIP commit 로직을 중복하지 않음
+      - **Reliability**: `if: always()` 조건이 모든 종료 시나리오를 캐치함
+      - **Idempotency**: Cleanup step의 `git diff --staged --quiet` 체크가 중복 방지
+
+      **Trade-off**:
+      - 실패 발생 시 즉시 WIP commit이 생성되지 않고 workflow 종료 시점에 생성됨
+      - 하지만 cleanup step은 `if: always()` 조건이므로 **반드시** 실행됨
+      - Timeout guard가 55분에 미리 commit하므로 최악의 경우 5분(55-60min) 동안만 uncommitted 상태
 
       **Implementation Details**:
-      - Lines 158-181 ("Check Sisyphus Result and Handle WIP")의 WIP commit 부분을 주석 처리하지 말고 composite action 호출로 교체
-      - 이 step은 실패 케이스 감지 로직은 유지하되, WIP commit은 post step에서 처리
+      - Lines 158-181 ("Check Sisyphus Result and Handle WIP")에서 WIP commit 로직 완전 제거
+      - 실패 감지 로직만 유지 (출력 및 상태 기록 목적)
 
       **Current** (Lines 158-181):
       ```yaml
@@ -524,18 +553,20 @@ chore: CCC maintenance
           fi
       ```
 
-   - [ ] 2.2 Post step 추가 (workflow 맨 마지막)
+      **Note**: WIP commit은 이제 cleanup step (Task 2.2)에서만 처리됨
+
+   - [ ] 2.2 Always-Run Cleanup Step 추가 (workflow 맨 마지막)
 
       **Implementation Details**:
       - Line 289 (Upload logs on failure) **이후**에 새로운 step 추가
-      - `if: always()` 조건으로 항상 실행
+      - `if: always()` 조건으로 항상 실행 (success/failure/cancel/timeout 무관)
       - Composite action 호출
 
       **Add after Line 289**:
       ```yaml
-      - name: Always Save WIP (Post Step)
+      - name: Always Save WIP (Cleanup Step)
         if: always()
-        id: post_save_wip
+        id: cleanup_save_wip
         uses: ./.github/actions/save-wip-commit
         with:
           branch_name: ${{ inputs.branch_name }}
@@ -546,29 +577,31 @@ chore: CCC maintenance
       - name: Report WIP Commit Status
         if: always()
         run: |
-          if [ "${{ steps.post_save_wip.outputs.wip_committed }}" == "true" ]; then
-            echo "✅ WIP commit created and pushed: ${{ steps.post_save_wip.outputs.commit_sha }}"
+          if [ "${{ steps.cleanup_save_wip.outputs.wip_committed }}" == "true" ]; then
+            echo "✅ WIP commit created and pushed: ${{ steps.cleanup_save_wip.outputs.commit_sha }}"
           else
             echo "📭 No WIP commit needed (no changes or already committed)"
           fi
       ```
 
-      Note:
-      - `if: always()` → workflow 취소, timeout, 실패 모든 경우에 실행
-      - `reason` 계산: 성공 시 'completed', 실패 시 outcome ('failure', 'cancelled', 'timed_out')
+      **Critical Points**:
+      - `if: always()` → Runs in ALL termination scenarios (success/failure/cancel/timeout)
+      - `reason` parameter: Captures workflow outcome for commit message context
+      - This step is the PRIMARY WIP commit mechanism (not "Check Sisyphus Result")
+      - Timeout guard at 55min is SECONDARY (reduces uncommitted window)
 
    - [ ] 2.3 기존 실패 처리 step과의 중복 방지
 
       **Implementation Details**:
       - "Check Sisyphus Result" step (수정된 Lines 158-181)에서 WIP commit 로직 완전히 제거
       - 대신 실패 상태만 기록 (`echo "failed=true" >> $GITHUB_OUTPUT`)
-      - Post step이 모든 WIP commit을 책임지도록 단일화
+      - Cleanup step (if: always())이 모든 WIP commit을 책임지도록 단일화
 
       **Race Condition Coordination**:
-      - Post step은 `if: always()` → 무조건 실행됨
+      - Cleanup step은 `if: always()` → 무조건 실행됨
       - But composite action 내부의 `git diff --staged --quiet` 체크가 idempotency 보장
-      - 만약 timeout guard(Task 3)가 55분에 이미 commit했다면 → post step이 "no changes" 감지하고 skip
-      - 이것이 의도된 동작: Guard와 Post는 각각 독립적으로 시도하되, 첫 번째가 성공하면 두 번째는 자동으로 skip
+      - 만약 timeout guard(Task 3)가 55분에 이미 commit했다면 → cleanup step이 "no changes" 감지하고 skip
+      - 이것이 의도된 동작: Guard와 Cleanup step은 각각 독립적으로 시도하되, 첫 번째가 성공하면 두 번째는 자동으로 skip
 
    - [ ] 2.4 YAML validation 및 Commit
 
@@ -638,8 +671,14 @@ chore: CCC maintenance
         if [ $ELAPSED_MINUTES -ge $TIMEOUT_MINUTES ]; then
           echo "⏱️  Timeout guard triggered at $ELAPSED_MINUTES minutes"
 
-          # CRITICAL: Perform git operations INLINE (not via post step)
+          # CRITICAL: Perform git operations INLINE (not via cleanup step)
           echo "💾 Creating WIP commit before termination..."
+
+          # Ensure git authentication (inherit from workflow environment)
+          export GH_TOKEN="${GH_TOKEN:-$GITHUB_TOKEN}"
+          if [ -z "$GH_TOKEN" ]; then
+            echo "⚠️  Warning: No GitHub token found, push may fail"
+          fi
 
           # Stage all changes including sessions/
           git add .
@@ -656,9 +695,10 @@ chore: CCC maintenance
             echo "✅ WIP commit created: $COMMIT_SHA"
 
             # Push with retry logic (3 attempts)
+            # Use -u flag to set upstream on first push
             for i in 1 2 3; do
               echo "📤 Pushing to origin (attempt $i/3)..."
-              if git push origin "$BRANCH_NAME"; then
+              if git push -u origin "$BRANCH_NAME"; then
                 echo "✅ WIP commit pushed successfully"
                 break
               fi
@@ -693,12 +733,21 @@ chore: CCC maintenance
       ```
 
       **Key Changes from Original**:
-      - **Performs git add/commit/push INLINE** (not delegated to post step)
+      - **Performs git add/commit/push INLINE** (not delegated to cleanup step)
       - Checks for changes before committing (idempotency)
       - Retry logic for push failures
       - Kills process AFTER committing (ensures WIP is saved first)
+      - **Git token authentication** via environment variable inheritance
 
-      Note: Exit code 124 signals guard activation to workflow, but WIP commit already happened
+      **Critical Understanding of Guard Role**:
+      - Guard commits at 55min → kills process → workflow continues to "Check Sisyphus Result" step
+      - "Check Sisyphus Result" no longer creates WIP commits (removed in Task 2.1)
+      - Workflow eventually reaches cleanup step (if: always()) at end
+      - Cleanup step sees "no changes" (guard already committed) → idempotently skips
+      - **BUT if work continues between 55-60min**, cleanup step acts as backup
+      - Result: Guard reduces uncommitted work window from 60min to 5min (55-60min)
+
+      Note: Exit code 124 signals guard activation, but WIP commit already happened inline
 
    - [ ] 3.2 Workflow에 timeout guard 로직 통합
 
@@ -958,20 +1007,30 @@ chore: CCC maintenance
 
    - [ ] 4.7 Scenario 5 테스트: Workflow Timeout at 60min (Guard Bypass)
 
-      **Note**: Full 60-minute test is impractical. Instead, verify mechanism through code inspection:
+      **Note**: Full 60-minute test is impractical. Instead, verify mechanism through code inspection AND simulated test:
 
-      **Verification**:
-      1. Confirm post step has `if: always()` → runs even on timeout
+      **Code Verification**:
+      1. Confirm cleanup step has `if: always()` → runs even on timeout
       2. Confirm composite action's git operations work independently
-      3. Reasoning: If guard doesn't trigger (process completes between 55-60min), post step acts as backup
+      3. Reasoning: If guard doesn't trigger (process completes between 55-60min), cleanup step acts as backup
 
       **Simulated Test** (Optional if time permits):
-      - Temporarily change workflow `timeout-minutes: 60` to `timeout-minutes: 5`
-      - Change guard script `TIMEOUT_MINUTES=55` to `TIMEOUT_MINUTES=10` (higher than workflow timeout)
-      - Run workflow → should timeout at 5min → post step creates WIP
-      - **Do NOT commit these changes** (revert after test)
+      **CORRECT TEST SEQUENCE**:
+      1. Temporarily change workflow `timeout-minutes: 60` to `timeout-minutes: 3`
+      2. Change guard script `TIMEOUT_MINUTES=55` to `TIMEOUT_MINUTES=10` (**HIGHER** than workflow timeout)
+      3. Create long-running task (e.g., sleep 15 minutes)
+      4. Run workflow:
+         - Workflow times out at 3 minutes (before guard triggers at 10 min)
+         - Guard never activates (process killed by workflow timeout)
+         - Cleanup step (if: always()) runs and creates WIP commit
+      5. **Do NOT commit these changes** (revert after test)
 
-      **Expected Result**: Post step is the fallback for actual workflow timeouts
+      **Why This Test Works**:
+      - Guard timeout (10min) > Workflow timeout (3min) → Guard never triggers
+      - This simulates "workflow times out before guard can save"
+      - Cleanup step is the safety net for this scenario
+
+      **Expected Result**: Cleanup step is the fallback when workflow times out before guard triggers
 
    - [ ] 4.8 Race Condition 테스트: Guard + Post Step No Duplicate
 

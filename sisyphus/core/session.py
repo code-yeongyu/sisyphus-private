@@ -52,8 +52,8 @@ class SessionStore:
         """Atomic save using temporary file and rename"""
         if self.sessions_file.exists():
             if self.backup_file.exists():
-                await anyio.to_thread.run_sync(self._remove_path_sync, self.backup_file)
-            await anyio.to_thread.run_sync(self.sessions_file.rename, self.backup_file)
+                await anyio.to_thread.run_sync(self._remove_path_sync, self.backup_file)  # type: ignore[reportAttributeAccessIssue]
+            await anyio.to_thread.run_sync(self.sessions_file.rename, self.backup_file)  # type: ignore[reportAttributeAccessIssue]
 
         # Write to temporary file
         temp_file = self.base_dir / f"sessions.json.tmp.{uuid.uuid4().hex}"
@@ -63,17 +63,17 @@ class SessionStore:
                 await f.flush()
 
             # Atomic rename
-            await anyio.to_thread.run_sync(temp_file.rename, self.sessions_file)
+            await anyio.to_thread.run_sync(temp_file.rename, self.sessions_file)  # type: ignore[reportAttributeAccessIssue]
         except Exception:
             # Clean up temp file on failure
             if temp_file.exists():
-                await anyio.to_thread.run_sync(temp_file.unlink)
+                await anyio.to_thread.run_sync(temp_file.unlink)  # type: ignore[reportAttributeAccessIssue]
             raise
 
     async def get_session(self, agent_type: str) -> str | None:
         """Get session ID for specific agent"""
         async with self.lock:
-            sessions = await anyio.to_thread.run_sync(self._load_sessions_sync)
+            sessions = await anyio.to_thread.run_sync(self._load_sessions_sync)  # type: ignore[reportAttributeAccessIssue]
             agent_data = sessions.get(agent_type)
             if agent_data is None:
                 return None
@@ -82,7 +82,7 @@ class SessionStore:
     async def save_session(self, agent_type: str, session_id: str) -> None:
         """Save session ID for specific agent"""
         async with self.lock:
-            sessions = await anyio.to_thread.run_sync(self._load_sessions_sync)
+            sessions = await anyio.to_thread.run_sync(self._load_sessions_sync)  # type: ignore[reportAttributeAccessIssue]
             sessions[agent_type] = {
                 "session_id": session_id,
                 "updated": datetime.now(UTC).isoformat(),
@@ -92,7 +92,7 @@ class SessionStore:
     async def delete_session(self, agent_type: str) -> None:
         """Delete session for specific agent"""
         async with self.lock:
-            sessions = await anyio.to_thread.run_sync(self._load_sessions_sync)
+            sessions = await anyio.to_thread.run_sync(self._load_sessions_sync)  # type: ignore[reportAttributeAccessIssue]
             if agent_type in sessions:
                 del sessions[agent_type]
                 await self._save_sessions_atomic(sessions)
@@ -100,4 +100,4 @@ class SessionStore:
     async def list_sessions(self) -> dict[str, dict[str, Any]]:
         """List all sessions"""
         async with self.lock:
-            return await anyio.to_thread.run_sync(self._load_sessions_sync)
+            return await anyio.to_thread.run_sync(self._load_sessions_sync)  # type: ignore[reportAttributeAccessIssue]

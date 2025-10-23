@@ -18,7 +18,7 @@ class ProcessManager:
     async def run_with_timeout(
         cmd: list[str],
         timeout_seconds: float = 30.0,
-    ) -> anyio.abc.Process:
+    ) -> anyio.abc.Process:  # type: ignore[reportAttributeAccessIssue]
         """
         Run a process with timeout.
 
@@ -41,7 +41,7 @@ class ProcessManager:
 
     @staticmethod
     async def terminate_gracefully(
-        process: anyio.abc.Process,
+        process: anyio.abc.Process,  # type: ignore[reportAttributeAccessIssue]
         timeout_seconds: float = 5.0,
     ) -> None:
         """
@@ -88,7 +88,7 @@ class ProcessManager:
 
     @staticmethod
     async def parse_jsonl_stream(
-        stream: anyio.abc.ByteReceiveStream,
+        stream: anyio.abc.ByteReceiveStream,  # type: ignore[reportAttributeAccessIssue]
         max_line_size: int = 10_000_000,
     ) -> AsyncIterator[dict[str, Any]]:
         """

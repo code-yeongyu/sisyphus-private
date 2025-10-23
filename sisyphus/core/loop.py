@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import anyio
 
@@ -364,7 +364,7 @@ class ExecutionLoop:
                     tg.start_soon(monitor_input)
             except* SessionLimitError as exception_group:
                 # Extract first SessionLimitError from ExceptionGroup
-                session_limit_error = exception_group.exceptions[0]
+                session_limit_error = cast(SessionLimitError, exception_group.exceptions[0])
 
                 self.execute_logger.error(
                     f"Session limit reached: {session_limit_error}",
@@ -529,7 +529,7 @@ class ExecutionLoop:
                     tg.start_soon(monitor_input)
             except* SessionLimitError as exception_group:
                 # Extract first SessionLimitError from ExceptionGroup
-                session_limit_error = exception_group.exceptions[0]
+                session_limit_error = cast(SessionLimitError, exception_group.exceptions[0])
 
                 self.verify_logger.error(
                     f"Session limit reached: {session_limit_error}",

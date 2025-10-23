@@ -26,8 +26,8 @@ async def temp_sessions_dir(tmp_path: Path) -> AsyncIterator[Path]:
     # cleanup
     if sessions_dir.exists():
         for file in sessions_dir.iterdir():
-            await anyio.to_thread.run_sync(file.unlink)
-        await anyio.to_thread.run_sync(sessions_dir.rmdir)
+            await anyio.to_thread.run_sync(file.unlink)  # type: ignore[reportAttributeAccessIssue]
+        await anyio.to_thread.run_sync(sessions_dir.rmdir)  # type: ignore[reportAttributeAccessIssue]
 
 
 @pytest.fixture()
@@ -166,7 +166,7 @@ async def test_atomic_write_creates_backup(session_store: SessionStore, temp_ses
 
     # then
     assert backup_file.exists()
-    backup_content = await anyio.to_thread.run_sync(backup_file.read_text)
+    backup_content = await anyio.to_thread.run_sync(backup_file.read_text)  # type: ignore[reportAttributeAccessIssue]
     backup_data = json.loads(backup_content)
     assert "claude" in backup_data
 
@@ -177,7 +177,7 @@ async def test_json_format_validity(session_store: SessionStore, temp_sessions_d
     sessions_file = temp_sessions_dir / "sessions.json"
 
     # when
-    content = await anyio.to_thread.run_sync(sessions_file.read_text)
+    content = await anyio.to_thread.run_sync(sessions_file.read_text)  # type: ignore[reportAttributeAccessIssue]
     data = json.loads(content)
 
     # then
@@ -196,7 +196,7 @@ async def test_corruption_recovery_from_backup(session_store: SessionStore, temp
     sessions_file = temp_sessions_dir / "sessions.json"
 
     # Corrupt main file
-    await anyio.to_thread.run_sync(sessions_file.write_text, "invalid json{{{")
+    await anyio.to_thread.run_sync(sessions_file.write_text, "invalid json{{{")  # type: ignore[reportAttributeAccessIssue]
 
     # when
     loaded_session = await session_store.get_session("claude")
@@ -211,8 +211,8 @@ async def test_corruption_recovery_both_files_corrupted(session_store: SessionSt
     backup_file = temp_sessions_dir / "sessions.json.bak"
 
     # Corrupt both files
-    await anyio.to_thread.run_sync(sessions_file.write_text, "invalid json{{{")
-    await anyio.to_thread.run_sync(backup_file.write_text, "also invalid}}}}")
+    await anyio.to_thread.run_sync(sessions_file.write_text, "invalid json{{{")  # type: ignore[reportAttributeAccessIssue]
+    await anyio.to_thread.run_sync(backup_file.write_text, "also invalid}}}}")  # type: ignore[reportAttributeAccessIssue]
 
     # when
     session = await session_store.get_session("claude")
@@ -229,8 +229,8 @@ async def test_corruption_recovery_start_fresh(
     backup_file = temp_sessions_dir / "sessions.json.bak"
 
     # Create corrupted files
-    await anyio.to_thread.run_sync(sessions_file.write_text, "corrupted{{{")
-    await anyio.to_thread.run_sync(backup_file.write_text, "corrupted}}}")
+    await anyio.to_thread.run_sync(sessions_file.write_text, "corrupted{{{")  # type: ignore[reportAttributeAccessIssue]
+    await anyio.to_thread.run_sync(backup_file.write_text, "corrupted}}}")  # type: ignore[reportAttributeAccessIssue]
 
     store = SessionStore(base_dir=temp_sessions_dir)
 

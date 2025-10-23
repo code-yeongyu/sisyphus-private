@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from typing import cast
 
 import anyio
 import pytest
@@ -23,7 +24,7 @@ async def test_except_star_syntax__if_single_session_limit_error__catches_error(
     try:
         raise error
     except* SessionLimitError as exception_group:
-        caught_error = exception_group.exceptions[0]
+        caught_error = cast(SessionLimitError, exception_group.exceptions[0])
 
     # then
     assert caught_error is error
@@ -45,7 +46,7 @@ async def test_except_star_syntax__if_session_limit_in_task_group__catches_error
 
             task_group.start_soon(raise_error)
     except* SessionLimitError as exception_group:
-        caught_error = exception_group.exceptions[0]
+        caught_error = cast(SessionLimitError, exception_group.exceptions[0])
 
     # then
     assert caught_error is not None
@@ -63,7 +64,7 @@ async def test_except_star_syntax__if_no_reset_time__catches_error_without_reset
     try:
         raise error
     except* SessionLimitError as exception_group:
-        caught_error = exception_group.exceptions[0]
+        caught_error = cast(SessionLimitError, exception_group.exceptions[0])
 
     # then
     assert caught_error is error

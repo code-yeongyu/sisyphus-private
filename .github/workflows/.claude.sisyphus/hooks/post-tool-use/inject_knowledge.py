@@ -107,7 +107,7 @@ class KnowledgeInfo(TypedDict):
 
 
 class KnowledgeFinder:
-    KNOWLEDGE_FILES = ["claude.md", "agents.md"]
+    KNOWLEDGE_FILES = ["claude.md", "agents.md", "readme.md"]
 
     def __init__(self, file_path: str, cwd: str | None = None) -> None:
         self.file_path = Path(file_path).resolve()
@@ -183,16 +183,101 @@ class KnowledgeFinder:
 
 
 class KnowledgeInjector:
-    def __init__(self, project_root: Path, transcript_path: str) -> None:
+    TODOS_DIR = Path.home() / ".claude" / "todos"
+
+    def __init__(self, project_root: Path, transcript_path: str, session_id: str) -> None:
         self.project_root = project_root
         self.transcript_path = Path(transcript_path)
+        self.session_id = session_id
+
+    def _generate_todo_id(self, knowledge_info: KnowledgeInfo) -> str:
+        """Generate todo ID for a knowledge file."""
+        distance = knowledge_info["distance"]
+        knowledge_type = knowledge_info["type"]
+        path_id = knowledge_info["path"].replace("/", "-").replace(".md", "")
+        return f"read-knowledge-d{distance}-{knowledge_type}-{path_id}"
+
+    def _mark_todo_completed(self, todo_id: str) -> None:
+        """Mark an existing todo item as completed."""
+        self.TODOS_DIR.mkdir(parents=True, exist_ok=True)
+        todo_file = self.TODOS_DIR / f"{self.session_id}-agent-{self.session_id}.json"
+
+        if not todo_file.exists():
+            return
+
+        try:
+            todos = orjson.loads(todo_file.read_bytes())
+        except (orjson.JSONDecodeError, OSError):
+            return
+
+        for todo in todos:
+            if todo.get("id") == todo_id:
+                if todo.get("status") != "completed":
+                    todo["status"] = "completed"
+                break
+
+        try:
+            todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+        except OSError:
+            pass
+
+    def _add_todo_item(self, knowledge_info: KnowledgeInfo) -> None:
+        self.TODOS_DIR.mkdir(parents=True, exist_ok=True)
+        todo_file = self.TODOS_DIR / f"{self.session_id}-agent-{self.session_id}.json"
+
+        try:
+            if todo_file.exists():
+                todos = orjson.loads(todo_file.read_bytes())
+            else:
+                todos = []
+        except (orjson.JSONDecodeError, OSError):
+            todos = []
+
+        full_path = self.project_root / knowledge_info["path"]
+        knowledge_type = knowledge_info["type"].upper()
+        todo_id = self._generate_todo_id(knowledge_info)
+
+        todo_item = {
+            "content": f"Read {knowledge_type} knowledge: {full_path}",
+            "status": "pending",
+            "priority": "high",
+            "id": todo_id,
+        }
+
+        for existing_todo in todos:
+            if existing_todo.get("id") == todo_item["id"]:
+                return
+
+        todos.append(todo_item)
+
+        knowledge_todos = [t for t in todos if t.get("id", "").startswith("read-knowledge-d")]
+        other_todos = [t for t in todos if not t.get("id", "").startswith("read-knowledge-d")]
+
+        def extract_distance(todo: dict[str, str]) -> int:
+            todo_id = todo.get("id", "")
+            parts = todo_id.split("-")
+            if len(parts) >= 3 and parts[2].startswith("d"):
+                try:
+                    return int(parts[2][1:])
+                except ValueError:
+                    return 0
+            return 0
+
+        knowledge_todos.sort(key=extract_distance, reverse=True)
+
+        todos[:] = other_todos + knowledge_todos
+
+        try:
+            todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+        except OSError:
+            pass
 
     def _has_knowledge_been_read(self, knowledge_path: Path) -> bool:
         if not self.transcript_path.exists():
             return False
 
         try:
-            knowledge_path_str = str(knowledge_path)
+            knowledge_path_str = str(knowledge_path.resolve())
             transcript_content = self.transcript_path.read_text(encoding="utf-8")
 
             for line in transcript_content.splitlines():
@@ -252,7 +337,11 @@ class KnowledgeInjector:
             return ""
 
         if self._has_knowledge_been_read(full_path):
+            todo_id = self._generate_todo_id(knowledge_info)
+            self._mark_todo_completed(todo_id)
             return ""
+
+        self._add_todo_item(knowledge_info)
 
         file_type_display = knowledge_type.upper()
 
@@ -260,6 +349,7 @@ class KnowledgeInjector:
             f"ACTION REQUIRED: Use Read tool to read {file_type_display} knowledge immediately. READ NOW.\n"
             f"You MUST read the following knowledge file before proceeding:\n"
             f"{full_path}\n\n"
+            f"[Todo added to ~/.claude/todos/{self.session_id}-agent-{self.session_id}.json]\n"
         )
 
         return warning_message
@@ -332,7 +422,8 @@ class HookHandler:
             print(f"[{hook_filename}] Success: No relevant knowledge files found")
             sys.exit(0)
 
-        injector = KnowledgeInjector(finder.project_root, transcript_path)
+        session_id = data["session_id"]
+        injector = KnowledgeInjector(finder.project_root, transcript_path, session_id)
         messages_to_inject: list[str] = []
 
         for knowledge_info in filtered_knowledge_infos:

@@ -134,7 +134,19 @@ async def get_python_info_async() -> tuple[str | None, str | None]:
         return python_version, "global"
 
 
-def check_virtual_env() -> list[str]:
+def detect_package_manager() -> str | None:
+    """Detect package manager by checking for lock files."""
+    current_dir = os.getcwd()
+
+    if os.path.isfile(os.path.join(current_dir, "uv.lock")):
+        return "uv"
+    elif os.path.isfile(os.path.join(current_dir, "poetry.lock")):
+        return "poetry"
+
+    return None
+
+
+def check_virtual_env(package_manager: str | None = None) -> list[str]:
     """Check for virtual environment mismatches."""
     messages = []
     current_dir = os.getcwd()
@@ -149,6 +161,7 @@ def check_virtual_env() -> list[str]:
         return messages
 
     virtual_env = os.environ.get("VIRTUAL_ENV")
+    run_command_str = "uv run" if package_manager == "uv" else "'uv run' or 'poetry run'"
 
     if virtual_env and local_venv:
         real_virtual_env = os.path.realpath(virtual_env)
@@ -160,7 +173,7 @@ def check_virtual_env() -> list[str]:
                     "[WARNING] Virtual environment mismatch detected!",
                     f"Current active venv: {virtual_env}",
                     f"Local project venv: {local_venv}",
-                    "Consider using 'uv run' or 'poetry run' for project-specific commands.",
+                    f"Consider using {run_command_str} for project-specific commands.",
                     f"Or activate the correct venv: source {local_venv}/bin/activate",
                 ]
             )
@@ -169,7 +182,7 @@ def check_virtual_env() -> list[str]:
             [
                 "[NOTICE] Local virtual environment found but not activated",
                 f"Local project venv: {local_venv}",
-                "Consider using 'uv run' or 'poetry run' for project-specific commands.",
+                f"Consider using {run_command_str} for project-specific commands.",
                 f"Or activate the venv: source {local_venv}/bin/activate",
             ]
         )
@@ -219,21 +232,24 @@ async def generate_system_reminder_async() -> str:
     if python_version:
         lines.append(f"Python: {python_version} ({env_type})")
 
-    venv_messages = check_virtual_env()
+    package_manager = detect_package_manager()
+    if package_manager:
+        lines.append(f"Package manager: {package_manager}")
+
+    venv_messages = check_virtual_env(package_manager)
     if venv_messages:
         lines.extend(venv_messages)
 
     lines.extend(
         [
             "",
-            "[ABSOLUTE TASK COMPLETION RULE]",
-            "NEVER STOP until the user's EXACT request is 100% complete.",
-            "If ANY part of the user's task remains unfinished:",
-            "- DO NOT say 'I cannot' or 'This is difficult'",
-            "- DO NOT give up or suggest alternatives",
-            "- CONTINUE working until EVERY requirement is met",
-            "The task is NOT complete until the user explicitly confirms completion.",
-            "Keep pushing. Keep trying. Complete the task fully.",
+            "[To-Do Managements]",
+            "Always analyze user's request, extract what to do, if sufficient, always ask to user to clarify.",
+            "Without user's explicit \"Do Foo Bar\", don't try to do write operations.",
+            "without user's saying: always do operations with NO SIDE EFFECTS",
+            "(running test code, look at web, look at the code, executing command to look at docker status)",
+            "After extracting and analyzing user's request, use todo tools to manage them."
+            "Always use todo tool to plan and processing user's request.",
         ]
     )
 

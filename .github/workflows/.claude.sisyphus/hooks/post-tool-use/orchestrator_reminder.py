@@ -92,7 +92,7 @@ After @agent-{EXECUTOR} returns, remember to:
 YOUR VERIFICATION DUTIES (DO NOT SKIP ANY):
 - Inspect: Read the ACTUAL code changes and confirm they FULLY meet requirements
 - Review: MANUALLY verify their work matches the goal - assume they cut corners
-- Verify: Run global tests (ex: pytest .) and lint(ex: ruff check .) and typecheck
+- Verify: Verify test code: Naive test cases, redundant test cases, duplicated test cases.(Make sure test code should reflect the spec and also clear.) Run global tests (ex: pytest .) and lint(ex: ruff check .) and typecheck
   (ex: basedpyright .), consider executor as a liar. Use playwright mcp, tmux cli, python
 - Check notepad.md: Verify executor documented work with REAL findings, not placeholders
 - Commit: After verification, ensure all changes committed. Check git commit and status

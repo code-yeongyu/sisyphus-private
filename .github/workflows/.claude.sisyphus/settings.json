@@ -91,7 +91,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "uv run python ~/.claude/hooks/user-prompt-submit/system-reminder.py"
+                        "command": "uv run python ~/.claude/hooks/user-prompt-submit/system_reminder.py"
                     }
                 ]
             }

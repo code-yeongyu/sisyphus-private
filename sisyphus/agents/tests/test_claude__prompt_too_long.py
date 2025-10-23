@@ -36,28 +36,22 @@ def mock_sdk_options() -> MagicMock:
     return MagicMock()
 
 
-async def test_claude__if_assistant_message_contains_prompt_too_long__raises_prompt_too_long_error(
+async def test_claude__if_result_message_has_prompt_too_long_error__raises_prompt_too_long_error(
     mock_sdk_client: MagicMock,
     mock_sdk_options: MagicMock,
 ) -> None:
-    """Test that stream() raises PromptTooLongError when AssistantMessage contains exact string."""
+    """Test that stream() raises PromptTooLongError when ResultMessage indicates error."""
     # given
     agent = ClaudeAgent()
-
-    text_block = TextBlock(text="Prompt is too long")
-    assistant_msg = MagicMock(spec=AssistantMessage)
-    assistant_msg.content = [text_block]
-    assistant_msg.model = "claude-sonnet-4-5"
 
     result_msg = MagicMock(spec=ResultMessage)
     result_msg.session_id = "sess_456"
     result_msg.duration_ms = 100
     result_msg.num_turns = 1
-    result_msg.is_error = False
-    result_msg.result = None
+    result_msg.is_error = True
+    result_msg.result = "Error: Prompt is too long (max 200000 tokens)"
 
     async def mock_receive() -> AsyncIterator[MagicMock]:
-        yield assistant_msg
         yield result_msg
 
     mock_sdk_client.receive_response = mock_receive
@@ -73,15 +67,15 @@ async def test_claude__if_assistant_message_contains_prompt_too_long__raises_pro
             pass
 
 
-async def test_claude__if_assistant_message_without_prompt_too_long__yields_normally(
+async def test_claude__if_assistant_message_contains_prompt_too_long_text__yields_normally(
     mock_sdk_client: MagicMock,
     mock_sdk_options: MagicMock,
 ) -> None:
-    """Test that stream() yields normally when AssistantMessage does not contain error string."""
+    """Test that stream() yields normally when Assistant talks about 'Prompt is too long' (not an error)."""
     # given
     agent = ClaudeAgent()
 
-    text_block = TextBlock(text="Hello, world!")
+    text_block = TextBlock(text="The error 'Prompt is too long' means your input exceeded the limit.")
     assistant_msg = MagicMock(spec=AssistantMessage)
     assistant_msg.content = [text_block]
     assistant_msg.model = "claude-sonnet-4-5"
@@ -112,31 +106,25 @@ async def test_claude__if_assistant_message_without_prompt_too_long__yields_norm
     # then
     assert len(messages) == 2  # AssistantMessage + ResultMessage
     assert messages[0].role == "assistant"
-    assert messages[0].content == "Hello, world!"
+    assert "Prompt is too long" in messages[0].content  # Text is preserved, not treated as error
 
 
-async def test_claude__if_prompt_too_long_in_middle_of_content__raises_error(
+async def test_claude__if_result_message_is_error_without_prompt_too_long__does_not_raise_prompt_too_long_error(
     mock_sdk_client: MagicMock,
     mock_sdk_options: MagicMock,
 ) -> None:
-    """Test that error is detected even when string appears in middle of content."""
+    """Test that other errors in ResultMessage don't trigger PromptTooLongError."""
     # given
     agent = ClaudeAgent()
-
-    text_block = TextBlock(text="Some text... Prompt is too long ... more text")
-    assistant_msg = MagicMock(spec=AssistantMessage)
-    assistant_msg.content = [text_block]
-    assistant_msg.model = "claude-sonnet-4-5"
 
     result_msg = MagicMock(spec=ResultMessage)
     result_msg.session_id = "sess_456"
     result_msg.duration_ms = 100
     result_msg.num_turns = 1
-    result_msg.is_error = False
-    result_msg.result = None
+    result_msg.is_error = True
+    result_msg.result = "Some other error occurred"
 
     async def mock_receive() -> AsyncIterator[MagicMock]:
-        yield assistant_msg
         yield result_msg
 
     mock_sdk_client.receive_response = mock_receive
@@ -146,7 +134,12 @@ async def test_claude__if_prompt_too_long_in_middle_of_content__raises_error(
             await agent.initialize()
             await agent.start_session()
 
-    # when/then
-    with pytest.raises(PromptTooLongError):
-        async for _ in agent.stream():
-            pass
+    # when
+    messages: list[AgentMessage] = []
+    async for msg in agent.stream():
+        messages.append(msg)
+
+    # then
+    assert len(messages) == 1  # ResultMessage only
+    assert messages[0].role == "system"
+    assert messages[0].metadata["is_error"] is True

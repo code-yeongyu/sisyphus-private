@@ -194,9 +194,6 @@ class ExecutionLoop:
                 break
 
             if should_verify and self.verify_agent:
-                # Reset consecutive execute counter when entering verify phase
-                self._consecutive_execute_count = 0
-
                 actual_verify_prompt = verify_prompt if verify_prompt is not None else DEFAULT_VERIFY_PROMPT
 
                 if verify_feedback_history:
@@ -208,27 +205,52 @@ class ExecutionLoop:
 
                 await self.ui.show_status(f"[Iteration {iteration}] Starting Verify phase...")
 
-                should_retry_verify = False
-                try:
-                    feedback, fully_done = await self._verify_phase(actual_verify_prompt, verify_extra)
+                # Verify retry loop - separate from main loop to prevent Execute phase execution
+                verify_retry_count = 0
+                max_verify_retries = 3
+                feedback = ""
+                fully_done = False
+                verify_succeeded = False
 
-                    if fully_done:
-                        await self.ui.show_status("✅ Architect confirmed FULLY_DONE. All work verified!")
-                        break
+                while verify_retry_count < max_verify_retries and not verify_succeeded:
+                    try:
+                        feedback, fully_done = await self._verify_phase(actual_verify_prompt, verify_extra)
+                        # Verify succeeded - exit retry loop
+                        verify_succeeded = True
 
+                    except* RetryRequiredError as exception_group:
+                        error = exception_group.exceptions[0]
+                        verify_retry_count += 1
+
+                        if verify_retry_count >= max_verify_retries:
+                            await self.ui.show_status(
+                                f"⚠️ Verify phase failed after {max_verify_retries} attempts. "
+                                "Skipping verify this iteration."
+                            )
+                            # Max retry exceeded - skip verify and continue to execute
+                            feedback = ""
+                            fully_done = False
+                        else:
+                            await self.ui.show_status(
+                                f"[Iteration {iteration}] Verify retry required ({error.__class__.__name__}): {error} "
+                                f"(attempt {verify_retry_count}/{max_verify_retries})"
+                            )
+                            # RetryRequiredError handling (sleep_until_reset) already done in error class
+                            # Loop will continue to retry verify phase
+
+                # Process verify results after retry loop completes
+                if fully_done:
+                    # Reset consecutive execute counter only when verify phase completes successfully
+                    self._consecutive_execute_count = 0
+                    await self.ui.show_status("✅ Architect confirmed FULLY_DONE. All work verified!")
+                    break
+
+                # Verify returned FALSE - maintain counter to ensure immediate verify re-entry on next iteration
+                if feedback:
                     verify_feedback_history.append(feedback)
-                    await self.ui.show_status(
-                        f"[Iteration {iteration}] Verify FALSE. Feedback received, will execute..."
-                    )
-                except* RetryRequiredError as exception_group:
-                    error = exception_group.exceptions[0]
-                    await self.ui.show_status(
-                        f"[Iteration {iteration}] Retry required ({error.__class__.__name__}): {error}"
-                    )
-                    should_retry_verify = True
-
-                if should_retry_verify:
-                    continue
+                await self.ui.show_status(
+                    f"[Iteration {iteration}] Verify FALSE. Feedback received, will execute..."
+                )
             elif should_verify and not self.verify_agent:
                 await self.ui.show_status("✅ All tasks completed!")
                 break

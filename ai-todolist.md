@@ -8,44 +8,98 @@ Issue #44에서 보고:
 ## 추가 사용자 요청 (기록용)
 
 1. 명시적으로 둘 다 지정안했기에 둘 다 클로드로 설정 된 상태. 오히려 execute -> verify 로넘어가는 로직에 문제가 있다고 봄. 이 부분 더 확실히 조사하고 작업계획서 내에 테스트 코드를 보강했으면 해.
-2. 껐다켰을때에 resume 문제도 지속된 문제 중 하나로 엄격하게 검증해서 보강하는 로직을 짜줘.
+2. **Session ID 저장은 제대로 되고 있음** - session 관련 task는 제외
 
 # 작업 목표 (WHAT & WHY)
 
 ## 핵심 목표 (TL;DR)
 
-ExecutionLoop의 force_verify 로직 버그 3가지와 session resume 에러 처리 부족 문제를 수정하고, 누락된 테스트 케이스 5개를 추가하여 regression 방지.
+ExecutionLoop의 verify phase 전환 로직 버그 3가지를 수정하고, 누락된 테스트 케이스를 추가하여 regression 방지.
 
 ## 상세 목표
 
 1. **Counter Reset Timing 버그 수정**: Verify phase 진입 시점에 counter를 리셋하는 로직을 verify 완료 후로 변경
 2. **Retry Verify 버그 수정**: Verify phase에서 RetryRequiredError 발생 시 execute가 아닌 verify를 재시도하도록 수정
 3. **혼란스러운 로그 메시지 수정**: "Forcing Verify phase" 메시지 타이밍을 실제 verify 진입 시점과 일치시킴
-4. **Session Save 에러 처리 강화**: save_session 실패 시 로깅 및 graceful handling 추가
-5. **테스트 커버리지 보강**: force_verify 로직과 session resume 관련 테스트 5개 추가
+4. **테스트 커버리지 보강**: force_verify 로직 관련 테스트 추가
 
 # 작업 배경 (WHY & WHAT - 현재 상태)
 
 ## 현재 상황
 
-**문제 1: Verify Phase 전환 실패**
+**문제: Verify Phase 전환 실패**
 - 사용자 보고: "execute 10번 지나서 분명히 verify phase 로 진입한다고 로그는 떴는데 execute phase 로 넘어갔어"
 - 근본 원인 3가지 발견:
-  1. **Counter Reset Bug (Line 198)**: Verify phase **진입 시점**에 `_consecutive_execute_count = 0` 리셋 → Verify FALSE 반환 시 다시 0부터 시작
-  2. **Retry Verify Bug (Line 230-231)**: `if should_retry_verify: continue` → while 처음(Line 137)으로 가서 execute phase 실행
-  3. **Message Confusion (Line 144-150)**: "Forcing Verify phase" 메시지가 execute phase 실행 **전**에 출력됨
 
-**문제 2: Session Resume 실패**
-- 프로그램 재시작 후 resume이 작동하지 않음
-- 근본 원인: `save_session` (Line 297, 411) 호출 시 예외 처리 없음 → 실패 시 조용히 실패, 로그 없음
+### Bug 1: Counter Reset Timing 버그 (Line 198)
+
+**증거**: `sisyphus/core/loop.py` line 196-198
+```python
+if should_verify and self.verify_agent:
+    # Reset consecutive execute counter when entering verify phase
+    self._consecutive_execute_count = 0  # ← BUG: 너무 이름!
+```
+
+**문제**:
+- Verify phase **진입 시점**에 counter 리셋
+- Verify가 `fully_done = FALSE` 반환 시 (line 219-222):
+  - `verify_feedback_history.append(feedback)` → loop 처음(line 137)으로 돌아감
+  - Line 140: `self._consecutive_execute_count += 1` → counter가 0에서 1로 증가
+  - 다음 9번 execute 가능 (counter 10이 될 때까지)
+
+**결과**: 10번 execute → verify → 9번 execute → verify 패턴 반복 가능
+
+### Bug 2: Retry Verify 로직 버그 (Line 230-231)
+
+**증거**: `sisyphus/core/loop.py` line 223-231
+```python
+except* RetryRequiredError as exception_group:
+    error = exception_group.exceptions[0]
+    await self.ui.show_status(
+        f"[Iteration {iteration}] Retry required ({error.__class__.__name__}): {error}"
+    )
+    should_retry_verify = True
+
+if should_retry_verify:
+    continue  # ← BUG: while True (line 137)로 돌아가서 execute phase 실행!
+```
+
+**문제**:
+- `continue`는 main loop 처음(line 137)으로 이동
+- Line 140-170: Execute phase가 다시 실행됨
+- Verify retry가 아닌 execute retry가 됨!
+
+**결과**: Rate limit 등으로 verify retry 필요 시 잘못된 phase 실행
+
+### Bug 3: 로그 메시지 타이밍 혼란 (Line 144-150)
+
+**증거**: `sisyphus/core/loop.py` line 144-150
+```python
+force_verify = self._consecutive_execute_count >= execute_throttle_max_count
+
+if force_verify:
+    await self.ui.show_status(
+        f"⚠️  Execute phase repeated {self._consecutive_execute_count} times consecutively. "
+        f"Forcing Verify phase to break potential infinite loop."
+    )
+
+await self.ui.show_status(f"[Iteration {iteration}] Starting Execute phase...")
+# ← 사용자는 "Forcing Verify" 메시지를 봤지만 execute가 실행됨!
+```
+
+**문제**:
+- "Forcing Verify phase" 메시지가 execute phase **실행 전**에 출력됨 (line 145-148)
+- 실제 execute phase 실행 (line 170)
+- 실제 verify phase 진입 (line 196-209)
+
+**결과**: 사용자가 verify로 전환된다고 생각했지만 실제로는 execute가 먼저 실행됨
 
 ## 변경 이유
 
 1. **무한 루프 방지**: Counter reset 버그로 인해 10번 execute → verify → 9번 execute → verify 패턴 반복 가능
 2. **올바른 Retry 동작**: Verify phase retry 시 execute가 아닌 verify를 재시도해야 함
 3. **사용자 경험 개선**: 로그 메시지가 실제 동작과 일치해야 혼란 방지
-4. **디버깅 가능성**: Session 저장 실패 시 원인 파악 가능해야 함
-5. **Regression 방지**: 테스트가 없어 production에서 버그 발견됨
+4. **Regression 방지**: 테스트가 없어 production에서 버그 발견됨
 
 ## 변경 사항
 
@@ -54,8 +108,7 @@ ExecutionLoop의 force_verify 로직 버그 3가지와 session resume 에러 처
 | Counter는 verify **진입 시** 리셋 | Counter는 verify **완료 후** (fully_done=TRUE 시에만) 리셋 |
 | Retry verify 시 continue → execute 실행 | Retry verify 시 별도 while 루프로 verify만 재시도 |
 | "Forcing Verify" 메시지가 execute 전에 출력 | Verify 실제 진입 시점에만 메시지 출력 |
-| save_session 실패 시 예외 propagate | Try-except로 에러 로깅, graceful handling |
-| force_verify 관련 테스트 0개 | 5개의 새로운 테스트 추가 |
+| force_verify 관련 테스트 0개 | 새로운 테스트 추가 |
 
 # 작업 시작 여부
 is_execution_started = FALSE
@@ -94,8 +147,7 @@ parallel_requested = FALSE
 각 Task의 개별 테스트 외에도, 주요 Task 완료 후 전체 test suite 실행 권장:
 - Task 1 완료 후: `pytest sisyphus/core/tests/test_loop.py -v` (loop 관련 테스트)
 - Task 2 완료 후: `pytest sisyphus/core/tests/test_loop.py -v` (regression 확인)
-- Task 4 완료 후: `pytest sisyphus/core/tests/test_session.py -v` (session 관련 테스트)
-- Task 6 완료 후: `pytest sisyphus/core/tests/ -v` (전체 test suite)
+- Task 4 완료 후: `pytest sisyphus/core/tests/ -v` (전체 test suite)
 
 # 필요 배경 지식
 
@@ -113,7 +165,6 @@ parallel_requested = FALSE
 - **핵심 패턴**:
   - Line 137-241: Main loop with counter, force_verify check, verify phase entry
   - Line 196-231: Verify phase execution and retry logic
-  - Line 297, 411: Session save calls (NO error handling currently)
 
 ### 2. `sisyphus/core/tests/test_loop.py`
 - **역할**: ExecutionLoop 테스트
@@ -135,15 +186,6 @@ parallel_requested = FALSE
       assert verify_agent.initialized
   ```
 
-### 3. `sisyphus/core/session.py`
-- **역할**: Session persistence with file locking
-- **검색할 내용**: `save_session`, `get_session`, `_save_sessions_atomic`
-- **핵심 패턴**: Atomic write with backup, file lock (anyio.Lock)
-
-### 4. `sisyphus/core/tests/test_session.py`
-- **역할**: SessionStore 테스트
-- **검색할 내용**: 테스트 구조, `temp_sessions_dir` fixture 사용법
-
 ## 참고 URL
 - pytest-anyio: https://anyio.readthedocs.io/en/stable/testing.html (find "pytestmark" usage)
 - Python unittest.mock: https://docs.python.org/3/library/unittest.mock.html (find "MagicMock" usage for exception simulation)
@@ -158,16 +200,13 @@ Task 2 (Retry Verify 수정) - depends on Task 1's counter logic
    ↓
 Task 3 (Message 타이밍 수정) - cosmetic, depends on logic fixes
    ↓
-Task 4 || Task 5 (병렬 가능)
-   ↓
-Task 6 (통합 테스트) - depends on all previous tasks
+Task 4 (통합 테스트) - depends on all previous tasks
 ```
 
 ## Phase별 설명
 - **Phase 1 (Task 1-2)**: 핵심 로직 버그 수정 - counter와 retry 로직이 서로 연관되어 순차 실행 필요
 - **Phase 2 (Task 3)**: 사용자 경험 개선 - 로그 메시지 타이밍 조정
-- **Phase 3 (Task 4-5)**: 병렬 가능 - Session 에러 처리와 테스트 추가는 독립적
-- **Phase 4 (Task 6)**: 전체 시나리오 통합 테스트
+- **Phase 3 (Task 4)**: 전체 시나리오 통합 테스트
 
 # 작업 계획
 
@@ -175,6 +214,7 @@ Task 6 (통합 테스트) - depends on all previous tasks
 
 ### ExecutionLoop 수정 전후 비교 (Mermaid)
 
+**수정 전:**
 ```mermaid
 graph TB
     Start[Iteration Start] --> IncCounter[consecutive_execute_count++]
@@ -244,7 +284,6 @@ graph TB
 ### Edge Case Handling
 - **Counter가 정확히 10일 때**: Force verify 발동, 하지만 여전히 execute phase 먼저 실행
 - **Verify retry 중 counter 증가**: Retry loop 내부에서는 counter 증가 없음
-- **save_session 실패**: 로그 남기고 계속 진행 (execute phase는 멈추지 않음)
 
 ### 암묵적 가정을 명시적으로
 - **가정 1**: `_consecutive_execute_count`는 execute phase 실행 횟수만 카운트 (verify는 카운트 안함)
@@ -429,7 +468,7 @@ $ git log -10 --oneline
       - MockAgent의 `stream` 메서드를 lambda로 오버라이드하여 동적 카운터 구현
       - `nonlocal` 사용하여 외부 변수(`execute_count`, `verify_count`) 수정
       - Verify 첫 번째 FALSE, 두 번째 TRUE로 자동 종료
-      - 수정 후: execute 10번, verify 2번 (총 execute 10번)
+      - 수정 후: execute 11번 (10 + 1), verify 2번
       - 수정 전 (Bug): execute 19번 (10 + 9), verify 2번
 
    - [ ] 1.4 테스트 실행 및 검증
@@ -869,300 +908,13 @@ Refs: Issue #44"
       - [ ] 기존 테스트가 여전히 통과하는가? (`pytest sisyphus/core/tests/test_loop.py`)
       - [ ] Git commit 완료
 
-- [ ] 4. Session Save 에러 처리 강화
-
-   **Reference Sources**:
-   - 구현 파일: `sisyphus/core/loop.py` (search for `save_session`, line 297 and 411)
-   - 에러 처리 패턴: `sisyphus/core/loop.py` line 343-362 (SessionLimitError 처리 참고)
-   - 로깅 패턴: line 265 (`self.execute_logger.info`)
-
-   - [ ] 4.1 구현: save_session 호출에 try-except 추가
-
-      **검색할 내용**: `await self.session_store.save_session` (line 297, 411)
-
-      **현재 코드 (No Error Handling)**:
-      ```python
-      # Line 297
-      await self.session_store.save_session(agent_type, actual_session_id)
-
-      # Line 408-411
-      final_session_id = self.execute_agent.session_id
-      if final_session_id and final_session_id != actual_session_id:
-          self.execute_logger.info(f"Updating session ID: '{actual_session_id}' -> '{final_session_id}'")
-          await self.session_store.save_session(agent_type, final_session_id)
-      ```
-
-      **수정 후 코드**:
-      ```python
-      # Line 297
-      try:
-          await self.session_store.save_session(agent_type, actual_session_id)
-          self.execute_logger.info(f"Session saved successfully: {actual_session_id}")
-      except Exception as e:
-          self.execute_logger.error(
-              f"Failed to save session {actual_session_id}: {e}",
-              exc_info=True,
-          )
-          await self.ui.show_status(f"⚠️  Session save failed: {e}. Continuing without session persistence.")
-
-      # Line 408-411
-      final_session_id = self.execute_agent.session_id
-      if final_session_id and final_session_id != actual_session_id:
-          self.execute_logger.info(f"Updating session ID: '{actual_session_id}' -> '{final_session_id}'")
-          try:
-              await self.session_store.save_session(agent_type, final_session_id)
-              self.execute_logger.info(f"Session updated successfully: {final_session_id}")
-          except Exception as e:
-              self.execute_logger.error(
-                  f"Failed to update session {final_session_id}: {e}",
-                  exc_info=True,
-              )
-              await self.ui.show_status(f"⚠️  Session update failed: {e}. Continuing without session persistence.")
-      ```
-
-      **구현 세부사항**:
-      - 두 곳 모두 try-except 추가
-      - 예외 발생 시: 에러 로깅 + UI 상태 메시지 출력
-      - Execute phase는 계속 진행 (session 저장 실패가 전체 작업을 중단시키지 않음)
-
-   - [ ] 4.2 테스트: save_session 실패 시 graceful handling 검증
-
-      **테스트 파일**: `sisyphus/core/tests/test_loop.py`
-
-      **테스트 코드**:
-      ```python
-      async def test_save_session_failure_does_not_crash() -> None:
-          # given
-          execute_agent = MockAgent()
-          execute_agent.messages_to_return = [
-              AgentMessage(role="assistant", content="Execute done", metadata={}),
-          ]
-
-          session_store = MockSessionStore()
-
-          # save_session이 항상 실패하도록 설정
-          async def failing_save(agent_type: str, session_id: str) -> None:
-              raise OSError("Disk full")
-
-          session_store.save_session = failing_save
-
-          ui = MockUI()
-          prompt_resolver = MockPromptResolver()
-          logger_factory = MockLoggerFactory()
-
-          loop = ExecutionLoop(
-              execute_agent=execute_agent,
-              ui=ui,
-              session_store=session_store,
-              prompt_resolver=prompt_resolver,
-              logger_factory=logger_factory,
-          )
-
-          # when
-          await loop.run(execute_prompt="test")  # Should NOT crash
-
-          # then
-          # Execute phase가 정상 완료되었는지 확인
-          assert execute_agent.closed
-
-          # 에러 메시지가 UI에 표시되었는지 확인
-          error_statuses = [s for s in ui.statuses if "Session save failed" in s]
-          assert len(error_statuses) >= 1  # 최소 1번 (initial save)
-      ```
-
-   - [ ] 4.3 테스트 실행 및 검증
-
-      ```bash
-      pytest -xvs sisyphus/core/tests/test_loop.py::test_save_session_failure_does_not_crash
-      ```
-
-      **예상 출력**:
-      ```
-      sisyphus/core/tests/test_loop.py::test_save_session_failure_does_not_crash PASSED
-      ===================== 1 passed in 0.28s =====================
-      ```
-
-   - [ ] 4.4 Lint 및 Type Check
-
-      ```bash
-      ruff check sisyphus/core/loop.py sisyphus/core/tests/test_loop.py
-      basedpyright sisyphus/core/loop.py
-      ```
-
-   - [ ] 4.5 Commit
-
-      ```bash
-      git add sisyphus/core/loop.py sisyphus/core/tests/test_loop.py
-      git commit -m "fix: add error handling for session save failures
-
-save_session calls had no error handling, causing silent failures when
-session persistence failed (e.g., disk full, permission denied).
-
-Now both save_session calls are wrapped in try-except blocks with:
-- Error logging for debugging
-- UI status message to inform user
-- Graceful continuation (execute phase not interrupted)
-
-Refs: Issue #44"
-      ```
-
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] Line 297의 save_session이 try-except로 감싸졌는가?
-      - [ ] Line 411의 save_session이 try-except로 감싸졌는가?
-      - [ ] 에러 로깅과 UI 메시지가 추가되었는가?
-      - [ ] `test_save_session_failure_does_not_crash` → PASSED
-      - [ ] Lint 및 type check 통과
-      - [ ] Git commit 완료
-
-- [ ] 5. Session Resume 통합 테스트 추가
-
-   **Reference Sources**:
-   - 테스트 파일: `sisyphus/core/tests/test_loop.py` (search for `test_execution_loop_session_resume`, line 256)
-   - SessionStore 실제 사용: `sisyphus/core/tests/test_session.py` (search for `temp_sessions_dir` fixture)
-
-   - [ ] 5.1 테스트: 실제 SessionStore로 resume 검증
-
-      **테스트 파일**: `sisyphus/core/tests/test_loop.py`
-
-      **기존 테스트 문제**:
-      - Line 256의 `test_execution_loop_session_resume`는 MockSessionStore 사용
-      - 실제 파일 I/O를 테스트하지 않음 (프로그램 재시작 시나리오 없음)
-
-      **필요한 Import 추가**:
-      ```python
-      from pathlib import Path
-      from sisyphus.core.session import SessionStore
-      import pytest
-      from collections.abc import AsyncIterator
-      ```
-
-      **Fixture 사용**:
-      ```python
-      # ※ 주의: temp_sessions_dir fixture는 이미 test_session.py에 존재함
-      # sisyphus/core/tests/test_session.py line 19:
-      # @pytest.fixture
-      # async def temp_sessions_dir(tmp_path: Path) -> AsyncIterator[Path]
-
-      # 하지만 다른 파일이므로 test_loop.py에서 사용하려면 conftest.py로 이동하거나
-      # 또는 test_loop.py에 별도로 정의해야 함
-      # 여기서는 test_loop.py에 간단히 정의
-
-      @pytest.fixture
-      def temp_sessions_dir(tmp_path: Path) -> Path:
-          """Create temporary sessions directory for testing."""
-          sessions_dir = tmp_path / "sessions"
-          sessions_dir.mkdir()
-          return sessions_dir
-      ```
-
-      **새 테스트 코드**:
-      ```python
-      async def test_session_resume_with_real_session_store(temp_sessions_dir: Path) -> None:
-          # given
-          # Phase 1: 첫 번째 실행 (session 생성 및 저장)
-          execute_agent_1 = MockAgent()
-          execute_agent_1.messages_to_return = [
-              AgentMessage(role="assistant", content="First run", metadata={}),
-          ]
-
-          session_store_1 = SessionStore(base_dir=temp_sessions_dir)
-          ui_1 = MockUI()
-          prompt_resolver = MockPromptResolver()
-          logger_factory = MockLoggerFactory()
-
-          loop_1 = ExecutionLoop(
-              execute_agent=execute_agent_1,
-              ui=ui_1,
-              session_store=session_store_1,
-              prompt_resolver=prompt_resolver,
-              logger_factory=logger_factory,
-          )
-
-          await loop_1.run(execute_prompt="test")
-
-          # Session이 저장되었는지 확인
-          # "new-session-123"은 MockAgent의 기본 반환값 (test_loop.py line 39 참조)
-          saved_session_id = await session_store_1.get_session("mockagent")
-          assert saved_session_id == "new-session-123"
-
-          # Phase 2: 프로그램 "재시작" 시뮬레이션 (새로운 객체 생성)
-          execute_agent_2 = MockAgent()
-          execute_agent_2.messages_to_return = [
-              AgentMessage(role="assistant", content="Second run", metadata={}),
-          ]
-
-          # 같은 디렉토리로 새 SessionStore 생성 (재시작 시뮬레이션)
-          session_store_2 = SessionStore(base_dir=temp_sessions_dir)
-          ui_2 = MockUI()
-
-          loop_2 = ExecutionLoop(
-              execute_agent=execute_agent_2,
-              ui=ui_2,
-              session_store=session_store_2,
-              prompt_resolver=prompt_resolver,
-              logger_factory=logger_factory,
-          )
-
-          # when
-          await loop_2.run(execute_prompt="test")
-
-          # then
-          # 이전 session ID로 start_session이 호출되었는지 확인
-          assert execute_agent_2.session_id == "new-session-123"  # Resume된 session
-
-          # SessionStore가 파일에서 올바르게 로드했는지 확인
-          loaded_session_id = await session_store_2.get_session("mockagent")
-          assert loaded_session_id == "new-session-123"
-      ```
-
-   - [ ] 5.2 테스트 실행 및 검증
-
-      ```bash
-      pytest -xvs sisyphus/core/tests/test_loop.py::test_session_resume_with_real_session_store
-      ```
-
-      **예상 출력**:
-      ```
-      sisyphus/core/tests/test_loop.py::test_session_resume_with_real_session_store PASSED
-      ===================== 1 passed in 0.35s =====================
-      ```
-
-   - [ ] 5.3 Lint 및 Type Check
-
-      ```bash
-      ruff check sisyphus/core/tests/test_loop.py
-      basedpyright sisyphus/core/tests/test_loop.py
-      ```
-
-   - [ ] 5.4 Commit
-
-      ```bash
-      git add sisyphus/core/tests/test_loop.py
-      git commit -m "test: add session resume integration test with real SessionStore
-
-Existing test_execution_loop_session_resume uses MockSessionStore which
-doesn't test actual file I/O and program restart scenarios.
-
-New test creates real SessionStore with temp directory, runs ExecutionLoop
-twice to simulate program restart, and verifies session is correctly
-persisted and resumed from disk.
-
-Refs: Issue #44"
-      ```
-
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `test_session_resume_with_real_session_store` 테스트가 추가되었는가?
-      - [ ] 테스트가 PASSED하는가?
-      - [ ] Lint 및 type check 통과
-      - [ ] Git commit 완료
-
-- [ ] 6. 통합 테스트: Issue #44 전체 시나리오
+- [ ] 4. 통합 테스트: Issue #44 전체 시나리오
 
    **Reference Sources**:
    - 통합 테스트 패턴: `sisyphus/core/tests/test_loop__integration_feedback_loop.py` (search for `test_feedback_loop_continues_until_fully_done`)
    - 여러 iteration 테스트: `sisyphus/core/tests/test_loop__verify_phase_feedback.py`
 
-   - [ ] 6.1 테스트: Issue #44 재현 및 수정 검증
+   - [ ] 4.1 테스트: Issue #44 재현 및 수정 검증
 
       **테스트 파일**: `sisyphus/core/tests/test_loop.py`
 
@@ -1271,7 +1023,7 @@ Refs: Issue #44"
               assert len(execute_between) == 0, f"No execute should run between force verify and verify phase"
       ```
 
-   - [ ] 6.2 테스트 실행 및 검증
+   - [ ] 4.2 테스트 실행 및 검증
 
       ```bash
       pytest -xvs sisyphus/core/tests/test_loop.py::test_issue_44_full_scenario
@@ -1283,22 +1035,22 @@ Refs: Issue #44"
       ===================== 1 passed in 0.42s =====================
       ```
 
-   - [ ] 6.3 전체 테스트 suite 실행
+   - [ ] 4.3 전체 테스트 suite 실행
 
       ```bash
       pytest sisyphus/core/tests/test_loop.py -v
       ```
 
-      **예상**: 모든 기존 테스트 + 새 테스트 5개 모두 PASSED
+      **예상**: 모든 기존 테스트 + 새 테스트 모두 PASSED
 
-   - [ ] 6.4 Lint 및 Type Check
+   - [ ] 4.4 Lint 및 Type Check
 
       ```bash
       ruff check sisyphus/core/loop.py sisyphus/core/tests/test_loop.py
       basedpyright sisyphus/core/loop.py sisyphus/core/tests/test_loop.py
       ```
 
-   - [ ] 6.5 Commit
+   - [ ] 4.5 Commit
 
       ```bash
       git add sisyphus/core/tests/test_loop.py
@@ -1318,7 +1070,7 @@ Refs: Issue #44"
 
    - [ ] **작업 완료 검증 체크리스트**
       - [ ] `test_issue_44_full_scenario` 테스트가 추가되었는가?
-      - [ ] 테스트가 execute 10번, verify 2번을 정확히 검증하는가?
+      - [ ] 테스트가 execute 11번, verify 2번을 정확히 검증하는가?
       - [ ] 메시지 순서 검증 로직이 포함되었는가?
       - [ ] 테스트가 PASSED하는가?
       - [ ] 전체 test suite가 통과하는가?
@@ -1331,13 +1083,11 @@ Refs: Issue #44"
 
 - **10번 반복 후 올바른 동작**: Execute phase가 10번 실행되면 자동으로 verify phase로 전환되고, verify가 FALSE를 반환해도 다시 9번 execute를 실행하지 않음
 - **명확한 로그 메시지**: "Forcing Verify phase" 메시지가 실제로 verify phase가 시작될 때만 출력되어 혼란 없음
-- **안정적인 Resume**: 프로그램을 껐다 켜도 이전 session을 올바르게 resume할 수 있음
-- **디버깅 가능**: Session 저장 실패 시 명확한 에러 로그와 메시지로 원인 파악 가능
 
 ## 비즈니스 관점에서의 성공
 
 - **무한 루프 방지**: Counter reset 버그로 인한 10번 → verify → 9번 반복 패턴이 완전히 제거됨
-- **테스트 커버리지 증가**: force_verify 로직에 대한 테스트가 0개에서 5개로 증가
+- **테스트 커버리지 증가**: force_verify 로직에 대한 테스트 추가
 - **Production 안정성**: 버그가 테스트로 먼저 발견되어 production 배포 전 차단 가능
 
 ## 기술적 성공 기준
@@ -1345,13 +1095,13 @@ Refs: Issue #44"
 - [ ] **모든 새 테스트 통과**:
   ```bash
   pytest sisyphus/core/tests/test_loop.py -v
-  # 기대: 기존 테스트 + 새 테스트 5개 모두 PASSED
+  # 기대: 기존 테스트 + 새 테스트 모두 PASSED
   ```
 
 - [ ] **기존 테스트 regression 없음**:
   ```bash
   pytest sisyphus/core/tests/ -v
-  # 기대: 461 tests × 2 backends = 922 assertions 모두 통과
+  # 기대: 모든 테스트 통과
   ```
 
 - [ ] **Lint 및 Type Check 통과**:
@@ -1374,16 +1124,14 @@ Refs: Issue #44"
   - [ ] Counter reset이 verify 완료 후에만 발생하는가?
   - [ ] Verify retry 시 execute가 아닌 verify만 재시도하는가?
   - [ ] "Forcing Verify" 메시지가 올바른 타이밍에 출력되는가?
-  - [ ] Session save 실패 시 graceful handling이 동작하는가?
 
 - [ ] 2. **잘못된 구현 방지**
   - [ ] Counter reset이 verify 진입 시점(line 198)에 남아있지 않은가?
   - [ ] `should_retry_verify` 변수와 관련 코드가 모두 제거되었는가?
-  - [ ] save_session 호출이 try-except 없이 남아있지 않은가?
 
 - [ ] 3. **범위 준수 확인**
   - [ ] 계획서에 명시된 3가지 버그만 수정했는가? (추가 리팩토링 없음)
-  - [ ] 5개의 새 테스트만 추가했는가? (기존 테스트 수정 최소화)
+  - [ ] 새 테스트만 추가했는가? (기존 테스트 수정 최소화)
 
 - [ ] 4. **기존 기능 Regression 테스트**
   - [ ] 전체 test suite 실행: `pytest sisyphus/core/tests/ -v` → 모두 PASSED

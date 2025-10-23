@@ -194,3 +194,18 @@ jobs:
 
           prompt: |
             ${{ steps.build_user_prompt.outputs.FINAL_PROMPT }}
+
+      - name: Push non-master branch to origin
+        if: always()
+        run: |
+          CURRENT_BRANCH=$(git branch --show-current)
+
+          if [ "$CURRENT_BRANCH" != "master" ]; then
+            echo "📤 Ensuring $CURRENT_BRANCH is pushed to origin..."
+            git push -u origin "$CURRENT_BRANCH"
+            echo "✅ Push completed"
+          else
+            echo "ℹ️ On master branch, skipping push"
+          fi
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}

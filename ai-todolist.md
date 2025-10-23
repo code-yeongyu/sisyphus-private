@@ -163,14 +163,14 @@ graph TB
     Execute --> CalcVerify[Calculate should_verify]
     CalcVerify --> VerifyCheck{should_verify?}
 
-    VerifyCheck -->|Yes| ResetCounter[❌ BUG: Reset counter HERE]
+    VerifyCheck -->|Yes| ResetCounter["BUG: Reset counter HERE"]
     ResetCounter --> Verify[Verify Phase]
 
     Verify --> CheckDone{fully_done?}
     CheckDone -->|TRUE| End[Exit Loop]
     CheckDone -->|FALSE| CheckRetry{retry_required?}
 
-    CheckRetry -->|Yes| RetryBug[❌ BUG: continue → Execute!]
+    CheckRetry -->|Yes| RetryBug["BUG: continue to Execute"]
     CheckRetry -->|No| LoopBack[Loop back to Start]
 
     RetryBug --> IncCounter
@@ -201,7 +201,7 @@ graph TB
     CheckRetry -->|Yes| VerifyRetryLoop
     CheckRetry -->|No| CheckDone{fully_done?}
 
-    CheckDone -->|TRUE| ResetCounter[✅ Reset counter HERE]
+    CheckDone -->|TRUE| ResetCounter["FIX: Reset counter HERE"]
     CheckDone -->|FALSE| LoopBack[Loop back to Start]
 
     ResetCounter --> End[Exit Loop]
@@ -486,7 +486,7 @@ Refs: Issue #44"
       ```python
       # Verify retry loop 추가
       verify_retry_count = 0
-      max_verify_retries = 3
+      max_verify_retries = 3  # Execute phase와 동일 (참고: loop.py line 289 - execute resume fail max 3회)
 
       while verify_retry_count < max_verify_retries:
           try:
@@ -532,7 +532,7 @@ Refs: Issue #44"
       ```python
       from sisyphus.utils.errors import SessionLimitError  # ← 파일 상단에 추가
       ```
-      (검증 완료: `sisyphus/utils/errors.py`에 `SessionLimitError` 클래스 존재)
+      (Import path 확인 완료: `sisyphus/utils/errors.py` line 12에서 `SessionLimitError` 정의됨)
 
       **테스트 코드**:
       ```python
@@ -785,11 +785,12 @@ Refs: Issue #44"
 
       **검증 명령어** (로그 파일로 확인):
       ```bash
-      # 최근 로그 파일 찾기
-      ls -t logs/ | head -1
+      # 최근 로그 파일 찾기 및 메시지 추출 (한 줄로 실행)
+      LATEST_LOG=$(ls -t logs/ | head -1) && grep -E "(Starting Execute|Starting Verify|Forcing Verify)" "logs/$LATEST_LOG" | head -20
 
-      # 로그에서 관련 메시지 추출
-      grep -E "(Starting Execute|Starting Verify|Forcing Verify)" logs/[최근파일] | head -20
+      # 또는 수동으로:
+      # 1. ls -t logs/ | head -1  # 파일명 확인
+      # 2. grep -E "(Starting Execute|Starting Verify|Forcing Verify)" logs/[위에서_확인한_파일명] | head -20
       ```
 
       **성공 조건**:
@@ -850,7 +851,7 @@ Refs: Issue #44"
       except Exception as e:
           self.execute_logger.error(
               f"Failed to save session {actual_session_id}: {e}",
-              exc_info=e,
+              exc_info=True,
           )
           await self.ui.show_status(f"⚠️  Session save failed: {e}. Continuing without session persistence.")
 
@@ -864,7 +865,7 @@ Refs: Issue #44"
           except Exception as e:
               self.execute_logger.error(
                   f"Failed to update session {final_session_id}: {e}",
-                  exc_info=e,
+                  exc_info=True,
               )
               await self.ui.show_status(f"⚠️  Session update failed: {e}. Continuing without session persistence.")
       ```
@@ -1030,6 +1031,7 @@ Refs: Issue #44"
           await loop_1.run(execute_prompt="test")
 
           # Session이 저장되었는지 확인
+          # "new-session-123"은 MockAgent의 기본 반환값 (test_loop.py line 39 참조)
           saved_session_id = await session_store_1.get_session("mockagent")
           assert saved_session_id == "new-session-123"
 

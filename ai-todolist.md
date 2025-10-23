@@ -91,35 +91,51 @@ parallel_requested = FALSE
 
 # Required Background Knowledge
 
-## GitHub Actions Post-Run Mechanism
+## GitHub Actions Always-Run Mechanism
 
-### `post:` Step Pattern
-GitHub Actions는 step이 실패해도 cleanup을 실행할 수 있는 메커니즘 제공:
-- **`post:`**: Step 실행 후 항상 실행되는 cleanup 단계
-- **`post-if:`**: Post step 실행 조건 (기본값: `always()`)
-- **Composite Action**: Reusable action with pre/post steps
+### Workflow Steps: `if: always()` Pattern
+**IMPORTANT**: Workflow steps do NOT have native `post:` keyword. Instead, use `if: always()` condition:
 
-**Reference URL**: https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions (search for "post" and "post-if")
+- **`if: always()`**: Step이 성공, 실패, 취소 상태와 무관하게 항상 실행
+- **Use Case**: Cleanup, logging, artifact upload, WIP commit
+- **Contrast**: `failure()`는 실패 시에만, `success()`는 성공 시에만 실행
 
-**Code Pattern**:
+**Reference**: https://docs.github.com/en/actions/learn-github-actions/expressions#status-check-functions
+
+**Code Pattern for Workflows**:
 ```yaml
-# Composite Action 예시
+# Workflow step with always-run behavior
+- name: Main Step
+  run: echo "Main logic"
+  continue-on-error: true
+
+- name: Cleanup Step
+  if: always()  # Always run even if main step fails/cancels
+  run: echo "Cleanup logic"
+```
+
+### Composite Actions: `post:` Steps
+**Composite actions** (action.yml) CAN define `post:` steps that run after the main steps:
+
+**Reference**: https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions (search for "post" and "post-if")
+
+**Code Pattern for Composite Actions**:
+```yaml
+# In .github/actions/my-action/action.yml
 runs:
   using: "composite"
   steps:
     - name: Main Step
       run: echo "Main logic"
-    - name: Post Step
-      if: always()  # Always run even if main step fails
-      run: echo "Cleanup logic"
+      shell: bash
+  post:
+    - name: Post Cleanup
+      if: always()
+      run: echo "Cleanup after main"
+      shell: bash
 ```
 
-### `always()` Function
-- **Role**: Step이 성공, 실패, 취소 상태와 무관하게 항상 실행
-- **Use Case**: Cleanup, logging, artifact upload, WIP commit
-- **Contrast**: `failure()`는 실패 시에만, `success()`는 성공 시에만 실행
-
-**Reference**: https://docs.github.com/en/actions/learn-github-actions/expressions#status-check-functions
+**This Plan Uses**: `if: always()` at workflow level (not composite action `post:`)
 
 ## File Structure and Roles
 
@@ -287,20 +303,27 @@ chore: CCC maintenance
 
    - [ ] 0.1 Read workflow file
 
-      **Command**:
+      **Commands**:
       ```bash
-      cat .github/workflows/trigger-sisyphus-work.yml | head -300
+      # Check file length first
+      wc -l .github/workflows/trigger-sisyphus-work.yml
+
+      # Read full file using Read tool or grep for key sections
+      grep -n "name: Run Sisyphus" .github/workflows/trigger-sisyphus-work.yml
+      grep -n "Check Sisyphus Result and Handle WIP" .github/workflows/trigger-sisyphus-work.yml
+      grep -n "Upload logs on failure" .github/workflows/trigger-sisyphus-work.yml
+      grep -n "timeout-minutes:" .github/workflows/trigger-sisyphus-work.yml
       ```
 
-   - [ ] 0.2 Verify key sections exist
+   - [ ] 0.2 Verify key sections exist and note actual line numbers
 
-      **Check**:
-      - [ ] "Run Sisyphus" step exists (around lines 145-156)
-      - [ ] "Check Sisyphus Result and Handle WIP" step exists (around lines 158-181)
-      - [ ] "Upload logs on failure" step exists (around line 279+)
-      - [ ] Job uses `timeout-minutes: 60` (line 25)
+      **Check and Record**:
+      - [ ] "Run Sisyphus" step exists → Record actual line number: _____
+      - [ ] "Check Sisyphus Result and Handle WIP" step exists → Record actual line number: _____
+      - [ ] "Upload logs on failure" step exists → Record actual line number: _____
+      - [ ] Job uses `timeout-minutes: 60` → Record actual line number: _____
 
-      **Note**: If line numbers differ from plan assumptions, adjust subsequent tasks accordingly
+      **Action**: If line numbers differ significantly from plan assumptions (145-156, 158-181, 279+, 25), adjust subsequent task instructions accordingly
 
    - [ ] **Work Completion Verification Checklist**
       - [ ] Workflow file structure confirmed
@@ -901,7 +924,79 @@ chore: CCC maintenance
 
       **Expected Result**: 2분 경과 후 timeout guard 작동, WIP commit 생성
 
-   - [ ] 4.6 Restore timeout guard to 55 minutes
+   - [ ] 4.6 Scenario 1 테스트: Normal Success (No WIP Commit)
+
+      **Test Steps**:
+      1. Create simple successful ai-todolist.md:
+         ```bash
+         cat > ai-todolist.md << 'EOF'
+      # Test Work Plan
+
+      is_execution_started = FALSE
+      is_all_goals_accomplished = FALSE
+
+      # TODOs
+      - [ ] 1. Simple task
+          - [ ] 1.1 Echo hello world
+      EOF
+         git add ai-todolist.md && git commit -m "test: add simple successful task" && git push
+         ```
+
+      2. Trigger workflow:
+         ```bash
+         gh workflow run trigger-sisyphus-work.yml -f branch_name=test/wip-commit-integration
+         gh run watch
+         ```
+
+      3. Verify NO WIP commit created (only normal commits):
+         ```bash
+         git fetch origin test/wip-commit-integration
+         git log origin/test/wip-commit-integration -5 --oneline | grep "wip:" || echo "✅ No WIP commit (expected)"
+         ```
+
+      **Expected Result**: Workflow succeeds, NO WIP commit (변경사항 정상 처리됨, WIP 불필요)
+
+   - [ ] 4.7 Scenario 5 테스트: Workflow Timeout at 60min (Guard Bypass)
+
+      **Note**: Full 60-minute test is impractical. Instead, verify mechanism through code inspection:
+
+      **Verification**:
+      1. Confirm post step has `if: always()` → runs even on timeout
+      2. Confirm composite action's git operations work independently
+      3. Reasoning: If guard doesn't trigger (process completes between 55-60min), post step acts as backup
+
+      **Simulated Test** (Optional if time permits):
+      - Temporarily change workflow `timeout-minutes: 60` to `timeout-minutes: 5`
+      - Change guard script `TIMEOUT_MINUTES=55` to `TIMEOUT_MINUTES=10` (higher than workflow timeout)
+      - Run workflow → should timeout at 5min → post step creates WIP
+      - **Do NOT commit these changes** (revert after test)
+
+      **Expected Result**: Post step is the fallback for actual workflow timeouts
+
+   - [ ] 4.8 Race Condition 테스트: Guard + Post Step No Duplicate
+
+      **Test Steps**:
+      1. Use existing Scenario 4 setup (2-minute guard, 3-minute task)
+      2. After guard triggers at 2min, verify only ONE commit:
+         ```bash
+         git fetch origin test/wip-commit-integration
+         # Count WIP commits from this test
+         COMMIT_COUNT=$(git log origin/test/wip-commit-integration --oneline | grep -c "timeout-guard")
+         if [ "$COMMIT_COUNT" -eq 1 ]; then
+           echo "✅ Only one WIP commit (no duplicate)"
+         else
+           echo "❌ Found $COMMIT_COUNT commits (expected 1)"
+         fi
+         ```
+
+      3. Check post step logs for "No uncommitted changes" message:
+         ```bash
+         gh run view --log | grep "No uncommitted changes"
+         ```
+
+      **Expected Result**: Guard commits at 2min, post step skips (no changes left to commit)
+
+   - [ ] 4.9 Restore timeout guard to 55 minutes
 
       **Commands**:
       ```bash
@@ -911,7 +1006,7 @@ chore: CCC maintenance
       git push
       ```
 
-   - [ ] 4.7 Cleanup test branch
+   - [ ] 4.10 Cleanup test branch
 
       **Commands**:
       ```bash
@@ -921,15 +1016,19 @@ chore: CCC maintenance
 
    - [ ] **Work Completion Verification Checklist**
       - [ ] Test branch `test/wip-commit-integration` 생성됨
+      - [ ] Scenario 1 (Normal Success) 테스트 통과: NO WIP commit (정상 완료 시)
       - [ ] Scenario 2 (Failure) 테스트 통과: WIP commit 생성 확인
       - [ ] Scenario 3 (Manual Cancel) 테스트 통과: WIP commit 생성 확인
       - [ ] Scenario 4 (Timeout Guard) 테스트 통과: 2분 timeout guard 작동 확인
+      - [ ] Scenario 5 (Workflow Timeout) 테스트 완료: Post step fallback mechanism verified
+      - [ ] Race Condition 테스트 통과: Guard + Post step no duplicate commits
       - [ ] Timeout guard를 55분으로 복원 완료
       - [ ] 모든 테스트에서 WIP commit이 origin에 푸시되었음을 확인:
         ```bash
         git log origin/test/wip-commit-integration --oneline | grep "wip:"
         ```
         → 최소 3개의 WIP commit 존재 (failure, cancelled, timeout-guard)
+      - [ ] Race condition test에서 duplicate 없음 확인 (timeout-guard commit 1개만)
 
 # Success Vision
 
@@ -977,11 +1076,55 @@ chore: CCC maintenance
   - [ ] Timeout guard triggers at 55 minutes (verify with 2-minute test)
   - [ ] No duplicate WIP commits when multiple mechanisms trigger
 
-- [ ] 4. **Verify Original Issue Fixed**
-  - [ ] Re-test original Issue #44 scenario: 21-minute run interrupted
-    - [ ] Simulate interruption at 21 minutes
-    - [ ] Verify Task 3 WIP changes committed and pushed
-    - [ ] Verify sessions/, logs/, ai-todolist.md, notepad.md all preserved
+- [ ] 4. **Verify Original Issue #44 Fixed**
+  - [ ] Create test ai-todolist with 3 tasks (simulate Task 1-2 completed, Task 3 in progress):
+    ```bash
+    cat > ai-todolist.md << 'EOF'
+    # Test Work Plan for Issue #44 Simulation
+
+    is_execution_started = FALSE
+    is_all_goals_accomplished = FALSE
+
+    # TODOs
+    - [x] 1. Task 1 (completed)
+        - [x] 1.1 Subtask 1
+    - [x] 2. Task 2 (completed)
+        - [x] 2.1 Subtask 2
+    - [ ] 3. Task 3 (in progress - will be interrupted)
+        - [ ] 3.1 Long running subtask (sleep 30 minutes)
+    EOF
+    ```
+  - [ ] Trigger workflow on test branch:
+    ```bash
+    gh workflow run trigger-sisyphus-work.yml -f branch_name=test/issue-44-repro
+    ```
+  - [ ] After 5 minutes (simulates 21-min scenario), manually cancel workflow:
+    ```bash
+    RUN_ID=$(gh run list --workflow=trigger-sisyphus-work.yml --limit=1 --json databaseId --jq '.[0].databaseId')
+    sleep 300  # Wait 5 minutes
+    gh run cancel $RUN_ID
+    ```
+  - [ ] Verify WIP commit created and contains:
+    ```bash
+    git fetch origin test/issue-44-repro
+    git log origin/test/issue-44-repro -1 --name-status
+
+    # Expected files in WIP commit:
+    # - ai-todolist.md (with Task 3 partially executed)
+    # - sessions/ directory (session state up to cancellation)
+    # - logs/ directory (execution logs)
+    # - notepad.md (if sisyphus created it during execution)
+    ```
+  - [ ] Verify commit message indicates cancellation:
+    ```bash
+    git log origin/test/issue-44-repro -1 --pretty=format:"%s" | grep "cancelled"
+    ```
+  - [ ] Verify all WIP content pushed to origin (not just local):
+    ```bash
+    git ls-remote origin test/issue-44-repro  # Confirms branch exists on origin
+    ```
+
+  **Expected Result**: All progress up to cancellation point is preserved in origin, matching Issue #44 requirement
 
 - [ ] 5. **Prevent Incorrect Implementation**
   - [ ] No hardcoded timeouts except 55 minutes (guard) and 60 minutes (workflow)

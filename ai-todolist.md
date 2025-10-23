@@ -226,6 +226,9 @@ graph TB
 - **가정 1**: `_consecutive_execute_count`는 execute phase 실행 횟수만 카운트 (verify는 카운트 안함)
 - **가정 2**: Verify phase는 항상 새 session (resume 없음) - counter reset과 무관
 - **가정 3**: `force_verify = True`여도 execute phase는 한 번 더 실행됨 (verify 조건 체크는 execute **후**)
+- **가정 4**: Counter는 loop 시작 시점(line 140)에 무조건 증가함 - verify 결과와 무관
+- **가정 5**: 수정 후에도 "10번 execute → verify FALSE → 1번 execute → verify" 패턴은 발생 (counter 11이 되므로)
+  - 하지만 기존 버그 "10번 → verify → 9번 → verify"는 수정됨 (counter 리셋 안되므로)
 
 ## 프로젝트 Commit Message 스타일
 ```bash
@@ -368,14 +371,18 @@ $ git log -10 --oneline
           await loop.run(execute_prompt="test")
 
           # then
-          # 수정 후: Counter가 리셋되지 않으므로 verify FALSE 후에도 즉시 다시 verify 진입
-          # Execute 10번 (force_verify 발동) → Verify 1 (FALSE) → Execute 0번 (바로 verify) → Verify 2 (TRUE)
-          assert execute_count == 10, f"Expected exactly 10 executes, got {execute_count}"
+          # 수정 후: Counter가 리셋되지 않으므로 verify FALSE 후 1번만 execute
+          # Execute 10번 (counter 10, force_verify) → Verify 1 (FALSE) →
+          # Execute 1번 (counter 11, force_verify 여전히 true) → Verify 2 (TRUE)
+          assert execute_count == 11, f"Expected 11 executes (10+1), got {execute_count}"
           assert verify_count == 2, f"Expected 2 verifies, got {verify_count}"
 
           # 수정 전 (Bug): Counter 리셋되어 9번 더 execute 가능
-          # Execute 10번 → Verify 1 (FALSE, counter reset) → Execute 9번 → Verify 2 (TRUE)
-          # assert execute_count == 19  # ← 버그 상태에서는 이렇게 됨
+          # Execute 10번 → Verify 1 (FALSE, counter reset to 0) → Execute 9번 (counter 9) → Verify 2 (force_verify)
+          # assert execute_count == 19  # ← 버그 상태에서는 이렇게 됨 (10 + 9)
+
+          # ※ 주의: 완전히 execute를 막으려면 loop 구조를 변경해야 함 (should_verify를 execute 전에 체크)
+          # 하지만 이 수정의 목표는 "9번 반복"을 막는 것이지 "1번 실행"을 막는 것이 아님
       ```
 
       **구현 세부사항**:
@@ -493,7 +500,10 @@ Refs: Issue #44"
               feedback, fully_done = await self._verify_phase(actual_verify_prompt, verify_extra)
 
               if fully_done:
-                  self._consecutive_execute_count = 0  # Task 1에서 이동한 코드
+                  # ※ 주의: 이 counter reset은 Task 1.1에서 이동한 것과 동일한 위치임
+                  # Task 1.1의 "Line 215-217"은 현재 코드 기준이고,
+                  # Task 2.1의 verify retry loop 추가 후에는 이 위치가 됨
+                  self._consecutive_execute_count = 0
                   await self.ui.show_status("✅ Architect confirmed FULLY_DONE. All work verified!")
                   break  # Exit main loop (line 137)
 
@@ -1131,10 +1141,10 @@ Refs: Issue #44"
 
           시나리오:
           1. Execute 10번 반복 (task_validator는 계속 incomplete)
-          2. Force verify 발동 → Verify phase 진입
+          2. Force verify 발동 (counter=10) → Verify phase 진입
           3. Verify가 FULLY_DONE = FALSE 반환
-          4. 다음 iteration에서 counter가 리셋되지 않았으므로 즉시 다시 verify 진입
-          5. Verify가 FULLY_DONE = TRUE 반환 → 종료
+          4. 다음 iteration: counter++ → 11, execute 1번 실행, force_verify 여전히 true
+          5. Verify phase 다시 진입 → FULLY_DONE = TRUE 반환 → 종료
           """
           # given
           execute_agent = MockAgent()
@@ -1185,8 +1195,8 @@ Refs: Issue #44"
           await loop.run(execute_prompt="test")
 
           # then
-          # Execute가 정확히 10번 실행되었는지 확인 (11번이 아님!)
-          assert execute_count == 10, f"Expected 10 executes, got {execute_count}"
+          # Execute가 11번 실행되었는지 확인 (10번 + verify FALSE 후 1번)
+          assert execute_count == 11, f"Expected 11 executes (10+1), got {execute_count}"
 
           # Verify가 2번 실행되었는지 확인
           assert verify_count == 2, f"Expected 2 verifies, got {verify_count}"
@@ -1196,13 +1206,15 @@ Refs: Issue #44"
           verify_statuses = [s for s in ui.statuses if "Starting Verify phase" in s]
           force_verify_statuses = [s for s in ui.statuses if "Forcing Verify phase" in s]
 
-          # Execute 10번
-          assert len(execute_statuses) == 10
+          # Execute 11번 (10번 + verify FALSE 후 1번)
+          assert len(execute_statuses) == 11
 
           # Verify 2번
           assert len(verify_statuses) == 2
 
-          # Force verify 메시지 2번 (첫 번째와 두 번째 verify 진입 시)
+          # Force verify 메시지 2번
+          # - 첫 번째 verify 진입 시 (counter=10, force_verify=True)
+          # - 두 번째 verify 진입 시 (counter=11, force_verify=True)
           assert len(force_verify_statuses) == 2
 
           # 메시지 순서 검증: "Forcing Verify"가 "Starting Verify" 직전에 나와야 함

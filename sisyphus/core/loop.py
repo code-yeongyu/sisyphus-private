@@ -494,8 +494,18 @@ class ExecutionLoop:
         self.verify_logger.info("Prompt sent")
 
         self._resumed_once = False
+        verify_retry_count = 0
+        should_retry_verify = False
 
         while True:
+            if should_retry_verify:
+                self.verify_logger.info("Restarting verify with new session...")
+                actual_session_id = await self.verify_agent.start_session(None)
+                self.verify_logger.info(f"New session started: {actual_session_id}")
+                await self.verify_agent.send(final_prompt)
+                should_retry_verify = False
+                verify_retry_count += 1
+
             # Create new CancelScope for each loop iteration
             self._current_cancel_scope = anyio.CancelScope()
             monitor_scope = self._current_cancel_scope
@@ -571,15 +581,35 @@ class ExecutionLoop:
                 # Re-raise for outer loop to continue
                 raise session_limit_error
             except* Exception as exception_group:
-                # Catch any other unexpected exceptions from TaskGroup
+                sdk_error_detected = False
+
                 for exception in exception_group.exceptions:
                     self.verify_logger.error(
-                        f"Unexpected error in verify phase: {exception}",
+                        f"SDK error in verify phase: {exception}",
                         exc_info=exception,
                     )
-                raise
+
+                    error_str = str(exception).lower()
+                    is_sdk_error = (
+                        "command failed" in error_str or "sdk" in error_str or isinstance(exception, RuntimeError)
+                    )
+
+                    if is_sdk_error:
+                        self.verify_logger.info("SDK error detected in verify phase.")
+                        sdk_error_detected = True
+
+                if verify_retry_count >= 3:
+                    self.verify_logger.error("SDK error occurred 3 times in verify phase. Exiting.")
+                    raise
+                elif sdk_error_detected:
+                    should_retry_verify = True
+                else:
+                    raise
 
             # Task Group completed normally - check interrupt status
+            if should_retry_verify:
+                continue
+
             if self._interrupt_flag:
                 assert self._resume_event is not None
                 assert self.verify_logger is not None

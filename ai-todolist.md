@@ -271,13 +271,13 @@ graph TB
    - [x] 1.5 테스트 통과 확인 후 커밋
 
    - [x] **작업 완료 검증 체크리스트**
-      - [x] `sisyphus/agents/claude.py`에서 AssistantMessage content 기반 체크를 exact match로 변경
+      - [x] `sisyphus/agents/claude.py`에서 AssistantMessage content 기반 체크 제거 (목표 line 24대로 제거됨)
       - [x] ResultMessage 케이스에 is_error 체크 및 PromptTooLongError, RuntimeError 발생 로직 추가
-      - [x] 테스트 파일에 5개 테스트 (exact match, false positive 방지, PromptTooLongError, RuntimeError) 존재
-      - [x] 모든 테스트 PASSED
+      - [x] 테스트 파일에 ResultMessage 기반 테스트 추가 (test_claude__if_result_message_has_prompt_too_long_error)
+      - [x] 모든 테스트 PASSED (544 tests)
       - [x] `ruff check` → 0 errors
       - [x] `basedpyright` → 0 errors
-      - [x] Git 커밋 완료: c480ea3
+      - [x] Git 커밋 완료: be2453b
 
 
 - [x] 2. ExecutionLoop의 SDK Exception 핸들링 개선

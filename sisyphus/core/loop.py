@@ -65,6 +65,7 @@ class ExecutionLoop:
         self._resumed_once = False
         self._consecutive_execute_count: int = 0
         self._execute_resume_fail_count: int = 0
+        self._sdk_exception_count: int = 0
         self._should_exit_execute_phase = False
 
     async def run(
@@ -248,9 +249,7 @@ class ExecutionLoop:
                 # Verify returned FALSE - maintain counter to ensure immediate verify re-entry on next iteration
                 if feedback:
                     verify_feedback_history.append(feedback)
-                await self.ui.show_status(
-                    f"[Iteration {iteration}] Verify FALSE. Feedback received, will execute..."
-                )
+                await self.ui.show_status(f"[Iteration {iteration}] Verify FALSE. Feedback received, will execute...")
             elif should_verify and not self.verify_agent:
                 await self.ui.show_status("✅ All tasks completed!")
                 break
@@ -383,21 +382,47 @@ class ExecutionLoop:
                 # Re-raise for outer loop to continue
                 raise session_limit_error
             except* Exception as exception_group:
-                self._execute_resume_fail_count += 1
-                for exception in exception_group.exceptions:
-                    attempt_msg = f"(attempt {self._execute_resume_fail_count}/3)"
-                    self.execute_logger.error(
-                        f"Unexpected error in execute phase: {exception} {attempt_msg}",
-                        exc_info=exception,
-                    )
+                sdk_error_detected = False
+                sdk_exception = None
 
-                if self._execute_resume_fail_count >= 3:
-                    self.execute_logger.info("Exception occurred 3 times. Resetting session store.")
+                for exception in exception_group.exceptions:
+                    error_str = str(exception).lower()
+                    if "command failed" in error_str or "exit code" in error_str:
+                        sdk_error_detected = True
+                        sdk_exception = exception
+                        break
+
+                if sdk_error_detected:
+                    self._sdk_exception_count += 1
+                    attempt_msg = f"(attempt {self._sdk_exception_count}/3)"
+                    self.execute_logger.error(
+                        f"SDK error in execute phase: {sdk_exception} {attempt_msg}",
+                        exc_info=sdk_exception,
+                    )
+                    self.execute_logger.info("SDK error detected. Deleting invalid session.")
+
                     await self.session_store.delete_session(agent_type)
-                    self._execute_resume_fail_count = 0
-                    self._should_exit_execute_phase = True
+                    if self._sdk_exception_count >= 3:
+                        self.execute_logger.error("SDK error occurred 3 times. Exiting execute phase.")
+                        self._should_exit_execute_phase = True
+
+                    raise RetryRequiredError(f"SDK error: {sdk_exception}")
                 else:
-                    raise
+                    self._execute_resume_fail_count += 1
+                    for exception in exception_group.exceptions:
+                        attempt_msg = f"(attempt {self._execute_resume_fail_count}/3)"
+                        self.execute_logger.error(
+                            f"Unexpected error in execute phase: {exception} {attempt_msg}",
+                            exc_info=exception,
+                        )
+
+                    if self._execute_resume_fail_count >= 3:
+                        self.execute_logger.info("Exception occurred 3 times. Resetting session store.")
+                        await self.session_store.delete_session(agent_type)
+                        self._execute_resume_fail_count = 0
+                        self._should_exit_execute_phase = True
+                    else:
+                        raise
 
             # Task Group completed normally - check interrupt status
             if self._interrupt_flag:
@@ -548,13 +573,37 @@ class ExecutionLoop:
                 # Re-raise for outer loop to continue
                 raise session_limit_error
             except* Exception as exception_group:
-                # Catch any other unexpected exceptions from TaskGroup
+                sdk_error_detected = False
+                sdk_exception = None
+
                 for exception in exception_group.exceptions:
+                    error_str = str(exception).lower()
+                    if "command failed" in error_str or "exit code" in error_str:
+                        sdk_error_detected = True
+                        sdk_exception = exception
+                        break
+
+                if sdk_error_detected:
+                    self._sdk_exception_count += 1
+                    attempt_msg = f"(attempt {self._sdk_exception_count}/3)"
                     self.verify_logger.error(
-                        f"Unexpected error in verify phase: {exception}",
-                        exc_info=exception,
+                        f"SDK error in verify phase: {sdk_exception} {attempt_msg}",
+                        exc_info=sdk_exception,
                     )
-                raise
+                    self.verify_logger.info("SDK error detected in verify phase. Deleting invalid session.")
+
+                    # Delete invalid session (verify always uses new session)
+                    agent_type = type(self.verify_agent).__name__.lower().replace("agent", "")
+                    await self.session_store.delete_session(agent_type)
+
+                    raise RetryRequiredError(f"SDK error: {sdk_exception}")
+                else:
+                    for exception in exception_group.exceptions:
+                        self.verify_logger.error(
+                            f"Unexpected error in verify phase: {exception}",
+                            exc_info=exception,
+                        )
+                    raise
 
             # Task Group completed normally - check interrupt status
             if self._interrupt_flag:

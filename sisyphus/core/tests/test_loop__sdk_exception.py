@@ -111,6 +111,54 @@ async def test_execute_phase__if_sdk_exception_3_times__exits_phase() -> None:
     assert loaded_session is None
 
 
+async def test_verify_phase__if_sdk_exception__deletes_session_and_retries() -> None:
+    # given
+    verify_agent = MockAgentWithSDKError()
+    verify_agent.fail_on_first_stream = True
+
+    ui = MockUI()
+    session_store = MockSessionStore()
+    await session_store.save_session("mockwithsdkerror", "invalid-session-id")
+
+    prompt_resolver = MockPromptResolver()
+    logger_factory = MockLoggerFactory()
+    task_validator = MockTaskValidator()
+
+    loop = ExecutionLoop(
+        execute_agent=MagicMock(),  # type: ignore[arg-type]
+        verify_agent=verify_agent,  # type: ignore[arg-type]
+        ui=ui,  # type: ignore[arg-type]
+        session_store=session_store,  # type: ignore[arg-type]
+        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
+        logger_factory=logger_factory,  # type: ignore[arg-type]
+        task_validator=task_validator,  # type: ignore[arg-type]
+    )
+
+    # when
+    retry_count = 0
+    max_retries = 3
+    success = False
+
+    while retry_count < max_retries:
+        should_retry = False
+        try:
+            await loop._verify_phase(prompt="Test prompt", extra=None)
+            success = True
+            break
+        except* RetryRequiredError:
+            retry_count += 1
+            should_retry = True
+
+        if not should_retry:
+            break
+
+    # then
+    assert success is True
+    assert verify_agent.start_session_call_count == 2
+    loaded_session = await session_store.get_session("mockwithsdkerror")
+    assert loaded_session is None
+
+
 class MockAgentWithSDKError:
     def __init__(self) -> None:
         self.supports_interactive = False
@@ -212,3 +260,8 @@ class MockLoggerFactory:
         logger.warning = MagicMock()
         logger.error = MagicMock()
         return logger
+
+
+class MockTaskValidator:
+    async def is_complete(self) -> bool:
+        return False

@@ -182,12 +182,6 @@ class ClaudeAgent:
                                 else:
                                     content += thinking_header
 
-                    # Check for "Prompt is too long" error
-                    if "Prompt is too long" in content:
-                        raise PromptTooLongError(
-                            "Prompt exceeded maximum length. Please reduce prompt size or split the request."
-                        )
-
                     yield AgentMessage(
                         role="assistant",
                         content=content,
@@ -204,12 +198,21 @@ class ClaudeAgent:
                 case ResultMessage():
                     if message.is_error and message.result:
                         result_str = str(message.result).lower()
+
+                        # Check for session limit error
                         if "session limit" in result_str or "limit reached" in result_str:
                             reset_time = parse_reset_time(str(message.result))
                             raise SessionLimitError(
                                 f"Claude API session limit reached: {message.result}",
                                 reset_time=reset_time,
                             )
+
+                        # Check for prompt too long error
+                        if "prompt is too long" in result_str or ("prompt" in result_str and "too long" in result_str):
+                            raise PromptTooLongError(f"Prompt exceeded maximum length: {message.result}")
+
+                        # Any other SDK error - will be caught by loop.py's except* Exception handler
+                        raise RuntimeError(f"Claude Agent SDK error: {message.result}")
 
                     yield AgentMessage(
                         role="system",

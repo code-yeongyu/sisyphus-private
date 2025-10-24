@@ -36,28 +36,22 @@ def mock_sdk_options() -> MagicMock:
     return MagicMock()
 
 
-async def test_claude__if_assistant_message_contains_prompt_too_long__raises_prompt_too_long_error(
+async def test_claude__if_result_message_has_prompt_too_long_error__raises_prompt_too_long_error(
     mock_sdk_client: MagicMock,
     mock_sdk_options: MagicMock,
 ) -> None:
-    """Test that stream() raises PromptTooLongError when AssistantMessage contains exact string."""
+    """Test that stream() raises PromptTooLongError when ResultMessage.is_error=True with prompt too long error."""
     # given
     agent = ClaudeAgent()
-
-    text_block = TextBlock(text="Prompt is too long")
-    assistant_msg = MagicMock(spec=AssistantMessage)
-    assistant_msg.content = [text_block]
-    assistant_msg.model = "claude-sonnet-4-5"
 
     result_msg = MagicMock(spec=ResultMessage)
     result_msg.session_id = "sess_456"
     result_msg.duration_ms = 100
     result_msg.num_turns = 1
-    result_msg.is_error = False
-    result_msg.result = None
+    result_msg.is_error = True
+    result_msg.result = "Prompt is too long"
 
     async def mock_receive() -> AsyncIterator[MagicMock]:
-        yield assistant_msg
         yield result_msg
 
     mock_sdk_client.receive_response = mock_receive
@@ -73,15 +67,15 @@ async def test_claude__if_assistant_message_contains_prompt_too_long__raises_pro
             pass
 
 
-async def test_claude__if_assistant_message_without_prompt_too_long__yields_normally(
+async def test_claude__if_assistant_message_mentions_prompt_too_long__yields_normally(
     mock_sdk_client: MagicMock,
     mock_sdk_options: MagicMock,
 ) -> None:
-    """Test that stream() yields normally when AssistantMessage does not contain error string."""
+    """Test that stream() yields normally even when AssistantMessage mentions 'Prompt is too long' phrase."""
     # given
     agent = ClaudeAgent()
 
-    text_block = TextBlock(text="Hello, world!")
+    text_block = TextBlock(text="Your prompt is too long. Please shorten it.")
     assistant_msg = MagicMock(spec=AssistantMessage)
     assistant_msg.content = [text_block]
     assistant_msg.model = "claude-sonnet-4-5"
@@ -110,33 +104,27 @@ async def test_claude__if_assistant_message_without_prompt_too_long__yields_norm
         messages.append(msg)
 
     # then
-    assert len(messages) == 2  # AssistantMessage + ResultMessage
+    assert len(messages) == 2
     assert messages[0].role == "assistant"
-    assert messages[0].content == "Hello, world!"
+    assert "too long" in messages[0].content
 
 
-async def test_claude__if_prompt_too_long_in_middle_of_content__raises_error(
+async def test_claude__if_result_message_has_other_sdk_error__raises_runtime_error(
     mock_sdk_client: MagicMock,
     mock_sdk_options: MagicMock,
 ) -> None:
-    """Test that error is detected even when string appears in middle of content."""
+    """Test that stream() raises RuntimeError for other SDK errors in ResultMessage."""
     # given
     agent = ClaudeAgent()
-
-    text_block = TextBlock(text="Some text... Prompt is too long ... more text")
-    assistant_msg = MagicMock(spec=AssistantMessage)
-    assistant_msg.content = [text_block]
-    assistant_msg.model = "claude-sonnet-4-5"
 
     result_msg = MagicMock(spec=ResultMessage)
     result_msg.session_id = "sess_456"
     result_msg.duration_ms = 100
     result_msg.num_turns = 1
-    result_msg.is_error = False
-    result_msg.result = None
+    result_msg.is_error = True
+    result_msg.result = "Unknown SDK error occurred"
 
     async def mock_receive() -> AsyncIterator[MagicMock]:
-        yield assistant_msg
         yield result_msg
 
     mock_sdk_client.receive_response = mock_receive
@@ -147,6 +135,6 @@ async def test_claude__if_prompt_too_long_in_middle_of_content__raises_error(
             await agent.start_session()
 
     # when/then
-    with pytest.raises(PromptTooLongError):
+    with pytest.raises(RuntimeError, match="Claude Agent SDK error"):
         async for _ in agent.stream():
             pass

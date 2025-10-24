@@ -590,7 +590,11 @@ class ExecutionLoop:
                         f"SDK error in verify phase: {sdk_exception} {attempt_msg}",
                         exc_info=sdk_exception,
                     )
-                    self.verify_logger.info("SDK error detected in verify phase.")
+                    self.verify_logger.info("SDK error detected in verify phase. Deleting invalid session.")
+
+                    # Delete invalid session (verify always uses new session)
+                    agent_type = type(self.verify_agent).__name__.lower().replace("agent", "")
+                    await self.session_store.delete_session(agent_type)
 
                     raise RetryRequiredError(f"SDK error: {sdk_exception}")
                 else:

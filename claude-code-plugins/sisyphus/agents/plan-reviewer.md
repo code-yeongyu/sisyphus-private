@@ -242,6 +242,369 @@ If file verification reveals issues:
 
 ---
 
+## Special Case: Bug Fix Requests
+
+**CRITICAL IMPORTANCE**: Bug fix requests require additional verification beyond normal tasks. A bug fix plan MUST prove that:
+1. The bug actually exists (not a misunderstanding or expected behavior)
+2. The bug can be reliably reproduced
+3. The root cause is clearly identified
+4. The fix direction is technically sound
+
+### Required Components for Bug Fix Plans
+
+For ANY task described as a "bug fix", "issue resolution", or "problem correction", the plan MUST include:
+
+#### 1. Bug Existence Verification
+
+**Goal**: Confirm the bug is real and observable, not a misunderstanding of expected behavior.
+
+**Required Information**:
+- **Current Behavior**: What actually happens now (observable, specific)
+  - [PASS] Good: "API returns 500 error when user submits form with empty email field"
+  - [PASS] Good: "Dark mode toggle doesn't persist after page reload - always reverts to light mode"
+  - [FAIL] Bad: "The feature doesn't work properly"
+  - [FAIL] Bad: "Users are experiencing issues"
+
+- **Expected Behavior**: What should happen instead
+  - [PASS] Good: "API should return 400 with validation error message 'Email is required'"
+  - [PASS] Good: "Theme preference should persist in localStorage and restore on reload"
+  - [FAIL] Bad: "It should work correctly"
+  - [FAIL] Bad: "Better error handling"
+
+- **Evidence**: Proof that the bug exists
+  - [PASS] Good: "See error in production logs: `logs/error-2024-01-15.log:450-455`"
+  - [PASS] Good: "Screenshot of console error attached: `docs/bugs/dark-mode-issue.png`"
+  - [PASS] Good: "User report ticket #1234 describes the issue with steps"
+  - [FAIL] Bad: "Users have complained"
+  - [FAIL] Bad: No evidence provided
+
+**Verification Questions**:
+- Can you observe the current (buggy) behavior by following provided steps?
+- Is the expected behavior clearly different from current behavior?
+- Does evidence confirm this is a bug, not a feature request or expected behavior?
+
+**Auto-REJECT if**:
+- Current behavior is vague or unmeasurable
+- Expected behavior is not clearly defined
+- No evidence of bug existence (logs, screenshots, error messages, user reports)
+- Bug might be expected behavior (plan doesn't explain why it's a bug)
+
+#### 2. Reproduction Steps
+
+**Goal**: Ensure anyone can reliably trigger the bug to verify it exists and confirm when it's fixed.
+
+**Required Information**:
+- **Step-by-step reproduction**: Exact sequence to trigger the bug
+  - [PASS] Good:
+    ```
+    Reproduction Steps:
+    1. Navigate to `/profile` page
+    2. Click "Edit Profile" button
+    3. Clear the email field (delete all text)
+    4. Click "Save" button
+    5. Observe: Server returns 500 error (should be 400 validation error)
+    ```
+  - [PASS] Good:
+    ```
+    Reproduction Steps:
+    1. Open application in browser
+    2. Click dark mode toggle (theme switches to dark - this works)
+    3. Refresh the page (F5 or Cmd+R)
+    4. Observe: Page loads in light mode instead of dark mode
+    5. Check localStorage in DevTools → `theme` key is missing
+    ```
+  - [FAIL] Bad: "Try to submit the form without data"
+  - [FAIL] Bad: "Use the dark mode feature and reload"
+
+- **Preconditions**: Required setup or state
+  - [PASS] Good: "Prerequisites: User must be logged in, must have at least one profile saved"
+  - [PASS] Good: "Environment: Tested on Chrome 120, macOS 14.2, production environment"
+  - [FAIL] Bad: No preconditions specified when they're needed
+
+- **Consistency**: How often does the bug occur?
+  - [PASS] Good: "Occurs 100% of the time when steps are followed"
+  - [PASS] Good: "Occurs approximately 30% of the time (race condition suspected)"
+  - [FAIL] Bad: No mention of reproducibility rate
+
+**Verification Questions**:
+- Can you follow these steps and reliably trigger the bug?
+- Are preconditions clearly stated?
+- Is it clear whether the bug is consistent or intermittent?
+
+**Auto-REJECT if**:
+- Reproduction steps are vague or incomplete
+- Missing required preconditions (environment, data state, user state)
+- No indication of reproducibility rate (always? sometimes? rare?)
+- Steps cannot be followed without making assumptions
+
+#### 3. Root Cause Analysis
+
+**Goal**: Identify the logical/technical reason the bug occurs, not just symptoms.
+
+**Required Information**:
+- **Code Location**: Where in the codebase the bug originates
+  - [PASS] Good: "Root cause in `api/routes/profile.ts:145-160` - validation middleware is bypassed for PATCH requests"
+  - [PASS] Good: "Bug originates in `hooks/useTheme.ts:28` - `localStorage.setItem()` is called inside `useEffect` with empty dependency array, only runs on mount, not on theme change"
+  - [FAIL] Bad: "The bug is in the profile code"
+  - [FAIL] Bad: No file/line reference
+
+- **Technical Explanation**: WHY the code produces the bug
+  - [PASS] Good:
+    ```
+    Root Cause:
+    In `api/routes/profile.ts:145-160`, the PATCH endpoint calls `updateProfile()` directly
+    without first calling `validateProfileData()` middleware. The validation middleware
+    (lines 23-45) is only attached to POST /profile, not PATCH /profile/:id.
+    When email is empty, `updateProfile()` passes it to the database, which throws
+    an internal error (500) instead of validation error (400).
+    ```
+  - [PASS] Good:
+    ```
+    Root Cause:
+    In `hooks/useTheme.ts:28`, the code is:
+    ```tsx
+    useEffect(() => {
+      localStorage.setItem('theme', theme);
+    }, []); // Empty dependency array
+    ```
+    This effect only runs once on component mount. When `theme` state changes
+    (via toggle click), the effect doesn't re-run, so localStorage is never updated
+    with the new theme value. On reload, the app can't find the theme preference.
+    ```
+  - [FAIL] Bad: "The code doesn't save the theme"
+  - [FAIL] Bad: "Validation is missing"
+
+- **Logical Flow**: How the bug manifests through the system
+  - [PASS] Good: "Flow: User submits → handler skips validation → database rejects → uncaught error → 500 response"
+  - [PASS] Good: "Flow: User toggles theme → state updates → UI re-renders → useEffect doesn't run (empty deps) → localStorage not updated → reload reads nothing → defaults to light"
+  - [FAIL] Bad: No explanation of how the bug propagates
+
+**Verification Questions**:
+- Is the exact code location specified (file, line numbers)?
+- Does the explanation clearly show WHY the code produces the bug?
+- Can you trace the logical flow from trigger to symptom?
+- Does the root cause analysis identify a code defect, not just describe symptoms?
+
+**Auto-REJECT if**:
+- No specific code location (file + line numbers)
+- Explanation only describes symptoms, not underlying cause
+- Cannot trace logical connection between code defect and observed bug
+- Root cause is speculative without code evidence
+
+#### 4. Fix Direction
+
+**Goal**: Provide clear technical approach to resolve the bug without writing complete implementation.
+
+**Required Information**:
+- **Fix Strategy**: High-level approach to resolve the root cause
+  - [PASS] Good: "Add validation middleware to PATCH route, same as POST route uses"
+  - [PASS] Good: "Add `theme` to useEffect dependency array so localStorage updates when theme changes"
+  - [PASS] Good: "Wrap API call in try-catch, return 400 for validation errors instead of letting 500 bubble up"
+  - [FAIL] Bad: "Fix the validation"
+  - [FAIL] Bad: "Make it work properly"
+
+- **Code Changes Scope**: Which files/functions need modification
+  - [PASS] Good:
+    ```
+    Files to Modify:
+    1. `api/routes/profile.ts:145` - Add validateProfileData middleware to PATCH route
+    2. `api/routes/profile.ts:150-160` - Add try-catch around updateProfile call
+    ```
+  - [PASS] Good:
+    ```
+    Files to Modify:
+    1. `hooks/useTheme.ts:28` - Change useEffect dependency array from `[]` to `[theme]`
+    ```
+  - [FAIL] Bad: "Update the profile API"
+  - [FAIL] Bad: No specific files mentioned
+
+- **Implementation Sketch**: Enough detail to show fix will work, not complete code
+  - [PASS] Good:
+    ```
+    Fix Approach:
+    In `api/routes/profile.ts:145`, change:
+    ```typescript
+    router.patch('/profile/:id', updateProfile);
+    ```
+    To:
+    ```typescript
+    router.patch('/profile/:id', validateProfileData, updateProfile);
+    ```
+    This applies the same validation used by POST route (line 23) to PATCH route.
+    ```
+  - [PASS] Good:
+    ```
+    Fix Approach:
+    In `hooks/useTheme.ts:28`, change:
+    ```tsx
+    useEffect(() => {
+      localStorage.setItem('theme', theme);
+    }, []); // Empty - only runs on mount
+    ```
+    To:
+    ```tsx
+    useEffect(() => {
+      localStorage.setItem('theme', theme);
+    }, [theme]); // Runs whenever theme changes
+    ```
+    This ensures localStorage updates every time theme state changes.
+    ```
+  - [FAIL] Bad: "Add validation middleware"
+  - [FAIL] Bad: No code sketch provided
+
+- **Why This Fix Works**: Logical explanation connecting fix to root cause
+  - [PASS] Good: "This fix works because it ensures validation runs before database update, catching empty email and returning 400 instead of passing invalid data to DB (which causes 500)"
+  - [PASS] Good: "This fix works because adding `theme` to dependency array makes useEffect re-run whenever theme changes, ensuring localStorage always has the latest value to restore on reload"
+  - [FAIL] Bad: "This should fix it"
+  - [FAIL] Bad: No explanation of why fix resolves root cause
+
+- **Side Effects & Risks**: What else might be affected
+  - [PASS] Good: "Risk: Validation might reject currently valid PATCH requests if validation rules differ from POST. Check that PATCH validation schema matches POST schema in `validators/profile.ts`"
+  - [PASS] Good: "Side effect: useEffect will now run on every theme change. This is fine - localStorage.setItem is synchronous and fast. No performance impact expected."
+  - [PASS] Good: "No side effects expected - this is a localized fix"
+  - [FAIL] Bad: No mention of potential side effects (when they might exist)
+
+**Verification Questions**:
+- Is the fix strategy clearly stated (what change to make)?
+- Are specific files and code locations identified?
+- Does the implementation sketch show enough to prove the fix will work?
+- Is there a logical explanation of why this fix resolves the root cause?
+- Are potential side effects or risks acknowledged?
+
+**Auto-REJECT if**:
+- Fix strategy is vague ("improve validation", "fix the bug")
+- No specific files or code locations for changes
+- No implementation sketch showing how fix works
+- No explanation of why fix resolves root cause
+- Obvious side effects not acknowledged (e.g., adding validation that might break existing flows)
+
+### Bug Fix Verification Checklist
+
+When reviewing a bug fix task, verify ALL of these:
+
+- [ ] **Bug Existence**: Current behavior, expected behavior, and evidence provided
+- [ ] **Reproduction**: Step-by-step instructions with preconditions
+- [ ] **Root Cause**: Specific code location + technical explanation of WHY bug occurs
+- [ ] **Fix Direction**: Strategy, scope, implementation sketch, and rationale
+- [ ] **Verification Method**: How to confirm bug is fixed (test steps, automated tests)
+
+**Auto-REJECT if ANY of the above is missing or insufficient.**
+
+### Example: OKAY Bug Fix Plan
+
+```markdown
+## Task: Fix profile update validation error
+
+### Bug Description
+**Current Behavior**: When updating profile via PATCH /api/profile/:id with empty email field, server returns 500 Internal Server Error
+
+**Expected Behavior**: Server should return 400 Bad Request with validation error message "Email is required"
+
+**Evidence**: Production error log shows database constraint violation:
+- File: `logs/production-2024-01-15.log:450-455`
+- Error: `NOT NULL constraint failed: users.email`
+
+### Reproduction Steps
+1. Log in to application (test user: test@example.com / password123)
+2. Navigate to `/profile` page
+3. Click "Edit Profile" button
+4. Clear email field completely (delete all text)
+5. Click "Save Changes" button
+6. **Observe**: Red error toast "Server Error (500)" appears
+7. **Expected**: Should show "Email is required (400)"
+
+**Reproducibility**: 100% consistent across all tested browsers
+
+### Root Cause Analysis
+**Location**: `api/routes/profile.ts:145-160`
+
+**Technical Cause**:
+The PATCH endpoint (line 145) calls `updateProfile()` directly without validation:
+```typescript
+router.patch('/profile/:id', updateProfile); // Line 145 - no validation!
+```
+
+Compare to POST endpoint (line 23) which HAS validation:
+```typescript
+router.post('/profile', validateProfileData, createProfile); // Line 23 - validates first
+```
+
+**Why This Causes 500**:
+1. User sends PATCH with `{email: ""}`
+2. No validation middleware → `updateProfile()` receives invalid data
+3. `updateProfile()` calls `db.update()` with empty email
+4. Database rejects (NOT NULL constraint on `users.email`)
+5. Uncaught database error → Express returns 500
+
+**Logical Flow**: Request → No validation → Invalid data to DB → DB error → 500 response
+
+### Fix Direction
+
+**Strategy**: Add the same validation middleware to PATCH route that POST route uses
+
+**Files to Modify**:
+1. `api/routes/profile.ts:145` - Add `validateProfileData` middleware
+
+**Implementation Sketch**:
+```typescript
+// Current (line 145):
+router.patch('/profile/:id', updateProfile);
+
+// Fixed:
+router.patch('/profile/:id', validateProfileData, updateProfile);
+```
+
+The `validateProfileData` middleware is already defined at lines 23-45 and checks:
+- Email not empty
+- Email valid format
+- Other required fields
+
+**Why This Works**:
+Validation middleware runs before `updateProfile`, catches empty email, returns 400 with error message. Invalid data never reaches database.
+
+**Side Effects**:
+- PATCH requests now validate all fields, not just email
+- This might reject previously "working" requests that sent partial updates
+- **Risk Mitigation**: Review `validateProfileData` (lines 23-45) to ensure it allows partial updates (PATCH should accept subset of fields)
+
+### Verification
+**After Fix**:
+1. Repeat reproduction steps 1-6
+2. **Expected**: "Email is required" error message (400 status)
+3. **Confirm**: Error log shows validation error, not database error
+4. **Test**: Run `npm test -- api/profile.test.ts` → validation tests pass
+```
+
+**Why This Example Passes**:
+- [PASS] Bug existence proven with logs
+- [PASS] Reproduction steps are specific and complete
+- [PASS] Root cause identifies exact code location and explains WHY
+- [PASS] Fix direction shows clear strategy with code sketch
+- [PASS] Side effects acknowledged with mitigation plan
+- [PASS] Verification method specified
+
+### Example: REJECT Bug Fix Plan
+
+```markdown
+## Task: Fix the profile bug
+
+### Description
+Users are having issues with the profile page. It doesn't work properly.
+
+### Fix
+Update the profile API to handle errors better.
+```
+
+**Why This Example Fails**:
+- [FAIL] Bug existence not proven - what doesn't work? current vs expected?
+- [FAIL] No reproduction steps
+- [FAIL] No root cause analysis - where is the bug? why does it occur?
+- [FAIL] Fix too vague - "handle errors better" how? which file? what changes?
+- [FAIL] No verification method
+- **Verdict: REJECT**
+
+---
+
 ## Four Core Evaluation Criteria
 
 ### Criterion 1: Clarity of Work Content

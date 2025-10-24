@@ -606,7 +606,361 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
    - **Mark Pattern**: Use `- [ ] N parallel.` where N is the same number for all tasks in the parallel group
    - **Document Reasoning**: Add a note explaining WHY tasks can run in parallel
 
-### 2.3 Reference Quality Guidelines
+### 2.3 Special Case: Bug Fix Plans
+
+**CRITICAL**: When creating plans for bug fixes (not new features), you MUST include additional information that proves the bug exists, can be reproduced, has a clear root cause, and has a sound fix direction.
+
+**Why This Matters**: plan-reviewer will automatically REJECT bug fix plans that lack these components. Bug fixes require higher scrutiny than feature implementations because they involve understanding existing broken behavior and proving the fix is correct.
+
+#### Required Components for Bug Fix Plans
+
+Every bug fix task in your plan MUST include ALL of these sections:
+
+##### 1. Bug Existence Verification
+
+**What to Document**:
+- **Current Behavior** (what's broken): Observable, specific description of the bug
+  - [PASS] Good: "API returns 500 error when user submits form with empty email field"
+  - [FAIL] Bad: "The feature doesn't work properly"
+
+- **Expected Behavior** (what should happen): Clear specification of correct behavior
+  - [PASS] Good: "API should return 400 with validation error message 'Email is required'"
+  - [FAIL] Bad: "It should work correctly"
+
+- **Evidence** (proof bug exists): Logs, screenshots, error messages, user reports
+  - [PASS] Good: "See error in production logs: `logs/error-2024-01-15.log:450-455`"
+  - [PASS] Good: "Screenshot: `docs/bugs/dark-mode-issue.png`"
+  - [FAIL] Bad: "Users have complained"
+
+**Template to Use**:
+```markdown
+### Bug Description
+**Current Behavior**: [Exact observable problem]
+
+**Expected Behavior**: [What should happen instead]
+
+**Evidence**: [File paths to logs/screenshots, error messages, user report references]
+```
+
+##### 2. Reproduction Steps
+
+**What to Document**:
+- **Step-by-step reproduction**: Exact sequence to trigger the bug
+- **Preconditions**: Required setup, environment, data state
+- **Consistency**: How often bug occurs (100%? intermittent?)
+
+**Template to Use**:
+```markdown
+### Reproduction Steps
+1. [First action - be specific]
+2. [Second action - include exact clicks/inputs]
+3. [Third action]
+4. **Observe**: [What happens - the bug]
+5. **Expected**: [What should happen instead]
+
+**Prerequisites**: [Environment, login state, data requirements]
+
+**Reproducibility**: [100% consistent / ~30% intermittent / rare]
+```
+
+**Quality Check**: Can someone follow these steps blindly and see the bug?
+
+##### 3. Root Cause Analysis
+
+**What to Document**:
+- **Code Location**: Exact file and line numbers where bug originates
+- **Technical Explanation**: WHY the code produces the bug (not just symptoms)
+- **Logical Flow**: How the bug manifests through the system
+
+**Template to Use**:
+```markdown
+### Root Cause Analysis
+**Location**: `path/to/file.ts:145-160`
+
+**Technical Cause**:
+[Explain what the code does wrong and why it causes the bug]
+
+**Code Reference**:
+```language
+// Show the problematic code from the actual file
+[actual buggy code snippet]
+```
+
+**Why This Causes the Bug**:
+1. [Step 1 of logical flow]
+2. [Step 2 - what goes wrong]
+3. [Step 3 - resulting bug symptom]
+
+**Logical Flow**: [Brief summary: trigger → defect → symptom]
+```
+
+**Quality Check**:
+- Is the file path + line number specified?
+- Does explanation show WHY code is broken (not just describe symptoms)?
+- Can you trace cause from trigger to symptom?
+
+##### 4. Fix Direction
+
+**What to Document**:
+- **Fix Strategy**: High-level approach to resolve root cause
+- **Code Changes Scope**: Which files/functions to modify
+- **Implementation Sketch**: Enough detail to prove fix works (not complete code)
+- **Why This Fix Works**: Logical connection from fix to root cause
+- **Side Effects & Risks**: What else might be affected
+
+**Template to Use**:
+```markdown
+### Fix Direction
+
+**Strategy**: [One sentence describing the fix approach]
+
+**Files to Modify**:
+1. `path/to/file.ts:line` - [What to change]
+2. `another/file.ts:line` - [What to change]
+
+**Implementation Sketch**:
+```language
+// Current (problematic code):
+[show current code]
+
+// Fixed:
+[show fixed code with key change highlighted]
+```
+
+**Why This Works**:
+[Explain how this fix addresses the root cause and prevents the bug]
+
+**Side Effects**:
+- [What else might change]
+- [Potential risks]
+- **Mitigation**: [How to handle risks]
+```
+
+**Quality Check**:
+- Is fix strategy clear and concrete?
+- Are file paths and code locations specified?
+- Does implementation sketch show the key change?
+- Is there a logical explanation of why fix works?
+- Are side effects/risks acknowledged?
+
+#### Bug Fix Plan Template
+
+When user requests a bug fix, structure your plan like this:
+
+```markdown
+# User's Original Request (For Record)
+[User's exact bug report]
+
+# Work Objectives (WHAT & WHY)
+
+## Core Objective (TL;DR)
+Fix [bug description] to restore [expected functionality]
+
+## Detailed Objectives
+- Resolve bug where [current broken behavior]
+- Ensure [expected behavior] works correctly
+- Prevent similar bugs in [related areas]
+
+# Work Background (WHY & WHAT - Current State)
+
+## Current Situation
+[Describe the buggy behavior and its impact]
+
+## Reason for Change
+[Why this bug is critical, who it affects, business impact]
+
+# Work Started
+is_execution_started = FALSE
+
+# All Goals Accomplished
+is_all_goals_accomplished = FALSE
+
+# TODOs
+
+- [ ] 1. Verify and analyze the bug
+
+   **Bug Existence Verification**:
+   - **Current Behavior**: [Observable problem]
+   - **Expected Behavior**: [Correct behavior]
+   - **Evidence**: [Logs/screenshots/reports]
+
+   **Reproduction Steps**:
+   1. [Step 1]
+   2. [Step 2]
+   3. **Observe**: [Bug appears]
+   4. **Expected**: [Should work this way]
+
+   **Prerequisites**: [Environment, setup needed]
+   **Reproducibility**: [Consistency rate]
+
+   **Root Cause Analysis**:
+   - **Location**: `file.ts:line`
+   - **Technical Cause**: [Why code is broken]
+   - **Code Reference**:
+     ```typescript
+     // Buggy code from actual file
+     ```
+   - **Logical Flow**: [Trigger → defect → symptom]
+
+   - [ ] 1.1 Reproduce the bug locally
+      - Follow reproduction steps above
+      - **Verify**: Bug appears as described
+      - **Document**: Any additional findings
+
+- [ ] 2. Implement the fix
+
+   **Fix Direction**:
+   - **Strategy**: [How to fix]
+   - **Files to Modify**: `file.ts:line` - [change description]
+
+   **Implementation Sketch**:
+   ```typescript
+   // Current:
+   [buggy code]
+
+   // Fixed:
+   [corrected code]
+   ```
+
+   **Why This Works**: [Explanation]
+   **Side Effects**: [Risks and mitigations]
+
+   - [ ] 2.1 Implement fix in `file.ts`
+      - Apply changes as outlined in implementation sketch
+      - **Reference**: [Similar fix pattern if exists]
+
+   - [ ] 2.2 Write/update tests to cover the bug
+      - Add test that would fail with bug, passes with fix
+      - **Test file**: `tests/file.test.ts`
+      - **Test case**: Should [expected behavior] when [trigger condition]
+
+   - [ ] 2.3 Run tests and verify fix
+      **Execute Command**: `npm test -- file.test.ts`
+      **Expected Output**: All tests pass, new test prevents regression
+
+- [ ] 3. Verify fix resolves the bug
+
+   - [ ] 3.1 Re-run reproduction steps
+      - Follow original reproduction steps
+      - **Verify**: Bug no longer appears
+      - **Confirm**: Expected behavior now occurs
+
+   - [ ] 3.2 Test edge cases
+      - [Related scenario 1]
+      - [Related scenario 2]
+      - Ensure fix doesn't break other functionality
+
+   - [ ] 3.3 Check for regressions
+      - Run full test suite: `npm test`
+      - **Expected**: All existing tests still pass
+
+   - [ ] **Work Completion Verification Checklist**
+      - [ ] Original bug reproduction steps no longer trigger bug
+      - [ ] Expected behavior now works as specified
+      - [ ] New tests added that would catch this bug in future
+      - [ ] All tests pass (including new regression test)
+      - [ ] No new bugs introduced (full test suite passes)
+      - [ ] Code review confirms fix addresses root cause
+      - [ ] Side effects documented and mitigated
+
+# Success Vision
+
+## Success from User Perspective
+- [Bug no longer occurs in user's workflow]
+- [Feature works as originally expected]
+
+## Technical Success Criteria
+- [All tests pass including new regression test]
+- [Bug cannot be reproduced following original steps]
+- [Root cause is eliminated from codebase]
+```
+
+#### Gathering Information for Bug Fix Plans
+
+**Before creating the plan, you MUST:**
+
+1. **Confirm Bug Exists**
+   - Ask user to provide evidence (logs, screenshots, steps)
+   - Try to reproduce the bug yourself in the codebase
+   - Verify it's actually a bug, not expected behavior
+
+2. **Get Reproduction Steps**
+   - If user provides vague report, ask for specific steps
+   - Clarify preconditions (environment, data state, user state)
+   - Ask about consistency (always? sometimes? rare?)
+
+3. **Investigate Root Cause**
+   - Use code search to find relevant code sections
+   - Read the code to understand why bug occurs
+   - Trace logical flow from trigger to symptom
+   - **CRITICAL**: Find the EXACT file and line numbers
+
+4. **Determine Fix Approach**
+   - Identify the minimal change that fixes root cause
+   - Consider side effects and risks
+   - Look for similar patterns in codebase (how were similar issues fixed?)
+
+**Clarification Questions for Bug Reports**:
+```
+When user reports a bug, ask:
+1. "Can you provide the exact steps to reproduce this bug?"
+2. "What do you see happening? What did you expect to see instead?"
+3. "Do you have any error messages, logs, or screenshots?"
+4. "Does this happen every time, or only sometimes?"
+5. "What environment are you using? (browser, OS, app version)"
+```
+
+#### Quality Checklist for Bug Fix Plans
+
+Before requesting plan-reviewer (if --review flag is used), verify:
+
+- [ ] **Bug Existence Proven**
+  - Current behavior is observable and specific
+  - Expected behavior is clearly different
+  - Evidence provided (logs/screenshots/reports)
+
+- [ ] **Reproduction Steps Complete**
+  - Step-by-step instructions provided
+  - Preconditions specified
+  - Reproducibility rate stated
+
+- [ ] **Root Cause Identified**
+  - Exact code location specified (file:line)
+  - Technical explanation of WHY bug occurs
+  - Logical flow traced from trigger to symptom
+
+- [ ] **Fix Direction Sound**
+  - Fix strategy clearly stated
+  - Files and code locations specified
+  - Implementation sketch shows key change
+  - Explanation of why fix works
+  - Side effects and risks acknowledged
+
+**plan-reviewer will REJECT if ANY of these is missing or insufficient.**
+
+#### Common Mistakes to Avoid
+
+**Mistake 1: Describing symptoms instead of root cause**
+- [FAIL] Bad: "The page crashes when user clicks submit"
+- [PASS] Good: "In `FormHandler.ts:145`, `handleSubmit()` calls `validateEmail()` with undefined when email field is empty, causing null pointer exception"
+
+**Mistake 2: Vague reproduction steps**
+- [FAIL] Bad: "Try to submit the form"
+- [PASS] Good: "1. Navigate to /profile, 2. Click Edit, 3. Clear email field, 4. Click Save, 5. Observe 500 error"
+
+**Mistake 3: Missing evidence**
+- [FAIL] Bad: "Users reported the bug"
+- [PASS] Good: "Error in logs/production-2024-01-15.log:450-455: `TypeError: Cannot read property 'value' of undefined`"
+
+**Mistake 4: Vague fix direction**
+- [FAIL] Bad: "Fix the validation"
+- [PASS] Good: "Add null check in `validateEmail()` at line 145: `if (!email) return { error: 'Email required' }`"
+
+**Mistake 5: No side effects consideration**
+- [FAIL] Bad: "Just add the validation middleware"
+- [PASS] Good: "Add validation middleware. Risk: May reject partial PATCH updates. Mitigation: Configure middleware to allow partial data for PATCH."
+
+### 2.4 Reference Quality Guidelines
 
 **The key question: "Can a worker open this file, search for this concept, and trace to everything they need?"**
 

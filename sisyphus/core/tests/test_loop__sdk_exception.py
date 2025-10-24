@@ -1,0 +1,214 @@
+from __future__ import annotations
+
+from collections.abc import AsyncIterator
+from pathlib import Path
+from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
+
+import pytest
+
+from sisyphus.core.loop import ExecutionLoop
+from sisyphus.utils.errors import RetryRequiredError
+from sisyphus.utils.types import AgentMessage
+
+if TYPE_CHECKING:
+    pass
+
+pytestmark = [pytest.mark.anyio]
+
+
+async def test_execute_phase__if_sdk_exception__deletes_session_and_retries() -> None:
+    # given
+    execute_agent = MockAgentWithSDKError()
+    execute_agent.fail_on_first_stream = True
+
+    ui = MockUI()
+    session_store = MockSessionStore()
+    await session_store.save_session("mockwithsdkerror", "invalid-session-id")
+
+    prompt_resolver = MockPromptResolver()
+    logger_factory = MockLoggerFactory()
+
+    loop = ExecutionLoop(
+        execute_agent=execute_agent,  # type: ignore[arg-type]
+        ui=ui,  # type: ignore[arg-type]
+        session_store=session_store,  # type: ignore[arg-type]
+        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
+        logger_factory=logger_factory,  # type: ignore[arg-type]
+    )
+
+    # when
+    retry_count = 0
+    max_retries = 3
+    success = False
+
+    while retry_count < max_retries:
+        should_retry = False
+        try:
+            await loop._execute_phase(prompt="Test prompt", extra=None)
+            success = True
+            break
+        except* RetryRequiredError:
+            retry_count += 1
+            should_retry = True
+
+        if not should_retry:
+            break
+
+    # then
+    assert success is True
+    assert execute_agent.start_session_call_count == 2
+    loaded_session = await session_store.get_session("mockwithsdkerror")
+    assert loaded_session is not None
+    assert loaded_session == "new-session-2"
+
+
+async def test_execute_phase__if_sdk_exception_3_times__exits_phase() -> None:
+    # given
+    execute_agent = MockAgentWithSDKError()
+    execute_agent.always_fail = True
+
+    ui = MockUI()
+    session_store = MockSessionStore()
+    await session_store.save_session("mockwithsdkerror", "invalid-session-id")
+
+    prompt_resolver = MockPromptResolver()
+    logger_factory = MockLoggerFactory()
+
+    loop = ExecutionLoop(
+        execute_agent=execute_agent,  # type: ignore[arg-type]
+        ui=ui,  # type: ignore[arg-type]
+        session_store=session_store,  # type: ignore[arg-type]
+        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
+        logger_factory=logger_factory,  # type: ignore[arg-type]
+    )
+
+    # when
+    retry_count = 0
+    max_retries = 5
+    final_exception_raised = False
+
+    while retry_count < max_retries:
+        should_retry = False
+        try:
+            await loop._execute_phase(prompt="Test prompt", extra=None)
+            break
+        except* RetryRequiredError:
+            retry_count += 1
+            should_retry = True
+
+        if loop._should_exit_execute_phase:
+            final_exception_raised = True
+            break
+
+        if not should_retry:
+            break
+
+    # then
+    assert final_exception_raised is True
+    assert execute_agent.stream_call_count == 3
+    loaded_session = await session_store.get_session("mockwithsdkerror")
+    assert loaded_session is None
+
+
+class MockAgentWithSDKError:
+    def __init__(self) -> None:
+        self.supports_interactive = False
+        self.initialized = False
+        self.session_id: str | None = None
+        self.sent_messages: list[str] = []
+        self.closed = False
+        self.start_session_call_count = 0
+        self.stream_call_count = 0
+        self.fail_on_first_stream = False
+        self.always_fail = False
+
+    async def initialize(self) -> None:
+        self.initialized = True
+
+    async def start_session(self, session_id: str | None = None) -> str:
+        self.start_session_call_count += 1
+        if session_id is not None:
+            self.session_id = session_id
+        else:
+            self.session_id = f"new-session-{self.start_session_call_count}"
+        return self.session_id
+
+    async def send(self, message: str) -> None:
+        self.sent_messages.append(message)
+
+    def stream(self) -> AsyncIterator[AgentMessage]:
+        async def _generator() -> AsyncIterator[AgentMessage]:
+            self.stream_call_count += 1
+
+            if self.always_fail:
+                raise Exception("Command failed with exit code 1")
+
+            if self.fail_on_first_stream and self.stream_call_count == 1:
+                raise Exception("Command failed with exit code 1")
+
+            yield AgentMessage(role="assistant", content="Success", metadata={})
+
+        return _generator()
+
+    async def close(self) -> None:
+        self.closed = True
+
+
+class MockUI:
+    def __init__(self) -> None:
+        self.initialized = False
+        self.messages: list[tuple[AgentMessage, str]] = []
+        self.statuses: list[str] = []
+        self.closed = False
+
+    async def initialize(self) -> None:
+        self.initialized = True
+
+    async def show_message(self, message: AgentMessage, source: str) -> None:
+        self.messages.append((message, source))
+
+    async def show_status(self, status: str) -> None:
+        self.statuses.append(status)
+
+    async def get_input(self) -> str | None:
+        return None
+
+    async def close(self) -> None:
+        self.closed = True
+
+
+class MockSessionStore:
+    def __init__(self) -> None:
+        self.sessions: dict[str, str] = {}
+
+    async def get_session(self, agent_type: str) -> str | None:
+        return self.sessions.get(agent_type)
+
+    async def save_session(self, agent_type: str, session_id: str) -> None:
+        self.sessions[agent_type] = session_id
+
+    async def delete_session(self, agent_type: str) -> None:
+        if agent_type in self.sessions:
+            del self.sessions[agent_type]
+
+    async def list_sessions(self) -> dict[str, dict[str, str]]:
+        return {k: {"session_id": v} for k, v in self.sessions.items()}
+
+
+class MockPromptResolver:
+    async def resolve(self, prompt: str, extra: str | None = None) -> str:
+        if extra:
+            return f"{prompt}\n\n{extra}"
+        return prompt
+
+
+class MockLoggerFactory:
+    @staticmethod
+    def create_logger(agent_type: str, session_id: str | None = None, log_dir: Path = Path("./logs")) -> MagicMock:
+        logger = MagicMock()
+        logger.info = MagicMock()
+        logger.debug = MagicMock()
+        logger.warning = MagicMock()
+        logger.error = MagicMock()
+        return logger

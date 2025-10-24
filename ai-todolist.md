@@ -407,12 +407,12 @@ graph TB
       ```
 
    - [x] **작업 완료 검증 체크리스트**
-      - [ ] loop.py의 except* Exception 블록에 세션 삭제 로직 추가되었는가?
-      - [ ] SDK 에러 감지 시 `self.session_store.delete_session(agent_type)` 호출되는가?
-      - [ ] 3회 실패 시 _should_exit_execute_phase=True 설정되는가?
-      - [ ] 테스트 2개 작성 및 PASSED 확인
-      - [ ] Lint/타입 체크 0 errors
-      - [ ] Git 커밋 완료
+      - [x] loop.py의 except* Exception 블록에 세션 삭제 로직 추가되었는가?
+      - [x] SDK 에러 감지 시 `self.session_store.delete_session(agent_type)` 호출되는가?
+      - [x] 3회 실패 시 _should_exit_execute_phase=True 설정되는가?
+      - [x] 테스트 2개 작성 및 PASSED 확인
+      - [x] Lint/타입 체크 0 errors
+      - [x] Git 커밋 완료
 
 
 - [x] 3. Verify 페이즈에도 동일한 SDK Exception 핸들링 적용
@@ -487,10 +487,10 @@ graph TB
       ```
 
    - [x] **작업 완료 검증 체크리스트**
-      - [ ] verify phase except* Exception 블록에 세션 삭제 로직 추가되었는가?
-      - [ ] 테스트 작성 및 PASSED 확인
-      - [ ] Lint/타입 체크 0 errors
-      - [ ] Git 커밋 완료
+      - [x] verify phase except* Exception 블록에 세션 삭제 로직 추가되었는가?
+      - [x] 테스트 작성 및 PASSED 확인
+      - [x] Lint/타입 체크 0 errors
+      - [x] Git 커밋 완료
 
 
 - [x] 4. 통합 테스트: 실제 SDK 에러 시나리오 재현 및 검증
@@ -583,11 +583,11 @@ graph TB
       ```
 
    - [x] **작업 완료 검증 체크리스트**
-      - [ ] 통합 테스트 작성 및 PASSED 확인
-      - [ ] 수동 테스트 수행 및 정상 작동 확인
-      - [ ] 로그 파일에 상세 traceback 기록 확인
-      - [ ] 세션 파일에서 invalid session 삭제 확인
-      - [ ] Git 커밋 완료
+      - [x] 통합 테스트 작성 및 PASSED 확인
+      - [x] 수동 테스트 수행 및 정상 작동 확인
+      - [x] 로그 파일에 상세 traceback 기록 확인
+      - [x] 세션 파일에서 invalid session 삭제 확인
+      - [x] Git 커밋 완료
 
 
 - [x] 5. 전체 테스트 스위트 실행 및 회귀 테스트
@@ -612,7 +612,7 @@ graph TB
       - 기존 테스트 실패: 변경 사항이 기존 동작을 깨뜨렸는지 확인
       - AssistantMessage 테스트 실패: "Prompt is too long" 체크 제거로 인한 예상된 동작 변경 → 테스트 수정 필요
 
-   - [ ] 5.2 타입 체크 전체 실행
+   - [x] 5.2 타입 체크 전체 실행
 
       **실행 명령**:
       ```bash
@@ -624,7 +624,7 @@ graph TB
       0 errors, 0 warnings
       ```
 
-   - [ ] 5.3 Lint 전체 실행
+   - [x] 5.3 Lint 전체 실행
 
       **실행 명령**:
       ```bash
@@ -636,18 +636,18 @@ graph TB
       All checks passed!
       ```
 
-   - [ ] 5.4 최종 커밋 (선택적: 회귀 테스트 수정이 있을 경우)
+   - [x] 5.4 최종 커밋 (선택적: 회귀 테스트 수정이 있을 경우)
 
       ```bash
       git add .
       git commit -m "test: fix regression tests after SDK error handling improvements"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `pytest` → 모든 테스트 PASSED
-      - [ ] `basedpyright` → 0 errors
-      - [ ] `ruff check` → 0 errors
-      - [ ] 회귀 테스트 수정 필요 시 커밋 완료
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `pytest` → 모든 테스트 PASSED
+      - [x] `basedpyright` → 0 errors
+      - [x] `ruff check` → 0 errors
+      - [x] 회귀 테스트 수정 필요 시 커밋 완료
 
 
 - [x] 6. 문서화 및 최종 검증
@@ -655,7 +655,7 @@ graph TB
    **참조 소스 (필수)**:
    - 프로젝트 문서: `AGENTS.md`, `ARCHITECTURE.md` (있다면)
 
-   - [ ] 6.1 변경 사항 문서화
+   - [x] 6.1 변경 사항 문서화
 
       **작성할 내용**:
       - SDK 에러 핸들링 메커니즘 설명
@@ -682,25 +682,25 @@ graph TB
       - Search for "SDK error" to find relevant entries
       ```
 
-   - [ ] 6.2 최종 수동 테스트: 전체 플로우 검증
+   - [x] 6.2 최종 수동 테스트: 전체 플로우 검증
 
       **테스트 시나리오**:
       1. 정상 케이스: 새 세션으로 실행 → 정상 작동
       2. Invalid session: 세션 파일 조작 → 자동 복구 확인
       3. 3회 실패: Mock으로 3회 연속 SDK Exception → 에러 보고 확인
 
-   - [ ] 6.3 최종 커밋
+   - [x] 6.3 최종 커밋
 
       ```bash
       git add docs/ERROR_HANDLING.md  # 또는 수정한 문서 파일
       git commit -m "docs: add SDK error handling documentation"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] 문서 작성 완료
-      - [ ] 최종 수동 테스트 통과
-      - [ ] Git 커밋 완료
-      - [ ] `is_all_goals_accomplished` → TRUE로 변경 (이 체크리스트 상단)
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] 문서 작성 완료
+      - [x] 최종 수동 테스트 통과
+      - [x] Git 커밋 완료
+      - [x] `is_all_goals_accomplished` → TRUE로 변경 (이 체크리스트 상단)
 
 
 # 성공 비전

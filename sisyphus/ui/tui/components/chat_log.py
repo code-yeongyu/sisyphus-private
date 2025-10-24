@@ -22,7 +22,7 @@ class ChatLog(RichLog):
             id="chat-log",
             highlight=True,
             markup=True,
-            auto_scroll=True,
+            auto_scroll=False,
             wrap=True,
         )
         self._user_scrolled_up: bool = False
@@ -89,7 +89,7 @@ class ChatLog(RichLog):
             content: User message content to display
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-        self.write(f"[dim]{timestamp}[/dim] [green]👤 USER:[/green] {content}")
+        self.write(f"[dim]{timestamp}[/dim] [green]👤 USER:[/green] {content}", scroll_end=False)
         if self._should_auto_scroll():
             self.call_after_refresh(self._safe_scroll_end)
 
@@ -100,7 +100,7 @@ class ChatLog(RichLog):
             content: Message content to display
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-        self.write(f"[dim]{timestamp}[/dim] [yellow]▶ EXECUTE:[/yellow] {content}")
+        self.write(f"[dim]{timestamp}[/dim] [yellow]▶ EXECUTE:[/yellow] {content}", scroll_end=False)
         if self._should_auto_scroll():
             self.call_after_refresh(self._safe_scroll_end)
 
@@ -111,7 +111,7 @@ class ChatLog(RichLog):
             content: Message content to display
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-        self.write(f"[dim]{timestamp}[/dim] [cyan]✓ VERIFY:[/cyan] {content}")
+        self.write(f"[dim]{timestamp}[/dim] [cyan]✓ VERIFY:[/cyan] {content}", scroll_end=False)
         if self._should_auto_scroll():
             self.call_after_refresh(self._safe_scroll_end)
 
@@ -122,6 +122,6 @@ class ChatLog(RichLog):
             content: Completion message content to display
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-        self.write(f"[dim]{timestamp}[/dim] [bold green]✅ COMPLETED:[/bold green] {content}")
+        self.write(f"[dim]{timestamp}[/dim] [bold green]✅ COMPLETED:[/bold green] {content}", scroll_end=False)
         if self._should_auto_scroll():
             self.call_after_refresh(self._safe_scroll_end)

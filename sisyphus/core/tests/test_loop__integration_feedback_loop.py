@@ -29,7 +29,6 @@ async def test_feedback_loop__scenario_1_immediate_success() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
     task_validator.all_complete = True
@@ -38,7 +37,6 @@ async def test_feedback_loop__scenario_1_immediate_success() -> None:
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
@@ -69,7 +67,6 @@ async def test_feedback_loop__scenario_2_task_incomplete_retry() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
     task_validator.completion_sequence = [False, True]
@@ -78,7 +75,6 @@ async def test_feedback_loop__scenario_2_task_incomplete_retry() -> None:
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
@@ -111,7 +107,6 @@ async def test_feedback_loop__scenario_3_verify_feedback_iteration() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
     task_validator.completion_sequence = [True, True, True]
@@ -120,7 +115,6 @@ async def test_feedback_loop__scenario_3_verify_feedback_iteration() -> None:
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
@@ -250,13 +244,6 @@ class MockSessionStore:
         return {k: {"session_id": v} for k, v in self.sessions.items()}
 
 
-class MockPromptResolver:
-    """Mock prompt resolver for testing."""
-
-    async def resolve(self, prompt: str, extra: str | None = None) -> str:
-        if extra:
-            return f"{prompt}\n\n{extra}"
-        return prompt
 
 
 class MockLoggerFactory:

@@ -14,7 +14,6 @@ from sisyphus.utils.session_limit import sleep_until_next_hour, sleep_until_rese
 
 if TYPE_CHECKING:
     from sisyphus.agents.base import Agent
-    from sisyphus.core.prompts import PromptResolver
     from sisyphus.core.session import SessionStore
     from sisyphus.core.tasks import TaskValidator
     from sisyphus.ui.base import UIProtocol
@@ -29,7 +28,6 @@ class ExecutionLoop:
         execute_agent: Agent,
         ui: UIProtocol,
         session_store: SessionStore,
-        prompt_resolver: PromptResolver,
         logger_factory: LoggerFactory,
         verify_agent: Agent | None = None,
         task_validator: TaskValidator | None = None,
@@ -40,7 +38,6 @@ class ExecutionLoop:
             execute_agent: Agent for execute phase
             ui: UI Protocol implementation
             session_store: Session persistence store
-            prompt_resolver: Prompt resolver
             logger_factory: Logger factory
             verify_agent: Optional agent for verify phase
             task_validator: Optional task validator for loop control
@@ -49,7 +46,6 @@ class ExecutionLoop:
         self.verify_agent = verify_agent
         self.ui = ui
         self.session_store = session_store
-        self.prompt_resolver = prompt_resolver
         self.logger_factory = logger_factory
         self.task_validator = task_validator
 
@@ -70,9 +66,7 @@ class ExecutionLoop:
 
     async def run(
         self,
-        execute_prompt: str | None,
         execute_extra: str | None = None,
-        verify_prompt: str | None = None,
         verify_extra: str | None = None,
     ) -> None:
         """Run the execution loop in unified mode.
@@ -88,9 +82,7 @@ class ExecutionLoop:
         - Feedback Loop: Continues until FULLY_DONE = TRUE
 
         Args:
-            execute_prompt: Execute phase prompt (None = use DEFAULT_EXECUTE_PROMPT)
             execute_extra: Extra prompt for execute phase
-            verify_prompt: Verify phase prompt (None = use DEFAULT_VERIFY_PROMPT)
             verify_extra: Extra prompt for verify phase
 
         Notes:
@@ -102,15 +94,13 @@ class ExecutionLoop:
         """
         await self.ui.initialize()
 
-        actual_execute_prompt = execute_prompt if execute_prompt is not None else DEFAULT_EXECUTE_PROMPT
-
-        await self._run_unified_mode(actual_execute_prompt, execute_extra, verify_prompt, verify_extra)
+        await self._run_unified_mode(DEFAULT_EXECUTE_PROMPT, execute_extra, DEFAULT_VERIFY_PROMPT, verify_extra)
 
     async def _run_unified_mode(
         self,
         execute_prompt: str,
         execute_extra: str | None = None,
-        verify_prompt: str | None = None,
+        verify_prompt: str = DEFAULT_VERIFY_PROMPT,
         verify_extra: str | None = None,
     ) -> None:
         """Unified mode: Execute -> Task Validator -> Verify phases in one flow.
@@ -195,7 +185,7 @@ class ExecutionLoop:
                 break
 
             if should_verify and self.verify_agent:
-                actual_verify_prompt = verify_prompt if verify_prompt is not None else DEFAULT_VERIFY_PROMPT
+                actual_verify_prompt = verify_prompt
 
                 if verify_feedback_history:
                     history_section = "<previous_architect_reviews>\n"
@@ -275,7 +265,7 @@ class ExecutionLoop:
         Raises:
             SessionLimitError: Re-raised after handling sleep (for loop to retry)
         """
-        final_prompt = await self.prompt_resolver.resolve(prompt, extra)
+        final_prompt = prompt if extra is None else f"{prompt}\n\n{extra}"
 
         await self.execute_agent.initialize()
 
@@ -480,7 +470,7 @@ class ExecutionLoop:
         feedback_messages: list[str] = []
         fully_done: bool = False
 
-        final_prompt = await self.prompt_resolver.resolve(prompt, extra)
+        final_prompt = prompt if extra is None else f"{prompt}\n\n{extra}"
 
         await self.verify_agent.initialize()
 

@@ -28,7 +28,6 @@ async def test_verify__if_no_feedback_history__uses_original_prompt() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
     task_validator.all_complete = True
@@ -37,7 +36,6 @@ async def test_verify__if_no_feedback_history__uses_original_prompt() -> None:
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
@@ -73,7 +71,6 @@ async def test_verify__if_feedback_history_exists__prepends_history_section() ->
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
     task_validator.completion_sequence = [True, True]
@@ -82,7 +79,6 @@ async def test_verify__if_feedback_history_exists__prepends_history_section() ->
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
@@ -123,7 +119,6 @@ async def test_verify__if_multiple_feedbacks__includes_all_in_history() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
     task_validator.completion_sequence = [True, True, True]
@@ -132,7 +127,6 @@ async def test_verify__if_multiple_feedbacks__includes_all_in_history() -> None:
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
@@ -249,13 +243,6 @@ class MockSessionStore:
         return {k: {"session_id": v} for k, v in self.sessions.items()}
 
 
-class MockPromptResolver:
-    """Mock prompt resolver for testing."""
-
-    async def resolve(self, prompt: str, extra: str | None = None) -> str:
-        if extra:
-            return f"{prompt}\n\n{extra}"
-        return prompt
 
 
 class MockLoggerFactory:

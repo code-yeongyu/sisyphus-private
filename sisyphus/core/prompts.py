@@ -1,11 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from os import PathLike
-
 DEFAULT_EXECUTE_PROMPT = """/execute
 
 Execute tasks from the ai-todolist.md file by spawning executor agents.
@@ -181,41 +175,3 @@ DEFAULT_VERIFY_PROMPT = (
     "If not, say `FULLY_DONE = FALSE`"
     "Your harsh feedback will be sent directly to the agent who did the work."
 )
-
-
-class PromptResolver:
-    def __init__(self, prompts_dir: Path = Path("prompts")) -> None:
-        self._prompts_dir = prompts_dir
-
-    async def resolve(
-        self,
-        prompt: str | PathLike[str],
-        extra: str | None = None,
-    ) -> str:
-        prompt_str = str(prompt) if not isinstance(prompt, str) else prompt
-
-        try:
-            is_file = Path(prompt_str).exists()
-        except OSError:
-            is_file = False
-
-        if is_file:
-            resolved_text = Path(prompt_str).read_text(encoding="utf-8")
-
-        elif prompt_str.startswith("/") and "/" not in prompt_str[1:]:
-            command_name = prompt_str[1:]
-            command_file = self._prompts_dir / f"{command_name}_command.md"
-
-            if not command_file.exists():
-                msg = f"Slash command file not found: {command_file}"
-                raise FileNotFoundError(msg)
-
-            resolved_text = command_file.read_text(encoding="utf-8")
-
-        else:
-            resolved_text = prompt_str
-
-        if extra is not None:
-            resolved_text = f"{resolved_text}\n\n{extra}"
-
-        return resolved_text

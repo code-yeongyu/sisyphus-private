@@ -22,7 +22,6 @@ async def test_execute_phase__after_resume__continues_phase(
     mock_execute_agent: MockAgentWithResume,
     mock_ui: MockUIWithInput,
     mock_session_store: MockSessionStore,
-    mock_prompt_resolver: MockPromptResolver,
     mock_logger_factory: MockLoggerFactory,
 ) -> None:
     mock_execute_agent.messages_to_return = [
@@ -35,7 +34,6 @@ async def test_execute_phase__after_resume__continues_phase(
         execute_agent=mock_execute_agent,  # type: ignore[arg-type]
         ui=mock_ui,  # type: ignore[arg-type]
         session_store=mock_session_store,  # type: ignore[arg-type]
-        prompt_resolver=mock_prompt_resolver,  # type: ignore[arg-type]
         logger_factory=mock_logger_factory,  # type: ignore[arg-type]
     )
 
@@ -57,7 +55,6 @@ async def test_execute_phase__normal_completion__ends_phase(
     mock_execute_agent: MockAgentWithResume,
     mock_ui: MockUIWithInput,
     mock_session_store: MockSessionStore,
-    mock_prompt_resolver: MockPromptResolver,
     mock_logger_factory: MockLoggerFactory,
 ) -> None:
     mock_execute_agent.messages_to_return = [
@@ -69,7 +66,6 @@ async def test_execute_phase__normal_completion__ends_phase(
         execute_agent=mock_execute_agent,  # type: ignore[arg-type]
         ui=mock_ui,  # type: ignore[arg-type]
         session_store=mock_session_store,  # type: ignore[arg-type]
-        prompt_resolver=mock_prompt_resolver,  # type: ignore[arg-type]
         logger_factory=mock_logger_factory,  # type: ignore[arg-type]
     )
 
@@ -83,7 +79,6 @@ async def test_execute_phase__multiple_resumes__continues_each_time(
     mock_execute_agent: MockAgentWithResume,
     mock_ui: MockUIWithInput,
     mock_session_store: MockSessionStore,
-    mock_prompt_resolver: MockPromptResolver,
     mock_logger_factory: MockLoggerFactory,
 ) -> None:
     mock_execute_agent.messages_to_return = [
@@ -96,7 +91,6 @@ async def test_execute_phase__multiple_resumes__continues_each_time(
         execute_agent=mock_execute_agent,  # type: ignore[arg-type]
         ui=mock_ui,  # type: ignore[arg-type]
         session_store=mock_session_store,  # type: ignore[arg-type]
-        prompt_resolver=mock_prompt_resolver,  # type: ignore[arg-type]
         logger_factory=mock_logger_factory,  # type: ignore[arg-type]
     )
 
@@ -123,7 +117,6 @@ async def test_verify_phase__after_resume__continues_phase(
     mock_verify_agent: MockAgentWithResume,
     mock_ui: MockUIWithInput,
     mock_session_store: MockSessionStore,
-    mock_prompt_resolver: MockPromptResolver,
     mock_logger_factory: MockLoggerFactory,
 ) -> None:
     mock_verify_agent.messages_to_return = [
@@ -137,7 +130,6 @@ async def test_verify_phase__after_resume__continues_phase(
         verify_agent=mock_verify_agent,  # type: ignore[arg-type]
         ui=mock_ui,  # type: ignore[arg-type]
         session_store=mock_session_store,  # type: ignore[arg-type]
-        prompt_resolver=mock_prompt_resolver,  # type: ignore[arg-type]
         logger_factory=mock_logger_factory,  # type: ignore[arg-type]
     )
 
@@ -160,7 +152,6 @@ async def test_verify_phase__normal_completion__ends_phase(
     mock_verify_agent: MockAgentWithResume,
     mock_ui: MockUIWithInput,
     mock_session_store: MockSessionStore,
-    mock_prompt_resolver: MockPromptResolver,
     mock_logger_factory: MockLoggerFactory,
 ) -> None:
     mock_verify_agent.messages_to_return = [
@@ -173,7 +164,6 @@ async def test_verify_phase__normal_completion__ends_phase(
         verify_agent=mock_verify_agent,  # type: ignore[arg-type]
         ui=mock_ui,  # type: ignore[arg-type]
         session_store=mock_session_store,  # type: ignore[arg-type]
-        prompt_resolver=mock_prompt_resolver,  # type: ignore[arg-type]
         logger_factory=mock_logger_factory,  # type: ignore[arg-type]
     )
 
@@ -259,13 +249,6 @@ class MockSessionStore:
         self.sessions[agent_type] = session_id
 
 
-class MockPromptResolver:
-    async def resolve(self, prompt: str, extra: str | None = None) -> str:
-        if extra:
-            return f"{prompt}\n\n{extra}"
-        return prompt
-
-
 class MockLoggerFactory:
     def create_logger(self, name: str, session_id: str | None) -> MagicMock:
         logger = MagicMock()
@@ -288,11 +271,6 @@ def mock_ui() -> MockUIWithInput:
 @pytest.fixture()
 def mock_session_store() -> MockSessionStore:
     return MockSessionStore()
-
-
-@pytest.fixture()
-def mock_prompt_resolver() -> MockPromptResolver:
-    return MockPromptResolver()
 
 
 @pytest.fixture()

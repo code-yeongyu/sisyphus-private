@@ -27,14 +27,12 @@ async def test_verify_phase__if_fully_done_true_in_message__returns_true_and_fee
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
         execute_agent=MockAgent(),  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=mock_verify_agent,  # type: ignore[arg-type]
     )
@@ -57,14 +55,12 @@ async def test_verify_phase__if_fully_done_false__returns_false_and_feedback() -
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
         execute_agent=MockAgent(),  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=mock_verify_agent,  # type: ignore[arg-type]
     )
@@ -87,14 +83,12 @@ async def test_verify_phase__if_multiple_messages__concatenates_with_newlines() 
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
         execute_agent=MockAgent(),  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=mock_verify_agent,  # type: ignore[arg-type]
     )
@@ -115,14 +109,12 @@ async def test_verify_phase__if_no_assistant_messages__returns_empty_string() ->
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
         execute_agent=MockAgent(),  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=mock_verify_agent,  # type: ignore[arg-type]
     )
@@ -215,13 +207,6 @@ class MockSessionStore:
         return {k: {"session_id": v} for k, v in self.sessions.items()}
 
 
-class MockPromptResolver:
-    """Mock prompt resolver for testing."""
-
-    async def resolve(self, prompt: str, extra: str | None = None) -> str:
-        if extra:
-            return f"{prompt}\n\n{extra}"
-        return prompt
 
 
 class MockLoggerFactory:

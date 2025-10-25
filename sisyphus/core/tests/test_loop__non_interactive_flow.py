@@ -33,7 +33,6 @@ async def test_unified__if_task_incomplete__skips_verify_and_retries_execute() -
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     task_validator = MockTaskValidator()
@@ -46,7 +45,6 @@ async def test_unified__if_task_incomplete__skips_verify_and_retries_execute() -
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
@@ -75,7 +73,6 @@ async def test_unified__if_task_complete_and_fully_done__exits_loop() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     task_validator = MockTaskValidator()
@@ -85,7 +82,6 @@ async def test_unified__if_task_complete_and_fully_done__exits_loop() -> None:
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
@@ -116,7 +112,6 @@ async def test_unified__if_task_complete_but_not_fully_done__continues_with_feed
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     task_validator = MockTaskValidator()
@@ -129,7 +124,6 @@ async def test_unified__if_task_complete_but_not_fully_done__continues_with_feed
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
@@ -229,13 +223,6 @@ class MockSessionStore:
         return {k: {"session_id": v} for k, v in self.sessions.items()}
 
 
-class MockPromptResolver:
-    """Mock prompt resolver for testing."""
-
-    async def resolve(self, prompt: str, extra: str | None = None) -> str:
-        if extra:
-            return f"{prompt}\n\n{extra}"
-        return prompt
 
 
 class MockLoggerFactory:

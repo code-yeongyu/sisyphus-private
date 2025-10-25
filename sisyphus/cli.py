@@ -18,7 +18,6 @@ from rich.console import Console
 from sisyphus.agents.claude import ClaudeAgent
 from sisyphus.agents.opencode import OpenCodeAgent
 from sisyphus.core.loop import ExecutionLoop
-from sisyphus.core.prompts import PromptResolver
 from sisyphus.core.session import SessionStore
 from sisyphus.core.tasks import TaskValidator
 from sisyphus.ui.base import create_ui
@@ -191,8 +190,6 @@ def create_agent(
 async def _main_cli(
     execute_agent: Agent,
     verify_agent: Agent | None,
-    execute_prompt_spec: str | None,
-    verify_prompt_spec: str | None,
     execute_extra: str | None,
     verify_extra: str | None,
     ui: UIProtocol,
@@ -203,8 +200,6 @@ async def _main_cli(
     Args:
         execute_agent: Execute agent
         verify_agent: Verify agent (Optional)
-        execute_prompt_spec: Execute prompt spec (uses built-in if None)
-        verify_prompt_spec: Verify prompt spec (uses built-in if None)
         execute_extra: Additional execute prompt
         verify_extra: Additional verify prompt
         ui: UI Protocol implementation
@@ -212,7 +207,6 @@ async def _main_cli(
     """
     start_time = time.time()
 
-    prompt_resolver = PromptResolver()
     logger_factory = LoggerFactory()
 
     task_validator = TaskValidator() if Path("ai-todolist.md").exists() else None
@@ -221,16 +215,13 @@ async def _main_cli(
         execute_agent=execute_agent,
         ui=ui,
         session_store=session_store,
-        prompt_resolver=prompt_resolver,
         logger_factory=logger_factory,
         verify_agent=verify_agent,
         task_validator=task_validator,
     )
 
     await loop.run(
-        execute_prompt=execute_prompt_spec,
         execute_extra=execute_extra,
-        verify_prompt=verify_prompt_spec,
         verify_extra=verify_extra,
     )
 
@@ -254,8 +245,6 @@ async def _main_cli(
 async def _main_tui(
     execute_agent: Agent,
     verify_agent: Agent | None,
-    execute_prompt_spec: str | None,
-    verify_prompt_spec: str | None,
     execute_extra: str | None,
     verify_extra: str | None,
     ui: UIProtocol,
@@ -266,8 +255,6 @@ async def _main_tui(
     Args:
         execute_agent: Execute agent
         verify_agent: Verify agent (Optional)
-        execute_prompt_spec: Execute prompt spec (uses built-in if None)
-        verify_prompt_spec: Verify prompt spec (uses built-in if None)
         execute_extra: Additional execute prompt
         verify_extra: Additional verify prompt
         ui: UI Protocol implementation
@@ -294,7 +281,6 @@ async def _main_tui(
             if cancel_scope.cancelled_caught:
                 raise TimeoutError("TUI initialization timeout")
 
-            prompt_resolver = PromptResolver()
             logger_factory = LoggerFactory()
             task_validator = TaskValidator() if Path("ai-todolist.md").exists() else None
 
@@ -305,7 +291,6 @@ async def _main_tui(
                 execute_agent=execute_agent,
                 ui=ui,
                 session_store=session_store,
-                prompt_resolver=prompt_resolver,
                 logger_factory=logger_factory,
                 verify_agent=verify_agent,
                 task_validator=task_validator,
@@ -315,9 +300,7 @@ async def _main_tui(
                 ui.set_execution_loop(loop)
 
             await loop.run(
-                execute_prompt=execute_prompt_spec,
                 execute_extra=execute_extra,
-                verify_prompt=verify_prompt_spec,
                 verify_extra=verify_extra,
             )
 
@@ -364,12 +347,6 @@ def run(
     agent: str | None = typer.Option(None, "--agent", "-a", help="Agent type (claude|opencode)"),
     execute: str | None = typer.Option(None, "--execute", help="Execute agent (AGENT[:MODEL])"),
     verify: str | None = typer.Option(None, "--verify", help="Verify agent (AGENT[:MODEL])"),
-    execute_prompt: str | None = typer.Option(
-        None, "--execute-prompt", help="Execute prompt (path/slash/text, default: built-in)"
-    ),
-    verify_prompt: str | None = typer.Option(
-        None, "--verify-prompt", help="Verify prompt (path/slash/text, default: built-in)"
-    ),
     execute_extra_prompt: str | None = typer.Option(None, "--execute-extra-prompt", help="Extra execute prompt"),
     verify_extra_prompt: str | None = typer.Option(None, "--verify-extra-prompt", help="Extra verify prompt"),
     binary: Path | None = typer.Option(None, "--binary", help="Common binary path"),
@@ -428,8 +405,6 @@ def run(
                 _main_cli,
                 execute_agent,
                 verify_agent,
-                execute_prompt,
-                verify_prompt,
                 execute_extra_prompt,
                 verify_extra_prompt,
                 ui,
@@ -441,8 +416,6 @@ def run(
                 _main_tui,
                 execute_agent,
                 verify_agent,
-                execute_prompt,
-                verify_prompt,
                 execute_extra_prompt,
                 verify_extra_prompt,
                 ui,

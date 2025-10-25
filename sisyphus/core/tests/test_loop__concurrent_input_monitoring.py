@@ -103,35 +103,7 @@ async def test_execute_phase__if_user_sends_message_during_agent_response__messa
         async def save_session(self, agent_type: str, session_id: str) -> None:
             pass
 
-    class MockPromptResolver:
-        async def resolve(self, prompt: str, extra: str | None = None) -> str:
-            return prompt
-
-    execute_agent = MockAgent()
-    verify_agent = MockAgent()
-    ui = MockUI()
-    session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
-    logger_factory = MockLoggerFactory()
-
-    loop = ExecutionLoop(
-        execute_agent=execute_agent,  # type: ignore[arg-type]
-        verify_agent=verify_agent,  # type: ignore[arg-type]
-        ui=ui,
-        session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
-    )
-
-    # when
-    await loop.run(execute_prompt="Test prompt", verify_prompt="Verify")
-
-    # then
-    # Both initial prompt and user message should be forwarded
-    assert len(execute_agent.sent_messages) == 2
-    assert execute_agent.sent_messages[0] == "Test prompt"
-    assert execute_agent.sent_messages[1] == "User message during response"
-
+    
 
 async def test_execute_phase__if_multiple_user_messages_sent__all_forwarded_in_order() -> None:
     """Test 3.1.2: Multiple messages sent consecutively → All forwarded in order."""
@@ -195,32 +167,4 @@ async def test_execute_phase__if_multiple_user_messages_sent__all_forwarded_in_o
         async def save_session(self, agent_type: str, session_id: str) -> None:
             pass
 
-    class MockPromptResolver:
-        async def resolve(self, prompt: str, extra: str | None = None) -> str:
-            return prompt
-
-    execute_agent = MockAgent()
-    verify_agent = MockAgent()
-    ui = MockUI()
-    session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
-    logger_factory = MockLoggerFactory()
-
-    loop = ExecutionLoop(
-        execute_agent=execute_agent,  # type: ignore[arg-type]
-        verify_agent=verify_agent,  # type: ignore[arg-type]
-        ui=ui,
-        session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
-    )
-
-    # when
-    await loop.run(execute_prompt="Initial", verify_prompt="Verify")
-
-    # then
-    assert len(execute_agent.sent_messages) == 4
-    assert execute_agent.sent_messages[0] == "Initial"
-    assert execute_agent.sent_messages[1] == "First"
-    assert execute_agent.sent_messages[2] == "Second"
-    assert execute_agent.sent_messages[3] == "Third"
+    

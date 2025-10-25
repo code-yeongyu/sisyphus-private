@@ -94,13 +94,6 @@ class MockSessionStore:
         return {k: {"session_id": v} for k, v in self.sessions.items()}
 
 
-class MockPromptResolver:
-    """Mock prompt resolver for testing."""
-
-    async def resolve(self, prompt: str, extra: str | None = None) -> str:
-        if extra:
-            return f"{prompt}\n\n{extra}"
-        return prompt
 
 
 class MockLoggerFactory:
@@ -151,24 +144,23 @@ async def test_execution_loop_execute_only() -> None:
     ]
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
     )
 
     # when
-    await loop.run(execute_prompt="Execute task")
+    await loop.run()
 
     # then
     assert execute_agent.initialized
     assert execute_agent.session_id == "new-session-123"
-    assert "Execute task" in execute_agent.sent_messages
+    assert len(execute_agent.sent_messages) > 0
+    assert "/execute" in execute_agent.sent_messages[0]
     assert execute_agent.closed
     assert ui.initialized
     # UI remains initialized after ExecutionLoop completes (no longer closes automatically)
@@ -191,7 +183,6 @@ async def test_execution_loop_execute_and_verify() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator(all_complete=True)
 
@@ -200,13 +191,12 @@ async def test_execution_loop_execute_and_verify() -> None:
         verify_agent=verify_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
     )
 
     # when
-    await loop.run(execute_prompt="Execute task", verify_prompt="Verify task")
+    await loop.run()
 
     # then
     assert execute_agent.initialized
@@ -231,8 +221,6 @@ async def test_execution_loop_verify_always_new_session() -> None:
     ui = MockUI()
     session_store = MockSessionStore()
     await session_store.save_session("mockagent", "old-session-456")
-
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator(all_complete=True)
 
@@ -241,13 +229,12 @@ async def test_execution_loop_verify_always_new_session() -> None:
         verify_agent=verify_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
     )
 
     # when
-    await loop.run(execute_prompt="Execute", verify_prompt="Verify")
+    await loop.run()
 
     # then
     assert verify_agent.session_id == "new-session-123"
@@ -261,20 +248,17 @@ async def test_execution_loop_session_resume() -> None:
     ui = MockUI()
     session_store = MockSessionStore()
     await session_store.save_session("mock", "existing-session-789")
-
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
     )
 
     # when
-    await loop.run(execute_prompt="Resume task")
+    await loop.run()
 
     # then
     assert execute_agent.session_id == "existing-session-789"
@@ -287,7 +271,6 @@ async def test_execution_loop_with_task_validator_complete() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator(all_complete=True)
 
@@ -295,13 +278,12 @@ async def test_execution_loop_with_task_validator_complete() -> None:
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
     )
 
     # when
-    await loop.run(execute_prompt="Execute")
+    await loop.run()
 
     # then
     assert task_validator.read_count == 1
@@ -315,7 +297,6 @@ async def test_execution_loop_with_task_validator_incomplete() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     validator = MockTaskValidator(all_complete=False)
@@ -324,7 +305,6 @@ async def test_execution_loop_with_task_validator_incomplete() -> None:
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         task_validator=validator,  # type: ignore[arg-type]
     )
@@ -343,7 +323,7 @@ async def test_execution_loop_with_task_validator_incomplete() -> None:
     loop._execute_phase = patched_execute_phase  # type: ignore[method-assign]
 
     # when
-    await loop.run(execute_prompt="Execute")
+    await loop.run()
 
     # then
     assert iteration_count == 2
@@ -357,22 +337,22 @@ async def test_execution_loop_prompt_with_extra() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
     )
 
     # when
-    await loop.run(execute_prompt="Main prompt", execute_extra="Extra info")
+    await loop.run(execute_extra="Extra info")
 
     # then
-    assert "Main prompt\n\nExtra info" in execute_agent.sent_messages
+    assert len(execute_agent.sent_messages) > 0
+    assert "Extra info" in execute_agent.sent_messages[0]
+    assert "/execute" in execute_agent.sent_messages[0]
 
 
 async def test_execution_loop_ui_status_updates() -> None:
@@ -382,19 +362,17 @@ async def test_execution_loop_ui_status_updates() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
     )
 
     # when
-    await loop.run(execute_prompt="Task")
+    await loop.run()
 
     # then
     assert any("Execute phase" in s for s in ui.statuses)
@@ -408,19 +386,17 @@ async def test_execution_loop_session_saved() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
     )
 
     # when
-    await loop.run(execute_prompt="Task")
+    await loop.run()
 
     # then
     sessions = await session_store.list_sessions()

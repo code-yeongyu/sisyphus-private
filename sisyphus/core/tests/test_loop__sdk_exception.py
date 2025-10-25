@@ -25,15 +25,12 @@ async def test_execute_phase__if_sdk_exception__deletes_session_and_retries() ->
     ui = MockUI()
     session_store = MockSessionStore()
     await session_store.save_session("mockwithsdkerror", "invalid-session-id")
-
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
     )
 
@@ -71,15 +68,12 @@ async def test_execute_phase__if_sdk_exception_3_times__exits_phase() -> None:
     ui = MockUI()
     session_store = MockSessionStore()
     await session_store.save_session("mockwithsdkerror", "invalid-session-id")
-
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
     )
 
@@ -119,8 +113,6 @@ async def test_verify_phase__if_sdk_exception__deletes_session_and_retries() -> 
     ui = MockUI()
     session_store = MockSessionStore()
     await session_store.save_session("mockwithsdkerror", "invalid-session-id")
-
-    prompt_resolver = MockPromptResolver()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
 
@@ -129,7 +121,6 @@ async def test_verify_phase__if_sdk_exception__deletes_session_and_retries() -> 
         verify_agent=verify_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
-        prompt_resolver=prompt_resolver,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
     )
@@ -244,11 +235,6 @@ class MockSessionStore:
         return {k: {"session_id": v} for k, v in self.sessions.items()}
 
 
-class MockPromptResolver:
-    async def resolve(self, prompt: str, extra: str | None = None) -> str:
-        if extra:
-            return f"{prompt}\n\n{extra}"
-        return prompt
 
 
 class MockLoggerFactory:

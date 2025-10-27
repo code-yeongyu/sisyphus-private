@@ -486,17 +486,20 @@ class ExecutionLoop:
         self.verify_logger.info("Prompt sent")
 
         self._resumed_once = False
+        max_judgment_retries = 5
+        judgment_retry_count = 0
 
         while True:
             # Create new CancelScope for each loop iteration
             self._current_cancel_scope = anyio.CancelScope()
             monitor_scope = self._current_cancel_scope
+            has_judgment = False
 
             async def consume_stream() -> None:
                 """Consume messages from stream and collect feedback"""
                 assert self.verify_logger is not None
                 assert self.verify_agent is not None
-                nonlocal feedback_messages, fully_done
+                nonlocal feedback_messages, fully_done, has_judgment
                 stream = self.verify_agent.stream()
                 async for message in stream:
                     if self._interrupt_flag:
@@ -511,20 +514,24 @@ class ExecutionLoop:
                         feedback_messages.append(message.content)
 
                 # Stream completed - check FULLY_DONE only in last assistant message
-                if feedback_messages:
-                    last_content = feedback_messages[-1].upper()
-                    has_true = "FULLY_DONE = TRUE" in last_content or "FULLY_DONE=TRUE" in last_content
-                    has_false = "FULLY_DONE = FALSE" in last_content or "FULLY_DONE=FALSE" in last_content
+                if not feedback_messages:
+                    monitor_scope.cancel()
+                    has_judgment = False
+                    return
 
-                    if has_true and not has_false:
-                        fully_done = True
-                    elif not has_true and not has_false:
-                        # TODO: Next step will add resume & retry logic
-                        fully_done = False  # Treat as FALSE for now
-                    else:
-                        fully_done = False
+                last_content = feedback_messages[-1].upper()
+                has_true = "FULLY_DONE = TRUE" in last_content or "FULLY_DONE=TRUE" in last_content
+                has_false = "FULLY_DONE = FALSE" in last_content or "FULLY_DONE=FALSE" in last_content
 
-                # Stream completed normally - cancel monitor_input to terminate Task Group
+                if has_true and not has_false:
+                    fully_done = True
+                    has_judgment = True
+                elif has_true or has_false:
+                    fully_done = False
+                    has_judgment = True
+                else:
+                    has_judgment = False
+
                 monitor_scope.cancel()
 
             async def monitor_input() -> None:
@@ -598,7 +605,7 @@ class ExecutionLoop:
                         )
                     raise
 
-            # Task Group completed normally - check interrupt status
+            # Task Group completed normally - check interrupt status and judgment
             if self._interrupt_flag:
                 assert self._resume_event is not None
                 assert self.verify_logger is not None
@@ -617,6 +624,26 @@ class ExecutionLoop:
                 if self._resumed_once:
                     self._resumed_once = False
                     continue
+                elif not has_judgment and judgment_retry_count < max_judgment_retries:
+                    judgment_retry_count += 1
+                    self.verify_logger.info(
+                        f"No FULLY_DONE judgment found, retrying ({judgment_retry_count}/{max_judgment_retries})"
+                    )
+                    retry_message = (
+                        "You did not provide a clear FULLY_DONE judgment in your last response. "
+                        "Please review the execute phase output and provide a clear judgment:\n\n"
+                        "- Say 'FULLY_DONE = TRUE' if all goals in ai-todolist.md are accomplished\n"
+                        "- Say 'FULLY_DONE = FALSE' if any goals remain incomplete\n\n"
+                        "Please respond with your judgment now."
+                    )
+                    await self.verify_agent.send(retry_message)
+                    continue
+                elif not has_judgment:
+                    self.verify_logger.warning(
+                        "Max retries exceeded without clear judgment, defaulting to FULLY_DONE = FALSE"
+                    )
+                    fully_done = False
+                    break
                 else:
                     break
 

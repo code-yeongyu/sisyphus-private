@@ -305,7 +305,7 @@ Recommended for this work: "interactive/non-interactive mode unification and ver
      - Create simple work in new test directory
      - Write ai-todolist.md
    - [ ] 5.2 Run Actual sisyphus
-     - Execute `uv run sisyphus run`
+     - Execute `uv run sisyphus work`
      - Confirm Execute -> Task Validator -> Verify order
    - [ ] 5.3 Analyze Logs
      - Check logs/ directory for each Phase execution

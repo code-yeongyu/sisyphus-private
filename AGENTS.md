@@ -186,16 +186,16 @@ uv run ruff format       # Format
 **Run:**
 ```bash
 # Basic (Claude + TUI + default prompts)
-uv run sisyphus run
+uv run sisyphus work
 
 # CLI mode (non-interactive)
-uv run sisyphus run --no-tui
+uv run sisyphus work --no-tui
 
 # Custom agents
-uv run sisyphus run --execute claude:sonnet --verify opencode
+uv run sisyphus work --execute claude:sonnet --verify opencode
 
 # Custom prompts
-uv run sisyphus run --execute-prompt prompts/custom.md --verify-prompt /architect
+uv run sisyphus work --execute-prompt prompts/custom.md --verify-prompt /architect
 ```
 
 **Git File Management:**

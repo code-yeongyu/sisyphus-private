@@ -94,8 +94,6 @@ class MockSessionStore:
         return {k: {"session_id": v} for k, v in self.sessions.items()}
 
 
-
-
 class MockLoggerFactory:
     """Mock logger factory for testing."""
 
@@ -402,3 +400,109 @@ async def test_execution_loop_session_saved() -> None:
     sessions = await session_store.list_sessions()
     assert "mock" in sessions
     assert sessions["mock"]["session_id"] == "new-session-123"
+
+
+async def test_verify_phase__if_middle_message_has_true_but_last_has_false__returns_false() -> None:
+    # given
+    execute_agent = MockAgent()
+    verify_agent = MockAgent()
+    verify_agent.messages_to_return = [
+        AgentMessage(role="assistant", content="Checking... FULLY_DONE = TRUE in thinking", metadata={}),
+        AgentMessage(role="assistant", content="Actually, FULLY_DONE = FALSE", metadata={}),
+    ]
+
+    ui = MockUI()
+    session_store = MockSessionStore()
+    logger_factory = MockLoggerFactory()
+
+    loop = ExecutionLoop(
+        execute_agent=execute_agent,  # type: ignore[arg-type]
+        verify_agent=verify_agent,  # type: ignore[arg-type]
+        ui=ui,  # type: ignore[arg-type]
+        session_store=session_store,  # type: ignore[arg-type]
+        logger_factory=logger_factory,  # type: ignore[arg-type]
+    )
+
+    # when
+    feedback, fully_done = await loop._verify_phase(
+        prompt="Test prompt",
+        extra=None,
+    )
+
+    # then
+    assert fully_done is False
+    assert len(verify_agent.sent_messages) == 1
+
+
+async def test_verify_phase__if_no_judgment__retries_until_found() -> None:
+    # given
+    execute_agent = MockAgent()
+    verify_agent = MockAgent()
+
+    call_count = 0
+
+    def stream_generator() -> AsyncIterator[AgentMessage]:
+        async def _generator() -> AsyncIterator[AgentMessage]:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                yield AgentMessage(role="assistant", content="Still analyzing...", metadata={})
+            else:
+                yield AgentMessage(role="assistant", content="FULLY_DONE = FALSE", metadata={})
+
+        return _generator()
+
+    verify_agent.stream = stream_generator  # type: ignore[method-assign]
+
+    ui = MockUI()
+    session_store = MockSessionStore()
+    logger_factory = MockLoggerFactory()
+
+    loop = ExecutionLoop(
+        execute_agent=execute_agent,  # type: ignore[arg-type]
+        verify_agent=verify_agent,  # type: ignore[arg-type]
+        ui=ui,  # type: ignore[arg-type]
+        session_store=session_store,  # type: ignore[arg-type]
+        logger_factory=logger_factory,  # type: ignore[arg-type]
+    )
+
+    # when
+    feedback, fully_done = await loop._verify_phase(
+        prompt="Test prompt",
+        extra=None,
+    )
+
+    # then
+    assert fully_done is False
+    assert len(verify_agent.sent_messages) == 2
+
+
+async def test_verify_phase__if_max_retries_exceeded__defaults_to_false() -> None:
+    # given
+    execute_agent = MockAgent()
+    verify_agent = MockAgent()
+    verify_agent.messages_to_return = [
+        AgentMessage(role="assistant", content="Still analyzing...", metadata={}),
+    ]
+
+    ui = MockUI()
+    session_store = MockSessionStore()
+    logger_factory = MockLoggerFactory()
+
+    loop = ExecutionLoop(
+        execute_agent=execute_agent,  # type: ignore[arg-type]
+        verify_agent=verify_agent,  # type: ignore[arg-type]
+        ui=ui,  # type: ignore[arg-type]
+        session_store=session_store,  # type: ignore[arg-type]
+        logger_factory=logger_factory,  # type: ignore[arg-type]
+    )
+
+    # when
+    feedback, fully_done = await loop._verify_phase(
+        prompt="Test prompt",
+        extra=None,
+    )
+
+    # then
+    assert fully_done is False
+    assert len(verify_agent.sent_messages) == 6

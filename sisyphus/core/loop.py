@@ -510,16 +510,19 @@ class ExecutionLoop:
                     if message.role == "assistant":
                         feedback_messages.append(message.content)
 
-                        content_upper = message.content.upper()
-                        contains_fully_done_false = (
-                            "FULLY_DONE = FALSE" in content_upper or "FULLY_DONE=FALSE" in content_upper
-                        )
-                        contains_fully_done_true = (
-                            "FULLY_DONE = TRUE" in content_upper or "FULLY_DONE=TRUE" in content_upper
-                        )
+                # Stream completed - check FULLY_DONE only in last assistant message
+                if feedback_messages:
+                    last_content = feedback_messages[-1].upper()
+                    has_true = "FULLY_DONE = TRUE" in last_content or "FULLY_DONE=TRUE" in last_content
+                    has_false = "FULLY_DONE = FALSE" in last_content or "FULLY_DONE=FALSE" in last_content
 
-                        if not contains_fully_done_false and contains_fully_done_true:
-                            fully_done = True
+                    if has_true and not has_false:
+                        fully_done = True
+                    elif not has_true and not has_false:
+                        # TODO: Next step will add resume & retry logic
+                        fully_done = False  # Treat as FALSE for now
+                    else:
+                        fully_done = False
 
                 # Stream completed normally - cancel monitor_input to terminate Task Group
                 monitor_scope.cancel()

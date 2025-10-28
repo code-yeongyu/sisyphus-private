@@ -1,8 +1,13 @@
 # Textual 기반 Tetris 게임 구현 작업계획서
 # AI TodoList Format v2.0
+#
+# This is a comprehensive example of YAML work plan format for Sisyphus.
+# It demonstrates all available features including nested todos, references,
+# verification specs, and parallel execution groups.
 
 # ============================================================================
 # METADATA - 문서 자체 정보
+# Document creation and modification timestamps
 # ============================================================================
 metadata:
   created_at: "2025-10-28T14:32:15.123456+09:00"
@@ -10,6 +15,7 @@ metadata:
 
 # ============================================================================
 # USER REQUEST - 요청 기록
+# Original user request and timestamp for tracking work origin
 # ============================================================================
 user_request:
   original: "Textual 기반의 Tetris 게임 작업계획서 작성 (YAML 형식)"
@@ -18,6 +24,7 @@ user_request:
 
 # ============================================================================
 # OBJECTIVES - 목표
+# Core goal and detailed measurable objectives
 # ============================================================================
 objectives:
   core: "Textual TUI 프레임워크를 활용하여 클래식 Tetris 게임을 구현하고, 터미널에서 플레이 가능한 완전한 게임을 제공한다."
@@ -223,6 +230,7 @@ required_background:
 
 # ============================================================================
 # STATUS - 실행 상태
+# Current execution state, work mode, progress counters, and active task tracking
 # ============================================================================
 status:
   execution:
@@ -277,6 +285,8 @@ workflow:
 
 # ============================================================================
 # TODOS - 실행 항목 (트리 구조)
+# Task tree with nested children, status tracking, references, and verification specs
+# Supports parallel execution groups via parallel_group field
 # ============================================================================
 todos:
   # -------------------------------------------------------------------------
@@ -1271,6 +1281,7 @@ todos:
 
 # ============================================================================
 # SUCCESS VISION - 성공 비전
+# User scenarios, business metrics, and technical criteria for success
 # ============================================================================
 success_vision:
   user_perspective:
@@ -1330,6 +1341,8 @@ success_vision:
 
 # ============================================================================
 # FINAL VERIFICATION - 최종 검증
+# Comprehensive validation checklist organized by category
+# Includes command execution, manual testing, and LLM-based verification
 # ============================================================================
 final_verification:
   - category: "기능 동작 확인"

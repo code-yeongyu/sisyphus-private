@@ -1422,15 +1422,15 @@ final_verification: []
    - `sisyphus/core/tasks.py`
    - `sisyphus/core/plan_loader.py`
 
-   - [ ] 6.1 tasks.py에 YAML 지원 로직 추가
+   - [x] 6.1 tasks.py에 YAML 지원 로직 추가
 
-      **구현**: `.yaml` suffix 감지 → `_check_yaml_accomplished()` 호출
+      **구현**: `.yaml` suffix 감지 → `_check_yaml_accomplished()` 호출 (이미 구현됨 - tasks.py:40-41, 137-147)
 
       ```python
       def check_all_goals_accomplished(self, content: str | None = None) -> bool:
           """Check if all goals accomplished (Markdown or YAML)"""
           # YAML 파일 감지
-          if self.todolist_path.suffix == ".yaml":
+          if self.todolist_path.suffix in (".yaml", ".yml"):
               return self._check_yaml_accomplished()
 
           # 기존 Markdown 로직
@@ -1448,7 +1448,7 @@ final_verification: []
           return plan.status.execution.completed
       ```
 
-   - [ ] 6.2 테스트 작성
+   - [x] 6.2 테스트 작성
 
       **테스트 파일**: `sisyphus/core/tests/test_tasks.py`에 추가
 
@@ -1477,25 +1477,24 @@ final_verification: []
           assert result is True
       ```
 
-   - [ ] 6.3 기존 Markdown 테스트 모두 통과 확인
+   - [x] 6.3 기존 Markdown 테스트 모두 통과 확인
 
-      **검증**: `uv run pytest sisyphus/core/tests/test_tasks.py -k test_check_all_goals`
+      **검증**: `uv run pytest sisyphus/core/tests/test_tasks.py` → 72 tests PASSED (asyncio + trio)
 
-   - [ ] 6.4 Lint 및 타입 체크
+   - [x] 6.4 Lint 및 타입 체크
 
-   - [ ] 6.5 커밋
+      **결과**: ruff check 0 errors, basedpyright 0 errors/warnings
 
-      ```bash
-      git add sisyphus/core/tasks.py sisyphus/core/tests/test_tasks.py
-      git commit -m "feat: add YAML format support to TaskValidator"
-      ```
+   - [x] 6.5 커밋
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] TaskValidator YAML 파일 감지 (suffix .yaml)
-      - [ ] YAML 완료 검증 (status.execution.completed)
-      - [ ] Markdown 호환성 유지 (기존 테스트 통과)
-      - [ ] 새 테스트 추가 (YAML 형식)
-      - [ ] 테스트: `uv run pytest sisyphus/core/tests/test_tasks.py` → PASSED
+      **결과**: 이미 커밋됨 (YAML 지원 코드는 이미 존재했으며, 모든 테스트 통과 확인)
+
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] TaskValidator YAML 파일 감지 (suffix .yaml/.yml) - tasks.py:40
+      - [x] YAML 완료 검증 (status.execution.completed) - tasks.py:137-147
+      - [x] Markdown 호환성 유지 (기존 테스트 통과) - 72 tests PASSED
+      - [x] 새 테스트 추가 (YAML 형식) - 3 YAML tests included
+      - [x] 테스트: `uv run pytest sisyphus/core/tests/test_tasks.py` → 72 PASSED
 
 - [x] 7. 단위 테스트 작성 (추가 커버리지)
 

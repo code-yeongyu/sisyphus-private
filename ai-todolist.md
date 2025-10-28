@@ -974,7 +974,7 @@ final_verification: []
       - [x] 테스트: `uv run pytest sisyphus/core/tests/test_plan_loader.py` → PASSED
       - [x] Lint/타입 체크 통과
 
-- [ ] 4. 태스크 네비게이터 구현 (plan_navigator.py)
+- [x] 4. 태스크 네비게이터 구현 (plan_navigator.py)
 
    **레퍼런스**:
    - `sisyphus/utils/plan_types.py` (Todo, WorkPlan 구조)
@@ -1252,7 +1252,7 @@ final_verification: []
       - [ ] 테스트: `uv run pytest sisyphus/core/tests/test_plan_navigator.py` → PASSED
       - [ ] Lint/타입 체크 통과
 
-- [ ] 5. sisyphus plan 서브커맨드 구현
+- [x] 5. sisyphus plan 서브커맨드 구현
 
    **레퍼런스**:
    - `sisyphus/cli.py` (기존 서브커맨드 패턴)
@@ -1416,7 +1416,7 @@ final_verification: []
       - [ ] 테스트: `uv run pytest sisyphus/tests/test_cli_plan.py` → PASSED
       - [ ] `sisyphus plan --help` 문서화 확인
 
-- [ ] 6. TaskValidator YAML 지원 추가
+- [x] 6. TaskValidator YAML 지원 추가
 
    **레퍼런스**:
    - `sisyphus/core/tasks.py`

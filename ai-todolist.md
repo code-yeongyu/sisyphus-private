@@ -1258,7 +1258,7 @@ final_verification: []
    - `sisyphus/cli.py` (기존 서브커맨드 패턴)
    - Typer 문서
 
-   - [ ] 5.1 sisyphus/cli.py에 plan 서브커맨드 추가
+   - [x] 5.1 sisyphus/cli.py에 plan 서브커맨드 추가
 
       **명령어 구조**:
       - `sisyphus plan get task --current/--next/--id <id>`
@@ -1331,7 +1331,7 @@ final_verification: []
           pass
       ```
 
-   - [ ] 5.2 Rich 포매팅 유틸리티 추가 (`sisyphus/utils/formatting.py`)
+   - [x] 5.2 Rich 포매팅 유틸리티 추가 (`sisyphus/utils/formatting.py`)
 
       **구현**:
       ```python
@@ -1364,7 +1364,7 @@ final_verification: []
           console.print(table)
       ```
 
-   - [ ] 5.3 CLI 테스트 작성 (`sisyphus/tests/test_cli_plan.py`)
+   - [x] 5.3 CLI 테스트 작성 (`sisyphus/tests/test_cli_plan.py`)
 
       **테스트 패턴**:
       ```python
@@ -1396,7 +1396,7 @@ final_verification: []
           assert "Task: " in result.stdout
       ```
 
-   - [ ] 5.4 Lint 및 타입 체크
+   - [x] 5.4 Lint 및 타입 체크
 
    - [ ] 5.5 커밋
 

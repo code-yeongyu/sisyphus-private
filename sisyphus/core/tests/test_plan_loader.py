@@ -1,6 +1,8 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
+from ruamel.yaml import YAMLError
 
 from sisyphus.core.plan_loader import PlanLoader
 from sisyphus.utils.plan_types import (
@@ -112,3 +114,65 @@ async def test_save_and_reload(tmp_path: Path) -> None:
     # then
     assert reloaded.objectives.core == "Test"
     assert reloaded.metadata.format_version == "2.0"
+
+
+async def test_load_malformed_yaml__when_invalid_syntax__raises_yaml_error(tmp_path: Path) -> None:
+    # given
+    yaml_file = tmp_path / "malformed.yaml"
+    malformed_content = """
+metadata:
+  created_at: "2025-01-01"
+  invalid indentation here
+    more_invalid: "value"
+"""
+    yaml_file.write_text(malformed_content, encoding="utf-8")
+
+    # when & then
+    loader = PlanLoader(yaml_file)
+    with pytest.raises((YAMLError, ValidationError)):
+        loader.load()
+
+
+async def test_load_yaml_with_invalid_schema__when_wrong_types__raises_validation_error(tmp_path: Path) -> None:
+    # given
+    yaml_file = tmp_path / "invalid_schema.yaml"
+    invalid_content = """
+metadata:
+  created_at: 12345
+  updated_at: "2025-01-01"
+user_request:
+  original: "Test"
+  timestamp: "2025-01-01"
+objectives:
+  core: "Test"
+background:
+  current_situation: "A"
+  reason_for_change: "B"
+  changes_to_make: "C"
+required_background:
+  description: "Test"
+status:
+  execution:
+    started: false
+    completed: false
+  work_mode:
+    parallel_requested: false
+    current_task_id: null
+  progress:
+    total_tasks: 0
+    completed: 0
+    in_progress: 0
+    pending: 0
+  current_work: "None"
+workflow:
+  dependency_diagram: "Test"
+todos: []
+success_vision: {}
+final_verification: []
+"""
+    yaml_file.write_text(invalid_content, encoding="utf-8")
+
+    # when & then
+    loader = PlanLoader(yaml_file)
+    with pytest.raises(ValidationError):
+        loader.load()

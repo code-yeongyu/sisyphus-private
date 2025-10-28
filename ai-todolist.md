@@ -88,7 +88,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- Task 5: sisyphus plan 서브커맨드 구현
+- Task 7: 단위 테스트 작성 (추가 커버리지)
 
 # 필요한 배경 지식
 
@@ -1497,19 +1497,19 @@ final_verification: []
       - [ ] 새 테스트 추가 (YAML 형식)
       - [ ] 테스트: `uv run pytest sisyphus/core/tests/test_tasks.py` → PASSED
 
-- [ ] 7. 단위 테스트 작성 (추가 커버리지)
+- [x] 7. 단위 테스트 작성 (추가 커버리지)
 
-   - [ ] 7.1 Edge case 테스트 추가
-      - [ ] Pydantic validation 실패 (잘못된 필드 타입)
-      - [ ] YAML 파싱 실패 (malformed YAML)
-      - [ ] Navigator ID 없음 (존재하지 않는 ID)
-      - [ ] Navigator 모든 완료 (next = None)
+   - [x] 7.1 Edge case 테스트 추가
+      - [x] Pydantic validation 실패 (잘못된 필드 타입)
+      - [x] YAML 파싱 실패 (malformed YAML)
+      - [x] Navigator ID 없음 (존재하지 않는 ID)
+      - [x] Navigator 모든 완료 (next = None)
 
-   - [ ] 7.2 전체 테스트 실행 및 커버리지 확인 (≥90%)
+   - [x] 7.2 전체 테스트 실행 및 커버리지 확인 (≥90%)
 
       **검증**: `uv run pytest --cov=sisyphus --cov-report=term-missing`
 
-   - [ ] 7.3 커밋
+   - [x] 7.3 커밋
 
       ```bash
       git add sisyphus/

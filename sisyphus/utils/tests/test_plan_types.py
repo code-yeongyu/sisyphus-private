@@ -106,3 +106,59 @@ async def test_todo_recursive_children() -> None:
     assert len(parent.children) == 1
     assert parent.children[0].id == "1.1"
     assert parent.children[0].title == "Child"
+
+
+async def test_pydantic_validation_fails__when_invalid_status__raises_error() -> None:
+    # given
+    data = {
+        "id": "1",
+        "title": "Test",
+        "status": "invalid_status",
+        "created_at": "2025-01-01",
+        "updated_at": "2025-01-01",
+    }
+
+    # when & then
+    with pytest.raises(ValidationError) as exc:
+        Todo(**data)  # type: ignore
+    assert "status" in str(exc.value).lower()
+
+
+async def test_pydantic_validation_fails__when_missing_required_field__raises_error() -> None:
+    # given
+    data = {
+        "id": "1",
+        "status": "pending",
+        "created_at": "2025-01-01",
+        "updated_at": "2025-01-01",
+    }
+
+    # when & then
+    with pytest.raises(ValidationError) as exc:
+        Todo(**data)  # type: ignore
+    assert "title" in str(exc.value).lower()
+
+
+async def test_workplan_validation_fails__when_missing_metadata__raises_error() -> None:
+    # given
+    data = {
+        "user_request": {"original": "Test", "timestamp": "2025-01-01"},
+        "objectives": {"core": "Test"},
+        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
+        "required_background": {"description": "Test"},
+        "status": {
+            "execution": {"started": False, "completed": False},
+            "work_mode": {"parallel_requested": False, "current_task_id": None},
+            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+            "current_work": "None",
+        },
+        "workflow": {"dependency_diagram": "Test"},
+        "todos": [],
+        "success_vision": {},
+        "final_verification": [],
+    }
+
+    # when & then
+    with pytest.raises(ValidationError) as exc:
+        WorkPlan(**data)  # type: ignore
+    assert "metadata" in str(exc.value).lower()

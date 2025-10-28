@@ -980,7 +980,7 @@ final_verification: []
    - `sisyphus/utils/plan_types.py` (Todo, WorkPlan 구조)
    - DFS 알고리즘 (Depth-First Search)
 
-   - [ ] 4.1 sisyphus/core/plan_navigator.py 구현
+   - [x] 4.1 sisyphus/core/plan_navigator.py 구현
 
       **구현 내용**: PlanNavigator 클래스 with DFS-based navigation
 
@@ -1147,7 +1147,7 @@ final_verification: []
               return None
       ```
 
-   - [ ] 4.2 테스트 작성
+   - [x] 4.2 테스트 작성
 
       **테스트 파일**: `sisyphus/core/tests/test_plan_navigator.py`
 
@@ -1225,32 +1225,32 @@ final_verification: []
           assert found.title == "Nested task"
       ```
 
-   - [ ] 4.3 Lint 및 타입 체크
+   - [x] 4.3 Lint 및 타입 체크
 
       **검증**: `uv run ruff check sisyphus/core/plan_navigator.py && uv run basedpyright sisyphus/core/plan_navigator.py`
 
-   - [ ] 4.4 커밋
+   - [x] 4.4 커밋
 
       ```bash
       git add sisyphus/core/plan_navigator.py sisyphus/core/tests/test_plan_navigator.py
       git commit -m "feat: implement PlanNavigator with DFS-based task navigation"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `get_current_task()` 동작 (current_task_id lookup)
-      - [ ] `get_next_task()` 동작 (DFS 순서: children → sibling → backtrack)
-      - [ ] `find_todo_by_id()` 동작 (recursive search)
-      - [ ] Edge cases 처리:
-        - [ ] current_task_id null → 첫 pending 반환
-        - [ ] 모든 작업 완료 → None 반환
-        - [ ] 존재하지 않는 ID → ValueError
-      - [ ] 비즈니스 규칙 구현:
-        - [ ] in_progress → children first
-        - [ ] completed → next sibling
-        - [ ] no sibling → parent's sibling (backtrack)
-      - [ ] parallel_group 처리 (첫 pending 반환)
-      - [ ] 테스트: `uv run pytest sisyphus/core/tests/test_plan_navigator.py` → PASSED
-      - [ ] Lint/타입 체크 통과
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `get_current_task()` 동작 (current_task_id lookup)
+      - [x] `get_next_task()` 동작 (DFS 순서: children → sibling → backtrack)
+      - [x] `find_todo_by_id()` 동작 (recursive search)
+      - [x] Edge cases 처리:
+        - [x] current_task_id null → 첫 pending 반환
+        - [x] 모든 작업 완료 → None 반환
+        - [x] 존재하지 않는 ID → ValueError
+      - [x] 비즈니스 규칙 구현:
+        - [x] in_progress → children first
+        - [x] completed → next sibling
+        - [x] no sibling → parent's sibling (backtrack)
+      - [x] parallel_group 처리 (첫 pending 반환)
+      - [x] 테스트: `uv run pytest sisyphus/core/tests/test_plan_navigator.py` → PASSED
+      - [x] Lint/타입 체크 통과
 
 - [x] 5. sisyphus plan 서브커맨드 구현
 
@@ -1398,23 +1398,23 @@ final_verification: []
 
    - [x] 5.4 Lint 및 타입 체크
 
-   - [ ] 5.5 커밋
+   - [x] 5.5 커밋
 
       ```bash
       git add sisyphus/cli.py sisyphus/utils/formatting.py sisyphus/tests/test_cli_plan.py
       git commit -m "feat: add sisyphus plan CLI subcommands with Rich formatting"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `sisyphus plan get task --current` 동작
-      - [ ] `sisyphus plan get task --next` 동작
-      - [ ] `sisyphus plan get task --id <id>` 동작
-      - [ ] `sisyphus plan set current-task <id>` 동작
-      - [ ] `sisyphus plan set task-status <id> <status>` 동작
-      - [ ] Rich 포매팅 적용 (table, colors)
-      - [ ] 에러 메시지 친절 (FileNotFoundError, ValidationError)
-      - [ ] 테스트: `uv run pytest sisyphus/tests/test_cli_plan.py` → PASSED
-      - [ ] `sisyphus plan --help` 문서화 확인
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `sisyphus plan get task --current` 동작
+      - [x] `sisyphus plan get task --next` 동작
+      - [x] `sisyphus plan get task --id <id>` 동작
+      - [x] `sisyphus plan set current-task <id>` 동작
+      - [x] `sisyphus plan set task-status <id> <status>` 동작
+      - [x] Rich 포매팅 적용 (table, colors)
+      - [x] 에러 메시지 친절 (FileNotFoundError, ValidationError)
+      - [x] 테스트: `uv run pytest sisyphus/tests/test_cli_plan.py` → PASSED
+      - [x] `sisyphus plan --help` 문서화 확인
 
 - [x] 6. TaskValidator YAML 지원 추가
 

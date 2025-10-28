@@ -1,0 +1,125 @@
+from __future__ import annotations
+
+from sisyphus.utils.plan_types import Todo, TodoStatus, WorkPlan
+
+
+class PlanNavigator:
+    """Navigate work plan tasks using DFS (Depth-First Search) algorithm.
+
+    Business rules:
+    - DFS order: children → sibling → parent's sibling (backtrack)
+    - in_progress task: check children first, then siblings
+    - completed task: check next sibling, then backtrack to parent's sibling
+    - parallel_group: return first pending in group (parallel execution controlled by CLI)
+    """
+
+    def __init__(self, plan: WorkPlan) -> None:
+        self.plan = plan
+
+    def get_current_task(self) -> Todo | None:
+        """Get currently in-progress task from current_task_id."""
+        current_id = self.plan.status.work_mode.current_task_id
+        if current_id is None:
+            return None
+        return self.find_todo_by_id(current_id)
+
+    def get_next_task(self, current_id: str | None = None) -> Todo | None:
+        """Get next pending task using DFS algorithm.
+
+        DFS traversal order:
+        1. current_id=None → return first pending
+        2. in_progress → children first, then siblings
+        3. completed → next sibling, then backtrack to parent's sibling
+        """
+        if current_id is None:
+            current_id = self.plan.status.work_mode.current_task_id
+
+        if current_id is None:
+            return self._find_first_pending(self.plan.todos)
+
+        current = self.find_todo_by_id(current_id)
+        if current is None:
+            raise ValueError(f"작업 ID를 찾을 수 없습니다: {current_id}")
+
+        match current.status:
+            case TodoStatus.in_progress:
+                if current.children:
+                    first_child_pending = self._find_first_pending(current.children)
+                    if first_child_pending:
+                        return first_child_pending
+
+                next_sibling = self._find_next_sibling(current_id)
+                if next_sibling and next_sibling.status == TodoStatus.pending:
+                    return next_sibling
+
+            case TodoStatus.completed:
+                next_sibling = self._find_next_sibling(current_id)
+                if next_sibling and next_sibling.status == TodoStatus.pending:
+                    return next_sibling
+
+                parent = self._find_parent(current_id)
+                if parent:
+                    parent_next = self._find_next_sibling(parent.id)
+                    if parent_next and parent_next.status == TodoStatus.pending:
+                        return parent_next
+
+        return None
+
+    def find_todo_by_id(self, target_id: str) -> Todo | None:
+        """Find todo by ID (e.g. "1", "1.1", "1.1.2")."""
+        return self._find_in_list(self.plan.todos, target_id)
+
+    def _find_in_list(self, todos: list[Todo], target_id: str) -> Todo | None:
+        for todo in todos:
+            if todo.id == target_id:
+                return todo
+            if todo.children:
+                found = self._find_in_list(todo.children, target_id)
+                if found:
+                    return found
+        return None
+
+    def _find_first_pending(self, todos: list[Todo]) -> Todo | None:
+        for todo in todos:
+            if todo.status == TodoStatus.pending:
+                return todo
+            if todo.children:
+                child = self._find_first_pending(todo.children)
+                if child:
+                    return child
+        return None
+
+    def _find_next_sibling(self, current_id: str) -> Todo | None:
+        siblings = self._get_siblings(current_id)
+        if siblings is None:
+            return None
+
+        for i, sibling in enumerate(siblings):
+            if sibling.id == current_id and i + 1 < len(siblings):
+                return siblings[i + 1]
+        return None
+
+    def _get_siblings(self, target_id: str) -> list[Todo] | None:
+        for todo in self.plan.todos:
+            if todo.id == target_id:
+                return self.plan.todos
+
+        parent = self._find_parent(target_id)
+        if parent:
+            return parent.children
+        return None
+
+    def _find_parent(self, target_id: str) -> Todo | None:
+        return self._find_parent_in_list(self.plan.todos, target_id)
+
+    def _find_parent_in_list(self, todos: list[Todo], target_id: str) -> Todo | None:
+        for todo in todos:
+            for child in todo.children:
+                if child.id == target_id:
+                    return todo
+
+            if todo.children:
+                parent = self._find_parent_in_list(todo.children, target_id)
+                if parent:
+                    return parent
+        return None

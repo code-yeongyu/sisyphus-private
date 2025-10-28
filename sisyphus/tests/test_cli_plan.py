@@ -1,0 +1,268 @@
+"""CLI plan subcommand tests."""
+
+from __future__ import annotations
+
+from unittest.mock import MagicMock, patch
+
+from typer.testing import CliRunner
+
+from sisyphus.cli import app
+from sisyphus.core.plan_navigator import PlanNavigator
+from sisyphus.utils.plan_types import Todo, TodoStatus, WorkPlan
+
+runner = CliRunner()
+
+
+def test_plan_get_task_current__when_not_started__shows_message() -> None:
+    # given
+    mock_plan = MagicMock()
+    mock_work_mode = MagicMock()
+    mock_work_mode.current_task_id = None
+    mock_status = MagicMock()
+    mock_status.work_mode = mock_work_mode
+    mock_plan.status = mock_status
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        mock_loader_instance = MagicMock()
+        mock_loader_instance.load.return_value = mock_plan
+        mock_loader.return_value = mock_loader_instance
+
+        result = runner.invoke(app, ["plan", "get", "task", "--current"])
+
+    # then
+    assert result.exit_code == 0
+    assert "작업이 시작되지 않았습니다" in result.stdout
+
+
+def test_plan_get_task_next__when_no_pending__shows_completed_message() -> None:
+    # given
+    mock_plan = MagicMock(spec=WorkPlan)
+    mock_plan.todos = []
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+            mock_loader_instance = MagicMock()
+            mock_loader_instance.load.return_value = mock_plan
+            mock_loader.return_value = mock_loader_instance
+
+            mock_navigator = MagicMock(spec=PlanNavigator)
+            mock_navigator.get_next_task.return_value = None
+            mock_navigator_class.return_value = mock_navigator
+
+            result = runner.invoke(app, ["plan", "get", "task", "--next"])
+
+    # then
+    assert result.exit_code == 0
+    assert "모든 작업이 완료되었습니다" in result.stdout
+
+
+def test_plan_get_task_id__when_task_exists__prints_task() -> None:
+    # given
+    mock_task = Todo(
+        id="1.1",
+        title="Test Task",
+        status=TodoStatus.pending,
+        created_at="2025-01-01",
+        updated_at="2025-01-01",
+    )
+    mock_plan = MagicMock(spec=WorkPlan)
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+            with patch("sisyphus.cli.print_task") as mock_print_task:
+                mock_loader_instance = MagicMock()
+                mock_loader_instance.load.return_value = mock_plan
+                mock_loader.return_value = mock_loader_instance
+
+                mock_navigator = MagicMock(spec=PlanNavigator)
+                mock_navigator.find_todo_by_id.return_value = mock_task
+                mock_navigator_class.return_value = mock_navigator
+
+                result = runner.invoke(app, ["plan", "get", "task", "--id", "1.1"])
+
+    # then
+    assert result.exit_code == 0
+    mock_print_task.assert_called_once_with(mock_task)
+
+
+def test_plan_get_task_id__when_task_not_found__shows_error() -> None:
+    # given
+    mock_plan = MagicMock(spec=WorkPlan)
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+            mock_loader_instance = MagicMock()
+            mock_loader_instance.load.return_value = mock_plan
+            mock_loader.return_value = mock_loader_instance
+
+            mock_navigator = MagicMock(spec=PlanNavigator)
+            mock_navigator.find_todo_by_id.return_value = None
+            mock_navigator_class.return_value = mock_navigator
+
+            result = runner.invoke(app, ["plan", "get", "task", "--id", "999"])
+
+    # then
+    assert result.exit_code == 1
+    assert "작업 ID를 찾을 수 없습니다" in result.stdout
+
+
+def test_plan_get_task__when_no_option_provided__shows_error() -> None:
+    # given
+    mock_plan = MagicMock(spec=WorkPlan)
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+            mock_loader_instance = MagicMock()
+            mock_loader_instance.load.return_value = mock_plan
+            mock_loader.return_value = mock_loader_instance
+
+            mock_navigator = MagicMock(spec=PlanNavigator)
+            mock_navigator_class.return_value = mock_navigator
+
+            result = runner.invoke(app, ["plan", "get", "task"])
+
+    # then
+    assert result.exit_code == 1
+    assert "--current, --next, --id 중 하나를 선택하세요" in result.stdout
+
+
+def test_plan_get_reference__shows_not_implemented() -> None:
+    # given
+    mock_plan = MagicMock(spec=WorkPlan)
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+            mock_loader_instance = MagicMock()
+            mock_loader_instance.load.return_value = mock_plan
+            mock_loader.return_value = mock_loader_instance
+
+            mock_navigator = MagicMock(spec=PlanNavigator)
+            mock_navigator_class.return_value = mock_navigator
+
+            result = runner.invoke(app, ["plan", "get", "reference"])
+
+    # then
+    assert result.exit_code == 1
+    assert "Reference lookup not yet implemented" in result.stdout
+
+
+def test_plan_set_current_task__when_valid_id__updates_plan() -> None:
+    # given
+    mock_plan = MagicMock()
+    mock_work_mode = MagicMock()
+    mock_work_mode.current_task_id = None
+    mock_status = MagicMock()
+    mock_status.work_mode = mock_work_mode
+    mock_plan.status = mock_status
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        mock_loader_instance = MagicMock()
+        mock_loader_instance.load.return_value = mock_plan
+        mock_loader.return_value = mock_loader_instance
+
+        result = runner.invoke(app, ["plan", "set", "current-task", "1.1"])
+
+    # then
+    assert result.exit_code == 0
+    assert "Current task set to: 1.1" in result.stdout
+    assert mock_plan.status.work_mode.current_task_id == "1.1"
+    mock_loader_instance.save.assert_called_once_with(mock_plan)
+
+
+def test_plan_set_task_status__when_no_status_option__shows_error() -> None:
+    # given
+    mock_plan = MagicMock(spec=WorkPlan)
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        mock_loader_instance = MagicMock()
+        mock_loader_instance.load.return_value = mock_plan
+        mock_loader.return_value = mock_loader_instance
+
+        result = runner.invoke(app, ["plan", "set", "task-status", "1.1"])
+
+    # then
+    assert result.exit_code == 1
+    assert "--status 옵션이 필요합니다" in result.stdout
+
+
+def test_plan_set_task_status__when_task_not_found__shows_error() -> None:
+    # given
+    mock_plan = MagicMock(spec=WorkPlan)
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+            mock_loader_instance = MagicMock()
+            mock_loader_instance.load.return_value = mock_plan
+            mock_loader.return_value = mock_loader_instance
+
+            mock_navigator = MagicMock(spec=PlanNavigator)
+            mock_navigator.find_todo_by_id.return_value = None
+            mock_navigator_class.return_value = mock_navigator
+
+            result = runner.invoke(app, ["plan", "set", "task-status", "999", "--status", "completed"])
+
+    # then
+    assert result.exit_code == 1
+    assert "작업 ID를 찾을 수 없습니다" in result.stdout
+
+
+def test_plan_set_task_status__when_valid__updates_status() -> None:
+    # given
+    mock_task = MagicMock(spec=Todo)
+    mock_plan = MagicMock(spec=WorkPlan)
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+            mock_loader_instance = MagicMock()
+            mock_loader_instance.load.return_value = mock_plan
+            mock_loader.return_value = mock_loader_instance
+
+            mock_navigator = MagicMock(spec=PlanNavigator)
+            mock_navigator.find_todo_by_id.return_value = mock_task
+            mock_navigator_class.return_value = mock_navigator
+
+            result = runner.invoke(app, ["plan", "set", "task-status", "1.1", "--status", "completed"])
+
+    # then
+    assert result.exit_code == 0
+    assert "Task 1.1 status set to: completed" in result.stdout
+    assert mock_task.status == "completed"
+    mock_loader_instance.save.assert_called_once_with(mock_plan)
+
+
+def test_plan_get__when_file_not_found__shows_error() -> None:
+    # given / when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        mock_loader_instance = MagicMock()
+        mock_loader_instance.load.side_effect = FileNotFoundError("작업계획서를 찾을 수 없습니다")
+        mock_loader.return_value = mock_loader_instance
+
+        result = runner.invoke(app, ["plan", "get", "task", "--current"])
+
+    # then
+    assert result.exit_code == 1
+    assert "작업계획서를 찾을 수 없습니다" in result.stdout
+
+
+def test_plan_set__when_file_not_found__shows_error() -> None:
+    # given / when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        mock_loader_instance = MagicMock()
+        mock_loader_instance.load.side_effect = FileNotFoundError("작업계획서를 찾을 수 없습니다")
+        mock_loader.return_value = mock_loader_instance
+
+        result = runner.invoke(app, ["plan", "set", "current-task", "1.1"])
+
+    # then
+    assert result.exit_code == 1
+    assert "작업계획서를 찾을 수 없습니다" in result.stdout

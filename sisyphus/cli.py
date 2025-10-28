@@ -13,15 +13,19 @@ from urllib.parse import urlparse
 
 import anyio
 import typer
+from pydantic import ValidationError
 from rich.console import Console
 
 from sisyphus.agents.claude import ClaudeAgent
 from sisyphus.agents.opencode import OpenCodeAgent
 from sisyphus.core.loop import ExecutionLoop
+from sisyphus.core.plan_loader import PlanLoader
+from sisyphus.core.plan_navigator import PlanNavigator
 from sisyphus.core.session import SessionStore
 from sisyphus.core.tasks import TaskValidator
 from sisyphus.ui.base import create_ui
 from sisyphus.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
+from sisyphus.utils.formatting import print_task
 from sisyphus.utils.git import detect_base_branch, find_commits_with_files, generate_rebase_guide, is_on_main_branch
 from sisyphus.utils.logging import LoggerFactory
 from sisyphus.utils.theme import ThemeName, detect_system_theme
@@ -571,6 +575,107 @@ def clean_history(
 
     if dry_run:
         console.print("\n[dim]DRY RUN - no changes made[/dim]")
+
+
+plan_app = typer.Typer(name="plan", help="Work plan management")
+app.add_typer(plan_app)
+
+
+@plan_app.command(name="get")
+def get_plan_info(
+    what: str = typer.Argument(..., help="What to get: task, reference"),
+    current: bool = typer.Option(False, "--current", help="Get current task"),
+    next_task: bool = typer.Option(False, "--next", help="Get next pending task"),
+    task_id: str | None = typer.Option(None, "--id", help="Specific task ID"),
+) -> None:
+    """Get information from work plan."""
+    try:
+        loader = PlanLoader()
+        plan = loader.load()
+        navigator = PlanNavigator(plan)
+
+        match what:
+            case "task":
+                if current:
+                    task = navigator.get_current_task()
+                    if task is None:
+                        console.print("[yellow]작업이 시작되지 않았습니다[/yellow]")
+                        raise typer.Exit(0)
+                    print_task(task)
+                elif next_task:
+                    task = navigator.get_next_task()
+                    if task is None:
+                        console.print("[green]모든 작업이 완료되었습니다![/green]")
+                        raise typer.Exit(0)
+                    print_task(task)
+                elif task_id:
+                    task = navigator.find_todo_by_id(task_id)
+                    if task is None:
+                        console.print(f"[red]작업 ID를 찾을 수 없습니다: {task_id}[/red]")
+                        raise typer.Exit(1)
+                    print_task(task)
+                else:
+                    console.print("[red]--current, --next, --id 중 하나를 선택하세요[/red]")
+                    raise typer.Exit(1)
+
+            case "reference":
+                console.print("[yellow]Reference lookup not yet implemented[/yellow]")
+                raise typer.Exit(1)
+
+            case _:
+                console.print(f"[red]Unknown option: {what}[/red]")
+                raise typer.Exit(1)
+
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+    except ValidationError as e:
+        console.print(f"[red]YAML 검증 실패:[/red]\n{e}")
+        raise typer.Exit(1)
+
+
+@plan_app.command(name="set")
+def set_plan_info(
+    what: str = typer.Argument(..., help="What to set: current-task, task-status"),
+    value: str = typer.Argument(..., help="Value to set"),
+    status: str | None = typer.Option(None, "--status", help="Task status (for task-status)"),
+) -> None:
+    """Update work plan information."""
+    try:
+        loader = PlanLoader()
+        plan = loader.load()
+
+        match what:
+            case "current-task":
+                plan.status.work_mode.current_task_id = value
+                loader.save(plan)
+                console.print(f"[green]✓[/green] Current task set to: {value}")
+
+            case "task-status":
+                if status is None:
+                    console.print("[red]--status 옵션이 필요합니다[/red]")
+                    raise typer.Exit(1)
+
+                navigator = PlanNavigator(plan)
+                task = navigator.find_todo_by_id(value)
+                if task is None:
+                    console.print(f"[red]작업 ID를 찾을 수 없습니다: {value}[/red]")
+                    raise typer.Exit(1)
+
+                task.status = status  # type: ignore
+                loader.save(plan)
+                console.print(f"[green]✓[/green] Task {value} status set to: {status}")
+
+            case _:
+                console.print(f"[red]Unknown option: {what}[/red]")
+                raise typer.Exit(1)
+
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+    except ValidationError as e:
+        console.print(f"[red]YAML 검증 실패:[/red]\n{e}")
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":

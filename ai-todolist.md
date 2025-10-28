@@ -79,7 +79,7 @@ YAML + Pydantic 조합으로:
 - `TaskValidator`: Markdown/YAML 둘 다 지원
 
 # 작업 시작 여부
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 모든 목표 달성 여부
 is_all_goals_accomplished = FALSE
@@ -88,11 +88,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 작업이 아직 시작되지 않음.
-  - 작업 시작 시 위의 `is_execution_started` 값을 TRUE로 변경할 것.
-  - 사용자가 명시적으로 "작업 시작해"라고 말하기 전까지는 절대 시작하지 말 것.
-  - **plan-reviewer로부터 OKAY를 받아도 절대 시작하지 말 것**
-  - 사용자의 명시적 시작 명령만 인정.
+- Task 5: sisyphus plan 서브커맨드 구현
 
 # 필요한 배경 지식
 
@@ -349,19 +345,19 @@ graph LR
 
 # TODOs
 
-- [ ] 1. 파일 이름 변경 및 의존성 추가
+- [x] 1. 파일 이름 변경 및 의존성 추가
 
    **레퍼런스**:
    - `pyproject.toml` (dependencies 섹션 확인)
    - `ai-todolist.yaml` (이름 변경 대상)
 
-   - [ ] 1.1 ai-todolist.yaml을 example-ai-todolist.yaml로 이름 변경
+   - [x] 1.1 ai-todolist.yaml을 example-ai-todolist.yaml로 이름 변경
 
       **실행 명령어**: `mv ai-todolist.yaml example-ai-todolist.yaml`
 
       **검증**: `ls -la example-ai-todolist.yaml` → 파일 존재 확인
 
-   - [ ] 1.2 pyproject.toml에 의존성 추가
+   - [x] 1.2 pyproject.toml에 의존성 추가
 
       **현재 상태**: pydantic, ruamel.yaml 없음
 
@@ -377,7 +373,7 @@ graph LR
 
       **검증**: `uv sync` → 의존성 설치 성공
 
-   - [ ] 1.3 의존성 설치 및 확인
+   - [x] 1.3 의존성 설치 및 확인
 
       **실행 명령어**: `uv sync`
 
@@ -387,7 +383,7 @@ graph LR
       ```
       **예상 출력**: `OK`
 
-   - [ ] 1.4 변경사항 커밋
+   - [x] 1.4 변경사항 커밋
 
       **커밋 명령어**:
       ```bash
@@ -395,22 +391,22 @@ graph LR
       git commit -m "feat: add YAML plan dependencies and rename example file"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `example-ai-todolist.yaml` 파일 존재
-      - [ ] `ai-todolist.yaml` 파일 삭제됨
-      - [ ] `pyproject.toml`에 pydantic, ruamel.yaml 추가됨
-      - [ ] `uv sync` 성공
-      - [ ] import 테스트 성공
-      - [ ] git commit 완료
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `example-ai-todolist.yaml` 파일 존재
+      - [x] `ai-todolist.yaml` 파일 삭제됨
+      - [x] `pyproject.toml`에 pydantic, ruamel.yaml 추가됨
+      - [x] `uv sync` 성공
+      - [x] import 테스트 성공
+      - [x] git commit 완료
 
-- [ ] 2. Pydantic 모델 정의 (plan_types.py)
+- [x] 2. Pydantic 모델 정의 (plan_types.py)
 
    **레퍼런스**:
    - `example-ai-todolist.yaml` (구조 파악)
    - Pydantic 공식 문서: https://docs.pydantic.dev/latest/ (Discriminated Union 검색)
    - `sisyphus/utils/types.py` (파일 위치 패턴)
 
-   - [ ] 2.1 sisyphus/utils/plan_types.py 파일 생성
+   - [x] 2.1 sisyphus/utils/plan_types.py 파일 생성
 
       **구현 내용**:
       - Enum 정의: `TodoStatus`, `ReferenceType`, `InputType`, `VerifyType`, `RetrievalType`
@@ -682,7 +678,7 @@ graph LR
       - **모든 Discriminated Union에 `type` 필드 명시** (Pydantic discriminator 필수)
       - **TodoId는 모두 string**: "1", "1.1", "1.1.1" 형식
 
-   - [ ] 2.2 기본 validation 테스트 작성
+   - [x] 2.2 기본 validation 테스트 작성
 
       **테스트 파일**: `sisyphus/utils/tests/test_plan_types.py`
 
@@ -778,7 +774,7 @@ graph LR
           assert parent.children[0].title == "Child"
       ```
 
-   - [ ] 2.3 Lint 및 타입 체크
+   - [x] 2.3 Lint 및 타입 체크
 
       **검증 명령어**:
       ```bash
@@ -787,7 +783,7 @@ graph LR
       ```
       **예상 결과**: 0 errors
 
-   - [ ] 2.4 커밋
+   - [x] 2.4 커밋
 
       **커밋 명령어**:
       ```bash
@@ -795,28 +791,28 @@ graph LR
       git commit -m "feat: add complete Pydantic models for YAML work plan"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `plan_types.py` 파일 존재
-      - [ ] 모든 Enum, 모델 정의 완료 (Todo 모든 필드, WorkPlan 모든 필드)
-      - [ ] Discriminated Union 동작 (type 필드로 구분)
-      - [ ] InputSpec 4개 타입 (command, prompt, manual, multi_command)
-      - [ ] VerifySpec 4개 타입 (programmatic, llm_judge, none, prompt)
-      - [ ] ReferenceSpec 4개 타입 (file, url, code_snippet, text)
-      - [ ] RetrievalSpec 2개 타입 (keywords, prompt)
-      - [ ] Recursive Todo 정의 (children)
-      - [ ] 테스트 파일 작성 (validation, discriminated union, recursive children)
-      - [ ] `uv run pytest sisyphus/utils/tests/test_plan_types.py` → PASSED
-      - [ ] Ruff, basedpyright 통과
-      - [ ] git commit 완료
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `plan_types.py` 파일 존재
+      - [x] 모든 Enum, 모델 정의 완료 (Todo 모든 필드, WorkPlan 모든 필드)
+      - [x] Discriminated Union 동작 (type 필드로 구분)
+      - [x] InputSpec 4개 타입 (command, prompt, manual, multi_command)
+      - [x] VerifySpec 4개 타입 (programmatic, llm_judge, none, prompt)
+      - [x] ReferenceSpec 4개 타입 (file, url, code_snippet, text)
+      - [x] RetrievalSpec 2개 타입 (keywords, prompt)
+      - [x] Recursive Todo 정의 (children)
+      - [x] 테스트 파일 작성 (validation, discriminated union, recursive children)
+      - [x] `uv run pytest sisyphus/utils/tests/test_plan_types.py` → PASSED
+      - [x] Ruff, basedpyright 통과
+      - [x] git commit 완료
 
-- [ ] 3. YAML 로더/세이버 구현 (plan_loader.py)
+- [x] 3. YAML 로더/세이버 구현 (plan_loader.py)
 
    **레퍼런스**:
    - `sisyphus/utils/plan_types.py` (Pydantic 모델)
    - `sisyphus/core/tasks.py` (파일 경로 처리 패턴)
    - ruamel.yaml 문서: https://yaml.readthedocs.io/ ("YAML" 검색)
 
-   - [ ] 3.1 sisyphus/core/plan_loader.py 구현
+   - [x] 3.1 sisyphus/core/plan_loader.py 구현
 
       **구현 내용**:
       ```python
@@ -853,7 +849,7 @@ graph LR
       - `yaml.YAMLError` → YAML 파싱 에러
       - `pydantic.ValidationError` → 스키마 검증 실패
 
-   - [ ] 3.2 테스트 작성
+   - [x] 3.2 테스트 작성
 
       **테스트 파일**: `sisyphus/core/tests/test_plan_loader.py`
 
@@ -959,24 +955,24 @@ final_verification: []
           assert reloaded.metadata.format_version == "2.0"
       ```
 
-   - [ ] 3.3 Lint 및 타입 체크
+   - [x] 3.3 Lint 및 타입 체크
 
       **검증**: `uv run ruff check sisyphus/core/plan_loader.py && uv run basedpyright sisyphus/core/plan_loader.py`
 
-   - [ ] 3.4 커밋
+   - [x] 3.4 커밋
 
       ```bash
       git add sisyphus/core/plan_loader.py sisyphus/core/tests/test_plan_loader.py
       git commit -m "feat: implement YAML plan loader with Pydantic validation"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `PlanLoader.load()` 동작 (YAML → WorkPlan)
-      - [ ] `PlanLoader.save()` 동작 (WorkPlan → YAML)
-      - [ ] FileNotFoundError 적절히 처리
-      - [ ] Pydantic ValidationError 전달
-      - [ ] 테스트: `uv run pytest sisyphus/core/tests/test_plan_loader.py` → PASSED
-      - [ ] Lint/타입 체크 통과
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `PlanLoader.load()` 동작 (YAML → WorkPlan)
+      - [x] `PlanLoader.save()` 동작 (WorkPlan → YAML)
+      - [x] FileNotFoundError 적절히 처리
+      - [x] Pydantic ValidationError 전달
+      - [x] 테스트: `uv run pytest sisyphus/core/tests/test_plan_loader.py` → PASSED
+      - [x] Lint/타입 체크 통과
 
 - [ ] 4. 태스크 네비게이터 구현 (plan_navigator.py)
 

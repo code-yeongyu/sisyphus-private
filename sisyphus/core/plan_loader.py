@@ -22,6 +22,6 @@ class PlanLoader:
         return WorkPlan(**data)
 
     def save(self, plan: WorkPlan) -> None:
-        data = plan.model_dump(mode="python")
+        data = plan.model_dump(mode="json")
         with self.plan_path.open("w", encoding="utf-8") as f:
             self.yaml.dump(data, f)

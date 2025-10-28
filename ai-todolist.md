@@ -1643,21 +1643,21 @@ final_verification: []
 
 # 최종 작업 검증 체크리스트
 
-- [ ] 1. **기능 동작 확인**
-  - [ ] `sisyphus plan get task --current/--next/--id`
-  - [ ] `sisyphus plan set current-task`
-  - [ ] `sisyphus plan get reference`
+- [x] 1. **기능 동작 확인**
+  - [x] `sisyphus plan get task --current/--next/--id` → 정상 동작 (12 CLI tests PASSED)
+  - [x] `sisyphus plan set current-task` → 정상 동작
+  - [x] `sisyphus plan get reference` → Not implemented 메시지 정상 출력
 
-- [ ] 2. **잘못된 구현 방지**
-  - [ ] TodoId 모두 string
-  - [ ] Pydantic validation 동작
-  - [ ] 명확한 에러 메시지
+- [x] 2. **잘못된 구현 방지**
+  - [x] TodoId 모두 string → test_todo_id_must_be_string PASSED
+  - [x] Pydantic validation 동작 → 3 validation tests PASSED
+  - [x] 명확한 에러 메시지 → FileNotFoundError, ValidationError 테스트 PASSED
 
-- [ ] 3. **범위 준수 확인**
-  - [ ] 기존 CLI 수정 없음
-  - [ ] TaskValidator Markdown 지원 유지
+- [x] 3. **범위 준수 확인**
+  - [x] 기존 CLI 수정 없음 → `sisyphus work` 명령어 유지, `plan` 서브커맨드만 추가
+  - [x] TaskValidator Markdown 지원 유지 → 72 tests PASSED (Markdown + YAML 둘 다)
 
-- [ ] 4. **기존 기능 회귀 테스트**
-  - [ ] `sisyphus --help` 동작
-  - [ ] `sisyphus work` 영향 없음
-  - [ ] TaskValidator 기존 테스트 통과
+- [x] 4. **기존 기능 회귀 테스트**
+  - [x] `sisyphus --help` 동작 → work, reset, ignore, clean-history, plan 모두 표시
+  - [x] `sisyphus work` 영향 없음 → 기존 명령어 정상 동작
+  - [x] TaskValidator 기존 테스트 통과 → 72 tests PASSED (YAML 3개 추가, Markdown 유지)

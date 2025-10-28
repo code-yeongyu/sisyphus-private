@@ -4,10 +4,6 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
 
 
 class TaskValidator:
@@ -33,7 +29,7 @@ class TaskValidator:
             return ""
 
     def check_all_goals_accomplished(self, content: str | None = None) -> bool:
-        """Check if is_all_goals_accomplished = TRUE.
+        """Check if is_all_goals_accomplished = TRUE (Markdown or YAML).
 
         Args:
             content: Content to check. If None, reads from file.
@@ -41,6 +37,9 @@ class TaskValidator:
         Returns:
             True if flag is set to TRUE, False otherwise
         """
+        if self.todolist_path.suffix in (".yaml", ".yml"):
+            return self._check_yaml_accomplished()
+
         if content is None:
             content = self.read_content()
 
@@ -134,3 +133,15 @@ class TaskValidator:
 
         checked = re.findall(r"^\s*-\s*\[x\]", content, re.MULTILINE | re.IGNORECASE)
         return len(checked)
+
+    def _check_yaml_accomplished(self) -> bool:
+        """Check YAML work plan completion.
+
+        Returns:
+            True if status.execution.completed is True, False otherwise
+        """
+        from sisyphus.core.plan_loader import PlanLoader
+
+        loader = PlanLoader(self.todolist_path)
+        plan = loader.load()
+        return plan.status.execution.completed

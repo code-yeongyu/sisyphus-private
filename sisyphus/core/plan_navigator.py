@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sisyphus.utils.plan_types import Todo, TodoStatus, WorkPlan
+from sisyphus.utils.plan_types import SimpleReference, Todo, TodoStatus, VerificationItem, WorkPlan
 
 
 class PlanNavigator:
@@ -123,3 +123,42 @@ class PlanNavigator:
                 if parent:
                     return parent
         return None
+
+    def get_task_references(self, task_id: str) -> list[SimpleReference]:
+        """Get references for a specific task."""
+        task = self.find_todo_by_id(task_id)
+        if task is None:
+            raise ValueError(f"작업 ID를 찾을 수 없습니다: {task_id}")
+        return task.references
+
+    def get_task_children(self, task_id: str) -> list[Todo]:
+        """Get direct children of a task."""
+        task = self.find_todo_by_id(task_id)
+        if task is None:
+            raise ValueError(f"작업 ID를 찾을 수 없습니다: {task_id}")
+        return task.children
+
+    def get_all_descendants(self, task_id: str) -> list[Todo]:
+        """Get all descendants (children recursively) of a task."""
+        task = self.find_todo_by_id(task_id)
+        if task is None:
+            raise ValueError(f"작업 ID를 찾을 수 없습니다: {task_id}")
+
+        descendants: list[Todo] = []
+
+        def collect(todos: list[Todo]) -> None:
+            for todo in todos:
+                descendants.append(todo)
+                if todo.children:
+                    collect(todo.children)
+
+        if task.children:
+            collect(task.children)
+        return descendants
+
+    def get_task_verification(self, task_id: str) -> list[VerificationItem]:
+        """Get verification spec for a task."""
+        task = self.find_todo_by_id(task_id)
+        if task is None:
+            raise ValueError(f"작업 ID를 찾을 수 없습니다: {task_id}")
+        return task.verification_spec

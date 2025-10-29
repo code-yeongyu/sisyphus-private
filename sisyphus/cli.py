@@ -25,7 +25,7 @@ from sisyphus.core.session import SessionStore
 from sisyphus.core.tasks import TaskValidator
 from sisyphus.ui.base import create_ui
 from sisyphus.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
-from sisyphus.utils.formatting import print_task
+from sisyphus.utils.formatting import print_children, print_references, print_task, print_verification
 from sisyphus.utils.git import detect_base_branch, find_commits_with_files, generate_rebase_guide, is_on_main_branch
 from sisyphus.utils.logging import LoggerFactory
 from sisyphus.utils.theme import ThemeName, detect_system_theme
@@ -587,6 +587,10 @@ def get_plan_info(
     current: bool = typer.Option(False, "--current", help="Get current task"),
     next_task: bool = typer.Option(False, "--next", help="Get next pending task"),
     task_id: str | None = typer.Option(None, "--id", help="Specific task ID"),
+    show_references: bool = typer.Option(False, "--show-references", help="Show only references"),
+    show_children: bool = typer.Option(False, "--show-children", help="Show only children"),
+    show_verification: bool = typer.Option(False, "--show-verification", help="Show only verification spec"),
+    show_all: bool = typer.Option(False, "--show-all", help="Show complete task info (default)"),
 ) -> None:
     """Get information from work plan."""
     try:
@@ -596,27 +600,37 @@ def get_plan_info(
 
         match what:
             case "task":
+                task = None
                 if current:
                     task = navigator.get_current_task()
                     if task is None:
                         console.print("[yellow]작업이 시작되지 않았습니다[/yellow]")
                         raise typer.Exit(0)
-                    print_task(task)
                 elif next_task:
                     task = navigator.get_next_task()
                     if task is None:
                         console.print("[green]모든 작업이 완료되었습니다![/green]")
                         raise typer.Exit(0)
-                    print_task(task)
                 elif task_id:
                     task = navigator.find_todo_by_id(task_id)
                     if task is None:
                         console.print(f"[red]작업 ID를 찾을 수 없습니다: {task_id}[/red]")
                         raise typer.Exit(1)
-                    print_task(task)
                 else:
                     console.print("[red]--current, --next, --id 중 하나를 선택하세요[/red]")
                     raise typer.Exit(1)
+
+                if show_references:
+                    refs = navigator.get_task_references(task.id)
+                    print_references(refs)
+                elif show_children:
+                    children = navigator.get_task_children(task.id)
+                    print_children(children)
+                elif show_verification:
+                    verifications = navigator.get_task_verification(task.id)
+                    print_verification(verifications)
+                else:
+                    print_task(task)
 
             case "reference":
                 console.print("[yellow]Reference lookup not yet implemented[/yellow]")

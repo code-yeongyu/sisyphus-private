@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from sisyphus.utils.plan_types import CommandInput, ProgrammaticVerify, Todo, WorkPlan
+from sisyphus.utils.plan_types import CommandInput, ProgrammaticVerify, Todo, VerificationItem, WorkPlan
 
 pytestmark = [pytest.mark.anyio]
 
@@ -162,3 +162,36 @@ async def test_workplan_validation_fails__when_missing_metadata__raises_error() 
     with pytest.raises(ValidationError) as exc:
         WorkPlan(**data)  # type: ignore
     assert "metadata" in str(exc.value).lower()
+
+
+async def test_verification_item_completed_defaults_to_false() -> None:
+    # given
+    data = {
+        "id": "v1",
+        "description": "Test",
+        "input": {"type": "command", "command": "ls"},
+        "verify": {"type": "none"},
+    }
+
+    # when
+    item = VerificationItem(**data)
+
+    # then
+    assert item.completed is False
+
+
+async def test_verification_item_completed_can_be_set() -> None:
+    # given
+    data = {
+        "id": "v1",
+        "description": "Test",
+        "input": {"type": "command", "command": "ls"},
+        "verify": {"type": "none"},
+        "completed": True,
+    }
+
+    # when
+    item = VerificationItem(**data)
+
+    # then
+    assert item.completed is True

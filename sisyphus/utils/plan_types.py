@@ -121,6 +121,7 @@ class VerificationItem(BaseModel):
     input: InputSpec
     verify: VerifySpec
     note: str | None = None
+    completed: bool = False
 
 
 # === Reference Discriminated Union (모든 타입) ===

@@ -446,6 +446,66 @@ Session file recovery failed. Delete and restart.
 rm ./sessions/sessions.json
 ```
 
+---
+
+## Work Plan Management (`sisyphus plan`)
+
+Sisyphus provides CLI commands to programmatically query and manipulate YAML work plans. These commands are designed for use within agent loops to track progress and manage task completion.
+
+### Task Filtering and Completion Tracking
+
+#### Query with Filters
+
+Filter task information to show only what you need:
+
+```bash
+# Get only references
+sisyphus plan get task --id 1 --show-references
+
+# Get only child tasks
+sisyphus plan get task --id 1 --show-children
+
+# Get only verification spec
+sisyphus plan get task --id 1 --show-verification
+```
+
+#### Recursive Task Completion
+
+Mark a task and all its children as completed in one command:
+
+```bash
+# Mark task and all children as completed
+sisyphus plan set task-status 1 --status completed --recursive
+```
+
+#### Verification Item Tracking
+
+Track individual verification items within a task:
+
+```bash
+# Mark verification item as completed
+sisyphus plan set-verification 1 v1 --completed
+
+# Mark as not completed
+sisyphus plan set-verification 1 v1 --not-completed
+```
+
+#### Completion Check
+
+Check if a task can be completed by analyzing all children and verifications:
+
+```bash
+# Check if task can be completed (checks all children + verifications)
+sisyphus plan check 1
+```
+
+This generates a comprehensive report showing:
+- Child task status (completed, in_progress, pending counts)
+- Verification item progress (completed/total)
+- Whether the task can be marked as completed
+
+---
+
 ### Running Tests
 
 Sisyphus uses pytest. Thanks to anyio, both asyncio and trio backends are tested.

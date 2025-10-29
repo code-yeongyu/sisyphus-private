@@ -1,6 +1,19 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from sisyphus.utils.plan_types import SimpleReference, Todo, TodoStatus, VerificationItem, WorkPlan
+
+
+@dataclass
+class CompletionReport:
+    task_id: str
+    task_status: TodoStatus
+    all_children_completed: bool
+    children_summary: dict[str, int]
+    all_verifications_completed: bool
+    verification_summary: dict[str, int]
+    can_complete: bool
 
 
 class PlanNavigator:
@@ -162,3 +175,55 @@ class PlanNavigator:
         if task is None:
             raise ValueError(f"작업 ID를 찾을 수 없습니다: {task_id}")
         return task.verification_spec
+
+    def check_task_completion(self, task_id: str) -> CompletionReport:
+        """Check if task can be marked as completed.
+
+        Business rule: Task can complete when:
+        - All children are completed
+        - All verification items are completed
+
+        Args:
+            task_id: Task ID to check
+
+        Returns:
+            CompletionReport with completion status
+
+        Raises:
+            ValueError: If task ID is not found
+        """
+        task = self.find_todo_by_id(task_id)
+        if task is None:
+            raise ValueError(f"작업 ID를 찾을 수 없습니다: {task_id}")
+
+        # 1. Children 체크
+        descendants = self.get_all_descendants(task_id)
+        children_summary = {
+            "completed": sum(1 for d in descendants if d.status == TodoStatus.completed),
+            "in_progress": sum(1 for d in descendants if d.status == TodoStatus.in_progress),
+            "pending": sum(1 for d in descendants if d.status == TodoStatus.pending),
+        }
+        all_children_completed = len(descendants) == 0 or children_summary["completed"] == len(descendants)
+
+        # 2. Verification 체크
+        verifications = task.verification_spec
+        verification_summary = {
+            "completed": sum(1 for v in verifications if v.completed),
+            "total": len(verifications),
+        }
+        all_verifications_completed = len(verifications) == 0 or verification_summary["completed"] == len(
+            verifications
+        )
+
+        # 3. 완료 가능 여부
+        can_complete = all_children_completed and all_verifications_completed
+
+        return CompletionReport(
+            task_id=task_id,
+            task_status=task.status,
+            all_children_completed=all_children_completed,
+            children_summary=children_summary,
+            all_verifications_completed=all_verifications_completed,
+            verification_summary=verification_summary,
+            can_complete=can_complete,
+        )

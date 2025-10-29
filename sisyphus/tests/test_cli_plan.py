@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 from typer.testing import CliRunner
 
 from sisyphus.cli import app
-from sisyphus.core.plan_navigator import PlanNavigator
+from sisyphus.core.plan_navigator import CompletionReport, PlanNavigator
 from sisyphus.utils.plan_types import (
     CommandInput,
     NoneVerify,
@@ -225,8 +225,11 @@ def test_plan_set_task_status__when_task_not_found__shows_error() -> None:
 
 def test_plan_set_task_status__when_valid__updates_status() -> None:
     # given
-    mock_task = MagicMock(spec=Todo)
+    mock_task = Todo(
+        id="1.1", title="Test Task", status=TodoStatus.pending, created_at="2025-01-01", updated_at="2025-01-01"
+    )
     mock_plan = MagicMock(spec=WorkPlan)
+    mock_plan.todos = [mock_task]
 
     # when
     with patch("sisyphus.cli.PlanLoader") as mock_loader:
@@ -237,15 +240,15 @@ def test_plan_set_task_status__when_valid__updates_status() -> None:
 
             mock_navigator = MagicMock(spec=PlanNavigator)
             mock_navigator.find_todo_by_id.return_value = mock_task
+            mock_navigator.get_all_descendants.return_value = []
             mock_navigator_class.return_value = mock_navigator
 
             result = runner.invoke(app, ["plan", "set", "task-status", "1.1", "--status", "completed"])
 
     # then
     assert result.exit_code == 0
-    assert "Task 1.1 status set to: completed" in result.stdout
-    assert mock_task.status == "completed"
-    mock_loader_instance.save.assert_called_once_with(mock_plan)
+    assert "1개 태스크 상태 변경" in result.stdout
+    mock_loader_instance.save.assert_called_once()
 
 
 def test_plan_get__when_file_not_found__shows_error() -> None:
@@ -426,3 +429,140 @@ def test_plan_get_task__when_no_filter_specified__prints_full_task() -> None:
     # then
     assert result.exit_code == 0
     mock_print_task.assert_called_once_with(mock_task)
+
+
+def test_plan_set_task_status_recursive__when_task_has_children__updates_all() -> None:
+    # given
+    child1 = Todo(
+        id="1.1", title="Child 1", status=TodoStatus.pending, created_at="2025-01-01", updated_at="2025-01-01"
+    )
+    child2 = Todo(
+        id="1.2", title="Child 2", status=TodoStatus.pending, created_at="2025-01-01", updated_at="2025-01-01"
+    )
+    parent = Todo(
+        id="1",
+        title="Parent",
+        status=TodoStatus.in_progress,
+        created_at="2025-01-01",
+        updated_at="2025-01-01",
+        children=[child1, child2],
+    )
+    mock_plan = MagicMock(spec=WorkPlan)
+    mock_plan.todos = [parent]
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+            mock_loader_instance = MagicMock()
+            mock_loader_instance.load.return_value = mock_plan
+            mock_loader.return_value = mock_loader_instance
+
+            mock_navigator = MagicMock(spec=PlanNavigator)
+            mock_navigator.find_todo_by_id.return_value = parent
+            mock_navigator.get_all_descendants.return_value = [child1, child2]
+            mock_navigator_class.return_value = mock_navigator
+
+            result = runner.invoke(app, ["plan", "set", "task-status", "1", "--status", "completed", "--recursive"])
+
+    # then
+    assert result.exit_code == 0
+    assert "3개 태스크 상태 변경" in result.stdout
+    mock_loader_instance.save.assert_called_once()
+
+
+def test_plan_set_verification__when_verification_exists__updates_status() -> None:
+    # given
+    verification = VerificationItem(
+        id="v1",
+        description="Test verification",
+        input=CommandInput(type="command", command="pytest"),
+        verify=NoneVerify(type="none"),
+        completed=False,
+    )
+    mock_task = Todo(
+        id="1",
+        title="Test Task",
+        status=TodoStatus.pending,
+        created_at="2025-01-01",
+        updated_at="2025-01-01",
+        verification_spec=[verification],
+    )
+    mock_plan = MagicMock(spec=WorkPlan)
+    mock_plan.todos = [mock_task]
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+            mock_loader_instance = MagicMock()
+            mock_loader_instance.load.return_value = mock_plan
+            mock_loader.return_value = mock_loader_instance
+
+            mock_navigator = MagicMock(spec=PlanNavigator)
+            mock_navigator.find_todo_by_id.return_value = mock_task
+            mock_navigator_class.return_value = mock_navigator
+
+            result = runner.invoke(app, ["plan", "set-verification", "1", "v1", "--completed"])
+
+    # then
+    assert result.exit_code == 0
+    assert "완료" in result.stdout
+    mock_loader_instance.save.assert_called_once()
+
+
+def test_plan_set_verification__when_verification_not_found__shows_error() -> None:
+    # given
+    mock_task = Todo(
+        id="1", title="Test Task", status=TodoStatus.pending, created_at="2025-01-01", updated_at="2025-01-01"
+    )
+    mock_plan = MagicMock(spec=WorkPlan)
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+            mock_loader_instance = MagicMock()
+            mock_loader_instance.load.return_value = mock_plan
+            mock_loader.return_value = mock_loader_instance
+
+            mock_navigator = MagicMock(spec=PlanNavigator)
+            mock_navigator.find_todo_by_id.return_value = mock_task
+            mock_navigator_class.return_value = mock_navigator
+
+            result = runner.invoke(app, ["plan", "set-verification", "1", "nonexistent", "--completed"])
+
+    # then
+    assert result.exit_code == 1
+    assert "검증 ID를 찾을 수 없습니다" in result.stdout
+
+
+def test_plan_check__when_task_exists__prints_report() -> None:
+    # given
+
+    mock_report = CompletionReport(
+        task_id="1",
+        task_status=TodoStatus.in_progress,
+        all_children_completed=False,
+        children_summary={"completed": 1, "in_progress": 1, "pending": 0},
+        all_verifications_completed=True,
+        verification_summary={"completed": 2, "total": 2},
+        can_complete=False,
+    )
+    mock_plan = MagicMock(spec=WorkPlan)
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+            with patch("sisyphus.cli.print_completion_report") as mock_print_report:
+                mock_loader_instance = MagicMock()
+                mock_loader_instance.load.return_value = mock_plan
+                mock_loader.return_value = mock_loader_instance
+
+                mock_navigator = MagicMock(spec=PlanNavigator)
+                mock_navigator.check_task_completion.return_value = mock_report
+                mock_navigator_class.return_value = mock_navigator
+
+                result = runner.invoke(app, ["plan", "check", "1"])
+
+    # then
+    assert result.exit_code == 0
+    mock_navigator.check_task_completion.assert_called_once_with("1")
+    mock_print_report.assert_called_once_with(mock_report)

@@ -689,3 +689,171 @@ async def test_get_task_verification__when_task_not_found__raises_value_error() 
     # when & then
     with pytest.raises(ValueError, match="작업 ID를 찾을 수 없습니다: 999"):
         navigator.get_task_verification("999")
+
+
+async def test_check_task_completion__when_all_completed__returns_can_complete_true() -> None:
+    # given - all children completed, all verifications completed
+    todos = [
+        Todo(
+            id="1",
+            title="Parent",
+            status=TodoStatus.in_progress,
+            created_at="2025-01-01",
+            updated_at="2025-01-01",
+            children=[
+                Todo(
+                    id="1.1",
+                    title="Child 1",
+                    status=TodoStatus.completed,
+                    created_at="2025-01-01",
+                    updated_at="2025-01-01",
+                ),
+                Todo(
+                    id="1.2",
+                    title="Child 2",
+                    status=TodoStatus.completed,
+                    created_at="2025-01-01",
+                    updated_at="2025-01-01",
+                ),
+            ],
+            verification_spec=[
+                VerificationItem(
+                    id="v1",
+                    description="Test 1",
+                    input=CommandInput(type="command", command="ls"),
+                    verify=NoneVerify(type="none"),
+                    completed=True,
+                ),
+                VerificationItem(
+                    id="v2",
+                    description="Test 2",
+                    input=CommandInput(type="command", command="pwd"),
+                    verify=NoneVerify(type="none"),
+                    completed=True,
+                ),
+            ],
+        )
+    ]
+    plan = create_minimal_plan(todos=todos)
+    navigator = PlanNavigator(plan)
+
+    # when
+    report = navigator.check_task_completion("1")
+
+    # then
+    assert report.task_id == "1"
+    assert report.task_status == TodoStatus.in_progress
+    assert report.all_children_completed is True
+    assert report.children_summary["completed"] == 2
+    assert report.all_verifications_completed is True
+    assert report.verification_summary["completed"] == 2
+    assert report.verification_summary["total"] == 2
+    assert report.can_complete is True
+
+
+async def test_check_task_completion__when_children_pending__returns_can_complete_false() -> None:
+    # given - some children pending
+    todos = [
+        Todo(
+            id="1",
+            title="Parent",
+            status=TodoStatus.in_progress,
+            created_at="2025-01-01",
+            updated_at="2025-01-01",
+            children=[
+                Todo(
+                    id="1.1",
+                    title="Child 1",
+                    status=TodoStatus.completed,
+                    created_at="2025-01-01",
+                    updated_at="2025-01-01",
+                ),
+                Todo(
+                    id="1.2",
+                    title="Child 2",
+                    status=TodoStatus.pending,
+                    created_at="2025-01-01",
+                    updated_at="2025-01-01",
+                ),
+            ],
+        )
+    ]
+    plan = create_minimal_plan(todos=todos)
+    navigator = PlanNavigator(plan)
+
+    # when
+    report = navigator.check_task_completion("1")
+
+    # then
+    assert report.all_children_completed is False
+    assert report.children_summary["completed"] == 1
+    assert report.children_summary["pending"] == 1
+    assert report.can_complete is False
+
+
+async def test_check_task_completion__when_verification_incomplete__returns_can_complete_false() -> None:
+    # given - verifications not all completed
+    todos = [
+        Todo(
+            id="1",
+            title="Task",
+            status=TodoStatus.in_progress,
+            created_at="2025-01-01",
+            updated_at="2025-01-01",
+            verification_spec=[
+                VerificationItem(
+                    id="v1",
+                    description="Test 1",
+                    input=CommandInput(type="command", command="ls"),
+                    verify=NoneVerify(type="none"),
+                    completed=True,
+                ),
+                VerificationItem(
+                    id="v2",
+                    description="Test 2",
+                    input=CommandInput(type="command", command="pwd"),
+                    verify=NoneVerify(type="none"),
+                    completed=False,
+                ),
+            ],
+        )
+    ]
+    plan = create_minimal_plan(todos=todos)
+    navigator = PlanNavigator(plan)
+
+    # when
+    report = navigator.check_task_completion("1")
+
+    # then
+    assert report.all_verifications_completed is False
+    assert report.verification_summary["completed"] == 1
+    assert report.verification_summary["total"] == 2
+    assert report.can_complete is False
+
+
+async def test_check_task_completion__when_no_children_no_verification__returns_can_complete_true() -> None:
+    # given - leaf task with no children and no verification
+    todos = [
+        Todo(id="1", title="Task 1", status=TodoStatus.in_progress, created_at="2025-01-01", updated_at="2025-01-01")
+    ]
+    plan = create_minimal_plan(todos=todos)
+    navigator = PlanNavigator(plan)
+
+    # when
+    report = navigator.check_task_completion("1")
+
+    # then
+    assert report.all_children_completed is True
+    assert report.all_verifications_completed is True
+    assert report.can_complete is True
+
+
+async def test_check_task_completion__when_task_not_found__raises_value_error() -> None:
+    # given
+    todos = [Todo(id="1", title="Task 1", status=TodoStatus.pending, created_at="2025-01-01", updated_at="2025-01-01")]
+    plan = create_minimal_plan(todos=todos)
+    navigator = PlanNavigator(plan)
+
+    # when & then
+    with pytest.raises(ValueError, match="작업 ID를 찾을 수 없습니다: 999"):
+        navigator.check_task_completion("999")

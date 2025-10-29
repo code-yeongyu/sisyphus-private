@@ -25,9 +25,16 @@ from sisyphus.core.session import SessionStore
 from sisyphus.core.tasks import TaskValidator
 from sisyphus.ui.base import create_ui
 from sisyphus.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
-from sisyphus.utils.formatting import print_children, print_references, print_task, print_verification
+from sisyphus.utils.formatting import (
+    print_children,
+    print_completion_report,
+    print_references,
+    print_task,
+    print_verification,
+)
 from sisyphus.utils.git import detect_base_branch, find_commits_with_files, generate_rebase_guide, is_on_main_branch
 from sisyphus.utils.logging import LoggerFactory
+from sisyphus.utils.plan_types import Todo, TodoStatus
 from sisyphus.utils.theme import ThemeName, detect_system_theme
 
 if TYPE_CHECKING:
@@ -653,6 +660,7 @@ def set_plan_info(
     what: str = typer.Argument(..., help="What to set: current-task, task-status"),
     value: str = typer.Argument(..., help="Value to set"),
     status: str | None = typer.Option(None, "--status", help="Task status (for task-status)"),
+    recursive: bool = typer.Option(False, "--recursive", help="Apply to all children recursively"),
 ) -> None:
     """Update work plan information."""
     try:
@@ -676,9 +684,19 @@ def set_plan_info(
                     console.print(f"[red]작업 ID를 찾을 수 없습니다: {value}[/red]")
                     raise typer.Exit(1)
 
-                task.status = status  # type: ignore
+                # 재귀 옵션 처리
+                if recursive:
+                    descendants = navigator.get_all_descendants(value)
+                    task_ids_to_update = [value] + [d.id for d in descendants]
+                else:
+                    task_ids_to_update = [value]
+
+                # 모든 task 업데이트 (Pydantic immutable → 새 객체 생성)
+                updated_todos = _update_task_statuses(plan.todos, task_ids_to_update, status)
+                plan = plan.model_copy(update={"todos": updated_todos})
+
                 loader.save(plan)
-                console.print(f"[green]✓[/green] Task {value} status set to: {status}")
+                console.print(f"[green]✓[/green] {len(task_ids_to_update)}개 태스크 상태 변경: {status}")
 
             case _:
                 console.print(f"[red]Unknown option: {what}[/red]")
@@ -689,6 +707,135 @@ def set_plan_info(
         raise typer.Exit(1)
     except ValidationError as e:
         console.print(f"[red]YAML 검증 실패:[/red]\n{e}")
+        raise typer.Exit(1)
+
+
+def _update_task_statuses(todos: list[Todo], task_ids: list[str], new_status: str) -> list[Todo]:
+    """Recursively update task statuses (immutable).
+
+    Args:
+        todos: List of todos to update
+        task_ids: IDs of tasks to update
+        new_status: New status value
+
+    Returns:
+        Updated list of todos
+    """
+    result = []
+    for todo in todos:
+        if todo.id in task_ids:
+            # 상태 변경
+            updated = todo.model_copy(update={"status": TodoStatus(new_status)})
+            # children도 재귀 업데이트
+            if updated.children:
+                updated = updated.model_copy(
+                    update={"children": _update_task_statuses(updated.children, task_ids, new_status)}
+                )
+            result.append(updated)
+        else:
+            # children만 재귀 확인
+            if todo.children:
+                updated = todo.model_copy(
+                    update={"children": _update_task_statuses(todo.children, task_ids, new_status)}
+                )
+                result.append(updated)
+            else:
+                result.append(todo)
+    return result
+
+
+@plan_app.command(name="set-verification")
+def set_verification_status(
+    task_id: str = typer.Argument(..., help="Task ID"),
+    verify_id: str = typer.Argument(..., help="Verification item ID"),
+    completed: bool = typer.Option(True, "--completed/--not-completed", help="Mark as completed"),
+) -> None:
+    """Mark a verification item as completed."""
+    try:
+        loader = PlanLoader()
+        plan = loader.load()
+        navigator = PlanNavigator(plan)
+
+        # Task 찾기
+        task = navigator.find_todo_by_id(task_id)
+        if task is None:
+            console.print(f"[red]작업 ID를 찾을 수 없습니다: {task_id}[/red]")
+            raise typer.Exit(1)
+
+        # Verification item 찾기
+        verify_item = next((v for v in task.verification_spec if v.id == verify_id), None)
+        if verify_item is None:
+            console.print(f"[red]검증 ID를 찾을 수 없습니다: {verify_id}[/red]")
+            raise typer.Exit(1)
+
+        # 상태 업데이트 (immutable)
+        updated_todos = _update_verification_status(plan.todos, task_id, verify_id, completed)
+        plan = plan.model_copy(update={"todos": updated_todos})
+
+        loader.save(plan)
+        status_str = "완료" if completed else "미완료"
+        console.print(f"[green]✓[/green] 검증 항목 {verify_id} → {status_str}")
+
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+    except ValidationError as e:
+        console.print(f"[red]YAML 검증 실패:[/red]\n{e}")
+        raise typer.Exit(1)
+
+
+def _update_verification_status(todos: list[Todo], task_id: str, verify_id: str, completed: bool) -> list[Todo]:
+    """Recursively update verification item status (immutable).
+
+    Args:
+        todos: List of todos to search
+        task_id: Target task ID
+        verify_id: Verification item ID to update
+        completed: Completion status
+
+    Returns:
+        Updated list of todos
+    """
+    result = []
+    for todo in todos:
+        if todo.id == task_id:
+            # 해당 task의 verification_spec 업데이트
+            updated_specs = [
+                v.model_copy(update={"completed": completed}) if v.id == verify_id else v
+                for v in todo.verification_spec
+            ]
+            updated = todo.model_copy(update={"verification_spec": updated_specs})
+            result.append(updated)
+        else:
+            # children 재귀 확인
+            if todo.children:
+                updated = todo.model_copy(
+                    update={"children": _update_verification_status(todo.children, task_id, verify_id, completed)}
+                )
+                result.append(updated)
+            else:
+                result.append(todo)
+    return result
+
+
+@plan_app.command(name="check")
+def check_completion(
+    task_id: str = typer.Argument(..., help="Task ID to check"),
+) -> None:
+    """Check if task can be marked as completed (checks children + verifications)."""
+    try:
+        loader = PlanLoader()
+        plan = loader.load()
+        navigator = PlanNavigator(plan)
+
+        report = navigator.check_task_completion(task_id)
+        print_completion_report(report)
+
+    except ValueError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
         raise typer.Exit(1)
 
 

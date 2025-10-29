@@ -336,6 +336,7 @@ todos:
         verification_spec:
           - id: "verify_1_1_dirs"
             description: "디렉토리 구조 확인"
+            completed: false
             input:
               type: command
               command: "ls -la tetris/ tests/tetris/ docs/plans/"
@@ -359,6 +360,7 @@ todos:
         verification_spec:
           - id: "verify_1_2_commit"
             description: "커밋 확인"
+            completed: true
             input:
               type: command
               command: "git log -1 --oneline"
@@ -373,6 +375,7 @@ todos:
     verification_spec:
       - id: "verify_task_1_file_count"
         description: "전체 파일 개수 확인"
+        completed: false
         input:
           type: command
           command: "find tetris tests/tetris docs/plans -type f | wc -l"

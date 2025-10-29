@@ -82,11 +82,9 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 작업이 시작되지 않았습니다.
-  - 작업 시작 시 위의 `is_execution_started` 값을 TRUE로 변경하세요.
-  - 사용자가 명시적으로 "작업 시작"이라고 말하기 전까지는 절대 작업을 시작하지 마세요.
-  - **plan-reviewer로부터 OKAY를 받아도 절대 작업을 시작하지 마세요**
-  - 사용자가 명시적으로 "작업 시작"이라고 말하기 전까지는 절대 작업을 시작하지 마세요.
+- Task 8: 문서화 업데이트
+  - Subtasks: 8.1-8.4
+  - 상태: 진행 중
 
 # 필요한 배경 지식
 
@@ -298,13 +296,13 @@ sequenceDiagram
 
 # TODOs
 
-- [ ] 1. VerificationItem에 completed 필드 추가
+- [x] 1. VerificationItem에 completed 필드 추가
 
    **레퍼런스**:
    - `sisyphus/utils/plan_types.py` (line 118-123, `VerificationItem` 클래스)
    - Pydantic 기본값 문서: https://docs.pydantic.dev/latest/ ("default values" 검색)
 
-   - [ ] 1.1 plan_types.py의 VerificationItem 수정
+   - [x] 1.1 plan_types.py의 VerificationItem 수정
 
       **현재 상태**:
       ```python
@@ -329,7 +327,7 @@ sequenceDiagram
 
       **이해할 점**: 기본값 False → 기존 YAML 호환성 유지
 
-   - [ ] 1.2 기본 validation 테스트 추가
+   - [x] 1.2 기본 validation 테스트 추가
 
       **테스트 파일**: `sisyphus/utils/tests/test_plan_types.py`
 
@@ -367,7 +365,7 @@ sequenceDiagram
           assert item.completed is True
       ```
 
-   - [ ] 1.3 Lint 및 타입 체크
+   - [x] 1.3 Lint 및 타입 체크
 
       **검증**:
       ```bash
@@ -376,7 +374,7 @@ sequenceDiagram
       ```
       **예상 결과**: 0 errors
 
-   - [ ] 1.4 커밋
+   - [x] 1.4 커밋
 
       **커밋 명령어**:
       ```bash
@@ -384,20 +382,20 @@ sequenceDiagram
       git commit -m "feat: add completed field to VerificationItem for progress tracking"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `VerificationItem.completed` 필드 존재
-      - [ ] 기본값 False 설정
-      - [ ] 기존 YAML 로드 시 에러 없음 (PlanLoader 테스트로 확인)
-      - [ ] 테스트: `uv run pytest sisyphus/utils/tests/test_plan_types.py::test_verification_item_completed*` → PASSED
-      - [ ] Lint/타입 체크 통과
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `VerificationItem.completed` 필드 존재
+      - [x] 기본값 False 설정
+      - [x] 기존 YAML 로드 시 에러 없음 (PlanLoader 테스트로 확인)
+      - [x] 테스트: `uv run pytest sisyphus/utils/tests/test_plan_types.py::test_verification_item_completed*` → PASSED
+      - [x] Lint/타입 체크 통과
 
-- [ ] 2. Navigator에 필터링 메서드 추가
+- [x] 2. Navigator에 필터링 메서드 추가
 
    **레퍼런스**:
    - `sisyphus/core/plan_navigator.py` (line 6-125)
    - `sisyphus/utils/plan_types.py` (Todo, SimpleReference, VerificationItem)
 
-   - [ ] 2.1 PlanNavigator에 새 메서드 추가
+   - [x] 2.1 PlanNavigator에 새 메서드 추가
 
       **구현 내용**:
       ```python
@@ -440,7 +438,7 @@ sequenceDiagram
           return task.verification_spec
       ```
 
-   - [ ] 2.2 테스트 작성
+   - [x] 2.2 테스트 작성
 
       **테스트 파일**: `sisyphus/core/tests/test_plan_navigator.py`
 
@@ -496,33 +494,33 @@ sequenceDiagram
           assert verifications[0].id == "v1"
       ```
 
-   - [ ] 2.3 Lint 및 타입 체크
+   - [x] 2.3 Lint 및 타입 체크
 
       **검증**: `uv run ruff check sisyphus/core/plan_navigator.py && uv run basedpyright sisyphus/core/plan_navigator.py`
 
-   - [ ] 2.4 커밋
+   - [x] 2.4 커밋
 
       ```bash
       git add sisyphus/core/plan_navigator.py sisyphus/core/tests/test_plan_navigator.py
       git commit -m "feat: add filtering methods to PlanNavigator (references, children, verification)"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `get_task_references()` 동작
-      - [ ] `get_task_children()` 동작
-      - [ ] `get_all_descendants()` 재귀 동작
-      - [ ] `get_task_verification()` 동작
-      - [ ] 존재하지 않는 ID → ValueError
-      - [ ] 테스트: `uv run pytest sisyphus/core/tests/test_plan_navigator.py` → PASSED
-      - [ ] Lint/타입 체크 통과
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `get_task_references()` 동작
+      - [x] `get_task_children()` 동작
+      - [x] `get_all_descendants()` 재귀 동작
+      - [x] `get_task_verification()` 동작
+      - [x] 존재하지 않는 ID → ValueError
+      - [x] 테스트: `uv run pytest sisyphus/core/tests/test_plan_navigator.py` → PASSED
+      - [x] Lint/타입 체크 통과
 
-- [ ] 3. CLI get 명령어에 필터 옵션 추가
+- [x] 3. CLI get 명령어에 필터 옵션 추가
 
    **레퍼런스**:
    - `sisyphus/cli.py` (line 584-634, `@plan_app.command(name="get")`)
    - `sisyphus/utils/formatting.py` (print_task 함수)
 
-   - [ ] 3.1 cli.py의 get_plan_info 함수 수정
+   - [x] 3.1 cli.py의 get_plan_info 함수 수정
 
       **현재 상태**: `--current`, `--next`, `--id` 옵션만 존재
 
@@ -565,7 +563,7 @@ sequenceDiagram
               # ...
       ```
 
-   - [ ] 3.2 formatting.py에 새 출력 함수 추가
+   - [x] 3.2 formatting.py에 새 출력 함수 추가
 
       **파일**: `sisyphus/utils/formatting.py`
 
@@ -620,7 +618,7 @@ sequenceDiagram
           console.print(table)
       ```
 
-   - [ ] 3.3 CLI 테스트 작성
+   - [x] 3.3 CLI 테스트 작성
 
       **테스트 파일**: `sisyphus/tests/test_cli_plan.py`
 
@@ -658,31 +656,31 @@ sequenceDiagram
           assert "Verification Spec" in result.stdout
       ```
 
-   - [ ] 3.4 Lint 및 타입 체크
+   - [x] 3.4 Lint 및 타입 체크
 
-   - [ ] 3.5 커밋
+   - [x] 3.5 커밋
 
       ```bash
       git add sisyphus/cli.py sisyphus/utils/formatting.py sisyphus/tests/test_cli_plan.py
       git commit -m "feat: add filtering options to plan get task command"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `sisyphus plan get task --id 1 --show-references` 동작
-      - [ ] `sisyphus plan get task --id 1 --show-children` 동작
-      - [ ] `sisyphus plan get task --id 1 --show-verification` 동작
-      - [ ] Rich 포맷팅 적용 (테이블 출력)
-      - [ ] 빈 리스트 처리 (friendly 메시지)
-      - [ ] 테스트: `uv run pytest sisyphus/tests/test_cli_plan.py` → PASSED
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `sisyphus plan get task --id 1 --show-references` 동작
+      - [x] `sisyphus plan get task --id 1 --show-children` 동작
+      - [x] `sisyphus plan get task --id 1 --show-verification` 동작
+      - [x] Rich 포맷팅 적용 (테이블 출력)
+      - [x] 빈 리스트 처리 (friendly 메시지)
+      - [x] 테스트: `uv run pytest sisyphus/tests/test_cli_plan.py` → PASSED
 
-- [ ] 4. 재귀적 태스크 완료 처리
+- [x] 4. 재귀적 태스크 완료 처리
 
    **레퍼런스**:
    - `sisyphus/cli.py` (line 637-680, `@plan_app.command(name="set")`)
    - `sisyphus/core/plan_loader.py` (PlanLoader.save)
    - `sisyphus/core/plan_navigator.py` (find_todo_by_id, get_all_descendants)
 
-   - [ ] 4.1 cli.py의 set_plan_info 함수 수정
+   - [x] 4.1 cli.py의 set_plan_info 함수 수정
 
       **변경 내용**:
       ```python
@@ -754,7 +752,7 @@ sequenceDiagram
           return result
       ```
 
-   - [ ] 4.2 테스트 작성
+   - [x] 4.2 테스트 작성
 
       **테스트 파일**: `sisyphus/tests/test_cli_plan.py`
 
@@ -784,29 +782,29 @@ sequenceDiagram
           assert plan.todos[0].children[1].status == TodoStatus.completed
       ```
 
-   - [ ] 4.3 Lint 및 타입 체크
+   - [x] 4.3 Lint 및 타입 체크
 
-   - [ ] 4.4 커밋
+   - [x] 4.4 커밋
 
       ```bash
       git add sisyphus/cli.py sisyphus/tests/test_cli_plan.py
       git commit -m "feat: add recursive task status update with --recursive flag"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `sisyphus plan set task-status 1 --status completed --recursive` 동작
-      - [ ] 모든 descendants 상태 변경 확인
-      - [ ] YAML 파일 정상 저장
-      - [ ] 재로드 후 상태 유지
-      - [ ] 테스트: `uv run pytest sisyphus/tests/test_cli_plan.py::test_plan_set_task_status_recursive` → PASSED
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `sisyphus plan set task-status 1 --status completed --recursive` 동작
+      - [x] 모든 descendants 상태 변경 확인
+      - [x] YAML 파일 정상 저장
+      - [x] 재로드 후 상태 유지
+      - [x] 테스트: `uv run pytest sisyphus/tests/test_cli_plan.py::test_plan_set_task_status_recursive` → PASSED
 
-- [ ] 5. 검증항목 개별 완료 처리
+- [x] 5. 검증항목 개별 완료 처리
 
    **레퍼런스**:
    - `sisyphus/cli.py` (plan_app)
    - `sisyphus/core/plan_navigator.py`
 
-   - [ ] 5.1 새 CLI 명령어 추가: set verification
+   - [x] 5.1 새 CLI 명령어 추가: set verification
 
       **구현**:
       ```python
@@ -878,7 +876,7 @@ sequenceDiagram
           return result
       ```
 
-   - [ ] 5.2 테스트 작성
+   - [x] 5.2 테스트 작성
 
       **테스트 케이스**:
       ```python
@@ -916,28 +914,28 @@ sequenceDiagram
           assert "검증 ID를 찾을 수 없습니다" in result.stdout
       ```
 
-   - [ ] 5.3 Lint 및 타입 체크
+   - [x] 5.3 Lint 및 타입 체크
 
-   - [ ] 5.4 커밋
+   - [x] 5.4 커밋
 
       ```bash
       git add sisyphus/cli.py sisyphus/tests/test_cli_plan.py
       git commit -m "feat: add set-verification command for individual verification tracking"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `sisyphus plan set-verification 1 v1 --completed` 동작
-      - [ ] YAML 파일에 completed 필드 저장
-      - [ ] 존재하지 않는 verify_id → 명확한 에러
-      - [ ] 테스트: `uv run pytest sisyphus/tests/test_cli_plan.py::test_plan_set_verification*` → PASSED
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `sisyphus plan set-verification 1 v1 --completed` 동작
+      - [x] YAML 파일에 completed 필드 저장
+      - [x] 존재하지 않는 verify_id → 명확한 에러
+      - [x] 테스트: `uv run pytest sisyphus/tests/test_cli_plan.py::test_plan_set_verification*` → PASSED
 
-- [ ] 6. 완료 여부 종합 리포트 생성
+- [x] 6. 완료 여부 종합 리포트 생성
 
    **레퍼런스**:
    - `sisyphus/core/plan_navigator.py`
    - `sisyphus/utils/formatting.py`
 
-   - [ ] 6.1 PlanNavigator에 완료 체크 메서드 추가
+   - [x] 6.1 PlanNavigator에 완료 체크 메서드 추가
 
       **구현**:
       ```python
@@ -999,7 +997,7 @@ sequenceDiagram
           )
       ```
 
-   - [ ] 6.2 CLI 명령어 추가: check completion
+   - [x] 6.2 CLI 명령어 추가: check completion
 
       **구현**:
       ```python
@@ -1024,7 +1022,7 @@ sequenceDiagram
               raise typer.Exit(1)
       ```
 
-   - [ ] 6.3 formatting.py에 리포트 출력 함수 추가
+   - [x] 6.3 formatting.py에 리포트 출력 함수 추가
 
       **구현**:
       ```python
@@ -1067,7 +1065,7 @@ sequenceDiagram
           console.print(panel)
       ```
 
-   - [ ] 6.4 테스트 작성
+   - [x] 6.4 테스트 작성
 
       **테스트 케이스**:
       ```python
@@ -1121,27 +1119,27 @@ sequenceDiagram
           assert "검증 항목" in result.stdout
       ```
 
-   - [ ] 6.5 Lint 및 타입 체크
+   - [x] 6.5 Lint 및 타입 체크
 
-   - [ ] 6.6 커밋
+   - [x] 6.6 커밋
 
       ```bash
       git add sisyphus/core/plan_navigator.py sisyphus/utils/formatting.py sisyphus/cli.py sisyphus/tests/
       git commit -m "feat: add completion checker with comprehensive report (children + verification)"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `check_task_completion()` 동작
-      - [ ] CompletionReport 정확한 데이터 생성
-      - [ ] `sisyphus plan check 1` CLI 동작
-      - [ ] Rich 패널 출력 (차일드 요약, 검증 진행률)
-      - [ ] can_complete 로직 정확 (children AND verifications)
-      - [ ] 테스트: `uv run pytest sisyphus/core/tests/test_plan_navigator.py::test_check_task_completion*` → PASSED
-      - [ ] 테스트: `uv run pytest sisyphus/tests/test_cli_plan.py::test_plan_check_completion*` → PASSED
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `check_task_completion()` 동작
+      - [x] CompletionReport 정확한 데이터 생성
+      - [x] `sisyphus plan check 1` CLI 동작
+      - [x] Rich 패널 출력 (차일드 요약, 검증 진행률)
+      - [x] can_complete 로직 정확 (children AND verifications)
+      - [x] 테스트: `uv run pytest sisyphus/core/tests/test_plan_navigator.py::test_check_task_completion*` → PASSED
+      - [x] 테스트: `uv run pytest sisyphus/tests/test_cli_plan.py::test_plan_check_completion*` → PASSED
 
-- [ ] 7. 단위/통합 테스트 작성
+- [x] 7. 단위/통합 테스트 작성
 
-   - [ ] 7.1 Edge case 테스트 추가
+   - [x] 7.1 Edge case 테스트 추가
 
       **테스트 시나리오**:
       - VerificationItem.completed 기본값 False
@@ -1150,7 +1148,7 @@ sequenceDiagram
       - 재귀 업데이트 시 중복 방지
       - YAML 저장/재로드 후 데이터 유지
 
-   - [ ] 7.2 통합 테스트: end-to-end 시나리오
+   - [x] 7.2 통합 테스트: end-to-end 시나리오
 
       **시나리오**:
       1. YAML 로드
@@ -1162,23 +1160,23 @@ sequenceDiagram
       7. YAML 저장 후 재로드
       8. 데이터 유지 확인
 
-   - [ ] 7.3 전체 테스트 실행 및 커버리지 확인
+   - [x] 7.3 전체 테스트 실행 및 커버리지 확인
 
       **검증**: `uv run pytest --cov=sisyphus --cov-report=term-missing`
       **목표**: 새 코드 커버리지 ≥ 90%
 
-   - [ ] 7.4 커밋
+   - [x] 7.4 커밋
 
       ```bash
       git add sisyphus/tests/
       git commit -m "test: add comprehensive tests for task filtering and completion tracking"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] 모든 edge case 테스트 추가
-      - [ ] End-to-end 통합 테스트 통과
-      - [ ] 전체 테스트 실행: `uv run pytest` → PASSED
-      - [ ] 커버리지 ≥ 90%
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] 모든 edge case 테스트 추가
+      - [x] End-to-end 통합 테스트 통과
+      - [x] 전체 테스트 실행: `uv run pytest` → PASSED
+      - [x] 커버리지 ≥ 90%
 
 - [ ] 8. 문서화 업데이트
 

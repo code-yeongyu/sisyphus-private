@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import anyio
 
 from sisyphus.core.prompts import DEFAULT_EXECUTE_PROMPT, DEFAULT_VERIFY_PROMPT
-from sisyphus.utils.errors import RetryRequiredError, SessionLimitError, SessionResumeError
+from sisyphus.utils.errors import PromptTooLongError, RetryRequiredError, SessionLimitError, SessionResumeError
 from sisyphus.utils.session_limit import sleep_until_next_hour, sleep_until_reset
 
 if TYPE_CHECKING:
@@ -164,6 +164,15 @@ class ExecutionLoop:
                 await self.ui.show_status(
                     f"[Iteration {iteration}] Retry required ({error.__class__.__name__}): {error}"
                 )
+
+                # PromptTooLongError → delete session and start new one
+                if isinstance(error, PromptTooLongError):
+                    agent_type = type(self.execute_agent).__name__.lower().replace("agent", "")
+                    await self.session_store.delete_session(agent_type)
+                    await self.ui.show_status(
+                        f"Session '{agent_type}' cleared due to prompt length exceeded. Starting new session."
+                    )
+
                 should_retry_execute = True
 
             if should_retry_execute:

@@ -120,7 +120,7 @@ async def test_verify_phase__after_resume__continues_phase(
     mock_logger_factory: MockLoggerFactory,
 ) -> None:
     mock_verify_agent.messages_to_return = [
-        AgentMessage(role="assistant", content="Initial response"),
+        AgentMessage(role="assistant", content="Initial response\nFULLY_DONE = TRUE"),
     ]
     mock_ui.input_queue = ["resumed message"]
     mock_ui.should_interrupt = True
@@ -156,7 +156,7 @@ async def test_verify_phase__normal_completion__ends_phase(
 ) -> None:
     mock_verify_agent.messages_to_return = [
         AgentMessage(role="assistant", content="Response 1"),
-        AgentMessage(role="assistant", content="Response 2"),
+        AgentMessage(role="assistant", content="Response 2\nFULLY_DONE = TRUE"),
     ]
 
     loop = ExecutionLoop(
@@ -183,7 +183,9 @@ class MockAgentWithResume:
         self.sent_messages: list[str] = []
         self.closed = False
         self.messages_to_return: list[AgentMessage] = []
+        self.response_sequence: list[list[AgentMessage]] = []
         self.stream_call_count = 0
+        self.session_count = 0
 
     async def initialize(self) -> None:
         self.initialized = True
@@ -192,7 +194,8 @@ class MockAgentWithResume:
         if session_id is not None:
             self.session_id = session_id
         else:
-            self.session_id = "new-session-123"
+            self.session_id = f"session-{self.session_count}"
+            self.session_count += 1
         return self.session_id
 
     async def send(self, message: str) -> None:
@@ -201,9 +204,16 @@ class MockAgentWithResume:
     def stream(self) -> AsyncIterator[AgentMessage]:
         async def _generator() -> AsyncIterator[AgentMessage]:
             self.stream_call_count += 1
-            for msg in self.messages_to_return:
-                yield msg
-                await anyio.sleep(0.01)
+            if self.response_sequence:
+                session_idx = self.session_count - 1
+                if 0 <= session_idx < len(self.response_sequence):
+                    for msg in self.response_sequence[session_idx]:
+                        yield msg
+                        await anyio.sleep(0.01)
+            else:
+                for msg in self.messages_to_return:
+                    yield msg
+                    await anyio.sleep(0.01)
 
         return _generator()
 

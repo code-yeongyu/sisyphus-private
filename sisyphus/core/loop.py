@@ -636,6 +636,7 @@ class ExecutionLoop:
                         "- Say 'FULLY_DONE = FALSE' if any goals remain incomplete\n\n"
                         "Please respond with your judgment now."
                     )
+                    feedback_messages.clear()
                     await self.verify_agent.send(retry_message)
                     continue
                 elif not has_judgment:

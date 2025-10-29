@@ -105,9 +105,9 @@ async def test_unified__if_task_complete_but_not_fully_done__continues_with_feed
     ]
 
     verify_agent = MockAgent()
-    verify_agent.messages_to_return = [
-        AgentMessage(role="assistant", content="Needs improvement", metadata={}),
-        AgentMessage(role="assistant", content="Better! FULLY_DONE = TRUE", metadata={}),
+    verify_agent.response_sequence = [
+        [AgentMessage(role="assistant", content="Needs improvement\nFULLY_DONE = FALSE", metadata={})],
+        [AgentMessage(role="assistant", content="Better! FULLY_DONE = TRUE", metadata={})],
     ]
 
     ui = MockUI()
@@ -149,7 +149,9 @@ class MockAgent:
         self.sent_messages: list[str] = []
         self.closed = False
         self.messages_to_return: list[AgentMessage] = []
-        self.stream_call_count = 0
+        self.response_sequence: list[list[AgentMessage]] = []
+        self.message_index = 0
+        self.session_count = 0
 
     async def initialize(self) -> None:
         self.initialized = True
@@ -158,19 +160,23 @@ class MockAgent:
         if session_id is not None:
             self.session_id = session_id
         else:
-            self.session_id = "new-session-123"
+            self.session_id = f"session-{self.session_count}"
+            self.session_count += 1
         return self.session_id
 
     async def send(self, message: str) -> None:
         self.sent_messages.append(message)
 
     def stream(self) -> AsyncIterator[AgentMessage]:
-        call_index = self.stream_call_count
-        self.stream_call_count += 1
-
         async def _generator() -> AsyncIterator[AgentMessage]:
-            if call_index < len(self.messages_to_return):
-                yield self.messages_to_return[call_index]
+            if self.response_sequence:
+                session_idx = self.session_count - 1
+                if 0 <= session_idx < len(self.response_sequence):
+                    for msg in self.response_sequence[session_idx]:
+                        yield msg
+            elif self.message_index < len(self.messages_to_return):
+                yield self.messages_to_return[self.message_index]
+                self.message_index += 1
 
         return _generator()
 
@@ -221,8 +227,6 @@ class MockSessionStore:
 
     async def list_sessions(self) -> dict[str, dict[str, str]]:
         return {k: {"session_id": v} for k, v in self.sessions.items()}
-
-
 
 
 class MockLoggerFactory:

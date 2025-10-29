@@ -44,7 +44,8 @@ async def test_execute__if_no_feedback_history__uses_original_extra() -> None:
     # when
     await loop._run_unified_mode(
         execute_prompt="Do the task",
-        execute_extra="Original extra content",        verify_extra=None,
+        execute_extra="Original extra content",
+        verify_extra=None,
     )
 
     # then
@@ -59,9 +60,10 @@ async def test_execute__if_feedback_history_exists__appends_feedback_section() -
     execute_agent = MockAgent()
     verify_agent = MockAgent()
 
-    verify_agent.messages_to_return = [
-        AgentMessage(role="assistant", content="Please fix the bug", metadata={}),
-        AgentMessage(role="assistant", content="FULLY_DONE = TRUE", metadata={}),
+    # First verify session returns feedback, second returns FULLY_DONE
+    verify_agent.response_sequence = [
+        [AgentMessage(role="assistant", content="Please fix the bug\nFULLY_DONE = FALSE", metadata={})],
+        [AgentMessage(role="assistant", content="FULLY_DONE = TRUE", metadata={})],
     ]
 
     ui = MockUI()
@@ -82,7 +84,8 @@ async def test_execute__if_feedback_history_exists__appends_feedback_section() -
     # when
     await loop._run_unified_mode(
         execute_prompt="Do the task",
-        execute_extra="Original extra",        verify_extra=None,
+        execute_extra="Original extra",
+        verify_extra=None,
     )
 
     # then
@@ -105,10 +108,10 @@ async def test_execute__if_multiple_feedbacks__includes_all_with_correct_numberi
     execute_agent = MockAgent()
     verify_agent = MockAgent()
 
-    verify_agent.messages_to_return = [
-        AgentMessage(role="assistant", content="First feedback", metadata={}),
-        AgentMessage(role="assistant", content="Second feedback", metadata={}),
-        AgentMessage(role="assistant", content="FULLY_DONE = TRUE", metadata={}),
+    verify_agent.response_sequence = [
+        [AgentMessage(role="assistant", content="First feedback\nFULLY_DONE = FALSE", metadata={})],
+        [AgentMessage(role="assistant", content="Second feedback\nFULLY_DONE = FALSE", metadata={})],
+        [AgentMessage(role="assistant", content="FULLY_DONE = TRUE", metadata={})],
     ]
 
     ui = MockUI()
@@ -129,7 +132,8 @@ async def test_execute__if_multiple_feedbacks__includes_all_with_correct_numberi
     # when
     await loop._run_unified_mode(
         execute_prompt="Do the task",
-        execute_extra=None,        verify_extra=None,
+        execute_extra=None,
+        verify_extra=None,
     )
 
     # then
@@ -156,7 +160,9 @@ class MockAgent:
         self.sent_messages: list[str] = []
         self.closed = False
         self.messages_to_return: list[AgentMessage] = []
+        self.response_sequence: list[list[AgentMessage]] = []
         self.message_index = 0
+        self.session_count = 0
 
     async def initialize(self) -> None:
         self.initialized = True
@@ -165,7 +171,8 @@ class MockAgent:
         if session_id is not None:
             self.session_id = session_id
         else:
-            self.session_id = f"session-{len(self.sent_messages)}"
+            self.session_id = f"session-{self.session_count}"
+            self.session_count += 1
         return self.session_id
 
     async def send(self, message: str) -> None:
@@ -173,7 +180,12 @@ class MockAgent:
 
     def stream(self) -> AsyncIterator[AgentMessage]:
         async def _generator() -> AsyncIterator[AgentMessage]:
-            if self.message_index < len(self.messages_to_return):
+            if self.response_sequence:
+                session_idx = self.session_count - 1
+                if 0 <= session_idx < len(self.response_sequence):
+                    for msg in self.response_sequence[session_idx]:
+                        yield msg
+            elif self.message_index < len(self.messages_to_return):
                 yield self.messages_to_return[self.message_index]
                 self.message_index += 1
 
@@ -226,8 +238,6 @@ class MockSessionStore:
 
     async def list_sessions(self) -> dict[str, dict[str, str]]:
         return {k: {"session_id": v} for k, v in self.sessions.items()}
-
-
 
 
 class MockLoggerFactory:

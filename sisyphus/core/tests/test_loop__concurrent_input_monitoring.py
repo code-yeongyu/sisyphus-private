@@ -15,7 +15,6 @@ from unittest.mock import MagicMock
 import anyio
 import pytest
 
-from sisyphus.core.loop import ExecutionLoop
 from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:
@@ -103,7 +102,7 @@ async def test_execute_phase__if_user_sends_message_during_agent_response__messa
         async def save_session(self, agent_type: str, session_id: str) -> None:
             pass
 
-    
+
 
 async def test_execute_phase__if_multiple_user_messages_sent__all_forwarded_in_order() -> None:
     """Test 3.1.2: Multiple messages sent consecutively → All forwarded in order."""
@@ -167,4 +166,3 @@ async def test_execute_phase__if_multiple_user_messages_sent__all_forwarded_in_o
         async def save_session(self, agent_type: str, session_id: str) -> None:
             pass
 
-    

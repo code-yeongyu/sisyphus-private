@@ -73,10 +73,10 @@ YAML 작업계획 시스템은 이미 구현되어 있고, 기본 조회/설정 
 - `sisyphus plan check completion <task_id>`: 완료 여부 종합 리포트 (차일드 상태, 검증 진행률)
 
 # 작업 시작 여부
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 모든 목표 달성 여부
-is_all_goals_accomplished = FALSE
+is_all_goals_accomplished = TRUE
 
 # 병렬 실행 요청 여부
 parallel_requested = FALSE
@@ -1178,9 +1178,9 @@ sequenceDiagram
       - [x] 전체 테스트 실행: `uv run pytest` → PASSED
       - [x] 커버리지 ≥ 90%
 
-- [ ] 8. 문서화 업데이트
+- [x] 8. 문서화 업데이트
 
-   - [ ] 8.1 README.md에 새 명령어 사용법 추가
+   - [x] 8.1 README.md에 새 명령어 사용법 추가
 
       **추가 내용**:
       ```markdown
@@ -1220,11 +1220,11 @@ sequenceDiagram
       ```
       ```
 
-   - [ ] 8.2 example-ai-todolist.yaml에 completed 필드 예시 추가
+   - [x] 8.2 example-ai-todolist.yaml에 completed 필드 예시 추가
 
       **수정 내용**: verification_spec에 completed: false/true 예시
 
-   - [ ] 8.3 CLI --help 문서화 확인
+   - [x] 8.3 CLI --help 문서화 확인
 
       **검증**:
       ```bash
@@ -1235,17 +1235,17 @@ sequenceDiagram
       sisyphus plan check --help
       ```
 
-   - [ ] 8.4 커밋
+   - [x] 8.4 커밋
 
       ```bash
       git add README.md example-ai-todolist.yaml
       git commit -m "docs: add documentation for task filtering and completion tracking features"
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] README 업데이트 완료
-      - [ ] example YAML 업데이트 완료
-      - [ ] --help 출력 확인 (모든 옵션 문서화)
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] README 업데이트 완료
+      - [x] example YAML 업데이트 완료
+      - [x] --help 출력 확인 (모든 옵션 문서화)
 
 # 성공 비전
 
@@ -1273,24 +1273,24 @@ sequenceDiagram
 
 # 최종 작업 검증 체크리스트
 
-- [ ] 1. **기능 동작 확인**
-  - [ ] `sisyphus plan get task --id 1 --show-references` → 정상 출력
-  - [ ] `sisyphus plan get task --id 1 --show-children` → 정상 출력
-  - [ ] `sisyphus plan get task --id 1 --show-verification` → 정상 출력
-  - [ ] `sisyphus plan set task-status 1 --status completed --recursive` → 차일드 포함 완료
-  - [ ] `sisyphus plan set-verification 1 v1 --completed` → 검증 완료 표시
-  - [ ] `sisyphus plan check 1` → 완료 여부 리포트 생성
+- [x] 1. **기능 동작 확인**
+  - [x] `sisyphus plan get task --id 1 --show-references` → 정상 출력 (테스트 통과)
+  - [x] `sisyphus plan get task --id 1 --show-children` → 정상 출력 (테스트 통과)
+  - [x] `sisyphus plan get task --id 1 --show-verification` → 정상 출력 (테스트 통과)
+  - [x] `sisyphus plan set task-status 1 --status completed --recursive` → 차일드 포함 완료 (테스트 통과)
+  - [x] `sisyphus plan set-verification 1 v1 --completed` → 검증 완료 표시 (테스트 통과)
+  - [x] `sisyphus plan check 1` → 완료 여부 리포트 생성 (테스트 통과)
 
-- [ ] 2. **잘못된 구현 방지**
-  - [ ] VerificationItem.completed 기본값 False → 기존 YAML 호환
-  - [ ] 재귀 업데이트 시 Pydantic immutable 패턴 준수
-  - [ ] 존재하지 않는 ID → 명확한 ValueError
+- [x] 2. **잘못된 구현 방지**
+  - [x] VerificationItem.completed 기본값 False → 기존 YAML 호환 (test_verification_item_completed_defaults_to_false 통과)
+  - [x] 재귀 업데이트 시 Pydantic immutable 패턴 준수 (_update_task_statuses, _update_verification_status 구현 확인)
+  - [x] 존재하지 않는 ID → 명확한 ValueError (모든 메서드에서 한글 에러 메시지 확인)
 
-- [ ] 3. **범위 준수 확인**
-  - [ ] 기존 CLI 명령어 영향 없음 (`sisyphus work` 정상 동작)
-  - [ ] PlanNavigator 기존 메서드 유지 (하위 호환)
+- [x] 3. **범위 준수 확인**
+  - [x] 기존 CLI 명령어 영향 없음 (`sisyphus work` 정상 동작 - 671 tests passed)
+  - [x] PlanNavigator 기존 메서드 유지 (하위 호환 - 기존 테스트 모두 통과)
 
-- [ ] 4. **기존 기능 회귀 테스트**
-  - [ ] `sisyphus plan get task --current/--next` 정상 동작
-  - [ ] `sisyphus plan set current-task` 정상 동작
-  - [ ] 기존 YAML 테스트 모두 통과
+- [x] 4. **기존 기능 회귀 테스트**
+  - [x] `sisyphus plan get task --current/--next` 정상 동작 (기존 테스트 통과)
+  - [x] `sisyphus plan set current-task` 정상 동작 (기존 테스트 통과)
+  - [x] 기존 YAML 테스트 모두 통과 (671 passed, 0 failed)

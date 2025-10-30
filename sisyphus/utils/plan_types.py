@@ -131,6 +131,7 @@ class FileReference(BaseModel):
     description: str
     retrieval: RetrievalSpec | None = None
     notes: str | None = None
+    id: str | None = None
 
 
 class URLReference(BaseModel):
@@ -139,6 +140,7 @@ class URLReference(BaseModel):
     description: str
     retrieval: RetrievalSpec | None = None
     notes: str | None = None
+    id: str | None = None
 
 
 class CodeSnippetReference(BaseModel):
@@ -146,12 +148,14 @@ class CodeSnippetReference(BaseModel):
     language: str
     description: str
     code: str
+    id: str | None = None
 
 
 class TextReference(BaseModel):
     type: Literal["text"] = "text"
     description: str
     content: str
+    id: str | None = None
 
 
 ReferenceSpec = Annotated[
@@ -179,6 +183,7 @@ class Todo(BaseModel):
     details: dict[str, Any] = {}
     verification_spec: list[VerificationItem] = []
     children: list[Todo] = []  # Recursive!
+    parallel_note: str | None = None
 
     @field_validator("id", mode="before")
     @classmethod

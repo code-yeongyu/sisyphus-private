@@ -393,7 +393,7 @@ class PlanLinter:
 
         ref_type = ref.get("type")
         if ref_type == "file":
-            allowed_fields = {"type", "path", "description", "retrieval", "notes"}
+            allowed_fields = {"type", "path", "description", "retrieval", "notes", "id"}
             self._check_extra_fields(ref, path, allowed_fields)
             self._validate_nested_required(ref, path, ["path", "description"])
             if "path" in ref:
@@ -401,7 +401,7 @@ class PlanLinter:
             if "description" in ref:
                 self._check_type(ref["description"], f"{path}.description", "string")
         elif ref_type == "url":
-            allowed_fields = {"type", "url", "description", "retrieval", "notes"}
+            allowed_fields = {"type", "url", "description", "retrieval", "notes", "id"}
             self._check_extra_fields(ref, path, allowed_fields)
             self._validate_nested_required(ref, path, ["url", "description"])
             if "url" in ref:
@@ -409,7 +409,7 @@ class PlanLinter:
             if "description" in ref:
                 self._check_type(ref["description"], f"{path}.description", "string")
         elif ref_type == "code_snippet":
-            allowed_fields = {"type", "language", "description", "code"}
+            allowed_fields = {"type", "language", "description", "code", "id"}
             self._check_extra_fields(ref, path, allowed_fields)
             self._validate_nested_required(ref, path, ["language", "description", "code"])
             if "language" in ref:
@@ -419,7 +419,7 @@ class PlanLinter:
             if "code" in ref:
                 self._check_type(ref["code"], f"{path}.code", "string")
         elif ref_type == "text":
-            allowed_fields = {"type", "description", "content"}
+            allowed_fields = {"type", "description", "content", "id"}
             self._check_extra_fields(ref, path, allowed_fields)
             self._validate_nested_required(ref, path, ["description", "content"])
             if "description" in ref:
@@ -585,6 +585,7 @@ class PlanLinter:
             "details",
             "verification_spec",
             "children",
+            "parallel_note",
         }
         self._check_extra_fields(todo, path, allowed_fields)
 

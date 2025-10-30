@@ -325,7 +325,7 @@ git log -10 --oneline
    - `print_verification()`: `sisyphus/utils/formatting.py:93-112`
    - `print_completion_report()`: `sisyphus/utils/formatting.py:115-150`
 
-   - [ ] 3.1 구현: `print_references()` 수정
+   - [x] 3.1 구현: `print_references()` 수정
 
       **패턴**: Task 2.1과 동일하게 format 파라미터 추가
 
@@ -336,7 +336,7 @@ git log -10 --oneline
         2. Type: url, URL: https://..., Description: ...
       ```
 
-   - [ ] 3.2 구현: `print_children()` 수정
+   - [x] 3.2 구현: `print_children()` 수정
 
       **Plain text 형식**:
       ```
@@ -345,7 +345,7 @@ git log -10 --oneline
         2. ID: 1.2, Title: ..., Status: completed
       ```
 
-   - [ ] 3.3 구현: `print_verification()` 수정
+   - [x] 3.3 구현: `print_verification()` 수정
 
       **Plain text 형식**:
       ```
@@ -354,7 +354,7 @@ git log -10 --oneline
         [✗] verify-2: Description text
       ```
 
-   - [ ] 3.4 구현: `print_completion_report()` 수정
+   - [x] 3.4 구현: `print_completion_report()` 수정
 
       **Plain text 형식** (Rich Panel 대신 인덴트된 텍스트):
       ```
@@ -375,7 +375,7 @@ git log -10 --oneline
         ✗ 완료 불가
       ```
 
-   - [ ] 3.5 수동 테스트: 모든 함수 plain text 출력 확인
+   - [x] 3.5 수동 테스트: 모든 함수 plain text 출력 확인
 
       **테스트 스크립트**:
       ```python
@@ -405,18 +405,18 @@ git log -10 --oneline
       print_completion_report(report, format=OutputFormat.PLAIN)
       ```
 
-   - [ ] 3.6 Lint 및 타입 체크
-      - [ ] `uv run ruff check sisyphus/utils/formatting.py` → 0 errors
-      - [ ] `uv run basedpyright sisyphus/utils/formatting.py` → 0 errors
+   - [x] 3.6 Lint 및 타입 체크
+      - [x] `uv run ruff check sisyphus/utils/formatting.py` → 0 errors
+      - [x] `uv run basedpyright sisyphus/utils/formatting.py` → 0 errors
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] 4개 함수 모두 `format` 파라미터 추가되었는가?
-      - [ ] 모든 함수의 기본값이 `OutputFormat.PLAIN`인가?
-      - [ ] Plain text 형식이 읽기 쉽고 구조화되어 있는가?
-      - [ ] Rich 포맷은 기존 동작 그대로 유지되는가?
-      - [ ] Python REPL 테스트로 모든 함수 확인했는가?
-      - [ ] Ruff check 통과?
-      - [ ] Basedpyright 통과?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] 4개 함수 모두 `format` 파라미터 추가되었는가?
+      - [x] 모든 함수의 기본값이 `OutputFormat.PLAIN`인가?
+      - [x] Plain text 형식이 읽기 쉽고 구조화되어 있는가?
+      - [x] Rich 포맷은 기존 동작 그대로 유지되는가?
+      - [x] Python REPL 테스트로 모든 함수 확인했는가?
+      - [x] Ruff check 통과?
+      - [x] Basedpyright 통과?
 
 
 - [x] 4. `cli.py`에 --rich 옵션 추가 및 format 전달
@@ -425,7 +425,7 @@ git log -10 --oneline
    - 명령어 정의: `sisyphus/cli.py:591-656` (search for `@plan_app.command("get")`)
    - Typer 옵션 패턴: `typer.Option()` 사용 예시들
 
-   - [ ] 4.1 구현: `get_plan_info()` 함수에 --rich 옵션 추가
+   - [x] 4.1 구현: `get_plan_info()` 함수에 --rich 옵션 추가
 
       **현재 시그니처** (sisyphus/cli.py:591-601):
       ```python
@@ -453,7 +453,7 @@ git log -10 --oneline
       output_format = OutputFormat.RICH if rich else OutputFormat.PLAIN
       ```
 
-   - [ ] 4.2 구현: print_* 함수 호출 시 format 전달
+   - [x] 4.2 구현: print_* 함수 호출 시 format 전달
 
       **수정 위치** (sisyphus/cli.py:630-640):
       ```python
@@ -470,13 +470,13 @@ git log -10 --oneline
       print_task(task, format=output_format)
       ```
 
-   - [ ] 4.3 구현: `check_completion()` 함수도 동일하게 수정
+   - [x] 4.3 구현: `check_completion()` 함수도 동일하게 수정
 
       **위치**: `sisyphus/cli.py:821-840` (search for `@plan_app.command("check")`)
       - `--rich` 옵션 추가
       - `print_completion_report(report, format=output_format)` 호출
 
-   - [ ] 4.4 수동 테스트: CLI 명령어로 옵션 동작 확인
+   - [x] 4.4 수동 테스트: CLI 명령어로 옵션 동작 확인
 
       **테스트 명령어들**:
       ```bash
@@ -504,17 +504,17 @@ git log -10 --oneline
       - --rich 옵션: 테이블 또는 Panel
       - 에러 없이 정상 동작
 
-   - [ ] 4.5 Lint 및 타입 체크
-      - [ ] `uv run ruff check sisyphus/cli.py` → 0 errors
-      - [ ] `uv run basedpyright sisyphus/cli.py` → 0 errors
+   - [x] 4.5 Lint 및 타입 체크
+      - [x] `uv run ruff check sisyphus/cli.py` → 0 errors
+      - [x] `uv run basedpyright sisyphus/cli.py` → 0 errors
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `get_plan_info()`에 `--rich` 옵션 추가되었는가?
-      - [ ] `check_completion()`에도 `--rich` 옵션 추가되었는가?
-      - [ ] 모든 `print_*` 호출에 `format=output_format` 전달되는가?
-      - [ ] CLI 수동 테스트로 plain/rich 모두 동작 확인했는가?
-      - [ ] Ruff check 통과?
-      - [ ] Basedpyright 통과?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `get_plan_info()`에 `--rich` 옵션 추가되었는가?
+      - [x] `check_completion()`에도 `--rich` 옵션 추가되었는가?
+      - [x] 모든 `print_*` 호출에 `format=output_format` 전달되는가?
+      - [x] CLI 수동 테스트로 plain/rich 모두 동작 확인했는가?
+      - [x] Ruff check 통과?
+      - [x] Basedpyright 통과?
 
 
 - [x] 5. 기존 테스트 수정 및 새 테스트 추가
@@ -523,14 +523,14 @@ git log -10 --oneline
    - 기존 테스트: `sisyphus/tests/test_cli_plan.py` (전체 파일)
    - CliRunner 패턴: `result = runner.invoke(app, ["plan", "get", ...])` 구조
 
-   - [ ] 5.1 기존 테스트 분석 및 업데이트 계획
+   - [x] 5.1 기존 테스트 분석 및 업데이트 계획
 
       **분석 내용**:
       - 현재 테스트는 Rich Table 출력 가정 (아마도)
       - Plain text가 기본값이므로 assertion 수정 필요
       - 예시: `assert "Task:" in result.stdout` 같은 텍스트 패턴 확인
 
-   - [ ] 5.2 구현: 기존 테스트를 plain text 기준으로 수정
+   - [x] 5.2 구현: 기존 테스트를 plain text 기준으로 수정
 
       **수정 대상 테스트들** (test_cli_plan.py):
       - `test_get_current_task_*`
@@ -552,7 +552,7 @@ git log -10 --oneline
       assert "  Title:" in result.stdout
       ```
 
-   - [ ] 5.3 구현: --rich 옵션 테스트 추가
+   - [x] 5.3 구현: --rich 옵션 테스트 추가
 
       **새 테스트 함수**:
       ```python
@@ -573,7 +573,7 @@ git log -10 --oneline
       - `test_get_task_references_with_rich__outputs_table`
       - `test_check_completion_with_rich__outputs_panel`
 
-   - [ ] 5.4 테스트 실행 및 검증
+   - [x] 5.4 테스트 실행 및 검증
 
       **실행 명령어**:
       ```bash
@@ -583,21 +583,21 @@ git log -10 --oneline
 
       **예상 결과**: 모든 테스트 PASSED
 
-   - [ ] 5.5 전체 테스트 스위트 실행 (회귀 테스트)
+   - [x] 5.5 전체 테스트 스위트 실행 (회귀 테스트)
 
       **실행 명령어**:
       ```bash
       uv run pytest . -x
       ```
 
-      **예상 결과**: 모든 테스트 PASSED (461 tests)
+      **예상 결과**: 모든 테스트 PASSED (675 tests)
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] 기존 테스트가 plain text 출력 기준으로 수정되었는가?
-      - [ ] --rich 옵션에 대한 새 테스트가 추가되었는가?
-      - [ ] `test_cli_plan.py` 단독 실행 → 모두 PASSED?
-      - [ ] 전체 테스트 스위트 실행 → 회귀 없음?
-      - [ ] Lint 및 타입 체크 통과?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] 기존 테스트가 plain text 출력 기준으로 수정되었는가?
+      - [x] --rich 옵션에 대한 새 테스트가 추가되었는가?
+      - [x] `test_cli_plan.py` 단독 실행 → 모두 PASSED?
+      - [x] 전체 테스트 스위트 실행 → 회귀 없음?
+      - [x] Lint 및 타입 체크 통과?
 
 
 - [x] 6. 통합 검증 및 커밋
@@ -605,7 +605,7 @@ git log -10 --oneline
    **Reference Sources**:
    - 커밋 메시지 스타일: `git log -10 --oneline` 참고
 
-   - [ ] 6.1 최종 수동 테스트: 모든 시나리오 동작 확인
+   - [x] 6.1 최종 수동 테스트: 모든 시나리오 동작 확인
 
       **테스트 시나리오**:
       ```bash
@@ -629,7 +629,7 @@ git log -10 --oneline
       - Rich: 테이블/Panel 포맷
       - 에러 없음
 
-   - [ ] 6.2 Lint 및 타입 체크 (전체 프로젝트)
+   - [x] 6.2 Lint 및 타입 체크 (전체 프로젝트)
 
       **실행 명령어**:
       ```bash
@@ -639,16 +639,16 @@ git log -10 --oneline
 
       **예상 결과**: 0 errors
 
-   - [ ] 6.3 전체 테스트 실행 (최종 회귀 테스트)
+   - [x] 6.3 전체 테스트 실행 (최종 회귀 테스트)
 
       **실행 명령어**:
       ```bash
       uv run pytest . -x
       ```
 
-      **예상 결과**: 461+ tests PASSED
+      **예상 결과**: 675 tests PASSED
 
-   - [ ] 6.4 Git 커밋 (변경사항 정리)
+   - [x] 6.4 Git 커밋 (변경사항 정리)
 
       **커밋 명령어**:
       ```bash
@@ -668,13 +668,13 @@ git log -10 --oneline
       git status  # clean working tree 확인
       ```
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] 모든 수동 테스트 시나리오 통과?
-      - [ ] Ruff check 전체 프로젝트 0 errors?
-      - [ ] Basedpyright 전체 프로젝트 0 errors?
-      - [ ] 전체 테스트 스위트 PASSED?
-      - [ ] Git 커밋 완료 (커밋 메시지 스타일 준수)?
-      - [ ] Working tree clean?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] 모든 수동 테스트 시나리오 통과?
+      - [x] Ruff check 전체 프로젝트 0 errors?
+      - [x] Basedpyright 전체 프로젝트 0 errors?
+      - [x] 전체 테스트 스위트 PASSED?
+      - [x] Git 커밋 완료 (커밋 메시지 스타일 준수)?
+      - [x] Working tree clean?
 
 # 성공 비전
 

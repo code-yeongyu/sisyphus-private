@@ -129,6 +129,7 @@ Complete schema definition for `ai-todolist.yaml` work plan files. This document
 | title | str | ✓ | - | Task title |
 | status | TodoStatus | ✓ | - | pending/in_progress/completed |
 | parallel_group | int \| None | - | None | Parallel group number |
+| parallel_note | str \| None | - | None | Notes about parallel execution |
 | created_at | str | ✓ | - | ISO 8601 format |
 | updated_at | str | ✓ | - | ISO 8601 format |
 | status_changed_at | str \| None | - | None | Status change timestamp |
@@ -309,6 +310,7 @@ Valid values: `"keywords"`, `"prompt"`
 | Field | Type | Required | Default |
 |-------|------|----------|---------|
 | type | Literal["file"] | - | "file" |
+| id | str \| None | - | None |
 | path | str | ✓ | - |
 | description | str | ✓ | - |
 | retrieval | RetrievalSpec \| None | - | None |
@@ -318,6 +320,7 @@ Valid values: `"keywords"`, `"prompt"`
 | Field | Type | Required | Default |
 |-------|------|----------|---------|
 | type | Literal["url"] | - | "url" |
+| id | str \| None | - | None |
 | url | str | ✓ | - |
 | description | str | ✓ | - |
 | retrieval | RetrievalSpec \| None | - | None |
@@ -327,6 +330,7 @@ Valid values: `"keywords"`, `"prompt"`
 | Field | Type | Required | Default |
 |-------|------|----------|---------|
 | type | Literal["code_snippet"] | - | "code_snippet" |
+| id | str \| None | - | None |
 | language | str | ✓ | - |
 | description | str | ✓ | - |
 | code | str | ✓ | - |
@@ -335,6 +339,7 @@ Valid values: `"keywords"`, `"prompt"`
 | Field | Type | Required | Default |
 |-------|------|----------|---------|
 | type | Literal["text"] | - | "text" |
+| id | str \| None | - | None |
 | description | str | ✓ | - |
 | content | str | ✓ | - |
 

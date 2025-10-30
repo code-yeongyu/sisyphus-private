@@ -162,11 +162,9 @@ echo "Work plan validation passed."
 
 ## 제한사항
 
-1. **ReferenceSpec에 id 필드 없음**: 현재 스키마에서는 ReferenceSpec (FileReference, URLReference, 등)에 `id` 필드가 정의되어 있지 않습니다. SimpleReference에서 ref_id로 참조하려면 스키마 수정이 필요합니다.
+1. **날짜 형식 검증 제외**: created_at, updated_at, timestamp 등의 날짜 필드는 타입(string)만 검증하며, ISO 8601 형식 여부는 Pydantic이 처리합니다.
 
-2. **날짜 형식 검증 제외**: created_at, updated_at, timestamp 등의 날짜 필드는 타입(string)만 검증하며, ISO 8601 형식 여부는 Pydantic이 처리합니다.
-
-3. **Discriminated Union의 type 필드**: InputSpec, VerifySpec, ReferenceSpec, RetrievalSpec는 type 필드가 필수이며, 누락 시 즉시 에러가 발생합니다.
+2. **Discriminated Union의 type 필드**: InputSpec, VerifySpec, ReferenceSpec, RetrievalSpec는 type 필드가 필수이며, 누락 시 즉시 에러가 발생합니다.
 
 ## 예시
 

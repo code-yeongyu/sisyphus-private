@@ -8,6 +8,7 @@ from typer.testing import CliRunner
 
 from sisyphus.cli import app
 from sisyphus.core.plan_navigator import CompletionReport, PlanNavigator
+from sisyphus.utils.formatting import OutputFormat
 from sisyphus.utils.plan_types import (
     CommandInput,
     NoneVerify,
@@ -93,7 +94,7 @@ def test_plan_get_task_id__when_task_exists__prints_task() -> None:
 
     # then
     assert result.exit_code == 0
-    mock_print_task.assert_called_once_with(mock_task)
+    mock_print_task.assert_called_once_with(mock_task, format=OutputFormat.PLAIN)
 
 
 def test_plan_get_task_id__when_task_not_found__shows_error() -> None:
@@ -313,7 +314,7 @@ def test_plan_get_task_show_references__when_task_has_references__prints_referen
     # then
     assert result.exit_code == 0
     mock_navigator.get_task_references.assert_called_once_with("1")
-    mock_print_references.assert_called_once_with(mock_refs)
+    mock_print_references.assert_called_once_with(mock_refs, format=OutputFormat.PLAIN)
 
 
 def test_plan_get_task_show_children__when_task_has_children__prints_children() -> None:
@@ -349,7 +350,7 @@ def test_plan_get_task_show_children__when_task_has_children__prints_children() 
     # then
     assert result.exit_code == 0
     mock_navigator.get_task_children.assert_called_once_with("1")
-    mock_print_children.assert_called_once_with(mock_children)
+    mock_print_children.assert_called_once_with(mock_children, format=OutputFormat.PLAIN)
 
 
 def test_plan_get_task_show_verification__when_task_has_verification__prints_verification() -> None:
@@ -398,7 +399,7 @@ def test_plan_get_task_show_verification__when_task_has_verification__prints_ver
     # then
     assert result.exit_code == 0
     mock_navigator.get_task_verification.assert_called_once_with("1")
-    mock_print_verification.assert_called_once_with(mock_verifications)
+    mock_print_verification.assert_called_once_with(mock_verifications, format=OutputFormat.PLAIN)
 
 
 def test_plan_get_task__when_no_filter_specified__prints_full_task() -> None:
@@ -428,7 +429,7 @@ def test_plan_get_task__when_no_filter_specified__prints_full_task() -> None:
 
     # then
     assert result.exit_code == 0
-    mock_print_task.assert_called_once_with(mock_task)
+    mock_print_task.assert_called_once_with(mock_task, format=OutputFormat.PLAIN)
 
 
 def test_plan_set_task_status_recursive__when_task_has_children__updates_all() -> None:
@@ -565,4 +566,4 @@ def test_plan_check__when_task_exists__prints_report() -> None:
     # then
     assert result.exit_code == 0
     mock_navigator.check_task_completion.assert_called_once_with("1")
-    mock_print_report.assert_called_once_with(mock_report)
+    mock_print_report.assert_called_once_with(mock_report, format=OutputFormat.PLAIN)

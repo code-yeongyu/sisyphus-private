@@ -26,6 +26,7 @@ from sisyphus.core.tasks import TaskValidator
 from sisyphus.ui.base import create_ui
 from sisyphus.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
 from sisyphus.utils.formatting import (
+    OutputFormat,
     print_children,
     print_completion_report,
     print_references,
@@ -598,8 +599,11 @@ def get_plan_info(
     show_children: bool = typer.Option(False, "--show-children", help="Show only children"),
     show_verification: bool = typer.Option(False, "--show-verification", help="Show only verification spec"),
     show_all: bool = typer.Option(False, "--show-all", help="Show complete task info (default)"),
+    rich: bool = typer.Option(False, "--rich", help="Use Rich table format (default: plain text)"),
 ) -> None:
     """Get information from work plan."""
+    output_format = OutputFormat.RICH if rich else OutputFormat.PLAIN
+
     try:
         loader = PlanLoader()
         plan = loader.load()
@@ -629,15 +633,15 @@ def get_plan_info(
 
                 if show_references:
                     refs = navigator.get_task_references(task.id)
-                    print_references(refs)
+                    print_references(refs, format=output_format)
                 elif show_children:
                     children = navigator.get_task_children(task.id)
-                    print_children(children)
+                    print_children(children, format=output_format)
                 elif show_verification:
                     verifications = navigator.get_task_verification(task.id)
-                    print_verification(verifications)
+                    print_verification(verifications, format=output_format)
                 else:
-                    print_task(task)
+                    print_task(task, format=output_format)
 
             case "reference":
                 console.print("[yellow]Reference lookup not yet implemented[/yellow]")
@@ -821,15 +825,18 @@ def _update_verification_status(todos: list[Todo], task_id: str, verify_id: str,
 @plan_app.command(name="check")
 def check_completion(
     task_id: str = typer.Argument(..., help="Task ID to check"),
+    rich: bool = typer.Option(False, "--rich", help="Use Rich table format (default: plain text)"),
 ) -> None:
     """Check if task can be marked as completed (checks children + verifications)."""
+    output_format = OutputFormat.RICH if rich else OutputFormat.PLAIN
+
     try:
         loader = PlanLoader()
         plan = loader.load()
         navigator = PlanNavigator(plan)
 
         report = navigator.check_task_completion(task_id)
-        print_completion_report(report)
+        print_completion_report(report, format=output_format)
 
     except ValueError as e:
         console.print(f"[red]{e}[/red]")

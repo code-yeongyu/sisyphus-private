@@ -36,10 +36,10 @@ sisyphus plan 명령어의 출력 포맷을 LLM-friendly한 plain text로 변경
 - **After**: Plain text가 기본, `--rich` 옵션으로 Rich Table 사용 가능
 
 # 작업 시작 여부
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 모든 목표 달성 여부
-is_all_goals_accomplished = FALSE
+is_all_goals_accomplished = TRUE
 
 # 병렬 실행 여부
 parallel_requested = FALSE
@@ -194,13 +194,13 @@ git log -10 --oneline
 
 # TODOs
 
-- [ ] 1. OutputFormat enum 추가 및 formatting.py 구조 개선
+- [x] 1. OutputFormat enum 추가 및 formatting.py 구조 개선
 
    **Reference Sources**:
    - 기존 코드: `sisyphus/utils/formatting.py:1-150` (현재 구현 파악)
    - Python enum 패턴: 표준 라이브러리 `enum.Enum` 사용
 
-   - [ ] 1.1 구현: `sisyphus/utils/formatting.py` 상단에 OutputFormat enum 추가
+   - [x] 1.1 구현: `sisyphus/utils/formatting.py` 상단에 OutputFormat enum 추가
 
       **구현 세부사항**:
       - 현재: Rich Table만 사용
@@ -214,7 +214,7 @@ git log -10 --oneline
         ```
       - 주의사항: 기존 import 구조 유지 (Rich 관련 import는 그대로)
 
-   - [ ] 1.2 테스트: Python REPL로 enum 정의 확인
+   - [x] 1.2 테스트: Python REPL로 enum 정의 확인
 
       **실행 명령**:
       ```bash
@@ -227,25 +227,25 @@ git log -10 --oneline
       OutputFormat.PLAIN OutputFormat.RICH
       ```
 
-   - [ ] 1.3 Lint 및 타입 체크
-      - [ ] `uv run ruff check sisyphus/utils/formatting.py` → 0 errors
-      - [ ] `uv run basedpyright sisyphus/utils/formatting.py` → 0 errors
+   - [x] 1.3 Lint 및 타입 체크
+      - [x] `uv run ruff check sisyphus/utils/formatting.py` → 0 errors
+      - [x] `uv run basedpyright sisyphus/utils/formatting.py` → 0 errors
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `OutputFormat` enum이 `sisyphus/utils/formatting.py`에 정의되었는가?
-      - [ ] `PLAIN`, `RICH` 멤버가 존재하는가?
-      - [ ] Python REPL 테스트로 import 성공 확인했는가?
-      - [ ] Ruff check 통과 (0 errors)?
-      - [ ] Basedpyright 통과 (0 errors)?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `OutputFormat` enum이 `sisyphus/utils/formatting.py`에 정의되었는가?
+      - [x] `PLAIN`, `RICH` 멤버가 존재하는가?
+      - [x] Python REPL 테스트로 import 성공 확인했는가?
+      - [x] Ruff check 통과 (0 errors)?
+      - [x] Basedpyright 통과 (0 errors)?
 
 
-- [ ] 2. `print_task()` 함수에 plain text 출력 로직 추가
+- [x] 2. `print_task()` 함수에 plain text 출력 로직 추가
 
    **Reference Sources**:
    - 기존 구현: `sisyphus/utils/formatting.py:13-42` (search for `def print_task`)
    - Rich Table 패턴: `Table()` 객체 생성 → `add_column()` → `add_row()` 구조
 
-   - [ ] 2.1 구현: `print_task()` 함수 수정
+   - [x] 2.1 구현: `print_task()` 함수 수정
 
       **현재 코드 구조** (sisyphus/utils/formatting.py:13-42):
       ```python
@@ -283,7 +283,7 @@ git log -10 --oneline
             console.print(table)
         ```
 
-   - [ ] 2.2 수동 테스트: Python REPL로 plain text 출력 확인
+   - [x] 2.2 수동 테스트: Python REPL로 plain text 출력 확인
 
       **테스트 스크립트**:
       ```python
@@ -303,21 +303,21 @@ git log -10 --oneline
 
       **예상 결과**: Plain은 인덴트된 텍스트, Rich는 테이블
 
-   - [ ] 2.3 Lint 및 타입 체크
-      - [ ] `uv run ruff check sisyphus/utils/formatting.py` → 0 errors
-      - [ ] `uv run basedpyright sisyphus/utils/formatting.py` → 0 errors
+   - [x] 2.3 Lint 및 타입 체크
+      - [x] `uv run ruff check sisyphus/utils/formatting.py` → 0 errors
+      - [x] `uv run basedpyright sisyphus/utils/formatting.py` → 0 errors
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `print_task()` 함수가 `format` 파라미터를 받는가?
-      - [ ] 기본값이 `OutputFormat.PLAIN`인가?
-      - [ ] `format==PLAIN`일 때 구조화된 plain text 출력되는가?
-      - [ ] `format==RICH`일 때 기존 테이블 출력되는가?
-      - [ ] Python REPL 테스트로 두 포맷 모두 확인했는가?
-      - [ ] Ruff check 통과?
-      - [ ] Basedpyright 통과?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `print_task()` 함수가 `format` 파라미터를 받는가?
+      - [x] 기본값이 `OutputFormat.PLAIN`인가?
+      - [x] `format==PLAIN`일 때 구조화된 plain text 출력되는가?
+      - [x] `format==RICH`일 때 기존 테이블 출력되는가?
+      - [x] Python REPL 테스트로 두 포맷 모두 확인했는가?
+      - [x] Ruff check 통과?
+      - [x] Basedpyright 통과?
 
 
-- [ ] 3. 나머지 출력 함수들에 plain text 로직 추가
+- [x] 3. 나머지 출력 함수들에 plain text 로직 추가
 
    **Reference Sources**:
    - `print_references()`: `sisyphus/utils/formatting.py:45-69`
@@ -419,7 +419,7 @@ git log -10 --oneline
       - [ ] Basedpyright 통과?
 
 
-- [ ] 4. `cli.py`에 --rich 옵션 추가 및 format 전달
+- [x] 4. `cli.py`에 --rich 옵션 추가 및 format 전달
 
    **Reference Sources**:
    - 명령어 정의: `sisyphus/cli.py:591-656` (search for `@plan_app.command("get")`)
@@ -517,7 +517,7 @@ git log -10 --oneline
       - [ ] Basedpyright 통과?
 
 
-- [ ] 5. 기존 테스트 수정 및 새 테스트 추가
+- [x] 5. 기존 테스트 수정 및 새 테스트 추가
 
    **Reference Sources**:
    - 기존 테스트: `sisyphus/tests/test_cli_plan.py` (전체 파일)
@@ -600,7 +600,7 @@ git log -10 --oneline
       - [ ] Lint 및 타입 체크 통과?
 
 
-- [ ] 6. 통합 검증 및 커밋
+- [x] 6. 통합 검증 및 커밋
 
    **Reference Sources**:
    - 커밋 메시지 스타일: `git log -10 --oneline` 참고

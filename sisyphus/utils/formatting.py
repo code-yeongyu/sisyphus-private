@@ -5,7 +5,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from sisyphus.core.plan_navigator import CompletionReport
-from sisyphus.utils.plan_types import SimpleReference, Todo, VerificationItem
+from sisyphus.utils.plan_types import ReferenceSpec, SimpleReference, Todo, VerificationItem
 
 console = Console()
 
@@ -20,39 +20,51 @@ def print_task(task: Todo) -> None:
     table.add_column("Field", style="cyan")
     table.add_column("Value", style="green")
 
-    table.add_row("ID", task.id)
+    table.add_row("ID", str(task.id))
     table.add_row("Title", task.title)
     table.add_row("Status", task.status.value)
     table.add_row("Created", task.created_at)
     table.add_row("Updated", task.updated_at)
 
     if task.references:
-        refs = ", ".join(ref.ref_id for ref in task.references)
-        table.add_row("References", refs)
+        ref_strs = []
+        for ref in task.references:
+            if isinstance(ref, SimpleReference):
+                ref_strs.append(ref.ref_id)
+            else:
+                ref_strs.append(f"{ref.type}: {getattr(ref, 'path', getattr(ref, 'url', ref.description))}")
+        table.add_row("References", ", ".join(ref_strs))
 
     if task.children:
-        children_ids = ", ".join(child.id for child in task.children)
+        children_ids = ", ".join(str(child.id) for child in task.children)
         table.add_row("Children", children_ids)
 
     console.print(table)
 
 
-def print_references(references: list[SimpleReference]) -> None:
+def print_references(references: list[ReferenceSpec | SimpleReference]) -> None:
     """Print references with Rich formatting.
 
     Args:
-        references: List of SimpleReference objects to print
+        references: List of ReferenceSpec or SimpleReference objects to print
     """
     if not references:
         console.print("[yellow]레퍼런스 없음[/yellow]")
         return
 
     table = Table(title="References")
-    table.add_column("Ref ID", style="cyan")
-    table.add_column("Note", style="green")
+    table.add_column("Type", style="cyan")
+    table.add_column("Info", style="green")
+    table.add_column("Description", style="yellow")
 
     for ref in references:
-        table.add_row(ref.ref_id, ref.note or "-")
+        if isinstance(ref, SimpleReference):
+            table.add_row("Simple Ref", ref.ref_id, ref.note or "-")
+        else:
+            info = getattr(ref, "path", getattr(ref, "url", getattr(ref, "code", "N/A")))
+            if len(info) > 50:
+                info = info[:47] + "..."
+            table.add_row(ref.type, info, ref.description)
 
     console.print(table)
 
@@ -73,7 +85,7 @@ def print_children(children: list[Todo]) -> None:
     table.add_column("Status", style="magenta")
 
     for child in children:
-        table.add_row(child.id, child.title, child.status.value)
+        table.add_row(str(child.id), child.title, child.status.value)
 
     console.print(table)
 

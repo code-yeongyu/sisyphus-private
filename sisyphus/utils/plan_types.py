@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # === Enums ===
@@ -168,17 +168,22 @@ class SimpleReference(BaseModel):
 
 # === Todo (Recursive - 모든 필드) ===
 class Todo(BaseModel):
-    id: str  # "1", "1.1", "1.1.1" (모두 string)
+    id: str | int  # "1", "1.1", "1.1.1" (모두 string) or integer
     title: str
     status: TodoStatus
     parallel_group: int | None = None
     created_at: str
     updated_at: str
     status_changed_at: str | None = None
-    references: list[SimpleReference] = []
+    references: list[ReferenceSpec | SimpleReference] = []
     details: dict[str, Any] = {}
     verification_spec: list[VerificationItem] = []
     children: list[Todo] = []  # Recursive!
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def convert_id_to_str(cls, v: str | int) -> str:
+        return str(v)
 
 
 # === Base Models ===

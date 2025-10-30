@@ -16,10 +16,12 @@ async def test_todo_id_must_be_string() -> None:
         "updated_at": "2025-01-01",
     }
 
-    # when & then
-    with pytest.raises(ValidationError) as exc:
-        Todo(**data)
-    assert "id" in str(exc.value)
+    # when
+    todo = Todo(**data)
+
+    # then
+    assert todo.id == "1"
+    assert isinstance(todo.id, str)
 
 
 async def test_workplan_loads_from_dict() -> None:

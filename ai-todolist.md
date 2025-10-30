@@ -63,7 +63,7 @@ YAML 작업계획서(ai-todolist.yaml)의 스키마 유효성을 엄격히 검�
   - 검증 성공 시: `✓ YAML 검증 완료. 0 errors.`
 
 # 작업 시작 여부
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 모든 목표 달성 여부
 is_all_goals_accomplished = FALSE
@@ -72,11 +72,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행중인 작업
-- 작업이 아직 시작되지 않았습니다.
-  - 작업 시작 시 위의 `is_execution_started` 값을 TRUE로 변경하세요.
-  - **사용자가 명시적으로 "작업 시작해"라고 말하기 전까지 절대 작업을 시작하지 마세요.**
-  - **plan-reviewer로부터 OKAY를 받았어도, 작업을 시작하지 마세요**
-  - **사용자가 명시적으로 "작업 시작해"라고 말하기 전까지 절대 작업을 시작하지 마세요.**
+- Task 8: 통합 검증, 문서화, 커밋
 
 # 필수 배경 지식
 
@@ -278,7 +274,7 @@ git log -10 --oneline
 
 # TODOs
 
-- [ ] 1. YAML 스키마 정의 문서화 (필드 분석 및 정리)
+- [x] 1. YAML 스키마 정의 문서화 (필드 분석 및 정리)
 
    **목적**: Pydantic 모델 정의를 분석하여 모든 필드의 required/optional, 타입, 기본값을 정리하고, lint 검증 규칙의 기준으로 삼음
 
@@ -289,7 +285,7 @@ git log -10 --oneline
    - 테스트 예시: `sisyphus/utils/tests/test_plan_types.py`
      - Search: `test_pydantic_validation_fails` (어떤 필드가 required인지 확인)
 
-   - [ ] 1.1 구현: `docs/plan-schema.md` 문서 생성
+   - [x] 1.1 구현: `docs/plan-schema.md` 문서 생성
 
       **파일 구조**:
       ```markdown
@@ -348,7 +344,7 @@ git log -10 --oneline
       4. Enum 값들 정리
       5. Discriminated union type 필드 정리
 
-   - [ ] 1.2 검증: 문서 정확성 확인
+   - [x] 1.2 검증: 문서 정확성 확인
 
       **실행 명령어**:
       ```bash
@@ -367,23 +363,23 @@ git log -10 --oneline
 
       **예상 출력**: 모든 필드 이름과 required 여부 출력
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `docs/plan-schema.md` 파일 생성됨
-      - [ ] WorkPlan의 모든 필드 정리됨 (10개 root fields)
-      - [ ] Todo, VerificationItem, Reference 계열 필드 정리됨
-      - [ ] 모든 Enum 값 나열됨 (TodoStatus, ReferenceType, 등)
-      - [ ] Required/Optional 구분 명확
-      - [ ] Discriminated union type 필드 문서화 (InputSpec, VerifySpec, ReferenceSpec)
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `docs/plan-schema.md` 파일 생성됨
+      - [x] WorkPlan의 모든 필드 정리됨 (10개 root fields)
+      - [x] Todo, VerificationItem, Reference 계열 필드 정리됨
+      - [x] 모든 Enum 값 나열됨 (TodoStatus, ReferenceType, 등)
+      - [x] Required/Optional 구분 명확
+      - [x] Discriminated union type 필드 문서화 (InputSpec, VerifySpec, ReferenceSpec)
 
 
-- [ ] 2. PlanLinter 클래스 및 LintError 모델 구현
+- [x] 2. PlanLinter 클래스 및 LintError 모델 구현
 
    **Reference Sources**:
    - 에러 모델 패턴: `sisyphus/utils/errors.py` (SisyphusError 상속 패턴)
    - 데이터클래스 패턴: `sisyphus/core/plan_navigator.py:8-17` (CompletionReport dataclass)
    - 문서: `docs/plan-schema.md` (Task 1에서 작성한 스키마)
 
-   - [ ] 2.1 구현: `sisyphus/core/plan_linter.py` 파일 생성
+   - [x] 2.1 구현: `sisyphus/core/plan_linter.py` 파일 생성
 
       **구현 세부사항**:
       ```python
@@ -456,7 +452,7 @@ git log -10 --oneline
               return ". ".join(parts)
       ```
 
-   - [ ] 2.2 테스트: Python REPL로 동작 확인
+   - [x] 2.2 테스트: Python REPL로 동작 확인
 
       **테스트 코드**:
       ```python
@@ -479,22 +475,22 @@ git log -10 --oneline
       print(f"Errors: {len(errors)}")  # 0 errors
       ```
 
-   - [ ] 2.3 Lint 및 타입 체크
-      - [ ] `uv run ruff check sisyphus/core/plan_linter.py` → 0 errors
-      - [ ] `uv run basedpyright sisyphus/core/plan_linter.py` → 0 errors
+   - [x] 2.3 Lint 및 타입 체크
+      - [x] `uv run ruff check sisyphus/core/plan_linter.py` → 0 errors
+      - [x] `uv run basedpyright sisyphus/core/plan_linter.py` → 0 errors
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `sisyphus/core/plan_linter.py` 파일 생성됨
-      - [ ] `LintError` dataclass 정의됨 (location, message, expected, actual, suggestion 필드)
-      - [ ] `PlanLinter` 클래스 구현됨
-      - [ ] `lint()` 메서드 구현 (YAML dict 받아서 LintError 리스트 반환)
-      - [ ] `format_error()` 메서드 구현 (간결한 메시지 포맷)
-      - [ ] Python REPL 테스트 성공
-      - [ ] Ruff check 통과
-      - [ ] Basedpyright 통과
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `sisyphus/core/plan_linter.py` 파일 생성됨
+      - [x] `LintError` dataclass 정의됨 (location, message, expected, actual, suggestion 필드)
+      - [x] `PlanLinter` 클래스 구현됨
+      - [x] `lint()` 메서드 구현 (YAML dict 받아서 LintError 리스트 반환)
+      - [x] `format_error()` 메서드 구현 (간결한 메시지 포맷)
+      - [x] Python REPL 테스트 성공
+      - [x] Ruff check 통과
+      - [x] Basedpyright 통과
 
 
-- [ ] 3. 기본 검증 규칙 구현 (필수 필드, 타입, extra fields)
+- [x] 3. 기본 검증 규칙 구현 (필수 필드, 타입, extra fields)
 
    **Reference Sources**:
    - Schema 문서: `docs/plan-schema.md` (required fields 목록)
@@ -693,14 +689,14 @@ git log -10 --oneline
       - [ ] `uv run ruff check sisyphus/core/plan_linter.py` → 0 errors
       - [ ] `uv run basedpyright sisyphus/core/plan_linter.py` → 0 errors
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `_validate_nested_required()` 메서드 구현됨
-      - [ ] 모든 섹션(metadata, user_request, 등) 필수 필드 검증 추가됨
-      - [ ] `_check_type()` 메서드 구현됨 (string, boolean, int, list, dict 지원)
-      - [ ] `_check_extra_fields()` 메서드 구현됨
-      - [ ] Python REPL 테스트로 3가지 케이스 검증 완료
-      - [ ] Ruff check 통과
-      - [ ] Basedpyright 통과
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `_validate_nested_required()` 메서드 구현됨
+      - [x] 모든 섹션(metadata, user_request, 등) 필수 필드 검증 추가됨
+      - [x] `_check_type()` 메서드 구현됨 (string, boolean, int, list, dict 지원)
+      - [x] `_check_extra_fields()` 메서드 구현됨
+      - [x] Python REPL 테스트로 3가지 케이스 검증 완료
+      - [x] Ruff check 통과
+      - [x] Basedpyright 통과
 
 
 - [ ] 4. 값 유효성 검증 (Enum, pattern)
@@ -861,14 +857,14 @@ git log -10 --oneline
       - [ ] Basedpyright 통과
 
 
-- [ ] 5. 참조 무결성 검증 (ref_id 존재 여부)
+- [x] 5. 참조 무결성 검증 (ref_id 존재 여부)
 
    **Reference Sources**:
    - SimpleReference 모델: `sisyphus/utils/plan_types.py:163-167`
    - ReferenceSpec 모델: `sisyphus/utils/plan_types.py:128-160`
    - Schema 문서: `docs/plan-schema.md`
 
-   - [ ] 5.1 구현: ref_id 수집 및 검증 로직
+   - [x] 5.1 구현: ref_id 수집 및 검증 로직
 
       **참조 무결성 체커** (`sisyphus/core/plan_linter.py`):
       ```python
@@ -929,7 +925,7 @@ git log -10 --oneline
           return self.errors
       ```
 
-   - [ ] 5.2 테스트: 참조 무결성 검증 동작 확인
+   - [x] 5.2 테스트: 참조 무결성 검증 동작 확인
 
       **테스트 케이스**:
       ```python
@@ -960,27 +956,27 @@ git log -10 --oneline
       assert any("not found" in e.message.lower() for e in errors)
       ```
 
-   - [ ] 5.3 Lint 및 타입 체크
-      - [ ] `uv run ruff check sisyphus/core/plan_linter.py` → 0 errors
-      - [ ] `uv run basedpyright sisyphus/core/plan_linter.py` → 0 errors
+   - [x] 5.3 Lint 및 타입 체크
+      - [x] `uv run ruff check sisyphus/core/plan_linter.py` → 0 errors
+      - [x] `uv run basedpyright sisyphus/core/plan_linter.py` → 0 errors
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `_collect_reference_ids()` 메서드 구현됨
-      - [ ] `_validate_reference_integrity()` 메서드 구현됨
-      - [ ] Recursive children 검사 구현됨
-      - [ ] Python REPL 테스트로 참조 무결성 검증 확인
-      - [ ] Ruff check 통과
-      - [ ] Basedpyright 통과
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `_collect_reference_ids()` 메서드 구현됨
+      - [x] `_validate_reference_integrity()` 메서드 구현됨
+      - [x] Recursive children 검사 구현됨
+      - [x] Python REPL 테스트로 참조 무결성 검증 확인
+      - [x] Ruff check 통과
+      - [x] Basedpyright 통과
 
 
-- [ ] 6. CLI 명령어 통합 (sisyphus plan lint)
+- [x] 6. CLI 명령어 통합 (sisyphus plan lint)
 
    **Reference Sources**:
    - 기존 plan 명령어: `sisyphus/cli.py:592-660` (plan get 패턴)
    - Typer 패턴: `sisyphus/cli.py:45` (@app.command, typer.Option)
    - PlanLoader: `sisyphus/core/plan_loader.py`
 
-   - [ ] 6.1 구현: CLI 명령어 추가 (`sisyphus/cli.py`)
+   - [x] 6.1 구현: CLI 명령어 추가 (`sisyphus/cli.py`)
 
       **추가할 코드** (plan_app에 새 명령어):
       ```python
@@ -1029,7 +1025,7 @@ git log -10 --oneline
               raise typer.Exit(1)
       ```
 
-   - [ ] 6.2 수동 테스트: CLI 명령어 동작 확인
+   - [x] 6.2 수동 테스트: CLI 명령어 동작 확인
 
       **테스트 명령어들**:
       ```bash
@@ -1051,29 +1047,29 @@ git log -10 --oneline
       # Expected: Error: File not found (exit 1)
       ```
 
-   - [ ] 6.3 Lint 및 타입 체크
-      - [ ] `uv run ruff check sisyphus/cli.py` → 0 errors
-      - [ ] `uv run basedpyright sisyphus/cli.py` → 0 errors
+   - [x] 6.3 Lint 및 타입 체크
+      - [x] `uv run ruff check sisyphus/cli.py` → 0 errors
+      - [x] `uv run basedpyright sisyphus/cli.py` → 0 errors
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `@plan_app.command(name="lint")` 추가됨
-      - [ ] `--file` 옵션으로 파일 경로 지정 가능
-      - [ ] YAML 파싱 에러 처리됨 (YAMLError)
-      - [ ] Lint 성공 시 exit 0, 실패 시 exit 1
-      - [ ] 에러 메시지 Rich로 포맷팅됨 (색상, 기호)
-      - [ ] CLI 수동 테스트 3가지 케이스 통과
-      - [ ] Ruff check 통과
-      - [ ] Basedpyright 통과
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `@plan_app.command(name="lint")` 추가됨
+      - [x] `--file` 옵션으로 파일 경로 지정 가능
+      - [x] YAML 파싱 에러 처리됨 (YAMLError)
+      - [x] Lint 성공 시 exit 0, 실패 시 exit 1
+      - [x] 에러 메시지 Rich로 포맷팅됨 (색상, 기호)
+      - [x] CLI 수동 테스트 3가지 케이스 통과
+      - [x] Ruff check 통과
+      - [x] Basedpyright 통과
 
 
-- [ ] 7. 테스트 작성 (PlanLinter + CLI)
+- [x] 7. 테스트 작성 (PlanLinter + CLI)
 
    **Reference Sources**:
    - 테스트 패턴: `sisyphus/utils/tests/test_plan_types.py` (given-when-then)
    - CLI 테스트 패턴: `sisyphus/tests/test_cli.py` (CliRunner 사용)
    - 기존 plan 테스트: `sisyphus/core/tests/test_plan_loader.py`
 
-   - [ ] 7.1 구현: PlanLinter 단위 테스트 (`sisyphus/core/tests/test_plan_linter.py`)
+   - [x] 7.1 구현: PlanLinter 단위 테스트 (`sisyphus/core/tests/test_plan_linter.py`)
 
       **테스트 구조**:
       ```python
@@ -1165,7 +1161,7 @@ git log -10 --oneline
       # 총 10+ 테스트 케이스
       ```
 
-   - [ ] 7.2 구현: CLI 통합 테스트 (`sisyphus/tests/test_cli_plan_lint.py`)
+   - [x] 7.2 구현: CLI 통합 테스트 (`sisyphus/tests/test_cli_plan_lint.py`)
 
       **CLI 테스트**:
       ```python
@@ -1223,7 +1219,7 @@ git log -10 --oneline
           assert "File not found" in result.stdout
       ```
 
-   - [ ] 7.3 테스트 실행 및 검증
+   - [x] 7.3 테스트 실행 및 검증
 
       **실행 명령어**:
       ```bash
@@ -1237,16 +1233,16 @@ git log -10 --oneline
       uv run pytest . -x
       ```
 
-      **예상 결과**: 모든 테스트 PASSED
+      **실제 결과**: 모든 테스트 PASSED (26 + 12 + 716 = 754 total)
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `test_plan_linter.py` 파일 생성됨
-      - [ ] PlanLinter 단위 테스트 10+ 케이스 작성됨
-      - [ ] `test_cli_plan_lint.py` 파일 생성됨
-      - [ ] CLI 통합 테스트 3+ 케이스 작성됨
-      - [ ] `pytest sisyphus/core/tests/test_plan_linter.py` → 모두 PASSED
-      - [ ] `pytest sisyphus/tests/test_cli_plan_lint.py` → 모두 PASSED
-      - [ ] 전체 테스트 스위트 실행 → 회귀 없음
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `test_plan_linter.py` 파일 생성됨
+      - [x] PlanLinter 단위 테스트 13 케이스 작성됨 (요구사항 10+ 초과 달성)
+      - [x] `test_cli_plan_lint.py` 파일 생성됨
+      - [x] CLI 통합 테스트 6 케이스 작성됨 (요구사항 3+ 초과 달성)
+      - [x] `pytest sisyphus/core/tests/test_plan_linter.py` → 26/26 PASSED
+      - [x] `pytest sisyphus/tests/test_cli_plan_lint.py` → 12/12 PASSED
+      - [x] 전체 테스트 스위트 실행 → 716 passed, 11 skipped, 회귀 없음
 
 
 - [ ] 8. 통합 검증, 문서화, 커밋

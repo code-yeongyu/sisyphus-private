@@ -567,3 +567,102 @@ def test_plan_check__when_task_exists__prints_report() -> None:
     assert result.exit_code == 0
     mock_navigator.check_task_completion.assert_called_once_with("1")
     mock_print_report.assert_called_once_with(mock_report, format=OutputFormat.PLAIN)
+
+
+def test_get_task_with_rich_option__prints_rich_table() -> None:
+    # given
+    mock_task = Todo(
+        id="1.1",
+        title="Test Task",
+        status=TodoStatus.pending,
+        created_at="2025-01-01",
+        updated_at="2025-01-01",
+    )
+    mock_plan = MagicMock(spec=WorkPlan)
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+            with patch("sisyphus.cli.print_task") as mock_print_task:
+                mock_loader_instance = MagicMock()
+                mock_loader_instance.load.return_value = mock_plan
+                mock_loader.return_value = mock_loader_instance
+
+                mock_navigator = MagicMock(spec=PlanNavigator)
+                mock_navigator.find_todo_by_id.return_value = mock_task
+                mock_navigator_class.return_value = mock_navigator
+
+                result = runner.invoke(app, ["plan", "get", "task", "--id", "1.1", "--rich"])
+
+    # then
+    assert result.exit_code == 0
+    mock_print_task.assert_called_once_with(mock_task, format=OutputFormat.RICH)
+
+
+def test_get_task_references_with_rich__prints_rich_table() -> None:
+    # given
+    mock_task = Todo(
+        id="1.1",
+        title="Test Task",
+        status=TodoStatus.pending,
+        created_at="2025-01-01",
+        updated_at="2025-01-01",
+    )
+    mock_refs = [
+        SimpleReference(ref_id="ref-1", note="First reference"),
+        SimpleReference(ref_id="ref-2", note="Second reference"),
+    ]
+    mock_plan = MagicMock(spec=WorkPlan)
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+            with patch("sisyphus.cli.print_task"):
+                with patch("sisyphus.cli.print_references") as mock_print_refs:
+                    mock_loader_instance = MagicMock()
+                    mock_loader_instance.load.return_value = mock_plan
+                    mock_loader.return_value = mock_loader_instance
+
+                    mock_navigator = MagicMock(spec=PlanNavigator)
+                    mock_navigator.find_todo_by_id.return_value = mock_task
+                    mock_navigator.get_task_references.return_value = mock_refs
+                    mock_navigator_class.return_value = mock_navigator
+
+                    result = runner.invoke(app, ["plan", "get", "task", "--id", "1.1", "--show-references", "--rich"])
+
+    # then
+    assert result.exit_code == 0
+    mock_print_refs.assert_called_once_with(mock_refs, format=OutputFormat.RICH)
+
+
+def test_check_completion_with_rich__prints_rich_panel() -> None:
+    # given
+    mock_report = CompletionReport(
+        task_id="1",
+        task_status=TodoStatus.in_progress,
+        all_children_completed=False,
+        children_summary={"completed": 1, "in_progress": 1, "pending": 0},
+        all_verifications_completed=True,
+        verification_summary={"completed": 2, "total": 2},
+        can_complete=False,
+    )
+    mock_plan = MagicMock(spec=WorkPlan)
+
+    # when
+    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+            with patch("sisyphus.cli.print_completion_report") as mock_print_report:
+                mock_loader_instance = MagicMock()
+                mock_loader_instance.load.return_value = mock_plan
+                mock_loader.return_value = mock_loader_instance
+
+                mock_navigator = MagicMock(spec=PlanNavigator)
+                mock_navigator.check_task_completion.return_value = mock_report
+                mock_navigator_class.return_value = mock_navigator
+
+                result = runner.invoke(app, ["plan", "check", "1", "--rich"])
+
+    # then
+    assert result.exit_code == 0
+    mock_navigator.check_task_completion.assert_called_once_with("1")
+    mock_print_report.assert_called_once_with(mock_report, format=OutputFormat.RICH)

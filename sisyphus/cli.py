@@ -15,10 +15,12 @@ import anyio
 import typer
 from pydantic import ValidationError
 from rich.console import Console
+from ruamel.yaml import YAML, YAMLError
 
 from sisyphus.agents.claude import ClaudeAgent
 from sisyphus.agents.opencode import OpenCodeAgent
 from sisyphus.core.loop import ExecutionLoop
+from sisyphus.core.plan_linter import PlanLinter
 from sisyphus.core.plan_loader import PlanLoader
 from sisyphus.core.plan_navigator import PlanNavigator
 from sisyphus.core.session import SessionStore
@@ -843,6 +845,46 @@ def check_completion(
         raise typer.Exit(1)
     except FileNotFoundError as e:
         console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+
+
+@plan_app.command(name="lint")
+def lint_plan(
+    file_path: Path = typer.Option(
+        Path("./ai-todolist.yaml"),
+        "--file",
+        "-f",
+        help="YAML file path to lint",
+    ),
+) -> None:
+    """Lint work plan YAML for schema validation."""
+    try:
+        yaml = YAML()
+        yaml.preserve_quotes = True
+
+        if not file_path.exists():
+            console.print(f"[red]Error: File not found: {file_path}[/red]")
+            raise typer.Exit(1)
+
+        with file_path.open("r", encoding="utf-8") as f:
+            yaml_data = yaml.load(f)
+
+        linter = PlanLinter({})
+        errors = linter.lint(yaml_data)
+
+        if errors:
+            console.print(f"[red]✗ Validation failed: {len(errors)} error(s)[/red]\n")
+            for error in errors:
+                console.print(f"  [red]•[/red] {linter.format_error(error)}")
+            raise typer.Exit(1)
+        else:
+            console.print("[green]✓ YAML validation passed. 0 errors.[/green]")
+
+    except YAMLError as e:
+        console.print(f"[red]YAML parsing error:[/red]\n{e}")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"[red]Unexpected error:[/red] {e}")
         raise typer.Exit(1)
 
 

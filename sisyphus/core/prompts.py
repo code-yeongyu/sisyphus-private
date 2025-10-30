@@ -53,7 +53,7 @@ When ALL tasks are truly completed and verified, you MUST do BOTH of these:
 You can also use this command to find unchecked checkboxes IN THE FILE:
 
 ```bash
-rg '- \\[ \\]' ai-todolist.md
+grep -n '\\- \\[ \\]' ai-todolist.md
 ```
 
 But if this returns 0 results, it does NOT necessarily mean you're done. Always check the

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 import time
 import traceback
 from datetime import UTC, datetime
@@ -682,6 +683,88 @@ def continue_work() -> None:
             for t in parallel_tasks:
                 console.print(f"  - Task {t.id}: {t.title}")
             console.print(f"\n[bold]→ Launch {len(parallel_tasks)} executor agents in parallel[/bold]\n")
+
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+    except ValueError as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@execute_phase_app.command(name="bash-verify")
+def bash_verify(task_id: str = typer.Argument(..., help="Task ID to verify")) -> None:
+    """Run bash verification for a task."""
+    try:
+        loader = PlanLoader()
+        plan = loader.load()
+        navigator = PlanNavigator(plan)
+
+        task = navigator.find_todo_by_id(task_id)
+        if task is None:
+            console.print(f"[red]Task not found: {task_id}[/red]")
+            raise typer.Exit(1)
+
+        if not task.verification_spec:
+            console.print(f"[yellow]No verification spec for task {task_id}[/yellow]")
+            raise typer.Exit(0)
+
+        all_passed = True
+        for verify_item in task.verification_spec:
+            if not verify_item.bash:
+                continue
+
+            for bash_spec in verify_item.bash:
+                console.print(f"Running: {bash_spec.execute}")
+                result = subprocess.run(bash_spec.execute, check=False, shell=True, capture_output=True, text=True)
+
+                if result.returncode == bash_spec.expected_exit_code:
+                    console.print("[green]✓ Passed[/green]")
+
+                    now = datetime.now(UTC).isoformat()
+
+                    def update_verification(todos: list[Todo]) -> list[Todo]:
+                        updated: list[Todo] = []
+                        for todo in todos:
+                            if todo.id == task_id:
+                                updated_specs = [
+                                    (
+                                        v.model_copy(
+                                            update={
+                                                "verified": True,
+                                                "verified_at": now,
+                                                "verification_evidence": f"Command succeeded: {bash_spec.execute}",
+                                            }
+                                        )
+                                        if v.id == verify_item.id
+                                        else v
+                                    )
+                                    for v in todo.verification_spec
+                                ]
+                                updated.append(todo.model_copy(update={"verification_spec": updated_specs}))
+                            elif todo.children:
+                                updated.append(
+                                    todo.model_copy(update={"children": update_verification(todo.children)})
+                                )
+                            else:
+                                updated.append(todo)
+                        return updated
+
+                    plan = plan.model_copy(update={"todos": update_verification(plan.todos)})
+                    loader.save(plan)
+                else:
+                    all_passed = False
+                    console.print("[red]✗ Failed[/red]")
+                    console.print(f"  Expected exit code: {bash_spec.expected_exit_code}")
+                    console.print(f"  Actual exit code: {result.returncode}")
+                    if result.stderr:
+                        console.print(f"  Stderr: {result.stderr}")
+
+        if all_passed:
+            console.print(f"\n[green]All bash verifications passed for task {task_id}[/green]")
+        else:
+            console.print(f"\n[red]Some verifications failed for task {task_id}[/red]")
+            raise typer.Exit(1)
 
     except FileNotFoundError as e:
         console.print(f"[red]{e}[/red]")

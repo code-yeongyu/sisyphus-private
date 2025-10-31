@@ -9,11 +9,8 @@ from enum import Enum
 from typing import Any
 
 from sisyphus.utils.plan_types import (
-    InputType,
-    ReferenceType,
     RetrievalType,
     TodoStatus,
-    VerifyType,
 )
 
 
@@ -233,7 +230,7 @@ class PlanLinter:
             )
 
     def _validate_discriminated_union_type(self, data: dict[str, Any], location: str, valid_types: list[str]) -> bool:
-        """Validate type field for discriminated unions (InputSpec, VerifySpec, ReferenceSpec).
+        """Validate type field for discriminated unions (ReferenceSpec, RetrievalSpec).
 
         Returns: True if type is valid, False if invalid (caller should skip further validation)
         """
@@ -249,7 +246,7 @@ class PlanLinter:
             return False
 
         if data["type"] not in valid_types:
-            # This will be caught by enum validation later
+            # This will be caught by literal validation later
             pass
 
         return True
@@ -286,15 +283,15 @@ class PlanLinter:
             self._check_type(user_req, "user_request", "dict")
             return
 
-        allowed_fields = {"original", "timestamp", "additional"}
+        allowed_fields = {"original", "created_at", "additional"}
         self._check_extra_fields(user_req, "user_request", allowed_fields)
 
-        self._validate_nested_required(user_req, "user_request", ["original", "timestamp"])
+        self._validate_nested_required(user_req, "user_request", ["original", "created_at"])
 
         if "original" in user_req:
             self._check_type(user_req["original"], "user_request.original", "string")
-        if "timestamp" in user_req:
-            self._check_type(user_req["timestamp"], "user_request.timestamp", "string")
+        if "created_at" in user_req:
+            self._check_type(user_req["created_at"], "user_request.created_at", "string")
         if "additional" in user_req:
             self._check_type(user_req["additional"], "user_request.additional", "list")
 
@@ -381,18 +378,26 @@ class PlanLinter:
                     self._validate_reference_spec(ref, f"required_background.references[{i}]")
 
     def _validate_reference_spec(self, ref: Any, path: str) -> None:
-        """Validate ReferenceSpec (discriminated union)."""
+        """Validate ReferenceItem (discriminated union) - v2.1."""
         if not isinstance(ref, dict):
             self._check_type(ref, path, "dict")
             return
 
-        # Validate discriminated union type field
-        valid_types = ["file", "url", "code_snippet", "text"]
+        # Validate discriminated union type field (v2.1: pointer, file, url, markdown)
+        valid_types = ["pointer", "file", "url", "markdown"]
         if not self._validate_discriminated_union_type(ref, path, valid_types):
             return
 
         ref_type = ref.get("type")
-        if ref_type == "file":
+        if ref_type == "pointer":
+            allowed_fields = {"type", "ref_id", "notes"}
+            self._check_extra_fields(ref, path, allowed_fields)
+            self._validate_nested_required(ref, path, ["ref_id"])
+            if "ref_id" in ref:
+                self._check_type(ref["ref_id"], f"{path}.ref_id", "string")
+            if "notes" in ref and ref["notes"] is not None:
+                self._check_type(ref["notes"], f"{path}.notes", "string")
+        elif ref_type == "file":
             allowed_fields = {"type", "path", "description", "retrieval", "notes", "id"}
             self._check_extra_fields(ref, path, allowed_fields)
             self._validate_nested_required(ref, path, ["path", "description"])
@@ -400,6 +405,8 @@ class PlanLinter:
                 self._check_type(ref["path"], f"{path}.path", "string")
             if "description" in ref:
                 self._check_type(ref["description"], f"{path}.description", "string")
+            if "notes" in ref and ref["notes"] is not None:
+                self._check_type(ref["notes"], f"{path}.notes", "string")
         elif ref_type == "url":
             allowed_fields = {"type", "url", "description", "retrieval", "notes", "id"}
             self._check_extra_fields(ref, path, allowed_fields)
@@ -408,17 +415,9 @@ class PlanLinter:
                 self._check_type(ref["url"], f"{path}.url", "string")
             if "description" in ref:
                 self._check_type(ref["description"], f"{path}.description", "string")
-        elif ref_type == "code_snippet":
-            allowed_fields = {"type", "language", "description", "code", "id"}
-            self._check_extra_fields(ref, path, allowed_fields)
-            self._validate_nested_required(ref, path, ["language", "description", "code"])
-            if "language" in ref:
-                self._check_type(ref["language"], f"{path}.language", "string")
-            if "description" in ref:
-                self._check_type(ref["description"], f"{path}.description", "string")
-            if "code" in ref:
-                self._check_type(ref["code"], f"{path}.code", "string")
-        elif ref_type == "text":
+            if "notes" in ref and ref["notes"] is not None:
+                self._check_type(ref["notes"], f"{path}.notes", "string")
+        elif ref_type == "markdown":
             allowed_fields = {"type", "description", "content", "id"}
             self._check_extra_fields(ref, path, allowed_fields)
             self._validate_nested_required(ref, path, ["description", "content"])
@@ -427,9 +426,17 @@ class PlanLinter:
             if "content" in ref:
                 self._check_type(ref["content"], f"{path}.content", "string")
 
-        # Validate type enum
-        if ref_type:
-            self._check_enum(ref_type, f"{path}.type", ReferenceType)
+        # Validate type literal (no enum in v2.1, just check valid_types)
+        if ref_type and ref_type not in valid_types:
+            self.errors.append(
+                LintError(
+                    location=f"{path}.type",
+                    message="Invalid type value",
+                    expected=f"one of {valid_types}",
+                    actual=str(ref_type),
+                    suggestion=f"Change to one of: {', '.join(valid_types)}",
+                )
+            )
 
         # Validate retrieval if present
         if "retrieval" in ref and ref["retrieval"] is not None:
@@ -622,26 +629,14 @@ class PlanLinter:
         if "status_changed_at" in todo and todo["status_changed_at"] is not None:
             self._check_type(todo["status_changed_at"], f"{path}.status_changed_at", "string")
 
-        # Validate references
+        # Validate references (v2.1: all references are ReferenceItem with type field)
         if "references" in todo:
             self._check_type(todo["references"], f"{path}.references", "list")
             if isinstance(todo["references"], list):
                 for i, ref in enumerate(todo["references"]):
                     ref_path = f"{path}.references[{i}]"
-                    if isinstance(ref, dict):
-                        # Check if it's SimpleReference or ReferenceSpec
-                        if "ref_id" in ref:
-                            # SimpleReference
-                            allowed_ref_fields = {"ref_id", "note"}
-                            self._check_extra_fields(ref, ref_path, allowed_ref_fields)
-                            self._validate_nested_required(ref, ref_path, ["ref_id"])
-                            if "ref_id" in ref:
-                                self._check_type(ref["ref_id"], f"{ref_path}.ref_id", "string")
-                            if "note" in ref and ref["note"] is not None:
-                                self._check_type(ref["note"], f"{ref_path}.note", "string")
-                        else:
-                            # ReferenceSpec
-                            self._validate_reference_spec(ref, ref_path)
+                    # All references are ReferenceItem (discriminated union with type field)
+                    self._validate_reference_spec(ref, ref_path)
 
         # Validate details
         if "details" in todo:
@@ -662,126 +657,138 @@ class PlanLinter:
                     self._validate_todo(child, f"{path}.children[{i}]")
 
     def _validate_verification_item(self, item: Any, path: str) -> None:
-        """Validate VerificationItem."""
+        """Validate VerificationItem - v2.1."""
         if not isinstance(item, dict):
             self._check_type(item, path, "dict")
             return
 
-        allowed_fields = {"id", "description", "input", "verify", "note", "completed"}
+        allowed_fields = {
+            "id",
+            "title",
+            "description",
+            "verified",
+            "verified_at",
+            "verification_evidence",
+            "orchestrator_manually_verified",
+            "manual_verification_evidence",
+            "bash",
+            "llm_judge",
+        }
         self._check_extra_fields(item, path, allowed_fields)
 
-        self._validate_nested_required(item, path, ["id", "description", "input", "verify"])
+        self._validate_nested_required(
+            item,
+            path,
+            ["id", "title", "description", "orchestrator_manually_verified", "manual_verification_evidence"],
+        )
 
+        # Type validation
         if "id" in item:
             self._check_type(item["id"], f"{path}.id", "string")
+        if "title" in item:
+            self._check_type(item["title"], f"{path}.title", "string")
         if "description" in item:
             self._check_type(item["description"], f"{path}.description", "string")
-        if "note" in item and item["note"] is not None:
-            self._check_type(item["note"], f"{path}.note", "string")
-        if "completed" in item:
-            self._check_type(item["completed"], f"{path}.completed", "boolean")
+        if "verified" in item:
+            self._check_type(item["verified"], f"{path}.verified", "boolean")
+        if "verified_at" in item and item["verified_at"] is not None:
+            self._check_type(item["verified_at"], f"{path}.verified_at", "string")
+        if "verification_evidence" in item and item["verification_evidence"] is not None:
+            self._check_type(item["verification_evidence"], f"{path}.verification_evidence", "string")
+        if "orchestrator_manually_verified" in item:
+            self._check_type(
+                item["orchestrator_manually_verified"], f"{path}.orchestrator_manually_verified", "boolean"
+            )
+        if "manual_verification_evidence" in item:
+            self._check_type(item["manual_verification_evidence"], f"{path}.manual_verification_evidence", "string")
 
-        # Validate input (InputSpec)
-        if "input" in item:
-            self._validate_input_spec(item["input"], f"{path}.input")
+        # Validate at least one of bash or llm_judge exists
+        has_bash = "bash" in item and item["bash"]
+        has_llm = "llm_judge" in item and item["llm_judge"]
+        if not has_bash and not has_llm:
+            self.errors.append(
+                LintError(
+                    location=path,
+                    message="bash or llm_judge is required",
+                    expected="at least one of bash or llm_judge",
+                    actual="neither present",
+                    suggestion="Add 'bash' or 'llm_judge' field",
+                )
+            )
 
-        # Validate verify (VerifySpec)
-        if "verify" in item:
-            self._validate_verify_spec(item["verify"], f"{path}.verify")
+        # Validate bash list
+        if has_bash:
+            self._validate_bash_list(item["bash"], f"{path}.bash")
 
-    def _validate_input_spec(self, input_data: Any, path: str) -> None:
-        """Validate InputSpec (discriminated union)."""
-        if not isinstance(input_data, dict):
-            self._check_type(input_data, path, "dict")
+        # Validate llm_judge list
+        if has_llm:
+            self._validate_llm_judge_list(item["llm_judge"], f"{path}.llm_judge")
+
+    def _validate_bash_list(self, bash_list: Any, path: str) -> None:
+        """Validate list of BashVerification."""
+        if not isinstance(bash_list, list):
+            self._check_type(bash_list, path, "list")
             return
 
-        valid_types = ["command", "prompt", "manual", "multi_command"]
-        if not self._validate_discriminated_union_type(input_data, path, valid_types):
+        for i, bash in enumerate(bash_list):
+            bash_path = f"{path}[{i}]"
+            if not isinstance(bash, dict):
+                self._check_type(bash, bash_path, "dict")
+                continue
+
+            allowed_fields = {"execute", "expected_stdout", "expected_stderr", "expected_exit_code", "notes"}
+            self._check_extra_fields(bash, bash_path, allowed_fields)
+            self._validate_nested_required(bash, bash_path, ["execute"])
+
+            if "execute" in bash:
+                self._check_type(bash["execute"], f"{bash_path}.execute", "string")
+            if "expected_stdout" in bash and bash["expected_stdout"] is not None:
+                self._check_type(bash["expected_stdout"], f"{bash_path}.expected_stdout", "string")
+            if "expected_stderr" in bash and bash["expected_stderr"] is not None:
+                self._check_type(bash["expected_stderr"], f"{bash_path}.expected_stderr", "string")
+            if "expected_exit_code" in bash:
+                self._check_type(bash["expected_exit_code"], f"{bash_path}.expected_exit_code", "int")
+            if "notes" in bash and bash["notes"] is not None:
+                self._check_type(bash["notes"], f"{bash_path}.notes", "string")
+
+    def _validate_llm_judge_list(self, llm_list: Any, path: str) -> None:
+        """Validate list of LLMJudgeVerification."""
+        if not isinstance(llm_list, list):
+            self._check_type(llm_list, path, "list")
             return
 
-        input_type = input_data.get("type")
-        if input_type == "command":
-            allowed_fields = {"type", "command", "capture_output"}
-            self._check_extra_fields(input_data, path, allowed_fields)
-            self._validate_nested_required(input_data, path, ["command"])
-            if "command" in input_data:
-                self._check_type(input_data["command"], f"{path}.command", "string")
-            if "capture_output" in input_data:
-                self._check_type(input_data["capture_output"], f"{path}.capture_output", "boolean")
-        elif input_type == "prompt":
-            allowed_fields = {"type", "prompt", "context"}
-            self._check_extra_fields(input_data, path, allowed_fields)
-            self._validate_nested_required(input_data, path, ["prompt"])
-            if "prompt" in input_data:
-                self._check_type(input_data["prompt"], f"{path}.prompt", "string")
-            if "context" in input_data:
-                self._check_type(input_data["context"], f"{path}.context", "dict")
-        elif input_type == "manual":
-            allowed_fields = {"type", "instructions"}
-            self._check_extra_fields(input_data, path, allowed_fields)
-            self._validate_nested_required(input_data, path, ["instructions"])
-            if "instructions" in input_data:
-                self._check_type(input_data["instructions"], f"{path}.instructions", "string")
-        elif input_type == "multi_command":
-            allowed_fields = {"type", "commands"}
-            self._check_extra_fields(input_data, path, allowed_fields)
-            self._validate_nested_required(input_data, path, ["commands"])
-            if "commands" in input_data:
-                self._check_type(input_data["commands"], f"{path}.commands", "list")
+        for i, llm in enumerate(llm_list):
+            llm_path = f"{path}[{i}]"
+            if not isinstance(llm, dict):
+                self._check_type(llm, llm_path, "dict")
+                continue
 
-        # Validate type enum
-        if input_type:
-            self._check_enum(input_type, f"{path}.type", InputType)
+            allowed_fields = {"by", "context_commands", "instruction"}
+            self._check_extra_fields(llm, llm_path, allowed_fields)
+            self._validate_nested_required(llm, llm_path, ["instruction"])
 
-    def _validate_verify_spec(self, verify_data: Any, path: str) -> None:
-        """Validate VerifySpec (discriminated union)."""
-        if not isinstance(verify_data, dict):
-            self._check_type(verify_data, path, "dict")
-            return
-
-        valid_types = ["programmatic", "llm_judge", "none", "prompt"]
-        if not self._validate_discriminated_union_type(verify_data, path, valid_types):
-            return
-
-        verify_type = verify_data.get("type")
-        if verify_type == "programmatic":
-            allowed_fields = {"type", "method", "expected"}
-            self._check_extra_fields(verify_data, path, allowed_fields)
-            self._validate_nested_required(verify_data, path, ["method", "expected"])
-            if "method" in verify_data:
-                self._check_type(verify_data["method"], f"{path}.method", "string")
-            # expected can be string or int
-            if "expected" in verify_data:
-                if not isinstance(verify_data["expected"], (str, int)):
+            # Validate by field (literal check)
+            if "by" in llm:
+                valid_by_values = ["orchestrator-agent", "external-agent"]
+                if llm["by"] not in valid_by_values:
                     self.errors.append(
                         LintError(
-                            location=f"{path}.expected",
-                            message="Type mismatch",
-                            expected="string or int",
-                            actual=type(verify_data["expected"]).__name__,
-                            suggestion="Change value to string or integer",
+                            location=f"{llm_path}.by",
+                            message="Invalid value",
+                            expected=f"one of {valid_by_values}",
+                            actual=str(llm["by"]),
+                            suggestion="Use 'orchestrator-agent' or 'external-agent'",
                         )
                     )
-        elif verify_type == "llm_judge":
-            allowed_fields = {"type", "criteria", "accept_if"}
-            self._check_extra_fields(verify_data, path, allowed_fields)
-            if "criteria" in verify_data:
-                self._check_type(verify_data["criteria"], f"{path}.criteria", "list")
-            if "accept_if" in verify_data:
-                self._check_type(verify_data["accept_if"], f"{path}.accept_if", "string")
-        elif verify_type == "none":
-            allowed_fields = {"type"}
-            self._check_extra_fields(verify_data, path, allowed_fields)
-        elif verify_type == "prompt":
-            allowed_fields = {"type", "prompt"}
-            self._check_extra_fields(verify_data, path, allowed_fields)
-            self._validate_nested_required(verify_data, path, ["prompt"])
-            if "prompt" in verify_data:
-                self._check_type(verify_data["prompt"], f"{path}.prompt", "string")
 
-        # Validate type enum
-        if verify_type:
-            self._check_enum(verify_type, f"{path}.type", VerifyType)
+            if "context_commands" in llm:
+                self._check_type(llm["context_commands"], f"{llm_path}.context_commands", "list")
+                if isinstance(llm["context_commands"], list):
+                    for j, cmd in enumerate(llm["context_commands"]):
+                        self._check_type(cmd, f"{llm_path}.context_commands[{j}]", "string")
+
+            if "instruction" in llm:
+                self._check_type(llm["instruction"], f"{llm_path}.instruction", "string")
 
     def _validate_success_vision(self, data: dict[str, Any]) -> None:
         """Validate success_vision section."""
@@ -850,7 +857,7 @@ class PlanLinter:
                         self._check_type(criterion["expected"], f"{criterion_path}.expected", "string")
 
     def _validate_final_verification(self, data: dict[str, Any]) -> None:
-        """Validate final_verification section."""
+        """Validate final_verification section - v2.1 (flattened structure)."""
         if "final_verification" not in data:
             return
         final_verification = data["final_verification"]
@@ -859,48 +866,86 @@ class PlanLinter:
             self._check_type(final_verification, "final_verification", "list")
             return
 
-        for i, category in enumerate(final_verification):
-            category_path = f"final_verification[{i}]"
-            if not isinstance(category, dict):
-                self._check_type(category, category_path, "dict")
+        # v2.1: flat list of FinalVerificationItem (each has category field)
+        for i, item in enumerate(final_verification):
+            item_path = f"final_verification[{i}]"
+            if not isinstance(item, dict):
+                self._check_type(item, item_path, "dict")
                 continue
 
-            allowed_category_fields = {"category", "items"}
-            self._check_extra_fields(category, category_path, allowed_category_fields)
+            allowed_item_fields = {
+                "id",
+                "title",
+                "category",
+                "description",
+                "verified",
+                "verified_at",
+                "verification_evidence",
+                "orchestrator_manually_verified",
+                "manual_verification_evidence",
+                "bash",
+                "llm_judge",
+            }
+            self._check_extra_fields(item, item_path, allowed_item_fields)
 
-            self._validate_nested_required(category, category_path, ["category", "items"])
+            self._validate_nested_required(
+                item,
+                item_path,
+                [
+                    "id",
+                    "title",
+                    "category",
+                    "description",
+                    "orchestrator_manually_verified",
+                    "manual_verification_evidence",
+                ],
+            )
 
-            if "category" in category:
-                self._check_type(category["category"], f"{category_path}.category", "string")
+            # Type validation
+            if "id" in item:
+                self._check_type(item["id"], f"{item_path}.id", "string")
+            if "title" in item:
+                self._check_type(item["title"], f"{item_path}.title", "string")
+            if "category" in item:
+                self._check_type(item["category"], f"{item_path}.category", "string")
+            if "description" in item:
+                self._check_type(item["description"], f"{item_path}.description", "string")
+            if "verified" in item:
+                self._check_type(item["verified"], f"{item_path}.verified", "boolean")
+            if "verified_at" in item and item["verified_at"] is not None:
+                self._check_type(item["verified_at"], f"{item_path}.verified_at", "string")
+            if "verification_evidence" in item and item["verification_evidence"] is not None:
+                self._check_type(item["verification_evidence"], f"{item_path}.verification_evidence", "string")
+            if "orchestrator_manually_verified" in item:
+                self._check_type(
+                    item["orchestrator_manually_verified"], f"{item_path}.orchestrator_manually_verified", "boolean"
+                )
+            if "manual_verification_evidence" in item:
+                self._check_type(
+                    item["manual_verification_evidence"], f"{item_path}.manual_verification_evidence", "string"
+                )
 
-            if "items" in category:
-                self._check_type(category["items"], f"{category_path}.items", "list")
-                if isinstance(category["items"], list):
-                    for j, item in enumerate(category["items"]):
-                        item_path = f"{category_path}.items[{j}]"
-                        if not isinstance(item, dict):
-                            self._check_type(item, item_path, "dict")
-                            continue
+            # Validate at least one of bash or llm_judge exists
+            has_bash = "bash" in item and item["bash"]
+            has_llm = "llm_judge" in item and item["llm_judge"]
+            if not has_bash and not has_llm:
+                self.errors.append(
+                    LintError(
+                        location=item_path,
+                        message="bash or llm_judge is required",
+                        expected="at least one of bash or llm_judge",
+                        actual="neither present",
+                        suggestion="Add 'bash' or 'llm_judge' field",
+                    )
+                )
 
-                        allowed_item_fields = {"id", "description", "input", "verify", "note"}
-                        self._check_extra_fields(item, item_path, allowed_item_fields)
+            # Validate bash list
+            if has_bash:
+                self._validate_bash_list(item["bash"], f"{item_path}.bash")
 
-                        self._validate_nested_required(item, item_path, ["id", "description", "input", "verify"])
-
-                        if "id" in item:
-                            self._check_type(item["id"], f"{item_path}.id", "string")
-                        if "description" in item:
-                            self._check_type(item["description"], f"{item_path}.description", "string")
-                        if "note" in item and item["note"] is not None:
-                            self._check_type(item["note"], f"{item_path}.note", "string")
-
-                        # Validate input (InputSpec)
-                        if "input" in item:
-                            self._validate_input_spec(item["input"], f"{item_path}.input")
-
-                        # Validate verify (VerifySpec)
-                        if "verify" in item:
-                            self._validate_verify_spec(item["verify"], f"{item_path}.verify")
+            # Validate llm_judge list
+            if has_llm:
+                self._validate_llm_judge_list(item["llm_judge"], f"{item_path}.llm_judge")
 
     def _collect_reference_ids(self, data: dict[str, Any]) -> set[str]:
         """Collect all reference IDs from required_background.references."""
@@ -915,16 +960,16 @@ class PlanLinter:
         return ref_ids
 
     def _validate_reference_integrity(self, data: dict[str, Any]) -> None:
-        """Validate all SimpleReference.ref_id exist in required_background."""
+        """Validate all ReferencePointer.ref_id exist in required_background - v2.1."""
         # 1. Collect all defined reference IDs
         valid_ref_ids = self._collect_reference_ids(data)
 
-        # 2. Check all todos for SimpleReference
+        # 2. Check all todos for ReferencePointer
         if "todos" in data and isinstance(data["todos"], list):
             self._check_todos_ref_integrity(data["todos"], "todos", valid_ref_ids)
 
     def _check_todos_ref_integrity(self, todos: list[Any], path: str, valid_ref_ids: set[str]) -> None:
-        """Recursively check todos for invalid ref_id."""
+        """Recursively check todos for invalid ref_id - v2.1."""
         for i, todo in enumerate(todos):
             if not isinstance(todo, dict):
                 continue
@@ -938,8 +983,8 @@ class PlanLinter:
                         continue
 
                     ref_path = f"{todo_path}.references[{j}]"
-                    # SimpleReference has ref_id
-                    if "ref_id" in ref:
+                    # v2.1: ReferencePointer has type="pointer" and ref_id
+                    if ref.get("type") == "pointer" and "ref_id" in ref:
                         ref_id = ref["ref_id"]
                         if isinstance(ref_id, str) and ref_id not in valid_ref_ids:
                             expected_msg = (

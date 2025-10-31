@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 # === Enums ===
@@ -13,87 +13,29 @@ class TodoStatus(str, Enum):
     completed = "completed"
 
 
-class ReferenceType(str, Enum):
-    file = "file"
-    url = "url"
-    code_snippet = "code_snippet"
-    text = "text"
-
-
-class InputType(str, Enum):
-    command = "command"
-    prompt = "prompt"
-    manual = "manual"
-    multi_command = "multi_command"
-
-
-class VerifyType(str, Enum):
-    programmatic = "programmatic"
-    llm_judge = "llm_judge"
-    none = "none"
-    prompt = "prompt"
-
-
 class RetrievalType(str, Enum):
     keywords = "keywords"
     prompt = "prompt"
 
 
-# === Input Discriminated Union (모든 타입) ===
-class CommandInput(BaseModel):
-    type: Literal["command"]
-    command: str
-    capture_output: bool = True
+# === v2.1 Verification Classes ===
+class BashVerification(BaseModel):
+    execute: str
+    expected_stdout: str | None = None
+    expected_stderr: str | None = None
+    expected_exit_code: int = 0
+    notes: str | None = None
 
 
-class PromptInput(BaseModel):
-    type: Literal["prompt"]
-    prompt: str
-    context: dict[str, Any] = {}
+class LLMJudgeBy(str, Enum):
+    ORCHESTRATOR = "orchestrator-agent"
+    EXTERNAL = "external-agent"
 
 
-class ManualInput(BaseModel):
-    type: Literal["manual"]
-    instructions: str
-
-
-class MultiCommandInput(BaseModel):
-    type: Literal["multi_command"]
-    commands: list[str]
-
-
-InputSpec = Annotated[
-    CommandInput | PromptInput | ManualInput | MultiCommandInput,
-    Field(discriminator="type"),
-]
-
-
-# === Verify Discriminated Union (모든 타입) ===
-class ProgrammaticVerify(BaseModel):
-    type: Literal["programmatic"]
-    method: str  # "contains", "exact", "regex", "exit_code"
-    expected: str | int
-
-
-class LLMJudgeVerify(BaseModel):
-    type: Literal["llm_judge"]
-    criteria: list[str] = []
-    accept_if: str = "All criteria met"
-
-
-class NoneVerify(BaseModel):
-    type: Literal["none"]
-
-
-class PromptVerify(BaseModel):
-    type: Literal["prompt"]
-    prompt: str
-
-
-VerifySpec = Annotated[
-    ProgrammaticVerify | LLMJudgeVerify | NoneVerify | PromptVerify,
-    Field(discriminator="type"),
-]
+class LLMJudgeVerification(BaseModel):
+    by: LLMJudgeBy = LLMJudgeBy.ORCHESTRATOR
+    context_commands: list[str] = []
+    instruction: str
 
 
 # === Reference Retrieval Discriminated Union ===
@@ -117,16 +59,32 @@ RetrievalSpec = Annotated[
 # === Verification ===
 class VerificationItem(BaseModel):
     id: str
+    title: str
     description: str
-    input: InputSpec
-    verify: VerifySpec
-    note: str | None = None
-    completed: bool = False
+    verified: bool = False
+    verified_at: str | None = None
+    verification_evidence: str | None = None
+    orchestrator_manually_verified: bool
+    manual_verification_evidence: str
+    bash: list[BashVerification] = []
+    llm_judge: list[LLMJudgeVerification] = []
+
+    @model_validator(mode="after")
+    def validate_at_least_one(self) -> Self:
+        if not self.bash and not self.llm_judge:
+            raise ValueError("bash 또는 llm_judge 중 하나 이상 필수")
+        return self
 
 
 # === Reference Discriminated Union (모든 타입) ===
+class ReferencePointer(BaseModel):
+    type: Literal["pointer"]
+    ref_id: str
+    notes: str | None = None
+
+
 class FileReference(BaseModel):
-    type: Literal["file"] = "file"
+    type: Literal["file"]
     path: str
     description: str
     retrieval: RetrievalSpec | None = None
@@ -135,7 +93,7 @@ class FileReference(BaseModel):
 
 
 class URLReference(BaseModel):
-    type: Literal["url"] = "url"
+    type: Literal["url"]
     url: str
     description: str
     retrieval: RetrievalSpec | None = None
@@ -143,46 +101,32 @@ class URLReference(BaseModel):
     id: str | None = None
 
 
-class CodeSnippetReference(BaseModel):
-    type: Literal["code_snippet"] = "code_snippet"
-    language: str
-    description: str
-    code: str
-    id: str | None = None
-
-
-class TextReference(BaseModel):
-    type: Literal["text"] = "text"
+class MarkdownReference(BaseModel):
+    type: Literal["markdown"]
     description: str
     content: str
     id: str | None = None
 
 
-ReferenceSpec = Annotated[
-    FileReference | URLReference | CodeSnippetReference | TextReference,
+ReferenceItem = Annotated[
+    ReferencePointer | FileReference | URLReference | MarkdownReference,
     Field(discriminator="type"),
 ]
 
 
-# === Simple Reference (todo에서 ref_id만 참조) ===
-class SimpleReference(BaseModel):
-    ref_id: str
-    note: str | None = None
-
-
 # === Todo (Recursive - 모든 필드) ===
 class Todo(BaseModel):
-    id: str | int  # "1", "1.1", "1.1.1" (모두 string) or integer
+    id: str | int
     title: str
     status: TodoStatus
     parallel_group: int | None = None
     created_at: str
     updated_at: str
     status_changed_at: str | None = None
-    references: list[ReferenceSpec | SimpleReference] = []
+    references: list[ReferenceItem] = []
     details: dict[str, Any] = {}
     verification_spec: list[VerificationItem] = []
-    children: list[Todo] = []  # Recursive!
+    children: list[Todo] = []
     parallel_note: str | None = None
 
     @field_validator("id", mode="before")
@@ -200,7 +144,7 @@ class Metadata(BaseModel):
 
 class UserRequest(BaseModel):
     original: str
-    timestamp: str
+    created_at: str
     additional: list[str] = []
 
 
@@ -223,7 +167,7 @@ class Background(BaseModel):
 class RequiredBackground(BaseModel):
     description: str
     file_structure: str | None = None
-    references: list[ReferenceSpec] = []
+    references: list[ReferenceItem] = []
 
 
 class ExecutionStatus(BaseModel):
@@ -282,15 +226,22 @@ class SuccessVision(BaseModel):
 
 class FinalVerificationItem(BaseModel):
     id: str
-    description: str
-    input: InputSpec
-    verify: VerifySpec
-    note: str | None = None
-
-
-class FinalVerificationCategory(BaseModel):
+    title: str
     category: str
-    items: list[FinalVerificationItem]
+    description: str
+    verified: bool = False
+    verified_at: str | None = None
+    verification_evidence: str | None = None
+    orchestrator_manually_verified: bool
+    manual_verification_evidence: str
+    bash: list[BashVerification] = []
+    llm_judge: list[LLMJudgeVerification] = []
+
+    @model_validator(mode="after")
+    def validate_at_least_one(self) -> Self:
+        if not self.bash and not self.llm_judge:
+            raise ValueError("bash 또는 llm_judge 중 하나 이상 필수")
+        return self
 
 
 # === Root Model (모든 필드) ===
@@ -306,4 +257,4 @@ class WorkPlan(BaseModel):
     workflow: Workflow
     todos: list[Todo]
     success_vision: SuccessVision
-    final_verification: list[FinalVerificationCategory]
+    final_verification: list[FinalVerificationItem]

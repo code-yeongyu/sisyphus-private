@@ -540,7 +540,7 @@ metadata:
   updated_at: "2025-01-01"
 user_request:
   original: "Test"
-  timestamp: "2025-01-01"
+  created_at: "2025-01-01"
 objectives:
   core: "Test objective"
 background:
@@ -590,7 +590,7 @@ metadata:
   updated_at: "2025-01-01"
 user_request:
   original: "Test"
-  timestamp: "2025-01-01"
+  created_at: "2025-01-01"
 objectives:
   core: "Test objective"
 background:
@@ -640,7 +640,7 @@ metadata:
   updated_at: "2025-01-01"
 user_request:
   original: "Test"
-  timestamp: "2025-01-01"
+  created_at: "2025-01-01"
 objectives:
   core: "Test objective"
 background:

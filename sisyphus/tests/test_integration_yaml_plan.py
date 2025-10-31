@@ -20,7 +20,7 @@ metadata:
   updated_at: "2025-01-01T00:00:00"
 user_request:
   original: "Test workflow"
-  timestamp: "2025-01-01"
+  created_at: "2025-01-01"
 objectives:
   core: "Test end-to-end workflow"
 background:
@@ -132,7 +132,7 @@ metadata:
   updated_at: "2025-01-01T00:00:00"
 user_request:
   original: "Nested test"
-  timestamp: "2025-01-01"
+  created_at: "2025-01-01"
 objectives:
   core: "Test nested navigation"
 background:

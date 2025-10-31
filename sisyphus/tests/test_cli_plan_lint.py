@@ -19,7 +19,7 @@ async def test_plan_lint__when_valid_yaml__exits_0(tmp_path: Path) -> None:
   updated_at: "2025-01-01"
 user_request:
   original: "Test"
-  timestamp: "2025-01-01"
+  created_at: "2025-01-01"
 objectives:
   core: "Test objective"
 background:
@@ -81,7 +81,7 @@ async def test_plan_lint__when_type_mismatch__exits_1_and_shows_type_error(tmp_p
   updated_at: "2025-01-01"
 user_request:
   original: "Test"
-  timestamp: "2025-01-01"
+  created_at: "2025-01-01"
 objectives:
   core: "Test"
 background:
@@ -137,7 +137,7 @@ async def test_plan_lint__when_invalid_enum__exits_1_and_shows_enum_error(tmp_pa
   updated_at: "2025-01-01"
 user_request:
   original: "Test"
-  timestamp: "2025-01-01"
+  created_at: "2025-01-01"
 objectives:
   core: "Test"
 background:

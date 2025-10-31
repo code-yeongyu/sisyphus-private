@@ -3,14 +3,13 @@ import pytest
 from sisyphus.core.plan_navigator import PlanNavigator
 from sisyphus.utils.plan_types import (
     Background,
-    CommandInput,
+    BashVerification,
     ExecutionStatus,
     Metadata,
-    NoneVerify,
     Objectives,
     Progress,
+    ReferencePointer,
     RequiredBackground,
-    SimpleReference,
     Status,
     SuccessVision,
     Todo,
@@ -31,7 +30,7 @@ def create_minimal_plan(
 ) -> WorkPlan:
     return WorkPlan(
         metadata=Metadata(created_at="2025-01-01", updated_at="2025-01-01"),
-        user_request=UserRequest(original="Test", timestamp="2025-01-01"),
+        user_request=UserRequest(original="Test", created_at="2025-01-01"),
         objectives=Objectives(core="Test"),
         background=Background(current_situation="A", reason_for_change="B", changes_to_make="C"),
         required_background=RequiredBackground(description="Test"),
@@ -418,8 +417,8 @@ async def test_get_task_references__when_task_has_references__returns_references
             created_at="2025-01-01",
             updated_at="2025-01-01",
             references=[
-                SimpleReference(ref_id="ref-1", note="Reference 1"),
-                SimpleReference(ref_id="ref-2", note="Reference 2"),
+                ReferencePointer(type="pointer", ref_id="ref-1", notes="Reference 1"),  # type: ignore[arg-type]
+                ReferencePointer(type="pointer", ref_id="ref-2", notes="Reference 2"),  # type: ignore[arg-type]
             ],
         )
     ]
@@ -432,7 +431,7 @@ async def test_get_task_references__when_task_has_references__returns_references
     # then
     assert len(refs) == 2
     assert refs[0].ref_id == "ref-1"
-    assert refs[0].note == "Reference 1"
+    assert refs[0].notes == "Reference 1"
     assert refs[1].ref_id == "ref-2"
 
 
@@ -638,17 +637,21 @@ async def test_get_task_verification__when_task_has_verification__returns_verifi
             verification_spec=[
                 VerificationItem(
                     id="v1",
+                    title="Verify test 1",
                     description="Verify test 1",
-                    input=CommandInput(type="command", command="ls"),
-                    verify=NoneVerify(type="none"),
-                    completed=False,
+                    orchestrator_manually_verified=False,
+                    manual_verification_evidence="",
+                    bash=[BashVerification(execute="echo test")],
+                    verified=False,
                 ),
                 VerificationItem(
                     id="v2",
+                    title="Verify test 2",
                     description="Verify test 2",
-                    input=CommandInput(type="command", command="pwd"),
-                    verify=NoneVerify(type="none"),
-                    completed=True,
+                    orchestrator_manually_verified=False,
+                    manual_verification_evidence="",
+                    bash=[BashVerification(execute="echo test")],
+                    verified=True,
                 ),
             ],
         )
@@ -662,9 +665,9 @@ async def test_get_task_verification__when_task_has_verification__returns_verifi
     # then
     assert len(verifications) == 2
     assert verifications[0].id == "v1"
-    assert verifications[0].completed is False
+    assert verifications[0].verified is False
     assert verifications[1].id == "v2"
-    assert verifications[1].completed is True
+    assert verifications[1].verified is True
 
 
 async def test_get_task_verification__when_no_verification__returns_empty_list() -> None:
@@ -719,17 +722,21 @@ async def test_check_task_completion__when_all_completed__returns_can_complete_t
             verification_spec=[
                 VerificationItem(
                     id="v1",
+                    title="Test 1",
                     description="Test 1",
-                    input=CommandInput(type="command", command="ls"),
-                    verify=NoneVerify(type="none"),
-                    completed=True,
+                    orchestrator_manually_verified=False,
+                    manual_verification_evidence="",
+                    bash=[BashVerification(execute="echo test")],
+                    verified=True,
                 ),
                 VerificationItem(
                     id="v2",
+                    title="Test 2",
                     description="Test 2",
-                    input=CommandInput(type="command", command="pwd"),
-                    verify=NoneVerify(type="none"),
-                    completed=True,
+                    orchestrator_manually_verified=False,
+                    manual_verification_evidence="",
+                    bash=[BashVerification(execute="echo test")],
+                    verified=True,
                 ),
             ],
         )
@@ -803,17 +810,21 @@ async def test_check_task_completion__when_verification_incomplete__returns_can_
             verification_spec=[
                 VerificationItem(
                     id="v1",
+                    title="Test 1",
                     description="Test 1",
-                    input=CommandInput(type="command", command="ls"),
-                    verify=NoneVerify(type="none"),
-                    completed=True,
+                    orchestrator_manually_verified=False,
+                    manual_verification_evidence="",
+                    bash=[BashVerification(execute="echo test")],
+                    verified=True,
                 ),
                 VerificationItem(
                     id="v2",
+                    title="Test 2",
                     description="Test 2",
-                    input=CommandInput(type="command", command="pwd"),
-                    verify=NoneVerify(type="none"),
-                    completed=False,
+                    orchestrator_manually_verified=False,
+                    manual_verification_evidence="",
+                    bash=[BashVerification(execute="echo test")],
+                    verified=False,
                 ),
             ],
         )

@@ -1,7 +1,14 @@
 import pytest
 from pydantic import ValidationError
 
-from sisyphus.utils.plan_types import CommandInput, ProgrammaticVerify, Todo, VerificationItem, WorkPlan
+from sisyphus.utils.plan_types import (
+    BashVerification,
+    LLMJudgeVerification,
+    ReferencePointer,
+    Todo,
+    VerificationItem,
+    WorkPlan,
+)
 
 pytestmark = [pytest.mark.anyio]
 
@@ -28,7 +35,7 @@ async def test_workplan_loads_from_dict() -> None:
     # given
     data = {
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "timestamp": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
         "objectives": {"core": "Test objective"},
         "background": {
             "current_situation": "A",
@@ -56,30 +63,131 @@ async def test_workplan_loads_from_dict() -> None:
     assert plan.objectives.core == "Test objective"
 
 
-async def test_discriminated_union_input() -> None:
+async def test_verification_item_bash_only__creates_successfully() -> None:
     # given
-    command_data = {"type": "command", "command": "ls"}
+    data = {
+        "id": "v1",
+        "title": "check file",
+        "description": "check file exists",
+        "orchestrator_manually_verified": False,
+        "manual_verification_evidence": "",
+        "bash": [{"execute": "ls -al", "expected_exit_code": 0}],
+    }
 
     # when
-    input_spec = CommandInput(**command_data)  # pyright: ignore[reportArgumentType]
+    item = VerificationItem(**data)
 
     # then
-    assert input_spec.type == "command"
-    assert input_spec.command == "ls"
-    assert input_spec.capture_output is True
+    assert item.verified is False
+    assert len(item.bash) == 1
+    assert len(item.llm_judge) == 0
+    assert item.bash[0].execute == "ls -al"
 
 
-async def test_discriminated_union_verify() -> None:
+async def test_verification_item_llm_judge_only__creates_successfully() -> None:
     # given
-    verify_data = {"type": "programmatic", "method": "contains", "expected": "OK"}
+    data = {
+        "id": "v2",
+        "title": "check with llm",
+        "description": "llm judge verification",
+        "orchestrator_manually_verified": False,
+        "manual_verification_evidence": "",
+        "llm_judge": [{"instruction": "check if file exists"}],
+    }
 
     # when
-    verify_spec = ProgrammaticVerify(**verify_data)  # pyright: ignore[reportArgumentType]
+    item = VerificationItem(**data)
 
     # then
-    assert verify_spec.type == "programmatic"
-    assert verify_spec.method == "contains"
-    assert verify_spec.expected == "OK"
+    assert item.verified is False
+    assert len(item.bash) == 0
+    assert len(item.llm_judge) == 1
+    assert item.llm_judge[0].instruction == "check if file exists"
+
+
+async def test_verification_item_both_bash_and_llm__creates_successfully() -> None:
+    # given
+    data = {
+        "id": "v3",
+        "title": "both verification",
+        "description": "both bash and llm",
+        "orchestrator_manually_verified": False,
+        "manual_verification_evidence": "",
+        "bash": [{"execute": "ls"}],
+        "llm_judge": [{"instruction": "check"}],
+    }
+
+    # when
+    item = VerificationItem(**data)
+
+    # then
+    assert len(item.bash) == 1
+    assert len(item.llm_judge) == 1
+
+
+async def test_verification_item_neither_bash_nor_llm__raises_error() -> None:
+    # given
+    data = {
+        "id": "v4",
+        "title": "no verification",
+        "description": "missing both",
+        "orchestrator_manually_verified": False,
+        "manual_verification_evidence": "",
+    }
+
+    # when & then
+    with pytest.raises(ValidationError) as exc:
+        VerificationItem(**data)
+    assert "bash 또는 llm_judge 중 하나 이상 필수" in str(exc.value)
+
+
+async def test_bash_verification__creates_with_all_fields() -> None:
+    # given
+    data = {
+        "execute": "pytest",
+        "expected_stdout": "passed",
+        "expected_stderr": "",
+        "expected_exit_code": 0,
+        "notes": "run all tests",
+    }
+
+    # when
+    bash = BashVerification(**data)
+
+    # then
+    assert bash.execute == "pytest"
+    assert bash.expected_stdout == "passed"
+    assert bash.notes == "run all tests"
+
+
+async def test_llm_judge_verification__creates_with_context_commands() -> None:
+    # given
+    data = {
+        "by": "orchestrator-agent",
+        "context_commands": ["ls -al", "cat config.json"],
+        "instruction": "verify config is correct",
+    }
+
+    # when
+    llm = LLMJudgeVerification(**data)
+
+    # then
+    assert llm.by.value == "orchestrator-agent"
+    assert len(llm.context_commands) == 2
+    assert llm.instruction == "verify config is correct"
+
+
+async def test_reference_pointer__creates_with_type_field() -> None:
+    # given
+    data = {"type": "pointer", "ref_id": "ref_001", "notes": "see reference"}
+
+    # when
+    ref = ReferencePointer(**data)  # type: ignore[arg-type]
+
+    # then
+    assert ref.type == "pointer"
+    assert ref.ref_id == "ref_001"
+    assert ref.notes == "see reference"
 
 
 async def test_todo_recursive_children() -> None:
@@ -144,7 +252,7 @@ async def test_pydantic_validation_fails__when_missing_required_field__raises_er
 async def test_workplan_validation_fails__when_missing_metadata__raises_error() -> None:
     # given
     data = {
-        "user_request": {"original": "Test", "timestamp": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
         "objectives": {"core": "Test"},
         "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
         "required_background": {"description": "Test"},
@@ -166,34 +274,46 @@ async def test_workplan_validation_fails__when_missing_metadata__raises_error() 
     assert "metadata" in str(exc.value).lower()
 
 
-async def test_verification_item_completed_defaults_to_false() -> None:
+async def test_verification_item_verified_defaults_to_false() -> None:
     # given
     data = {
-        "id": "v1",
-        "description": "Test",
-        "input": {"type": "command", "command": "ls"},
-        "verify": {"type": "none"},
+        "id": "v5",
+        "title": "default test",
+        "description": "Test default values",
+        "orchestrator_manually_verified": False,
+        "manual_verification_evidence": "",
+        "bash": [{"execute": "ls"}],
     }
 
     # when
     item = VerificationItem(**data)
 
     # then
-    assert item.completed is False
+    assert item.verified is False
+    assert item.verified_at is None
+    assert item.verification_evidence is None
 
 
-async def test_verification_item_completed_can_be_set() -> None:
+async def test_verification_item_verified_can_be_set() -> None:
     # given
     data = {
-        "id": "v1",
-        "description": "Test",
-        "input": {"type": "command", "command": "ls"},
-        "verify": {"type": "none"},
-        "completed": True,
+        "id": "v6",
+        "title": "verified test",
+        "description": "Test setting verified",
+        "verified": True,
+        "verified_at": "2025-01-01T12:00:00",
+        "verification_evidence": "test passed",
+        "orchestrator_manually_verified": True,
+        "manual_verification_evidence": "manually checked",
+        "bash": [{"execute": "ls"}],
     }
 
     # when
     item = VerificationItem(**data)
 
     # then
-    assert item.completed is True
+    assert item.verified is True
+    assert item.verified_at == "2025-01-01T12:00:00"
+    assert item.verification_evidence == "test passed"
+    assert item.orchestrator_manually_verified is True
+    assert item.manual_verification_evidence == "manually checked"

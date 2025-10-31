@@ -12,7 +12,7 @@ async def test_lint_valid_yaml__when_all_fields_present__returns_no_errors() -> 
     linter = PlanLinter({})
     data = {
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "timestamp": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
         "objectives": {"core": "Test objective"},
         "background": {
             "current_situation": "A",
@@ -43,7 +43,7 @@ async def test_lint_missing_required_field__when_metadata_missing__returns_error
     # given
     linter = PlanLinter({})
     data = {
-        "user_request": {"original": "Test", "timestamp": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
         "objectives": {"core": "Test"},
         "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
         "required_background": {"description": "Test"},
@@ -73,7 +73,7 @@ async def test_lint_missing_nested_required_field__when_metadata_updated_at_miss
     linter = PlanLinter({})
     data = {
         "metadata": {"created_at": "2025-01-01"},  # missing updated_at
-        "user_request": {"original": "Test", "timestamp": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
         "objectives": {"core": "Test"},
         "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
         "required_background": {"description": "Test"},
@@ -102,7 +102,7 @@ async def test_lint_type_mismatch__when_boolean_is_string__returns_error() -> No
     linter = PlanLinter({})
     data = {
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "timestamp": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
         "objectives": {"core": "Test"},
         "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
         "required_background": {"description": "Test"},
@@ -131,7 +131,7 @@ async def test_lint_extra_field__when_unknown_field_at_root__returns_error() -> 
     linter = PlanLinter({})
     data = {
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "timestamp": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
         "objectives": {"core": "Test"},
         "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
         "required_background": {"description": "Test"},
@@ -161,7 +161,7 @@ async def test_lint_invalid_enum__when_todo_status_invalid__returns_error() -> N
     linter = PlanLinter({})
     data = {
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "timestamp": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
         "objectives": {"core": "Test"},
         "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
         "required_background": {"description": "Test"},
@@ -198,7 +198,7 @@ async def test_lint_pattern_mismatch__when_todo_id_invalid__returns_error() -> N
     linter = PlanLinter({})
     data = {
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "timestamp": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
         "objectives": {"core": "Test"},
         "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
         "required_background": {"description": "Test"},
@@ -235,13 +235,13 @@ async def test_lint_ref_integrity__when_ref_id_not_found__returns_error() -> Non
     linter = PlanLinter({})
     data = {
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "timestamp": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
         "objectives": {"core": "Test"},
         "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
         "required_background": {
             "description": "Test",
             "references": [
-                {"type": "file", "path": "a.py", "description": "A"},
+                {"type": "file", "path": "a.py", "description": "A", "id": "ref1"},
             ],
         },
         "status": {
@@ -258,7 +258,9 @@ async def test_lint_ref_integrity__when_ref_id_not_found__returns_error() -> Non
                 "status": "pending",
                 "created_at": "2025-01-01",
                 "updated_at": "2025-01-01",
-                "references": [{"ref_id": "nonexistent"}],  # Invalid ref_id
+                "references": [
+                    {"type": "pointer", "ref_id": "nonexistent"}
+                ],  # Invalid ref_id (v2.1: needs type field)
             }
         ],
         "success_vision": {},
@@ -278,7 +280,7 @@ async def test_lint_multiple_errors__when_multiple_issues__returns_all_errors() 
     linter = PlanLinter({})
     data = {
         "metadata": {"created_at": "2025-01-01"},  # missing updated_at
-        "user_request": {"original": "Test", "timestamp": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
         "objectives": {"core": "Test"},
         "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
         "required_background": {"description": "Test"},
@@ -319,7 +321,7 @@ async def test_lint_recursive_children__when_child_has_error__returns_error() ->
     linter = PlanLinter({})
     data = {
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "timestamp": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
         "objectives": {"core": "Test"},
         "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
         "required_background": {"description": "Test"},
@@ -365,7 +367,7 @@ async def test_lint_discriminated_union__when_type_field_missing__returns_error(
     linter = PlanLinter({})
     data = {
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "timestamp": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
         "objectives": {"core": "Test"},
         "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
         "required_background": {
@@ -428,3 +430,266 @@ async def test_format_error__when_optional_fields_missing__returns_minimal_messa
 
     # then
     assert formatted == "Error: metadata - Missing required field"
+
+
+async def test_lint_verification_item_v2_1__when_bash_only__returns_no_errors() -> None:
+    # given
+    linter = PlanLinter({})
+    data = {
+        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
+        "objectives": {"core": "Test"},
+        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
+        "required_background": {"description": "Test"},
+        "status": {
+            "execution": {"started": False, "completed": False},
+            "work_mode": {"parallel_requested": False},
+            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+            "current_work": "None",
+        },
+        "workflow": {"dependency_diagram": "Test"},
+        "todos": [
+            {
+                "id": "1",
+                "title": "Task",
+                "status": "pending",
+                "created_at": "2025-01-01",
+                "updated_at": "2025-01-01",
+                "verification_spec": [
+                    {
+                        "id": "v1",
+                        "title": "check file",
+                        "description": "check file exists",
+                        "orchestrator_manually_verified": False,
+                        "manual_verification_evidence": "",
+                        "bash": [{"execute": "ls -al", "expected_exit_code": 0}],
+                    }
+                ],
+            }
+        ],
+        "success_vision": {},
+        "final_verification": [],
+    }
+
+    # when
+    errors = linter.lint(data)
+
+    # then
+    assert len(errors) == 0
+
+
+async def test_lint_verification_item_v2_1__when_llm_judge_only__returns_no_errors() -> None:
+    # given
+    linter = PlanLinter({})
+    data = {
+        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
+        "objectives": {"core": "Test"},
+        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
+        "required_background": {"description": "Test"},
+        "status": {
+            "execution": {"started": False, "completed": False},
+            "work_mode": {"parallel_requested": False},
+            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+            "current_work": "None",
+        },
+        "workflow": {"dependency_diagram": "Test"},
+        "todos": [
+            {
+                "id": "1",
+                "title": "Task",
+                "status": "pending",
+                "created_at": "2025-01-01",
+                "updated_at": "2025-01-01",
+                "verification_spec": [
+                    {
+                        "id": "v1",
+                        "title": "llm check",
+                        "description": "llm verification",
+                        "orchestrator_manually_verified": False,
+                        "manual_verification_evidence": "",
+                        "llm_judge": [{"instruction": "check if correct"}],
+                    }
+                ],
+            }
+        ],
+        "success_vision": {},
+        "final_verification": [],
+    }
+
+    # when
+    errors = linter.lint(data)
+
+    # then
+    assert len(errors) == 0
+
+
+async def test_lint_verification_item_v2_1__when_both_bash_and_llm__returns_no_errors() -> None:
+    # given
+    linter = PlanLinter({})
+    data = {
+        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
+        "objectives": {"core": "Test"},
+        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
+        "required_background": {"description": "Test"},
+        "status": {
+            "execution": {"started": False, "completed": False},
+            "work_mode": {"parallel_requested": False},
+            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+            "current_work": "None",
+        },
+        "workflow": {"dependency_diagram": "Test"},
+        "todos": [
+            {
+                "id": "1",
+                "title": "Task",
+                "status": "pending",
+                "created_at": "2025-01-01",
+                "updated_at": "2025-01-01",
+                "verification_spec": [
+                    {
+                        "id": "v1",
+                        "title": "both check",
+                        "description": "both bash and llm",
+                        "orchestrator_manually_verified": False,
+                        "manual_verification_evidence": "",
+                        "bash": [{"execute": "ls"}],
+                        "llm_judge": [{"instruction": "verify"}],
+                    }
+                ],
+            }
+        ],
+        "success_vision": {},
+        "final_verification": [],
+    }
+
+    # when
+    errors = linter.lint(data)
+
+    # then
+    assert len(errors) == 0
+
+
+async def test_lint_verification_item_v2_1__when_neither_bash_nor_llm__returns_error() -> None:
+    # given
+    linter = PlanLinter({})
+    data = {
+        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
+        "objectives": {"core": "Test"},
+        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
+        "required_background": {"description": "Test"},
+        "status": {
+            "execution": {"started": False, "completed": False},
+            "work_mode": {"parallel_requested": False},
+            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+            "current_work": "None",
+        },
+        "workflow": {"dependency_diagram": "Test"},
+        "todos": [
+            {
+                "id": "1",
+                "title": "Task",
+                "status": "pending",
+                "created_at": "2025-01-01",
+                "updated_at": "2025-01-01",
+                "verification_spec": [
+                    {
+                        "id": "v1",
+                        "title": "no verification",
+                        "description": "missing both",
+                        "orchestrator_manually_verified": False,
+                        "manual_verification_evidence": "",
+                    }
+                ],
+            }
+        ],
+        "success_vision": {},
+        "final_verification": [],
+    }
+
+    # when
+    errors = linter.lint(data)
+
+    # then
+    assert len(errors) > 0
+    assert any("bash or llm_judge is required" in e.message for e in errors)
+
+
+async def test_lint_reference_pointer_v2_1__when_type_field_present__returns_no_errors() -> None:
+    # given
+    linter = PlanLinter({})
+    data = {
+        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
+        "objectives": {"core": "Test"},
+        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
+        "required_background": {
+            "description": "Test",
+            "references": [{"type": "file", "path": "a.py", "description": "File A", "id": "ref1"}],
+        },
+        "status": {
+            "execution": {"started": False, "completed": False},
+            "work_mode": {"parallel_requested": False},
+            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+            "current_work": "None",
+        },
+        "workflow": {"dependency_diagram": "Test"},
+        "todos": [
+            {
+                "id": "1",
+                "title": "Task",
+                "status": "pending",
+                "created_at": "2025-01-01",
+                "updated_at": "2025-01-01",
+                "references": [{"type": "pointer", "ref_id": "ref1"}],
+            }
+        ],
+        "success_vision": {},
+        "final_verification": [],
+    }
+
+    # when
+    errors = linter.lint(data)
+
+    # then
+    assert len(errors) == 0
+
+
+async def test_lint_final_verification_v2_1__when_category_field_present__returns_no_errors() -> None:
+    # given
+    linter = PlanLinter({})
+    data = {
+        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
+        "objectives": {"core": "Test"},
+        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
+        "required_background": {"description": "Test"},
+        "status": {
+            "execution": {"started": False, "completed": False},
+            "work_mode": {"parallel_requested": False},
+            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+            "current_work": "None",
+        },
+        "workflow": {"dependency_diagram": "Test"},
+        "todos": [],
+        "success_vision": {},
+        "final_verification": [
+            {
+                "id": "fv1",
+                "title": "Final check",
+                "category": "기능 동작 확인",
+                "description": "Verify all features work",
+                "orchestrator_manually_verified": False,
+                "manual_verification_evidence": "",
+                "bash": [{"execute": "pytest"}],
+            }
+        ],
+    }
+
+    # when
+    errors = linter.lint(data)
+
+    # then
+    assert len(errors) == 0

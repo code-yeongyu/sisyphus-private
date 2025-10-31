@@ -1,939 +1,1016 @@
 # 사용자의 최초 요청 (기록용)
 
-지금 yaml 형태의 작업계획서 스펙이 좀 너무 복잡함. 아래와 같이 바뀌게 되었으면 함.
+ai todolist yaml 다루는 새 도구를 만들고, 내가 사용하지 않는 것들은 지울 수있었으면 함.
 
-```yaml
-verify:
-  - id: id in sequential
-    name: check file exists
-    description: check if the file exists or not using ls command
-    verified: false
-    bash:
-      execute: ls -al
-      expected_stdout: a.txt b.md
-      expected_stderr:
-      expected_exit_code: 0
-
-  - id: id in sequential
-    name: check file exists using llm judge
-    description: asdfasdfasdf foo bar
-    verified: false
-    verification_evidence: # verified 일 경우에 채워야함
-    llm_judge:
-      by: # orchestrator-agent or external-agent, defaults to orchestrator-agent
-
-      bash_execute: ls -al # optional, 만약에 있다면 instruction 이 들어가기 전에 이게 먼저 실행이 되는 느낌임
-      instruction: |
-        ls -al 해서 a.txt 랑 b.md 가 존재하는지 검증하세요
-```
-
-이정도 느낌이면 충분함. verification spec 이 이것보다 복잡할 이유가 단 한개도 없음. 각 verify 의 안의 내용들은 절대로 bash 와 llm_judge 를 동시에 가질 수 없음.
+@sisyphus/core/loop.py 통해서 execute phase 가 실행된다면 @sisyphus/core/prompts.py 이게 들어가고 얘가 메인 오케스트레이터 에이전트로써 @claude-code-plugins/sisyphus/agents/executor.md 를 호출하고, executor agent 의 작업이 끝나고나면 hook 으로 @.github/workflows/.claude.agent/hooks/post-tool-use/orchestrator_reminder.py 이게 orchestrator 한테 보고되는데, 이걸 yaml based 로 바꾸려고 함.
 
 ## 추가 사용자 요청 (기록용)
 
-1. `orchestrator_manually_verified: bool` 필드 추가 (필수)
-2. `manual_verification_evidence: str` 필드 추가 (필수)
-3. **bash/llm_judge 로직 변경: XOR → OR (둘 다 가능, 최소 하나 필수)**
-
-# 추가 요구사항 (2차)
-
-몇개만 더 추가해주라.
-
-references 가 id 로 ref id 로 엮을수도 있지만, 직접 nested 로 정의할수도 있어야 함. 따라서 포인터로써 가리킬수도있고 직접 정의할수도 있는 형태로써 스펙이 구성되어야 하고,
-references yaml part 자체는 맨 마지막이 되도록 해줘 그래서 스펙 자체가 metadata, user request, objectives, background(required_background 자체는 background 에 통합되어야 함), success_vision, status, work_overview(workflow 이름을 바꿔야함), todos, final_verification, references 순으로 구성되게 해주라.
-
-그리고 reference 의 경우 또 text 랑 code snippet 이랑 왜 구분하나 싶음. 적당히 합칠 수 있도록 해라 두개를 표현하는거는 다를 이유가 없다.
-
-그리고 좀 더 ai-todolist.md 처럼 description ? instruction? 이런걸 더 잘 넣을 수 있게 해줘 지금 너무 엄밀한 느낌임. pattern ? 이런게 왜필요해 지금 ai-todolist.md 를 yaml 스펙으로 표현될 수 있게 프로그래머블하게 옮기는건데.
+(없음)
 
 # 작업 목표 (WHAT & WHY)
 
 ## 핵심 목표 (TL;DR)
 
-현재 복잡한 YAML 작업계획서 스펙(v2.0)을 단순하고 직관적인 v2.1로 개선한다.
+sisyphus의 작업 계획 시스템을 ai-todolist.yaml 기반으로 재구성하고, `sisyphus execute-phase`와 `sisyphus verify-phase` CLI 명령어를 구현하여 YAML 기반 작업 워크플로우를 완성합니다.
 
-## 상세 목표
+## 세부 목표
 
-- **Verification spec 단순화**: InputSpec/VerifySpec discriminated union 제거 → bash/llm_judge 직접 필드로 변경
-- **References 이중 모드 지원**: pointer(ref_id) + inline 정의 모두 지원
-- **구조 재정렬**: 논리적 순서로 섹션 재배치 (references 맨 마지막으로)
-- **타입 통합**: text + code_snippet → markdown 단일 타입
-- **필드명 일관성**: timestamp → created_at, note → notes, name → title 통일
-- **Pydantic 호환성**: type 필드 명시로 discriminated union 완벽 지원
+- YAML 기반 작업 계획 시스템을 위한 새 CLI 명령어 구현 (`sisyphus execute-phase`, `sisyphus verify-phase`)
+- 기존 `sisyphus plan` 명령어 중 불필요한 업데이트성 명령어 제거
+- orchestrator-executor-hook 플로우를 YAML 스키마 기반으로 전환
 
 # 작업 배경 (WHY & WHAT - 현재 상태)
 
 ## 현재 상황
 
-- **복잡한 discriminated union 구조**: InputSpec(4가지) + VerifySpec(4가지) = 16가지 조합 가능
-- **References 제약**: pointer(ref_id)만 지원, inline 정의 불가
-- **비직관적 순서**: references가 중간에 위치 (required_background 내부)
-- **타입 중복**: text와 code_snippet이 분리되어 있으나 기능적으로 동일
-- **필드명 불일치**: timestamp/created_at, note/notes, name/title 혼용
-- **final_verification 구조 이질성**: todos와 다른 중첩 구조 (category → items)
+- 현재 ai-todolist.md 마크다운 기반 작업 계획 시스템이 운영 중
+- orchestrator agent가 executor agent를 호출하고, hook으로 작업 상태를 보고받는 구조
+- `sisyphus plan` 명령어에 get/set/set-verification/check/lint 5개 서브커맨드 존재
+- ai-todolist-draft.yaml에 v2.1 스키마가 정의되어 있음
 
-## 변경 이유
+## 변경 필요 이유
 
-- **직관성**: bash/llm_judge 직접 필드가 의도를 명확히 전달
-- **유연성**: references를 pointer로도, inline으로도 정의 가능
-- **논리적 순서**: 메타데이터 → 목표 → 배경 → 작업 → 검증 → 참고자료 순
-- **유지보수성**: 타입 통합으로 중복 제거, 필드명 통일로 혼란 방지
-- **구현 용이성**: Pydantic discriminator와 완벽 호환, linter 구현 단순화
+- YAML 기반 스키마(v2.1)가 구조화된 검증(bash, llm_judge)을 지원
+- 마크다운 기반보다 프로그래매틱한 접근이 용이
+- 작업 진행 상태, 검증 상태를 명확하게 관리 가능
 
-## 변경 사항
+## 변경 내용
 
-**현재 (v2.0)**:
-```python
-class VerificationItem:
-    id: str
-    description: str
-    input: InputSpec  # 4가지 타입 union
-    verify: VerifySpec  # 4가지 타입 union
-    completed: bool
-```
+**Before**:
+- ai-todolist.md (마크다운)
+- orchestrator → executor → hook 플로우
+- `sisyphus plan get/set/set-verification/check/lint`
 
-**변경 후 (v2.1)**:
-```python
-class VerificationItem:
-    id: str
-    title: str  # name → title 통일
-    description: str
-    verified: bool = False  # completed → verified
-    verified_at: str | None = None  # 추가
-    verification_evidence: str | None = None
-    orchestrator_manually_verified: bool  # 필수
-    manual_verification_evidence: str  # 필수
-    bash: list[BashVerification] = []  # 리스트로 여러 개 가능
-    llm_judge: list[LLMJudgeVerification] = []  # 리스트로 여러 개 가능
-```
+**After**:
+- ai-todolist.yaml (YAML v2.1)
+- `sisyphus execute-phase continue-work/bash-verify/llm-verify/manual-verify`
+- `sisyphus verify-phase bash-verify/llm-verify`
+- `sisyphus plan get/lint` (업데이트성 명령어 제거)
 
 # 작업 시작 여부
-is_execution_started = TRUE
+
+is_execution_started = FALSE
 
 # 모든 목표 달성 여부
-is_all_goals_accomplished = TRUE
+
+is_all_goals_accomplished = FALSE
 
 # 병렬 실행
+
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 없음 (모든 작업 완료)
 
-# 필수 배경 지식
+- 작업이 아직 시작되지 않았습니다.
+   - 작업을 시작할 때는 위의 `is_execution_started` 값을 TRUE로 변경하세요.
+   - 사용자가 명시적으로 "작업을 시작해"라고 말하기 전까지는 절대 작업을 시작하지 마세요.
+   - **plan reviewer로부터 OKAY를 받았다고 해도 작업을 시작하지 마세요**
+   - 사용자가 명시적으로 "작업을 시작해"라고 말하기 전까지는 절대 작업을 시작하지 마세요.
 
-## 기술 스택
-
-- Python 3.12
-- Pydantic 2.0+ (모델 정의 및 검증)
-- ruamel.yaml 0.18+ (YAML 파싱/저장)
-- pytest 8.4+ (테스트)
-- basedpyright 1.31+ (타입 체크)
-- ruff 0.14+ (린트)
+# 필요 배경 지식
 
 ## 파일 구조 및 역할
 
-**수정 대상 파일**:
-- `sisyphus/utils/plan_types.py`: Pydantic 모델 정의
-- `sisyphus/core/plan_linter.py`: YAML 스키마 검증 로직
-- `sisyphus/core/tests/test_plan_linter.py`: linter 테스트
-- `sisyphus/utils/tests/test_plan_types.py`: Pydantic 모델 테스트
+### 1. sisyphus/cli.py
+- **역할**: Typer 기반 CLI 진입점
+- **검색 키워드**: `@app.command`, `@plan_app.command`
+- **주요 패턴**: Typer command 데코레이터 사용, agent 팩토리 패턴
+- **참고 URL**: https://typer.tiangolo.com/ (find "Commands and Groups" section)
 
-**참조 파일**:
-- `sisyphus/core/plan_loader.py`: YAML 로드/저장 (영향 최소)
-- `sisyphus/core/plan_navigator.py`: 작업 탐색 (영향 받음)
+### 2. sisyphus/core/loop.py
+- **역할**: ExecutionLoop - Execute/Verify phase 오케스트레이션
+- **검색 키워드**: `_execute_phase`, `_verify_phase`, `_run_unified_mode`
+- **주요 패턴**: anyio 기반 async 루프, ExceptionGroup 처리
+- **코드 스니펫**:
+```python
+# ExecutionLoop의 핵심 루프 구조
+async def _run_unified_mode(self, ...):
+    while True:
+        await self._execute_phase(...)
+        if should_verify:
+            feedback, fully_done = await self._verify_phase(...)
+            if fully_done:
+                break
+```
 
-## 참조 파일들
+### 3. sisyphus/core/prompts.py
+- **역할**: DEFAULT_EXECUTE_PROMPT, DEFAULT_VERIFY_PROMPT 정의
+- **검색 키워드**: `DEFAULT_EXECUTE_PROMPT = `
+- **주요 패턴**: /execute, /architect 슬래시 커맨드 프롬프트
 
-### 1. `sisyphus/utils/plan_types.py`
-- **역할**: 모든 Pydantic 모델 정의
-- **검색 키워드**: `class VerificationItem`, `InputSpec`, `VerifySpec`, `ReferenceSpec`, `SimpleReference`
-- **주요 패턴**: Pydantic BaseModel, discriminated union (`Annotated[... | ..., Field(discriminator="type")]`)
-- **수정 범위**: VerificationItem, FinalVerificationItem, ReferenceSpec, SimpleReference 관련 클래스
+### 4. sisyphus/utils/plan_types.py
+- **역할**: v2.1 YAML 스키마 Pydantic 모델
+- **검색 키워드**: `class Todo`, `class VerificationItem`, `BashVerification`, `LLMJudgeVerification`
+- **주요 패턴**: Pydantic BaseModel, discriminated union (Field(discriminator="type"))
 
-### 2. `sisyphus/core/plan_linter.py`
-- **역할**: YAML 스키마 검증 (Pydantic 독립적)
-- **검색 키워드**: `_validate_verification_item`, `_validate_input_spec`, `_validate_verify_spec`, `_validate_reference_spec`
-- **주요 패턴**: 재귀 검증, `_check_type`, `_check_enum`, `_validate_nested_required`
-- **수정 범위**: verification_item, final_verification, reference_spec 검증 메서드
+### 5. sisyphus/core/plan_navigator.py
+- **역할**: YAML plan 탐색 (DFS 알고리즘)
+- **검색 키워드**: `get_next_task`, `find_todo_by_id`, `check_task_completion`
+- **주요 패턴**: 재귀적 트리 탐색, CompletionReport 생성
 
-### 3. 테스트 파일들
-- `sisyphus/core/tests/test_plan_linter.py`: linter 검증 테스트
-- `sisyphus/utils/tests/test_plan_types.py`: Pydantic 모델 생성/검증 테스트
-- **패턴**: pytest, `pytest.mark.anyio`, ValidationError 테스트
+### 6. sisyphus/core/plan_loader.py
+- **역할**: YAML 파일 읽기/쓰기, Pydantic 변환
+- **검색 키워드**: `def load()`, `def save()`
+- **주요 패턴**: ruamel.yaml 사용, Pydantic model_validate
 
-## 핵심 필드 설계 (중요)
+### 7. v2.1 YAML 스키마 정의 및 예제
 
-### orchestrator_manually_verified 필드
+**v2.1 스키마 정의**:
+- **소스**: `sisyphus/utils/plan_types.py` (lines 22-76)
+- **핵심 변경사항**: BashVerification, LLMJudgeVerification을 VerificationItem에 직접 포함
+- **주의**: `plan_types.py:142`의 `format_version: "2.0"`은 역사적 이유로 유지되지만, BashVerification/LLMJudgeVerification 구조가 v2.1의 실질적 변경사항
+- **ai-todolist-draft.yaml 사용 금지**: 구버전 v2.0 스키마 (input.type, verify.type 구조)
 
-**필드 의미**:
-- orchestrator agent가 자동 검증 결과(bash/llm_judge)를 수동으로 승인하는 플래그
-- 자동 검증만으로는 불충분한 경우, orchestrator가 직접 검토 후 승인
+**VerificationItem v2.1 필드**:
+- `verified: bool` (검증 완료 여부) ← **올바른 필드명**
+- `completed` 필드는 **존재하지 않음** (cli.py:811의 `{"completed": completed}`는 **버그**)
 
-**설정 시점**:
-- **초기값**: `False` (필수 필드)
-- orchestrator가 bash/llm_judge 결과를 검토한 후 `True`로 변경
-- 자동 검증 결과가 신뢰 가능하면 orchestrator가 수동 승인
+**v2.1 호환 YAML 예제**:
 
-**manual_verification_evidence**:
-- orchestrator가 수동 검증 시 남긴 코멘트/증거
-- 예: "bash 결과 확인 완료, 파일 a.txt 존재 확인됨"
-- `orchestrator_manually_verified=False`일 때: 빈 문자열 (필수 필드)
-
-**verified와의 관계**:
-- `verified`: bash/llm_judge 자동 검증 통과 여부
-- `orchestrator_manually_verified`: orchestrator 수동 승인 여부
-- `verification_evidence`: 자동 검증 증거 (stdout, llm 판단 결과 등)
-- `manual_verification_evidence`: orchestrator 수동 검증 코멘트
-- **최종 완료 조건**: `verified=True` AND `orchestrator_manually_verified=True`
-
-### context_commands 필드 (LLMJudgeVerification)
-
-**필드 의미**:
-- LLM 판단 전에 실행할 bash 명령어 리스트
-- 목적: LLM에게 판단을 위한 컨텍스트 제공 (파일 내용, 시스템 상태 등)
-
-**동작 방식**:
-1. `context_commands`의 명령어들을 순차적으로 실행
-2. 각 명령어의 출력(stdout/stderr)을 수집
-3. 수집된 출력과 함께 `instruction`을 LLM에게 전달
-4. LLM이 컨텍스트를 바탕으로 검증 판단
-
-**예시**:
+**1) VerificationItem 단독 예제** (BashVerification):
 ```yaml
-llm_judge:
-  - by: orchestrator-agent
-    context_commands:
-      - "ls -al"
-      - "cat config.json"
-    instruction: |
-      위 파일 목록과 config 내용을 보고,
-      a.txt 파일이 존재하고 config가 올바른지 검증하세요.
+verification_spec:
+  - id: "verify_bash_example"
+    title: "Bash 검증 예제"
+    description: "디렉토리 존재 확인"
+    verified: false
+    verified_at: null
+    verification_evidence: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ""
+    bash:
+      - execute: "ls -la todo-cli/"
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 0
+        notes: "디렉토리 존재 확인"
+    llm_judge: []
 ```
 
-**빈 리스트 가능**:
-- `context_commands: []` → 명령어 없이 instruction만 LLM에게 전달
-- context 없이 LLM이 판단해야 하는 경우 사용
+**2) VerificationItem 단독 예제** (LLMJudgeVerification):
+```yaml
+verification_spec:
+  - id: "verify_llm_example"
+    title: "LLM 검증 예제"
+    description: "코드 품질 검증"
+    verified: false
+    verified_at: null
+    verification_evidence: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ""
+    bash: []
+    llm_judge:
+      - by: "orchestrator-agent"
+        context_commands:
+          - "cat database.py"
+        instruction: |
+          Verify:
+          1. Connection pooling pattern
+          2. Error handling exists
+          3. Type hints present
+```
 
-### markdown type 통합 (ReferenceSpec)
+**3) 전체 WorkPlan 구조 예제** (v2.1 호환):
+```yaml
+metadata:
+  created_at: "2025-01-15T10:00:00Z"
+  updated_at: "2025-01-15T10:00:00Z"
+  format_version: "2.0"  # 역사적 이유로 "2.0" 유지
 
-**통합 근거**:
-- 기존 `text`와 `code_snippet` 타입은 모두 "텍스트 내용 저장" 역할
-- `code_snippet`의 `language` 필드는 단순 힌트, 실제 파싱/실행 불필요
-- markdown 포맷으로 둘 다 표현 가능:
-  - 일반 텍스트: markdown 본문
-  - 코드: markdown code fence (` ```python ... ``` `)
+user_request:
+  original: "implement todo CLI tool"
+  created_at: "2025-01-15T10:00:00Z"
+  additional: []
 
-**마이그레이션**:
-- `type: "text"` → `type: "markdown"`
-- `type: "code_snippet"` → `type: "markdown"`
-  - `language` 필드는 code fence의 언어 식별자로 변환
-  - `code` 필드는 code fence 내용으로 변환
+objectives:
+  core: "Create command-line todo management tool"
+  detailed: []
 
-**retrieval 필드**:
-- `FileReference`, `URLReference`: 파일/URL에서 특정 부분 추출 (keywords, line_range, prompt)
-- `MarkdownReference`: 이미 content에 전체 내용 포함 → retrieval 불필요
-- `ReferencePointer`: 정의된 reference의 retrieval 사용 → 자체 retrieval 불필요
+background:
+  current_situation: "No todo tool exists"
+  reason_for_change: "Need task tracking"
+  changes_to_make: "Implement CLI with database"
 
-# 작업 흐름 (HOW - 작업 흐름 및 의존성)
+required_background:
+  description: "Python 3.12, Typer, SQLAlchemy knowledge"
+  file_structure: null
+  references: []
 
-## 작업 의존성 다이어그램
+status:
+  execution:
+    started: false
+    completed: false
+    started_at: null
+    completed_at: null
+  work_mode:
+    parallel_requested: false
+    current_task_id: null
+  progress:
+    total_tasks: 2
+    completed: 0
+    in_progress: 0
+    pending: 2
+  current_work: "작업이 시작되지 않았습니다."
+
+workflow:
+  dependency_diagram: |
+    Task 1 → Task 2
+  critical_path: ["1", "2"]
+
+todos:
+  - id: "1"
+    title: "프로젝트 구조 생성"
+    status: "pending"
+    parallel_group: null
+    created_at: "2025-01-15T10:00:00Z"
+    updated_at: "2025-01-15T10:00:00Z"
+    status_changed_at: null
+    references: []
+    details: {}
+    verification_spec:
+      - id: "verify_1_dirs"
+        title: "디렉토리 구조 확인"
+        description: "todo-cli/ 디렉토리 존재 확인"
+        verified: false
+        verified_at: null
+        verification_evidence: null
+        orchestrator_manually_verified: false
+        manual_verification_evidence: ""
+        bash:
+          - execute: "ls -la todo-cli/"
+            expected_exit_code: 0
+            notes: "프로젝트 디렉토리 확인"
+        llm_judge: []
+    children: []
+    parallel_note: null
+
+  - id: "2"
+    title: "데이터베이스 모델 구현"
+    status: "pending"
+    parallel_group: null
+    created_at: "2025-01-15T10:00:00Z"
+    updated_at: "2025-01-15T10:00:00Z"
+    status_changed_at: null
+    references: []
+    details: {}
+    verification_spec:
+      - id: "verify_2_impl"
+        title: "코드 품질 검증"
+        description: "database.py 구현 검증"
+        verified: false
+        verified_at: null
+        verification_evidence: null
+        orchestrator_manually_verified: false
+        manual_verification_evidence: ""
+        bash: []
+        llm_judge:
+          - by: "orchestrator-agent"
+            context_commands:
+              - "cat todo-cli/database.py"
+            instruction: |
+              Verify database.py implementation:
+              1. Connection pooling pattern exists
+              2. Error handling present
+              3. Type hints complete
+    children: []
+    parallel_note: null
+
+success_vision:
+  user_perspective: []
+  business_perspective: []
+  technical_criteria: []
+
+final_verification: []
+```
+
+## 참고 파일
+
+### 현재 구현 패턴
+- `sisyphus/cli.py:594-890` (plan 서브커맨드 구현)
+- `sisyphus/core/plan_navigator.py:180-230` (check_task_completion)
+- `sisyphus/utils/formatting.py` (출력 포맷팅)
+
+### 제거 대상
+- `sisyphus plan set` (cli.py:664-717)
+- `sisyphus plan set-verification` (cli.py:754-825)
+- `sisyphus plan check` (cli.py:828-849)
+
+## VerificationItem 필드 명세
+
+### plan_types.py:60-76 필드 상세
+- `id`: 필수, 검증 ID
+- `title`: 필수, 검증 제목
+- `description`: 필수, 검증 설명
+- `verified`: Optional (기본값: false)
+- `verified_at`: Optional (기본값: null)
+- `verification_evidence`: Optional (기본값: null)
+- `orchestrator_manually_verified`: **필수**, orchestrator 수동 검증 여부 (기본값: false)
+- `manual_verification_evidence`: **필수**, 수동 검증 증거 (기본값: "")
+- `bash`: Optional (기본값: [])
+- `llm_judge`: Optional (기본값: [])
+
+**주의**: `orchestrator_manually_verified`, `manual_verification_evidence`는 필수이지만, YAML 작성 시 빈 문자열 (`""`) 또는 false로 초기화 필요
+
+# 작업 흐름 (HOW - 태스크 흐름 및 의존성)
+
+## 태스크 의존성 다이어그램
 
 ```
-Task 1 (Pydantic 모델 수정)
-   ↓
-Task 2 (plan_linter 검증 로직 수정)
-   ↓
-Task 3 (테스트 케이스 업데이트)
-   ↓
-Task 4 (최종 검증 및 문서화)
+Phase 1: CLI 명령어 구조 설계 및 기본 구현
+└─ Task 1: sisyphus execute-phase 서브커맨드 구조 구현
+   └─ Task 2: sisyphus verify-phase 서브커맨드 구조 구현
+
+Phase 2: execute-phase 기능 구현
+├─ Task 3: execute-phase get-overview 구현
+├─ Task 4: execute-phase continue-work 구현
+├─ Task 5: execute-phase bash-verify 구현
+├─ Task 6: execute-phase llm-verify 구현
+└─ Task 7: execute-phase manual-verify 구현
+
+Phase 3: verify-phase 기능 구현
+├─ Task 8: verify-phase bash-verify 구현
+└─ Task 9: verify-phase llm-verify 구현
+
+Phase 4: plan 명령어 정리
+└─ Task 10: 불필요한 plan 서브커맨드 제거
 ```
 
 ## 단계별 설명
 
-- **Phase 1 (Task 1)**: Pydantic 모델 변경 (기반 작업)
-  - VerificationItem 단순화
-  - ReferenceSpec dual-mode 지원
-  - 필드명 통일
-
-- **Phase 2 (Task 2)**: Linter 로직 업데이트 (Task 1 완료 후)
-  - verification_item 검증 로직 수정
-  - final_verification 구조 통일
-  - reference_spec 검증 로직 수정
-
-- **Phase 3 (Task 3)**: 테스트 케이스 수정 (Task 2 완료 후)
-  - plan_types 테스트 업데이트
-  - plan_linter 테스트 업데이트
-
-- **Phase 4 (Task 4)**: 최종 검증 및 문서화 (모든 작업 완료 후)
-  - 전체 린트/타입체크/테스트
-  - 스키마 문서 업데이트
+- **Phase 1 (Task 1-2)**: CLI 명령어 골격 구현, 기존 패턴(plan_app) 참고
+- **Phase 2 (Task 3-7)**: execute-phase 핵심 기능 구현, YAML 읽기/쓰기 활용
+- **Phase 3 (Task 8-9)**: verify-phase 구현, execute-phase와 로직 공유
+- **Phase 4 (Task 10)**: 정리 작업, set/set-verification/check 제거
 
 # 작업 계획
 
-## PRD & 구조
+## PRD 및 구조
 
-### 변경 전 구조 (v2.0)
+### 시스템 아키텍처
 
 ```mermaid
 graph TB
-    VI[VerificationItem] --> IS[InputSpec Union]
-    VI --> VS[VerifySpec Union]
+    CLI[sisyphus CLI]
 
-    IS --> CI[CommandInput]
-    IS --> PI[PromptInput]
-    IS --> MI[ManualInput]
-    IS --> MCI[MultiCommandInput]
+    CLI --> EP[execute-phase]
+    CLI --> VP[verify-phase]
+    CLI --> PLAN[plan get/lint]
 
-    VS --> PV[ProgrammaticVerify]
-    VS --> LV[LLMJudgeVerify]
-    VS --> NV[NoneVerify]
-    VS --> PRV[PromptVerify]
+    EP --> EPO[get-overview]
+    EP --> EPC[continue-work]
+    EP --> EPBV[bash-verify]
+    EP --> EPLV[llm-verify]
+    EP --> EPMV[manual-verify]
+
+    VP --> VPBV[bash-verify]
+    VP --> VPLV[llm-verify]
+
+    EPO --> PN[PlanNavigator]
+    EPC --> PN
+    EPBV --> PN
+    EPLV --> PN
+
+    PN --> PL[PlanLoader]
+    PL --> YAML[ai-todolist.yaml]
 ```
 
-### 변경 후 구조 (v2.1)
+### execute-phase 흐름
 
 ```mermaid
-graph TB
-    VI[VerificationItem] --> BV[bash: list]
-    VI --> LV[llm_judge: list]
-    VI --> VF[verified/evidence]
+sequenceDiagram
+    participant O as Orchestrator
+    participant EP as execute-phase
+    participant PN as PlanNavigator
+    participant YAML as ai-todolist.yaml
 
-    BV --> B1[BashVerification 1]
-    BV --> B2[BashVerification 2]
+    O->>EP: continue-work
+    EP->>PN: get_next_task()
+    PN->>YAML: load plan
+    YAML-->>PN: current task
+    PN-->>EP: task info
+    EP-->>O: formatted task assignment
 
-    LV --> L1[LLMJudgeVerification 1]
-    LV --> L2[LLMJudgeVerification 2]
+    O->>EP: bash-verify --task 1.1
+    EP->>YAML: find task 1.1
+    YAML-->>EP: verification_spec
+    EP->>EP: execute bash commands
+    EP->>YAML: update verified=true
+    EP-->>O: verification result
+
+    O->>EP: manual-verify --mark-verified "evidence"
+    EP->>YAML: update orchestrator_manually_verified=true
+    EP->>YAML: save manual_verification_evidence
+    EP-->>O: confirmation
 ```
 
 ## 구현 세부사항
 
 ### 아키텍처 제약
+- PlanLoader/PlanNavigator 기존 API 활용
+- Typer 기반 CLI 구조 유지
+- YAML 스키마 v2.1 준수
 
-- Pydantic 2.0+ `model_validator(mode='after')` 사용
-- ruamel.yaml로 순서 보존하며 파싱/저장
-- Linter는 Pydantic과 독립적으로 검증
-
-### 엣지 케이스 처리
-
-- **bash/llm_judge 둘 다 없음**: ValidationError 발생 (최소 하나 필수)
-- **bash/llm_judge 둘 다 있음**: 허용 (OR 로직)
-- **verified=True인데 verification_evidence=None**: 허용 (optional)
-- **References type 필드 필수**: Pydantic discriminator는 type 필드로만 분기, ReferencePointer 포함 모든 타입에 type 필드 명시
+### Edge Case 처리
+- task_id 없을 때 → ValueError 발생
+- bash 검증 실패 → verified=false 유지, 에러 출력
+- llm_judge by:external-agent → claude-agent-sdk 호출 필요
 
 ### 암묵적 가정 명시
-
-- **가정 1**: 기존 YAML 파일 migration 불필요 (새 형식만 지원)
-- **가정 2**: Linter는 Pydantic ValidationError를 신뢰하지 않고 독립 검증
-- **가정 3**: `completed` → `verified` 완전 대체, 하위 호환 없음
+- ai-todolist.yaml 파일이 존재한다고 가정
+- verification_spec이 비어있으면 자동 통과
+- orchestrator가 manual-verify 호출 책임
 
 ## 프로젝트 커밋 메시지 스타일
 
-```
-feat: 기능 추가
-fix: 버그 수정
-test: 테스트 추가/수정
-refactor: 리팩토링
-chore: 기타 작업
-docs: 문서 업데이트
-```
+최근 커밋 로그 분석 결과:
+- `feat:` - 새 기능 추가
+- `fix:` - 버그 수정
+- `docs:` - 문서 업데이트
+- `chore:` - 유지보수성 작업
+- `test:` - 테스트 추가
 
 # TODOs
 
-- [x] 1. Pydantic 모델 수정 (VerificationItem, ReferenceSpec 단순화)
+- [ ] 1. sisyphus execute-phase CLI 구조 구현
 
-   **참조 파일**: `sisyphus/utils/plan_types.py` (search for `class VerificationItem`, `class ReferenceSpec`, `InputSpec`, `VerifySpec`)
+   **참고 소스**:
+   - Pattern file: `sisyphus/cli.py` (search for `@plan_app.command`, examine argumen parsing and Typer structure around line 590-890)
+   - Pattern file: `sisyphus/core/plan_navigator.py` (search for `PlanNavigator` class, examine get_next_task method)
 
-   - [x] 1.1 BashVerification, LLMJudgeVerification 클래스 추가
+   - [ ] 1.1 execute_phase_app = typer.Typer() 생성
 
-      **구현 패턴**:
+      **구현 세부사항**:
+      - 현재 코드: `plan_app = typer.Typer(name="plan", help="Work plan management")`
+      - 변경 내용: `execute_phase_app = typer.Typer(name="execute-phase", help="Execute phase commands")`
+      - 위치: `sisyphus/cli.py` 하단 plan_app 아래
+
+   - [ ] 1.2 app.add_typer(execute_phase_app) 등록
+
+      **실행 명령**: `sisyphus execute-phase --help` 실행 시 서브커맨드 목록 출력 확인
+
+   - [ ] 1.3 테스트 작성 및 실행
+
+      **테스트 패턴 참고**: `sisyphus/tests/test_cli_plan.py` (search for `test_plan_get_current_task`, examine Typer testing pattern)
+      **실행 명령**: `uv run pytest sisyphus/tests/test_cli.py -v -k execute_phase`
+
+   - [ ] 1.4 Lint 및 타입 체크
+      - [ ] `ruff check sisyphus/cli.py` → 0 errors expected
+      - [ ] `basedpyright sisyphus/cli.py` → 0 errors expected
+
+   - [ ] 1.5 커밋
+      - 프로젝트 규칙에 따라: `feat: add execute-phase CLI subcommand structure`
+      - `git add sisyphus/cli.py sisyphus/tests/test_cli.py && git commit -m "..."`
+
+   - [ ] **작업 완료 검증 체크리스트**
+      - [ ] `sisyphus/cli.py`에 `execute_phase_app = typer.Typer()` 추가 확인
+      - [ ] `app.add_typer(execute_phase_app)` 호출 확인
+      - [ ] `sisyphus execute-phase --help` 실행 → 도움말 출력
+      - [ ] 테스트 실행: `uv run pytest sisyphus/tests/test_cli.py -v -k execute_phase` → PASSED
+      - [ ] `ruff check sisyphus/cli.py` → 0 errors
+      - [ ] `basedpyright sisyphus/cli.py` → 0 errors
+      - [ ] git commit 완료 확인: `git log -1 --oneline`
+
+- [ ] 2. sisyphus verify-phase CLI 구조 구현
+
+   **참고 소스**:
+   - Pattern file: `sisyphus/cli.py:590-590` (plan_app 선언 패턴 참고)
+
+   - [ ] 2.1 verify_phase_app = typer.Typer() 생성 및 등록
+   - [ ] 2.2 테스트 작성 (`test_verify_phase_help`)
+   - [ ] 2.3 테스트 실행 및 lint
+   - [ ] 2.4 커밋: `feat: add verify-phase CLI subcommand structure`
+
+   - [ ] **작업 완료 검증 체크리스트**
+      - [ ] `sisyphus verify-phase --help` → 도움말 출력
+      - [ ] 테스트 통과
+      - [ ] lint/typecheck 0 errors
+
+- [ ] 3. execute-phase get-overview 구현
+
+   **참고 소스**:
+   - `sisyphus/core/plan_navigator.py:33-38` (get_current_task 메서드)
+   - `sisyphus/utils/formatting.py:23-76` (print_task 함수)
+   - `ai-todolist-draft.yaml:1-100` (user_request, background, required_background 구조)
+
+   **구현 세부사항**:
+   - 현재: plan get 명령어가 task만 출력
+   - 변경: get-overview는 user_request + background + required_background + status + workflow + todos(depth 1 only) 출력
+   - 출력 형식: PLAIN (기본), RICH (--rich 옵션)
+
+   - [ ] 3.1 `@execute_phase_app.command(name="get-overview")` 함수 구현
+
+      **코드 패턴**:
       ```python
-      class BashVerification(BaseModel):
-          execute: str
-          expected_stdout: str | None = None
-          expected_stderr: str | None = None
-          expected_exit_code: int = 0
-          notes: str | None = None  # note → notes 통일
+      @execute_phase_app.command(name="get-overview")
+      def get_overview(
+          rich: bool = typer.Option(False, "--rich", help="Use Rich table format")
+      ) -> None:
+          """Get execution overview (user_request, background, status, workflow, todos depth-1)."""
+          try:
+              loader = PlanLoader()
+              plan = loader.load()
 
-      class LLMJudgeBy(str, Enum):
-          ORCHESTRATOR = "orchestrator-agent"
-          EXTERNAL = "external-agent"
-
-      class LLMJudgeVerification(BaseModel):
-          by: LLMJudgeBy = LLMJudgeBy.ORCHESTRATOR
-          context_commands: list[str] = []  # bash_execute → context_commands
-          instruction: str
+              # user_request, background, required_background, status, workflow, todos (depth 1만)
+              print_overview(plan, format=OutputFormat.RICH if rich else OutputFormat.PLAIN)
+          except FileNotFoundError as e:
+              console.print(f"[red]{e}[/red]")
+              raise typer.Exit(1)
       ```
 
-   - [x] 1.2 VerificationItem 클래스 재작성
+   - [ ] 3.2 `sisyphus/utils/formatting.py`에 `print_overview()` 함수 추가
 
-      **구현 패턴**:
+      **출력 형식 명세**:
+      ```
+      # PLAIN 모드
+      User Request: {user_request.original}
+      Additional: {', '.join(user_request.additional)}
+
+      Background:
+        Current: {background.current_situation}
+        Reason: {background.reason_for_change}
+
+      Required Background:
+        {required_background.description}
+
+      Status:
+        Execution: started={execution.started}, completed={execution.completed}
+        Current Task: {work_mode.current_task_id or "None"}
+        Progress: {progress.completed}/{progress.total_tasks} completed
+
+      Workflow:
+      {workflow.dependency_diagram}
+
+      Todos (depth 1):
+        1. [{status}] {title} ({len(children)} children)
+        2. [{status}] {title} ({len(children)} children)
+      ```
+
+      **RICH 모드**: Rich Panel 사용, 섹션별 Table 생성
+
+      **코드 스켈레톤**:
       ```python
-      from pydantic import model_validator
-      from typing import Self
-
-      class VerificationItem(BaseModel):
-          id: str
-          title: str  # name → title 통일
-          description: str
-          verified: bool = False
-          verified_at: str | None = None  # 추가
-          verification_evidence: str | None = None
-          orchestrator_manually_verified: bool
-          manual_verification_evidence: str
-          bash: list[BashVerification] = []
-          llm_judge: list[LLMJudgeVerification] = []
-
-          @model_validator(mode='after')
-          def validate_at_least_one(self) -> Self:
-              if not self.bash and not self.llm_judge:
-                  raise ValueError("bash 또는 llm_judge 중 하나 이상 필수")
-              return self
+      def print_overview(plan: WorkPlan, format: OutputFormat = OutputFormat.PLAIN) -> None:
+          if format == OutputFormat.PLAIN:
+              # 위 PLAIN 형식 출력
+              output = f"User Request: {plan.user_request.original}\n"
+              if plan.user_request.additional:
+                  output += f"Additional: {', '.join(plan.user_request.additional)}\n"
+              # ... (나머지 섹션)
+              console.print(output)
+          else:
+              # Rich Panel/Table 사용
+              from rich.panel import Panel
+              lines = [
+                  f"[bold]User Request:[/bold] {plan.user_request.original}",
+                  # ... (나머지 섹션)
+              ]
+              panel = Panel("\n".join(lines), title="Work Plan Overview")
+              console.print(panel)
       ```
 
-   - [x] 1.3 FinalVerificationItem 및 FinalVerificationCategory 수정
+   - [ ] 3.3 테스트 작성 및 실행
 
-      **1.3.1 FinalVerificationItem 수정 (category 필드 추가)**:
+      **실행 명령**: `sisyphus execute-phase get-overview`
+      **예상 출력**:
+      ```
+      User Request: ...
+      Background: ...
+      Status: execution.started=false, current_task_id=null
+      Todos (depth 1):
+        1. [pending] 프로젝트 구조 생성 (2 children)
+        2. [pending] 데이터베이스 모델 구현 (2 children)
+      ```
+
+   - [ ] 3.4 커밋: `feat: implement execute-phase get-overview command`
+
+   - [ ] **작업 완료 검증 체크리스트**
+      - [ ] `sisyphus execute-phase get-overview` 실행 → overview 출력
+      - [ ] `sisyphus execute-phase get-overview --rich` → Rich 포맷 출력
+      - [ ] 테스트 통과: `uv run pytest sisyphus/tests/test_cli.py -k overview`
+      - [ ] lint/typecheck 0 errors
+
+- [ ] 4. execute-phase continue-work 구현
+
+   **참고 소스**:
+   - `sisyphus/core/plan_navigator.py:40-80` (get_next_task 메서드 - DFS 알고리즘)
+   - `ai-todolist-draft.yaml:183-252` (todo 구조, children, verification_spec)
+
+   **구현 세부사항**:
+   - current_task_id가 null이면 첫 pending task 할당
+   - current_task가 완료되면 다음 task로 이동
+   - parallel_group이 같은 task들은 동시 할당 가이드 출력
+
+   - [ ] 4.1 `@execute_phase_app.command(name="continue-work")` 구현
+
+      **로직**:
+      1. PlanNavigator.get_next_task() 호출
+      2. task가 없으면 "모든 작업 완료" 출력
+      3. task가 있으면:
+         - status를 in_progress로 변경
+         - current_task_id 업데이트
+         - task 정보 출력 (id, title, references, children, details)
+         - parallel_group 확인 → N개의 executor 할당 가이드 출력
+
+   - [ ] 4.2 parallel_group 처리 로직 추가
+
+      **조건**: `task.parallel_group is not None`
+
+      **구현 알고리즘**:
+      1. PlanNavigator에 헬퍼 메서드 추가:
+         ```python
+         def get_parallel_group_tasks(self, group_id: int) -> list[Todo]:
+             """Get all tasks with same parallel_group."""
+             result = []
+             def collect(todos: list[Todo]) -> None:
+                 for todo in todos:
+                     if todo.parallel_group == group_id:
+                         result.append(todo)
+                     if todo.children:
+                         collect(todo.children)
+             collect(self.plan.todos)
+             return result
+         ```
+
+      2. continue-work에서 사용:
+         ```python
+         if task.parallel_group is not None:
+             parallel_tasks = navigator.get_parallel_group_tasks(task.parallel_group)
+             console.print(f"⚠️  Parallel Execution Required")
+             console.print(f"Tasks in parallel_group={task.parallel_group}:")
+             for t in parallel_tasks:
+                 console.print(f"  - Task {t.id}: {t.title}")
+             console.print(f"→ Launch {len(parallel_tasks)} executor agents in parallel")
+         ```
+
+      **출력 예시**:
+      ```
+      ⚠️  Parallel Execution Required
+      Tasks in parallel_group=10:
+        - Task 4: 테스트 작성
+        - Task 5: 문서화
+
+      → Launch 2 executor agents in parallel
+      ```
+
+   - [ ] 4.3 테스트 작성
+      - test_continue_work_first_task
+      - test_continue_work_parallel_group
+      - test_continue_work_all_completed
+
+   - [ ] 4.4 커밋: `feat: implement execute-phase continue-work with parallel support`
+
+   - [ ] **작업 완료 검증 체크리스트**
+      - [ ] 첫 실행 시 첫 pending task 할당
+      - [ ] parallel_group 감지 시 가이드 출력
+      - [ ] status/current_task_id YAML 업데이트 확인
+      - [ ] 테스트 통과
+
+- [ ] 5. execute-phase bash-verify 구현
+
+   **참고 소스**:
+   - `sisyphus/utils/plan_types.py:22-27` (BashVerification 모델)
+   - `ai-todolist-draft.yaml:213-226` (bash verification 예제)
+
+   **구현 세부사항**:
+   - VerificationItem.bash 리스트 순회
+   - subprocess로 bash command 실행
+   - stdout/stderr/exit_code 검증
+   - 성공 시 verified=true, verified_at 기록
+
+   - [ ] 5.1 `@execute_phase_app.command(name="bash-verify")` 구현
+
+      **코드 패턴**:
       ```python
-      class FinalVerificationItem(BaseModel):
-          id: str
-          title: str
-          category: str  # 추가 (기능 동작 확인, 잘못된 구현 방지 등)
-          description: str
-          verified: bool = False
-          verified_at: str | None = None
-          verification_evidence: str | None = None
-          orchestrator_manually_verified: bool
-          manual_verification_evidence: str
-          bash: list[BashVerification] = []
-          llm_judge: list[LLMJudgeVerification] = []
+      @execute_phase_app.command(name="bash-verify")
+      def bash_verify(
+          task_id: str = typer.Argument(..., help="Task ID to verify"),
+      ) -> None:
+          """Run bash verification for a task."""
+          try:
+              loader = PlanLoader()
+              plan = loader.load()
+              navigator = PlanNavigator(plan)
 
-          @model_validator(mode='after')
-          def validate_at_least_one(self) -> Self:
-              if not self.bash and not self.llm_judge:
-                  raise ValueError("bash 또는 llm_judge 중 하나 이상 필수")
-              return self
+              task = navigator.find_todo_by_id(task_id)
+              if task is None:
+                  console.print(f"[red]Task not found: {task_id}[/red]")
+                  raise typer.Exit(1)
+
+              # VerificationItem.bash 순회
+              for verify_item in task.verification_spec:
+                  for bash_spec in verify_item.bash:
+                      result = subprocess.run(
+                          bash_spec.execute,
+                          shell=True,
+                          capture_output=True,
+                          text=True
+                      )
+
+                      # 검증 로직
+                      if result.returncode == bash_spec.expected_exit_code:
+                          # verified=true, verified_at 업데이트
+                          ...
+          except Exception as e:
+              console.print(f"[red]Error: {e}[/red]")
+              raise typer.Exit(1)
       ```
 
-      **1.3.2 FinalVerificationCategory 클래스 제거**:
-      - `plan_types.py:291-294` FinalVerificationCategory 클래스 삭제
-      - v2.0 구조: `category: str` + `items: list[FinalVerificationItem]` (중첩)
-      - v2.1 구조: FinalVerificationItem에 category 필드 추가 (평탄화)
+   - [ ] 5.2 검증 실패 시 에러 처리
 
-      **1.3.3 WorkPlan.final_verification 타입 변경**:
+      **출력**:
+      ```
+      ✗ Verification failed: verify_1_1_dirs
+        Command: ls -la todo-cli/
+        Expected exit code: 0
+        Actual exit code: 2
+        Stderr: ls: todo-cli/: No such file or directory
+      ```
+
+   - [ ] 5.3 YAML 업데이트 로직 (immutable pattern)
+
+      **참고 코드**: `sisyphus/cli.py:794-825` (_update_verification_status 전체)
+      **⚠️ 주의**: cli.py:811의 `{"completed": completed}` 사용은 **버그**입니다. VerificationItem에는 `completed` 필드가 없고 `verified` 필드만 존재합니다.
+
+      **헬퍼 함수 구현** (cli.py 버그 수정):
       ```python
-      class WorkPlan(BaseModel):
-          # Before (v2.0)
-          final_verification: list[FinalVerificationCategory]
+      def _update_verification_status(
+          todos: list[Todo], task_id: str, verify_id: str, verified: bool,
+          verified_at: str, evidence: str
+      ) -> list[Todo]:
+          """Recursively update verification item (immutable).
 
-          # After (v2.1)
-          final_verification: list[FinalVerificationItem]
+          Args:
+              todos: List of todos to search
+              task_id: Target task ID
+              verify_id: Verification item ID to update
+              verified: Verification status (올바른 필드명: 'verified', not 'completed')
+              verified_at: Timestamp (ISO format)
+              evidence: Verification evidence
+
+          Returns:
+              Updated list of todos
+          """
+          result = []
+          for todo in todos:
+              if todo.id == task_id:
+                  # 해당 task의 verification_spec 업데이트
+                  updated_specs = [
+                      v.model_copy(update={
+                          "verified": verified,  # ← cli.py:811 버그 수정: 'completed' → 'verified'
+                          "verified_at": verified_at,
+                          "verification_evidence": evidence
+                      }) if v.id == verify_id else v
+                      for v in todo.verification_spec
+                  ]
+                  updated = todo.model_copy(update={"verification_spec": updated_specs})
+                  result.append(updated)
+              else:
+                  # children 재귀 확인
+                  if todo.children:
+                      updated = todo.model_copy(
+                          update={"children": _update_verification_status(
+                              todo.children, task_id, verify_id, verified, verified_at, evidence
+                          )}
+                      )
+                      result.append(updated)
+                  else:
+                      result.append(todo)
+          return result
       ```
 
-   - [x] 1.4 ReferenceSpec dual-mode 지원 및 SimpleReference 통합
-
-      **1.4.1 SimpleReference를 ReferencePointer로 통합**:
-      - **결정**: `SimpleReference` 클래스 제거 (`plan_types.py:168-171`)
-      - **이유**: ReferencePointer와 기능 중복, discriminated union 일관성
-      - **변경 사항**:
-        - Before: `SimpleReference = {"ref_id": str, "note": str | None}`
-        - After: `ReferencePointer = {"type": "pointer", "ref_id": str, "notes": str | None}`
-      - **todos.references 타입 변경**:
-        - Before: `list[ReferenceSpec | SimpleReference]`
-        - After: `list[ReferenceItem]` (ReferencePointer 포함)
-
-      **1.4.2 ReferenceSpec 클래스 구현**:
+      **사용법**:
       ```python
-      # Pointer reference (SimpleReference 대체)
-      class ReferencePointer(BaseModel):
-          type: Literal["pointer"]
-          ref_id: str
-          notes: str | None = None  # note → notes 통일
+      from datetime import datetime, timezone
 
-      # Inline references
-      class FileReference(BaseModel):
-          type: Literal["file"]
-          path: str
-          description: str
-          retrieval: RetrievalSpec | None = None
-          notes: str | None = None
-
-      class URLReference(BaseModel):
-          type: Literal["url"]
-          url: str
-          description: str
-          retrieval: RetrievalSpec | None = None
-          notes: str | None = None
-
-      class MarkdownReference(BaseModel):
-          type: Literal["markdown"]  # text + code_snippet 통합
-          description: str
-          content: str
-
-      # Discriminated union (type 필드 필수)
-      ReferenceItem = Annotated[
-          ReferencePointer | FileReference | URLReference | MarkdownReference,
-          Field(discriminator="type")
-      ]
+      verified_at = datetime.now(timezone.utc).isoformat()
+      updated_todos = _update_verification_status(
+          plan.todos, task_id, verify_id, True, verified_at, "bash command succeeded"
+      )
+      plan = plan.model_copy(update={"todos": updated_todos})
+      loader.save(plan)
       ```
 
-      **1.4.3 Todo.references 타입 변경**:
+   - [ ] 5.4 테스트 작성 및 커밋
+
+   - [ ] **작업 완료 검증 체크리스트**
+      - [ ] bash command 실행 및 결과 검증
+      - [ ] verified=true 업데이트 확인
+      - [ ] 실패 시 verified=false 유지 확인
+      - [ ] 테스트 통과
+
+- [ ] 6. execute-phase llm-verify 구현
+
+   **참고 소스**:
+   - `sisyphus/utils/plan_types.py:30-38` (LLMJudgeVerification, LLMJudgeBy enum)
+   - `ai-todolist-draft.yaml:324-346` (llm_judge 예제)
+
+   **구현 세부사항**:
+   - by: orchestrator-agent → instruction 출력, 수동 검증 요구
+   - by: external-agent → claude-agent-sdk 호출, VERIFIED=TRUE 파싱
+
+   - [ ] 6.1 orchestrator-agent 모드 구현
+
+      **출력**:
+      ```
+      LLM Verification Required (by: orchestrator-agent)
+
+      Task: 2.2 - database.py 구현
+      Instruction:
+        Verify database.py implementation:
+        1. Connection pooling pattern
+        2. Error handling
+        3. Type hints
+
+      Context Commands:
+        - cat todo-cli/database.py
+
+      After verification, run:
+        sisyphus execute-phase llm-verify mark-verified --task 2.2 --verify-id verify_2_2_impl --evidence "..."
+
+      ℹ️  1 more LLM verification remaining
+      ```
+
+   - [ ] 6.2 mark-verified 서브커맨드 구현
+
+      **코드 패턴**:
       ```python
-      class Todo(BaseModel):
-          # Before (v2.0)
-          references: list[ReferenceSpec | SimpleReference] = []
-
-          # After (v2.1)
-          references: list[ReferenceItem] = []
+      @execute_phase_app.command(name="llm-verify-mark")
+      def llm_verify_mark(
+          task_id: str = typer.Option(..., "--task"),
+          verify_id: str = typer.Option(..., "--verify-id"),
+          evidence: str = typer.Option(..., "--evidence"),
+      ) -> None:
+          """Mark LLM verification as completed."""
+          # verified=true, verification_evidence 업데이트
       ```
 
-   - [x] 1.5 기존 InputSpec, VerifySpec, SimpleReference, FinalVerificationCategory 클래스 제거
+   - [ ] 6.3 external-agent 모드 구현 (optional - 추후 확장)
 
-      **제거할 클래스들**:
-      - **InputSpec 관련**:
-        - CommandInput, PromptInput, ManualInput, MultiCommandInput
-        - InputSpec union type
-        - InputType enum
-      - **VerifySpec 관련**:
-        - ProgrammaticVerify, LLMJudgeVerify, NoneVerify, PromptVerify
-        - VerifySpec union type
-        - VerifyType enum
-      - **Reference 관련**:
-        - SimpleReference (`plan_types.py:168-171`)
-        - TextReference, CodeSnippetReference (markdown으로 통합)
-      - **FinalVerification 관련**:
-        - FinalVerificationCategory (`plan_types.py:291-294`)
+      **참고**: `sisyphus/agents/claude.py` (ClaudeAgent 사용 패턴)
+      **로직**:
+      - ClaudeAgent 초기화
+      - instruction + context_commands 결과를 프롬프트로 전송
+      - 응답에서 `{NAME}_VERIFIED = TRUE` 파싱
+      - verification_evidence 추출
 
-   - [x] 1.6 필드명 통일
+   - [ ] 6.4 테스트 및 커밋
 
-      **1.6.1 UserRequest.timestamp → created_at**:
+   - [ ] **작업 완료 검증 체크리스트**
+      - [ ] orchestrator 모드 instruction 출력
+      - [ ] mark-verified 명령어로 검증 완료 처리
+      - [ ] 남은 검증 개수 출력
+      - [ ] 테스트 통과
+
+- [ ] 7. execute-phase manual-verify 구현
+
+   **참고 소스**:
+   - `sisyphus/utils/plan_types.py:67-68` (orchestrator_manually_verified, manual_verification_evidence)
+
+   **구현 세부사항**:
+   - orchestrator가 코드 리뷰, 테스트 확인 후 수동 검증
+   - --mark-verified 옵션으로 evidence 기록
+
+   - [ ] 7.1 `@execute_phase_app.command(name="manual-verify")` 구현
+
+      **코드 패턴**:
       ```python
-      class UserRequest(BaseModel):
-          original: str
-          created_at: str  # timestamp → created_at
-          additional: list[str] = []
+      @execute_phase_app.command(name="manual-verify")
+      def manual_verify(
+          task_id: str = typer.Argument(...),
+          evidence: str = typer.Option(..., "--evidence"),
+      ) -> None:
+          """Manually verify task by orchestrator."""
+          # orchestrator_manually_verified=true
+          # manual_verification_evidence=evidence
       ```
 
-      **1.6.2 모든 note → notes (복수형)**:
-      - BashVerification, LLMJudgeVerification, ReferencePointer 등에서 일관되게 notes 사용
-
-      **1.6.3 VerificationItem name → title** (해당 없음):
-      - v2.0에는 name 필드 없음 (description만 존재)
-      - v2.1에서 title 필드를 새로 추가
-
-   - [x] 1.7 타입 체크 및 린트 실행
-
-      **실행 명령어**:
-      ```bash
-      uv run basedpyright sisyphus/utils/plan_types.py
-      uv run ruff check sisyphus/utils/plan_types.py
-      ```
-
-      **예상 결과**: 0 errors
-
-   - [x] **작업 완료 검증 체크리스트**
-      - [x] `BashVerification`, `LLMJudgeVerification` 클래스 정확히 구현?
-      - [x] `VerificationItem`에 `title`, `verified`, `verified_at`, `verification_evidence` 필드 추가?
-      - [x] `model_validator`가 "최소 하나 존재" 로직 강제? (bash 또는 llm_judge)
-      - [x] `FinalVerificationItem`에 `category` 필드 추가?
-      - [x] `ReferencePointer` + 3가지 inline reference 클래스 구현?
-      - [x] `type: pointer` 명시로 Pydantic discriminator 호환?
-      - [x] 기존 InputSpec/VerifySpec 클래스 제거?
-      - [x] `timestamp` → `created_at`, `note` → `notes`, `name` → `title` 통일?
-      - [x] `basedpyright` → 0 errors?
-      - [x] `ruff check` → 0 errors?
-
-- [x] 2. plan_linter 검증 로직 수정
-
-   **참조 파일**: `sisyphus/core/plan_linter.py` (search for `_validate_verification_item`, `_validate_final_verification`, `_validate_reference_spec`)
-
-   - [x] 2.1 `_validate_verification_item` 메서드 수정
-
-      **구현 패턴**:
-      ```python
-      def _validate_verification_item(self, item: Any, path: str) -> None:
-          if not isinstance(item, dict):
-              self._check_type(item, path, "dict")
-              return
-
-          # 필드 목록 변경
-          allowed_fields = {"id", "title", "description", "verified", "verified_at",
-                           "verification_evidence", "orchestrator_manually_verified",
-                           "manual_verification_evidence", "bash", "llm_judge"}
-          self._check_extra_fields(item, path, allowed_fields)
-
-          # 필수 필드 변경
-          self._validate_nested_required(item, path, ["id", "title", "description",
-                                                       "orchestrator_manually_verified",
-                                                       "manual_verification_evidence"])
-
-          # 최소 하나 존재 검증
-          has_bash = "bash" in item and item["bash"]
-          has_llm = "llm_judge" in item and item["llm_judge"]
-          if not has_bash and not has_llm:
-              self.errors.append(LintError(
-                  location=path,
-                  message="bash or llm_judge is required",
-                  expected="at least one of bash or llm_judge",
-                  actual="neither present",
-                  suggestion="Add 'bash' or 'llm_judge' field",
-              ))
-
-          # 타입 체크
-          if "title" in item:
-              self._check_type(item["title"], f"{path}.title", "string")
-          if "verified" in item:
-              self._check_type(item["verified"], f"{path}.verified", "boolean")
-          # ... (나머지 필드들)
-
-          # 하위 검증
-          if has_bash:
-              self._validate_bash_list(item["bash"], f"{path}.bash")
-          if has_llm:
-              self._validate_llm_judge_list(item["llm_judge"], f"{path}.llm_judge")
-      ```
-
-   - [x] 2.2 `_validate_input_spec`, `_validate_verify_spec` 메서드 제거
-
-      **제거할 메서드**:
-      - `_validate_input_spec` (line 692-734)
-      - `_validate_verify_spec` (line 736-784)
-
-   - [x] 2.3 `_validate_bash_list`, `_validate_llm_judge_list` 메서드 추가
-
-      **구현 패턴**:
-      ```python
-      def _validate_bash_list(self, bash_list: Any, path: str) -> None:
-          if not isinstance(bash_list, list):
-              self._check_type(bash_list, path, "list")
-              return
-
-          for i, bash in enumerate(bash_list):
-              bash_path = f"{path}[{i}]"
-              if not isinstance(bash, dict):
-                  self._check_type(bash, bash_path, "dict")
-                  continue
-
-              allowed_fields = {"execute", "expected_stdout", "expected_stderr",
-                               "expected_exit_code", "notes"}
-              self._check_extra_fields(bash, bash_path, allowed_fields)
-              self._validate_nested_required(bash, bash_path, ["execute"])
-
-              if "execute" in bash:
-                  self._check_type(bash["execute"], f"{bash_path}.execute", "string")
-              # ... (나머지 필드들)
-
-      def _validate_llm_judge_list(self, llm_list: Any, path: str) -> None:
-          if not isinstance(llm_list, list):
-              self._check_type(llm_list, path, "list")
-              return
-
-          for i, llm in enumerate(llm_list):
-              llm_path = f"{path}[{i}]"
-              if not isinstance(llm, dict):
-                  self._check_type(llm, llm_path, "dict")
-                  continue
-
-              allowed_fields = {"by", "context_commands", "instruction"}
-              self._check_extra_fields(llm, llm_path, allowed_fields)
-              self._validate_nested_required(llm, llm_path, ["instruction"])
-
-              # by 필드 리터럴 체크
-              if "by" in llm:
-                  valid_by_values = ["orchestrator-agent", "external-agent"]
-                  if llm["by"] not in valid_by_values:
-                      self.errors.append(LintError(
-                          location=f"{llm_path}.by",
-                          message="Invalid value",
-                          expected=f"one of {valid_by_values}",
-                          actual=str(llm["by"]),
-                          suggestion="Use 'orchestrator-agent' or 'external-agent'",
-                      ))
-      ```
-
-   - [x] 2.4 `_validate_final_verification` 구조 통일
-
-      **변경 전**:
-      ```python
-      final_verification:
-        - category: "기능 동작 확인"
-          items:  # 중첩 구조
-            - id: "verify_1"
-      ```
-
-      **변경 후**:
-      ```python
-      final_verification:
-        - id: "verify_1"
-          category: "기능 동작 확인"  # 필드로 이동
-      ```
-
-      **구현 패턴**: `_validate_final_verification`이 `_validate_verification_item`과 동일한 로직 사용 (category 필드 추가)
-
-   - [x] 2.5 `_validate_reference_spec` 및 SimpleReference 검증 제거
-
-      **2.5.1 `_validate_todo` 메서드에서 SimpleReference 검증 로직 제거**:
-      - **현재 (v2.0)**: todos.references에서 `ref_id` 유무로 SimpleReference vs ReferenceSpec 분기
-      - **변경 후 (v2.1)**: 모든 references는 discriminated union (type 필드 필수)
-      - **제거할 코드** (`plan_linter.py:632-644`):
-        ```python
-        # 삭제
-        if "ref_id" in ref:
-            # SimpleReference
-            allowed_ref_fields = {"ref_id", "note"}
-            self._check_extra_fields(ref, ref_path, allowed_ref_fields)
-            self._validate_nested_required(ref, ref_path, ["ref_id"])
-        else:
-            # ReferenceSpec
-            self._validate_reference_spec(ref, ref_path)
-        ```
-      - **추가할 코드**:
-        ```python
-        # 모든 references는 ReferenceItem (type 필드 필수)
-        self._validate_reference_spec(ref, ref_path)
-        ```
-
-      **2.5.2 `_validate_reference_spec` 수정 (dual-mode 지원)**:
-      ```python
-      def _validate_reference_spec(self, ref: Any, path: str) -> None:
-          if not isinstance(ref, dict):
-              self._check_type(ref, path, "dict")
-              return
-
-          # type 필드 필수 (pointer 포함)
-          valid_types = ["pointer", "file", "url", "markdown"]
-          if not self._validate_discriminated_union_type(ref, path, valid_types):
-              return
-
-          ref_type = ref.get("type")
-          if ref_type == "pointer":
-              allowed_fields = {"type", "ref_id", "notes"}
-              self._check_extra_fields(ref, path, allowed_fields)
-              self._validate_nested_required(ref, path, ["ref_id"])
-          elif ref_type == "file":
-              allowed_fields = {"type", "path", "description", "retrieval", "notes"}
-              # ... (기존 로직)
-          elif ref_type == "url":
-              # ... (기존 로직)
-          elif ref_type == "markdown":
-              allowed_fields = {"type", "description", "content"}
-              self._check_extra_fields(ref, path, allowed_fields)
-              self._validate_nested_required(ref, path, ["description", "content"])
-      ```
-
-   - [x] 2.6 필드명 검증 업데이트
-
-      **2.6.1 `_validate_user_request` 메서드 수정**:
-      - **위치**: `plan_linter.py:289, 296-297`
-      - **변경**: `allowed_fields`와 `_validate_nested_required`에서 `"timestamp"` → `"created_at"`
-      ```python
-      allowed_fields = {"original", "created_at", "additional"}  # timestamp → created_at
-      self._validate_nested_required(user_req, "user_request", ["original", "created_at"])
-      ```
-
-      **2.6.2 todos.references에서 note → notes 검증 수정**:
-      - **위치**: `plan_linter.py:640` (SimpleReference 검증 - 제거 예정)
-      - **변경 후**: ReferencePointer에서 `notes` 검증 (2.5.2에 이미 반영)
-
-      **2.6.3 VerificationItem name → title** (해당 없음):
-      - v2.0 VerificationItem에는 name 필드 없음
-      - title은 v2.1 신규 필드로 2.1에서 검증 추가
-
-   - [x] 2.7 린트 및 타입 체크
-
-      **실행 명령어**:
-      ```bash
-      uv run basedpyright sisyphus/core/plan_linter.py
-      uv run ruff check sisyphus/core/plan_linter.py
-      ```
-
-   - [x] **작업 완료 검증 체크리스트**
-      - [x] `_validate_verification_item`이 새 스키마 검증?
-      - [x] bash/llm_judge "최소 하나 존재" 검증 동작?
-      - [x] `_validate_bash_list`, `_validate_llm_judge_list` 메서드 추가?
-      - [x] `_validate_input_spec`, `_validate_verify_spec` 메서드 제거?
-      - [x] `_validate_final_verification` 구조 통일 (중첩 제거)?
-      - [x] `_validate_reference_spec`이 dual-mode (pointer + inline) 검증?
-      - [x] 필드명 검증 업데이트 (created_at, notes, title)?
-      - [x] `basedpyright` → 0 errors?
-      - [x] `ruff check` → 0 errors?
-
-- [x] 3. 테스트 케이스 업데이트
-
-   **참조 파일**:
-   - `sisyphus/utils/tests/test_plan_types.py` (Pydantic 모델 테스트)
-   - `sisyphus/core/tests/test_plan_linter.py` (linter 검증 테스트)
-
-   - [x] 3.1 plan_types 테스트 수정
-
-      **파일**: `sisyphus/utils/tests/test_plan_types.py`
-
-      **테스트 예시**:
-      ```python
-      def test_verification_item_bash_only__creates_successfully():
-          item = VerificationItem(
-              id="v1",
-              title="check file",
-              description="check file exists",
-              orchestrator_manually_verified=False,
-              manual_verification_evidence="",
-              bash=[BashVerification(execute="ls -al", expected_exit_code=0)]
-          )
-          assert item.verified is False
-          assert len(item.bash) == 1
-          assert len(item.llm_judge) == 0
-
-      def test_verification_item_both_bash_and_llm__creates_successfully():
-          item = VerificationItem(
-              id="v1",
-              title="test",
-              description="test",
-              orchestrator_manually_verified=False,
-              manual_verification_evidence="",
-              bash=[BashVerification(execute="ls")],
-              llm_judge=[LLMJudgeVerification(instruction="check")]
-          )
-          assert len(item.bash) == 1
-          assert len(item.llm_judge) == 1
-
-      def test_verification_item_neither_bash_nor_llm__raises_error():
-          with pytest.raises(ValidationError):
-              VerificationItem(
-                  id="v1",
-                  title="test",
-                  description="test",
-                  orchestrator_manually_verified=False,
-                  manual_verification_evidence=""
-              )
-      ```
-
-   - [x] 3.2 plan_linter 테스트 수정
-
-      **파일**: `sisyphus/core/tests/test_plan_linter.py`
-
-      **수정 사항**:
-      - verification_item 검증 테스트를 새 스키마로 변경
-      - bash/llm_judge 필드 검증 테스트 추가
-      - final_verification 구조 통일 테스트 추가
-      - reference dual-mode 테스트 추가
-
-   - [x] 3.3 전체 테스트 실행
-
-      **실행 명령어**:
-      ```bash
-      uv run pytest sisyphus/utils/tests/test_plan_types.py -xvs
-      uv run pytest sisyphus/core/tests/test_plan_linter.py -xvs
-      ```
-
-      **예상 결과**: All tests passed
-
-   - [x] **작업 완료 검증 체크리스트**
-      - [x] `test_plan_types.py` 테스트 모두 통과?
-      - [x] `test_plan_linter.py` 테스트 모두 통과?
-      - [x] bash/llm_judge OR 로직 테스트 추가? (둘 다 가능, 최소 하나 필수)
-      - [x] final_verification 구조 통일 테스트 추가?
-      - [x] reference dual-mode 테스트 추가?
-
-- [x] 4. 최종 검증 및 문서화
-
-   **참조**: 커밋 메시지 패턴 (feat/fix/test/refactor)
-
-   - [x] 4.1 전체 프로젝트 린트 및 타입 체크
-
-      **실행 명령어**:
-      ```bash
-      uv run ruff check sisyphus/
-      uv run basedpyright sisyphus/
-      ```
-
-      **예상 결과**: 0 errors
-      **실제 결과**: ✓ Ruff passed, basedpyright 0 errors (33 warnings - 기존 프로젝트)
-
-   - [x] 4.2 전체 테스트 실행
-
-      **실행 명령어**:
-      ```bash
-      uv run pytest
-      ```
-
-      **예상 결과**: All tests passed
-      **실제 결과**: ✓ 738 passed, 11 skipped
-
-   - [x] 4.3 스키마 문서 생성
-
-      **작업 내용**:
-      - `ai-todolist-spec-v2.1-final.yaml`을 `docs/schemas/` 디렉토리로 이동
-      - 변경 사항 요약 문서 작성 (v2.0 → v2.1 migration guide)
-
-      **완료**: docs/schemas/MIGRATION_v2.0_to_v2.1.md 생성
-
-   - [x] 4.4 변경 사항 검토
-
-      **확인 사항**:
-      - [x] `plan_types.py`: InputSpec/VerifySpec 제거, 새 클래스 추가
-      - [x] `plan_linter.py`: 검증 로직 업데이트
-      - [x] 테스트 파일: 새 스키마 반영 (test_plan_navigator.py 포함 20개 실패 → 0개)
-      - [x] 필드명 일관성 (created_at, notes, title)
-
-   - [x] 4.5 커밋
-
-      **커밋**: b2ab5ec45474af397cd4996454b10aca51fb59d1
-      **메시지**: feat: simplify YAML spec to v2.1 with bash/llm_judge direct fields
-      **변경 파일**: 10 files, +1797 -367 lines
-
-   - [x] **작업 완료 검증 체크리스트**
-      - [x] 전체 프로젝트 린트 통과?
-      - [x] 전체 프로젝트 타입 체크 통과?
-      - [x] 전체 테스트 통과?
-      - [x] 스키마 문서 생성 완료?
-      - [x] 커밋 완료? (`git log -1 --oneline` 확인)
-      - [x] 변경된 파일이 모두 스테이징되었는가?
+   - [ ] 7.2 테스트 및 커밋: `feat: implement execute-phase manual-verify`
+
+   - [ ] **작업 완료 검증 체크리스트**
+      - [ ] manual-verify 실행 시 YAML 업데이트
+      - [ ] evidence 기록 확인
+      - [ ] 테스트 통과
+
+- [ ] 8. verify-phase bash-verify 구현
+
+   **참고 소스**:
+   - Task 5 (execute-phase bash-verify) 로직 재사용
+
+   **구현 세부사항**:
+   - execute-phase bash-verify와 동일한 로직
+   - 단, sisyphus work 내에서 자동 실행되는 용도
+
+   - [ ] 8.1 `@verify_phase_app.command(name="bash-verify")` 구현
+      - execute-phase bash-verify 로직 공통 함수로 추출
+      - 재사용
+
+   - [ ] 8.2 테스트 및 커밋
+
+   - [ ] **작업 완료 검증 체크리스트**
+      - [ ] verify-phase bash-verify 실행 확인
+      - [ ] execute-phase와 동일한 동작 확인
+
+- [ ] 9. verify-phase llm-verify 구현
+
+   **참고 소스**:
+   - Task 6 (execute-phase llm-verify) 로직 재사용
+
+   **구현 세부사항**:
+   - get-overview 대신 ai-todolist.yaml 전체 내용 직접 포함
+   - Verify phase agent가 호출
+
+   - [ ] 9.1 `@verify_phase_app.command(name="llm-verify")` 구현
+      - ai-todolist.yaml 전체 읽기
+      - LLMJudgeVerification instruction + full YAML content
+      - orchestrator mode만 지원 (external-agent는 추후)
+
+   - [ ] 9.2 테스트 및 커밋
+
+   - [ ] **작업 완료 검증 체크리스트**
+      - [ ] verify-phase llm-verify 실행 확인
+      - [ ] full YAML 포함 확인
+
+- [ ] 10. 불필요한 plan 서브커맨드 제거 및 버그 수정
+
+   **참고 소스**:
+   - `sisyphus/cli.py:664-717` (plan set)
+   - `sisyphus/cli.py:754-825` (plan set-verification)
+   - `sisyphus/cli.py:828-849` (plan check)
+
+   **제거 대상**:
+   - `@plan_app.command(name="set")` 전체
+   - `@plan_app.command(name="set-verification")` 전체
+   - `@plan_app.command(name="check")` 전체
+   - 관련 헬퍼 함수: `_update_task_statuses`, `_update_verification_status`
+
+   **유지 대상**:
+   - `@plan_app.command(name="get")` (조회성)
+   - `@plan_app.command(name="lint")` (검증성)
+
+   **⚠️ 중요: 제거 전 버그 수정 필요**:
+   - `_update_verification_status` 함수 (cli.py:794-825)는 제거 대상이지만, cli.py:811의 `{"completed": completed}` 버그를 execute-phase/verify-phase 구현 시 반복하지 않도록 주의
+   - VerificationItem에는 `completed` 필드가 없고 `verified` 필드만 존재 (plan_types.py:64)
+
+   - [ ] 10.1 plan set/set-verification/check 제거
+
+   - [ ] 10.2 관련 테스트 제거 또는 수정
+
+      **테스트 파일**: `sisyphus/tests/test_cli_plan.py`
+
+   - [ ] 10.3 테스트 실행 및 커밋: `refactor: remove unused plan subcommands (set, set-verification, check)`
+
+   - [ ] **작업 완료 검증 체크리스트**
+      - [ ] `sisyphus plan --help` → set/set-verification/check 없음
+      - [ ] `sisyphus plan get --help` → 여전히 동작
+      - [ ] `sisyphus plan lint --help` → 여전히 동작
+      - [ ] 관련 테스트 통과 또는 제거 확인
 
 # 성공 비전
 
-## 사용자 관점 성공
+## 사용자 관점에서의 성공
 
-- 검증 스펙 작성 시 직관적인 `bash` / `llm_judge` 리스트 필드 사용
-- YAML 작성이 단순해지고 이해하기 쉬워짐
-- References를 pointer로도, inline으로도 자유롭게 정의 가능
-- 필드명 일관성으로 혼란 없음 (created_at, notes, title)
+- orchestrator가 `sisyphus execute-phase continue-work` 실행 → 다음 작업 할당받음
+- executor 작업 완료 후 `sisyphus execute-phase bash-verify --task 1.1` → 자동 검증
+- 수동 검증 필요 시 `sisyphus execute-phase manual-verify --evidence "..."` → 검증 기록
 
-## 비즈니스 관점 성공
+## 비즈니스 관점에서의 성공
 
-- 유지보수 비용 감소: 불필요한 클래스 제거로 코드베이스 단순화
-- 확장성 향상: 새로운 검증 타입 추가 시 독립적으로 추가 가능
-- 개발자 생산성: 직관적 구조로 학습 곡선 감소
+- YAML 기반 작업 관리로 구조화된 워크플로우 확립
+- 검증 프로세스 명확화 (bash, llm_judge, manual)
 
 ## 기술적 성공 기준
 
-- [x] 모든 테스트 통과: `uv run pytest` → 461 tests PASSED
-- [x] 타입 체크 통과: `uv run basedpyright` → 0 errors
-- [x] 린트 통과: `uv run ruff check` → 0 errors
-- [x] Pydantic discriminator 호환: type 필드 명시로 완벽 동작
-- [x] Linter 독립 검증: Pydantic 없이도 YAML 스키마 검증 가능
+- [ ] 모든 테스트 통과: `uv run pytest sisyphus/tests/ -v`
+- [ ] Lint 에러 0개: `uv run ruff check sisyphus/`
+- [ ] Type check 통과: `uv run basedpyright sisyphus/`
+- [ ] 명령어 실행 확인:
+  ```bash
+  sisyphus execute-phase --help
+  sisyphus execute-phase get-overview
+  sisyphus execute-phase continue-work
+  sisyphus execute-phase bash-verify --task 1
+  sisyphus verify-phase --help
+  ```
 
 # 최종 작업 검증 체크리스트
 
-- [x] 1. **기능 동작 확인**
-   - [x] YAML에서 새 스키마로 파싱 가능?
-   - [x] bash verification 리스트 동작 테스트
-   - [x] llm_judge verification 리스트 동작 테스트
-   - [x] bash와 llm_judge 동시 사용 테스트
-   - [x] "최소 하나 존재" 검증 동작 테스트
-   - [x] References dual-mode (pointer + inline) 테스트
+- [ ] 1. **기능 동작 확인**
+  - [ ] `sisyphus execute-phase get-overview` → overview 출력
+  - [ ] `sisyphus execute-phase continue-work` → next task 할당
+  - [ ] `sisyphus execute-phase bash-verify --task 1` → 검증 실행
+  - [ ] `sisyphus verify-phase bash-verify` → 검증 실행
+  - [ ] `sisyphus plan get --current` → 현재 task 조회 (여전히 동작)
+  - [ ] `sisyphus plan lint` → YAML 검증 (여전히 동작)
 
-- [x] 2. **잘못된 구현 방지**
-   - [x] InputSpec/VerifySpec이 완전히 제거되었는가?
-   - [x] 기존 테스트가 새 스키마로 변경되었는가?
-   - [x] Linter가 독립적으로 검증하는가?
-   - [x] final_verification 구조가 통일되었는가?
-   - [x] 필드명 일관성 (created_at, notes, title)?
+- [ ] 2. **잘못된 구현 방지**
+  - [ ] plan set/set-verification/check 명령어 제거 확인
+  - [ ] YAML 스키마 v2.1 준수 확인
 
-- [x] 3. **범위 준수 확인**
-   - [x] 계획서에 명시된 파일만 수정되었는가?
-   - [x] 불필요한 추가 기능이 없는가?
-   - [x] Breaking change 명시되었는가?
+- [ ] 3. **범위 준수**
+  - [ ] 요청된 기능만 구현 (추가 기능 없음)
+  - [ ] 기존 get/lint 명령어 유지 확인
 
-- [x] 4. **기존 기능 회귀 테스트**
-   - [x] `plan get`, `plan set` 명령어 정상 동작?
-   - [x] `plan lint` 명령어 정상 동작?
-   - [x] YAML 로드/저장 정상 동작?
+- [ ] 4. **기존 기능 회귀 테스트**
+  - [ ] 전체 테스트 스위트: `uv run pytest sisyphus/ -v` → 모든 테스트 통과
+  - [ ] sisyphus work 명령어 → 여전히 동작 (ExecutionLoop 영향 없음)

@@ -590,6 +590,9 @@ def clean_history(
 plan_app = typer.Typer(name="plan", help="Work plan management")
 app.add_typer(plan_app)
 
+execute_phase_app = typer.Typer(name="execute-phase", help="Execute phase commands")
+app.add_typer(execute_phase_app)
+
 
 @plan_app.command(name="get")
 def get_plan_info(

@@ -977,10 +977,10 @@ sequenceDiagram
 
 ## 기술적 성공 기준
 
-- [ ] 모든 테스트 통과: `uv run pytest sisyphus/tests/ -v`
-- [ ] Lint 에러 0개: `uv run ruff check sisyphus/`
-- [ ] Type check 통과: `uv run basedpyright sisyphus/`
-- [ ] 명령어 실행 확인:
+- [x] 모든 테스트 통과: `uv run pytest sisyphus/tests/ -v`
+- [x] Lint 에러 0개: `uv run ruff check sisyphus/`
+- [x] Type check 통과: `uv run basedpyright sisyphus/`
+- [x] 명령어 실행 확인:
   ```bash
   sisyphus execute-phase --help
   sisyphus execute-phase get-overview
@@ -992,21 +992,21 @@ sequenceDiagram
 # 최종 작업 검증 체크리스트
 
 - [x] 1. **기능 동작 확인**
-  - [ ] `sisyphus execute-phase get-overview` → overview 출력
-  - [ ] `sisyphus execute-phase continue-work` → next task 할당
-  - [ ] `sisyphus execute-phase bash-verify --task 1` → 검증 실행
-  - [ ] `sisyphus verify-phase bash-verify` → 검증 실행
-  - [ ] `sisyphus plan get --current` → 현재 task 조회 (여전히 동작)
-  - [ ] `sisyphus plan lint` → YAML 검증 (여전히 동작)
+  - [x] `sisyphus execute-phase get-overview` → overview 출력
+  - [x] `sisyphus execute-phase continue-work` → next task 할당
+  - [x] `sisyphus execute-phase bash-verify --task 1` → 검증 실행
+  - [x] `sisyphus verify-phase bash-verify` → 검증 실행
+  - [x] `sisyphus plan get --current` → 현재 task 조회 (여전히 동작)
+  - [x] `sisyphus plan lint` → YAML 검증 (여전히 동작)
 
 - [x] 2. **잘못된 구현 방지**
-  - [ ] plan set/set-verification/check 명령어 제거 확인
-  - [ ] YAML 스키마 v2.1 준수 확인
+  - [x] plan set/set-verification/check 명령어 제거 확인
+  - [x] YAML 스키마 v2.1 준수 확인
 
 - [x] 3. **범위 준수**
-  - [ ] 요청된 기능만 구현 (추가 기능 없음)
-  - [ ] 기존 get/lint 명령어 유지 확인
+  - [x] 요청된 기능만 구현 (추가 기능 없음)
+  - [x] 기존 get/lint 명령어 유지 확인
 
 - [x] 4. **기존 기능 회귀 테스트**
-  - [ ] 전체 테스트 스위트: `uv run pytest sisyphus/ -v` → 모든 테스트 통과
-  - [ ] sisyphus work 명령어 → 여전히 동작 (ExecutionLoop 영향 없음)
+  - [x] 전체 테스트 스위트: `uv run pytest sisyphus/ -v` → 모든 테스트 통과
+  - [x] sisyphus work 명령어 → 여전히 동작 (ExecutionLoop 영향 없음)

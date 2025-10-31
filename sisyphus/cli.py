@@ -31,6 +31,7 @@ from sisyphus.utils.formatting import (
     OutputFormat,
     print_children,
     print_completion_report,
+    print_overview,
     print_references,
     print_task,
     print_verification,
@@ -595,6 +596,19 @@ app.add_typer(execute_phase_app)
 
 verify_phase_app = typer.Typer(name="verify-phase", help="Verify phase commands")
 app.add_typer(verify_phase_app)
+
+
+@execute_phase_app.command(name="get-overview")
+def get_overview(rich: bool = typer.Option(False, "--rich", help="Use Rich table format")) -> None:
+    """Get execution overview (user_request, background, status, workflow, todos depth-1)."""
+    try:
+        loader = PlanLoader()
+        plan = loader.load()
+
+        print_overview(plan, format=OutputFormat.RICH if rich else OutputFormat.PLAIN)
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
 
 
 @plan_app.command(name="get")

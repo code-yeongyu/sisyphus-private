@@ -7,7 +7,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from sisyphus.core.plan_navigator import CompletionReport
-from sisyphus.utils.plan_types import ReferenceItem, ReferencePointer, Todo, VerificationItem
+from sisyphus.utils.plan_types import ReferenceItem, ReferencePointer, Todo, VerificationItem, WorkPlan
 
 
 class OutputFormat(Enum):
@@ -222,4 +222,77 @@ def print_completion_report(report: CompletionReport, format: OutputFormat = Out
             title="Completion Report",
             border_style=status_color,
         )
+        console.print(panel)
+
+
+def print_overview(plan: WorkPlan, format: OutputFormat = OutputFormat.PLAIN) -> None:
+    """Print work plan overview with Rich formatting.
+
+    Args:
+        plan: WorkPlan object to print
+        format: Output format (PLAIN or RICH)
+    """
+    if format == OutputFormat.PLAIN:
+        output = f"User Request: {plan.user_request.original}\n"
+        if plan.user_request.additional:
+            output += f"Additional: {', '.join(plan.user_request.additional)}\n"
+
+        output += "\nBackground:\n"
+        output += f"  Current: {plan.background.current_situation}\n"
+        output += f"  Reason: {plan.background.reason_for_change}\n"
+
+        output += "\nRequired Background:\n"
+        output += f"  {plan.required_background.description}\n"
+
+        output += "\nStatus:\n"
+        output += (
+            f"  Execution: started={plan.status.execution.started}, completed={plan.status.execution.completed}\n"
+        )
+        output += f"  Current Task: {plan.status.work_mode.current_task_id or 'None'}\n"
+        output += f"  Progress: {plan.status.progress.completed}/{plan.status.progress.total_tasks} completed\n"
+
+        output += "\nWorkflow:\n"
+        output += f"{plan.workflow.dependency_diagram}\n"
+
+        output += "\nTodos (depth 1):\n"
+        for idx, todo in enumerate(plan.todos, 1):
+            children_count = len(todo.children) if todo.children else 0
+            output += f"  {idx}. [{todo.status.value}] {todo.title} ({children_count} children)\n"
+
+        console.print(output)
+    else:
+        lines = [
+            f"[bold]User Request:[/bold] {plan.user_request.original}",
+        ]
+        if plan.user_request.additional:
+            lines.append(f"[bold]Additional:[/bold] {', '.join(plan.user_request.additional)}")
+
+        lines.append("")
+        lines.append("[bold]Background:[/bold]")
+        lines.append(f"  Current: {plan.background.current_situation}")
+        lines.append(f"  Reason: {plan.background.reason_for_change}")
+
+        lines.append("")
+        lines.append("[bold]Required Background:[/bold]")
+        lines.append(f"  {plan.required_background.description}")
+
+        lines.append("")
+        lines.append("[bold]Status:[/bold]")
+        lines.append(
+            f"  Execution: started={plan.status.execution.started}, completed={plan.status.execution.completed}"
+        )
+        lines.append(f"  Current Task: {plan.status.work_mode.current_task_id or 'None'}")
+        lines.append(f"  Progress: {plan.status.progress.completed}/{plan.status.progress.total_tasks} completed")
+
+        lines.append("")
+        lines.append("[bold]Workflow:[/bold]")
+        lines.append(plan.workflow.dependency_diagram)
+
+        lines.append("")
+        lines.append("[bold]Todos (depth 1):[/bold]")
+        for idx, todo in enumerate(plan.todos, 1):
+            children_count = len(todo.children) if todo.children else 0
+            lines.append(f"  {idx}. [{todo.status.value}] {todo.title} ({children_count} children)")
+
+        panel = Panel("\n".join(lines), title="Work Plan Overview")
         console.print(panel)

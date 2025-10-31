@@ -177,6 +177,27 @@ class PlanNavigator:
             raise ValueError(f"작업 ID를 찾을 수 없습니다: {task_id}")
         return task.verification_spec
 
+    def get_parallel_group_tasks(self, group_id: int) -> list[Todo]:
+        """Get all tasks with same parallel_group.
+
+        Args:
+            group_id: Parallel group ID to search for
+
+        Returns:
+            List of tasks belonging to the parallel group
+        """
+        result: list[Todo] = []
+
+        def collect(todos: list[Todo]) -> None:
+            for todo in todos:
+                if todo.parallel_group == group_id:
+                    result.append(todo)
+                if todo.children:
+                    collect(todo.children)
+
+        collect(self.plan.todos)
+        return result
+
     def check_task_completion(self, task_id: str | int) -> CompletionReport:
         """Check if task can be marked as completed.
 

@@ -6,6 +6,7 @@ import json
 import shutil
 import time
 import traceback
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
@@ -608,6 +609,85 @@ def get_overview(rich: bool = typer.Option(False, "--rich", help="Use Rich table
         print_overview(plan, format=OutputFormat.RICH if rich else OutputFormat.PLAIN)
     except FileNotFoundError as e:
         console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+
+
+@execute_phase_app.command(name="continue-work")
+def continue_work() -> None:
+    """Get next task and update plan status."""
+    try:
+        loader = PlanLoader()
+        plan = loader.load()
+        navigator = PlanNavigator(plan)
+
+        next_task = navigator.get_next_task()
+
+        if next_task is None:
+            console.print("[green]✓ 모든 작업이 완료되었습니다![/green]")
+            raise typer.Exit(0)
+
+        now = datetime.now(UTC).isoformat()
+
+        def update_task_status(todos: list[Todo], task_id: str | int) -> list[Todo]:
+            result: list[Todo] = []
+            for todo in todos:
+                if todo.id == task_id:
+                    updated = todo.model_copy(
+                        update={
+                            "status": TodoStatus.in_progress,
+                            "status_changed_at": now,
+                            "updated_at": now,
+                        }
+                    )
+                    result.append(updated)
+                elif todo.children:
+                    updated = todo.model_copy(update={"children": update_task_status(todo.children, task_id)})
+                    result.append(updated)
+                else:
+                    result.append(todo)
+            return result
+
+        updated_todos = update_task_status(plan.todos, next_task.id)
+
+        updated_status = plan.status.model_copy(
+            update={"work_mode": plan.status.work_mode.model_copy(update={"current_task_id": next_task.id})}
+        )
+
+        updated_metadata = plan.metadata.model_copy(update={"updated_at": now})
+        plan = plan.model_copy(update={"todos": updated_todos, "status": updated_status, "metadata": updated_metadata})
+
+        loader.save(plan)
+
+        console.print(f"\n[bold cyan]Next Task:[/bold cyan] {next_task.id} - {next_task.title}\n")
+
+        if next_task.references:
+            console.print("[bold]References:[/bold]")
+            for ref in next_task.references:
+                console.print(f"  - {ref}")
+            console.print()
+
+        if next_task.children:
+            console.print(f"[bold]Children:[/bold] {len(next_task.children)} subtasks\n")
+
+        if next_task.details:
+            console.print("[bold]Details:[/bold]")
+            for key, value in next_task.details.items():
+                console.print(f"  {key}: {value}")
+            console.print()
+
+        if next_task.parallel_group is not None:
+            parallel_tasks = navigator.get_parallel_group_tasks(next_task.parallel_group)
+            console.print("[yellow]⚠️  Parallel Execution Required[/yellow]")
+            console.print(f"Tasks in parallel_group={next_task.parallel_group}:")
+            for t in parallel_tasks:
+                console.print(f"  - Task {t.id}: {t.title}")
+            console.print(f"\n[bold]→ Launch {len(parallel_tasks)} executor agents in parallel[/bold]\n")
+
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+    except ValueError as e:
+        console.print(f"[red]Error: {e}[/red]")
         raise typer.Exit(1)
 
 

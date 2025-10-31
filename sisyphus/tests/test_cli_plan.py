@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import pytest
 from typer.testing import CliRunner
 
 from sisyphus.cli import app
@@ -160,6 +161,7 @@ def test_plan_get_reference__shows_not_implemented() -> None:
     assert "Reference lookup not yet implemented" in result.stdout
 
 
+@pytest.mark.skip(reason="Command removed in Task 10")
 def test_plan_set_current_task__when_valid_id__updates_plan() -> None:
     # given
     mock_plan = MagicMock()
@@ -184,6 +186,7 @@ def test_plan_set_current_task__when_valid_id__updates_plan() -> None:
     mock_loader_instance.save.assert_called_once_with(mock_plan)
 
 
+@pytest.mark.skip(reason="Command removed in Task 10")
 def test_plan_set_task_status__when_no_status_option__shows_error() -> None:
     # given
     mock_plan = MagicMock(spec=WorkPlan)
@@ -201,6 +204,7 @@ def test_plan_set_task_status__when_no_status_option__shows_error() -> None:
     assert "--status 옵션이 필요합니다" in result.stdout
 
 
+@pytest.mark.skip(reason="Command removed in Task 10")
 def test_plan_set_task_status__when_task_not_found__shows_error() -> None:
     # given
     mock_plan = MagicMock(spec=WorkPlan)
@@ -223,6 +227,7 @@ def test_plan_set_task_status__when_task_not_found__shows_error() -> None:
     assert "작업 ID를 찾을 수 없습니다" in result.stdout
 
 
+@pytest.mark.skip(reason="Command removed in Task 10")
 def test_plan_set_task_status__when_valid__updates_status() -> None:
     # given
     mock_task = Todo(
@@ -265,6 +270,7 @@ def test_plan_get__when_file_not_found__shows_error() -> None:
     assert "작업계획서를 찾을 수 없습니다" in result.stdout
 
 
+@pytest.mark.skip(reason="Command removed in Task 10")
 def test_plan_set__when_file_not_found__shows_error() -> None:
     # given / when
     with patch("sisyphus.cli.PlanLoader") as mock_loader:
@@ -435,6 +441,7 @@ def test_plan_get_task__when_no_filter_specified__prints_full_task() -> None:
     mock_print_task.assert_called_once_with(mock_task, format=OutputFormat.PLAIN)
 
 
+@pytest.mark.skip(reason="Command removed in Task 10")
 def test_plan_set_task_status_recursive__when_task_has_children__updates_all() -> None:
     # given
     child1 = Todo(
@@ -474,6 +481,7 @@ def test_plan_set_task_status_recursive__when_task_has_children__updates_all() -
     mock_loader_instance.save.assert_called_once()
 
 
+@pytest.mark.skip(reason="Command removed in Task 10")
 def test_plan_set_verification__when_verification_exists__updates_status() -> None:
     # given
     verification = VerificationItem(
@@ -515,6 +523,7 @@ def test_plan_set_verification__when_verification_exists__updates_status() -> No
     mock_loader_instance.save.assert_called_once()
 
 
+@pytest.mark.skip(reason="Command removed in Task 10")
 def test_plan_set_verification__when_verification_not_found__shows_error() -> None:
     # given
     mock_task = Todo(
@@ -540,6 +549,7 @@ def test_plan_set_verification__when_verification_not_found__shows_error() -> No
     assert "검증 ID를 찾을 수 없습니다" in result.stdout
 
 
+@pytest.mark.skip(reason="Command removed in Task 10")
 def test_plan_check__when_task_exists__prints_report() -> None:
     # given
 
@@ -640,6 +650,7 @@ def test_get_task_references_with_rich__prints_rich_table() -> None:
     mock_print_refs.assert_called_once_with(mock_refs, format=OutputFormat.RICH)
 
 
+@pytest.mark.skip(reason="Command removed in Task 10")
 def test_check_completion_with_rich__prints_rich_panel() -> None:
     # given
     mock_report = CompletionReport(

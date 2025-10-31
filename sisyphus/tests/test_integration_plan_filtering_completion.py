@@ -10,10 +10,9 @@ from sisyphus.core.plan_loader import PlanLoader
 from sisyphus.core.plan_navigator import PlanNavigator
 from sisyphus.utils.plan_types import (
     Background,
-    CommandInput,
+    BashVerification,
     ExecutionStatus,
     Metadata,
-    NoneVerify,
     Objectives,
     Progress,
     RequiredBackground,
@@ -52,17 +51,21 @@ async def test_end_to_end_workflow__load_query_update_verify_save_reload__data_p
 
     verification1 = VerificationItem(
         id="v1",
+        title="Run tests",
         description="Run tests",
-        input=CommandInput(type="command", command="pytest"),
-        verify=NoneVerify(type="none"),
-        completed=False,
+        orchestrator_manually_verified=False,
+        manual_verification_evidence="",
+        bash=[BashVerification(execute="pytest")],
+        verified=False,
     )
     verification2 = VerificationItem(
         id="v2",
+        title="Check lint",
         description="Check lint",
-        input=CommandInput(type="command", command="ruff check"),
-        verify=NoneVerify(type="none"),
-        completed=False,
+        orchestrator_manually_verified=False,
+        manual_verification_evidence="",
+        bash=[BashVerification(execute="ruff check")],
+        verified=False,
     )
 
     parent_task = Todo(
@@ -77,7 +80,7 @@ async def test_end_to_end_workflow__load_query_update_verify_save_reload__data_p
 
     initial_plan = WorkPlan(
         metadata=Metadata(created_at="2025-01-01", updated_at="2025-01-01"),
-        user_request=UserRequest(original="Test", timestamp="2025-01-01"),
+        user_request=UserRequest(original="Test", created_at="2025-01-01"),
         objectives=Objectives(core="Test"),
         background=Background(current_situation="A", reason_for_change="B", changes_to_make="C"),
         required_background=RequiredBackground(description="Test"),
@@ -114,7 +117,7 @@ async def test_end_to_end_workflow__load_query_update_verify_save_reload__data_p
 
     # when - Step 3: Mark verification item complete
     updated_verifications = [
-        v.model_copy(update={"completed": True}) if v.id == "v1" else v for v in plan.todos[0].verification_spec
+        v.model_copy(update={"verified": True}) if v.id == "v1" else v for v in plan.todos[0].verification_spec
     ]
     updated_task = plan.todos[0].model_copy(update={"verification_spec": updated_verifications})
     plan = plan.model_copy(update={"todos": [updated_task]})
@@ -150,7 +153,7 @@ async def test_end_to_end_workflow__load_query_update_verify_save_reload__data_p
 
     # when - Step 6: Mark remaining verification complete
     plan = loader.load()
-    updated_verifications_final = [v.model_copy(update={"completed": True}) for v in plan.todos[0].verification_spec]
+    updated_verifications_final = [v.model_copy(update={"verified": True}) for v in plan.todos[0].verification_spec]
     updated_task_final = plan.todos[0].model_copy(update={"verification_spec": updated_verifications_final})
     plan = plan.model_copy(update={"todos": [updated_task_final]})
     loader.save(plan)
@@ -178,8 +181,8 @@ async def test_end_to_end_workflow__load_query_update_verify_save_reload__data_p
     assert final_reloaded.todos[0].children[0].status == TodoStatus.completed
     assert final_reloaded.todos[0].children[1].status == TodoStatus.completed
     assert len(final_reloaded.todos[0].verification_spec) == 2
-    assert final_reloaded.todos[0].verification_spec[0].completed is True
-    assert final_reloaded.todos[0].verification_spec[1].completed is True
+    assert final_reloaded.todos[0].verification_spec[0].verified is True
+    assert final_reloaded.todos[0].verification_spec[1].verified is True
 
 
 async def test_empty_children_and_verification__when_leaf_task__handles_gracefully(tmp_path: Path) -> None:
@@ -198,7 +201,7 @@ async def test_empty_children_and_verification__when_leaf_task__handles_graceful
 
     plan = WorkPlan(
         metadata=Metadata(created_at="2025-01-01", updated_at="2025-01-01"),
-        user_request=UserRequest(original="Test", timestamp="2025-01-01"),
+        user_request=UserRequest(original="Test", created_at="2025-01-01"),
         objectives=Objectives(core="Test"),
         background=Background(current_situation="A", reason_for_change="B", changes_to_make="C"),
         required_background=RequiredBackground(description="Test"),
@@ -249,7 +252,7 @@ async def test_nonexistent_task_id__when_querying__raises_value_error(tmp_path: 
 
     plan = WorkPlan(
         metadata=Metadata(created_at="2025-01-01", updated_at="2025-01-01"),
-        user_request=UserRequest(original="Test", timestamp="2025-01-01"),
+        user_request=UserRequest(original="Test", created_at="2025-01-01"),
         objectives=Objectives(core="Test"),
         background=Background(current_situation="A", reason_for_change="B", changes_to_make="C"),
         required_background=RequiredBackground(description="Test"),
@@ -314,7 +317,7 @@ async def test_recursive_update_deduplication__when_updating_same_task_twice__ap
 
     plan = WorkPlan(
         metadata=Metadata(created_at="2025-01-01", updated_at="2025-01-01"),
-        user_request=UserRequest(original="Test", timestamp="2025-01-01"),
+        user_request=UserRequest(original="Test", created_at="2025-01-01"),
         objectives=Objectives(core="Test"),
         background=Background(current_situation="A", reason_for_change="B", changes_to_make="C"),
         required_background=RequiredBackground(description="Test"),

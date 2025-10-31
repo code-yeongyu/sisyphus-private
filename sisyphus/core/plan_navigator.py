@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
-from sisyphus.utils.plan_types import SimpleReference, Todo, TodoStatus, VerificationItem, WorkPlan
+from sisyphus.utils.plan_types import Todo, TodoStatus, VerificationItem, WorkPlan
 
 
 @dataclass
 class CompletionReport:
-    task_id: str
+    task_id: str | int
     task_status: TodoStatus
     all_children_completed: bool
     children_summary: dict[str, int]
@@ -78,11 +79,11 @@ class PlanNavigator:
 
         return None
 
-    def find_todo_by_id(self, target_id: str) -> Todo | None:
+    def find_todo_by_id(self, target_id: str | int) -> Todo | None:
         """Find todo by ID (e.g. "1", "1.1", "1.1.2")."""
         return self._find_in_list(self.plan.todos, target_id)
 
-    def _find_in_list(self, todos: list[Todo], target_id: str) -> Todo | None:
+    def _find_in_list(self, todos: list[Todo], target_id: str | int) -> Todo | None:
         for todo in todos:
             if todo.id == target_id:
                 return todo
@@ -102,7 +103,7 @@ class PlanNavigator:
                     return child
         return None
 
-    def _find_next_sibling(self, current_id: str) -> Todo | None:
+    def _find_next_sibling(self, current_id: str | int) -> Todo | None:
         siblings = self._get_siblings(current_id)
         if siblings is None:
             return None
@@ -112,7 +113,7 @@ class PlanNavigator:
                 return siblings[i + 1]
         return None
 
-    def _get_siblings(self, target_id: str) -> list[Todo] | None:
+    def _get_siblings(self, target_id: str | int) -> list[Todo] | None:
         for todo in self.plan.todos:
             if todo.id == target_id:
                 return self.plan.todos
@@ -122,10 +123,10 @@ class PlanNavigator:
             return parent.children
         return None
 
-    def _find_parent(self, target_id: str) -> Todo | None:
+    def _find_parent(self, target_id: str | int) -> Todo | None:
         return self._find_parent_in_list(self.plan.todos, target_id)
 
-    def _find_parent_in_list(self, todos: list[Todo], target_id: str) -> Todo | None:
+    def _find_parent_in_list(self, todos: list[Todo], target_id: str | int) -> Todo | None:
         for todo in todos:
             for child in todo.children:
                 if child.id == target_id:
@@ -137,21 +138,21 @@ class PlanNavigator:
                     return parent
         return None
 
-    def get_task_references(self, task_id: str) -> list[SimpleReference]:
+    def get_task_references(self, task_id: str | int) -> list[Any]:
         """Get references for a specific task."""
         task = self.find_todo_by_id(task_id)
         if task is None:
             raise ValueError(f"작업 ID를 찾을 수 없습니다: {task_id}")
         return task.references
 
-    def get_task_children(self, task_id: str) -> list[Todo]:
+    def get_task_children(self, task_id: str | int) -> list[Todo]:
         """Get direct children of a task."""
         task = self.find_todo_by_id(task_id)
         if task is None:
             raise ValueError(f"작업 ID를 찾을 수 없습니다: {task_id}")
         return task.children
 
-    def get_all_descendants(self, task_id: str) -> list[Todo]:
+    def get_all_descendants(self, task_id: str | int) -> list[Todo]:
         """Get all descendants (children recursively) of a task."""
         task = self.find_todo_by_id(task_id)
         if task is None:
@@ -169,14 +170,14 @@ class PlanNavigator:
             collect(task.children)
         return descendants
 
-    def get_task_verification(self, task_id: str) -> list[VerificationItem]:
+    def get_task_verification(self, task_id: str | int) -> list[VerificationItem]:
         """Get verification spec for a task."""
         task = self.find_todo_by_id(task_id)
         if task is None:
             raise ValueError(f"작업 ID를 찾을 수 없습니다: {task_id}")
         return task.verification_spec
 
-    def check_task_completion(self, task_id: str) -> CompletionReport:
+    def check_task_completion(self, task_id: str | int) -> CompletionReport:
         """Check if task can be marked as completed.
 
         Business rule: Task can complete when:
@@ -208,7 +209,7 @@ class PlanNavigator:
         # 2. Verification 체크
         verifications = task.verification_spec
         verification_summary = {
-            "completed": sum(1 for v in verifications if v.completed),
+            "completed": sum(1 for v in verifications if v.verified),
             "total": len(verifications),
         }
         all_verifications_completed = len(verifications) == 0 or verification_summary["completed"] == len(

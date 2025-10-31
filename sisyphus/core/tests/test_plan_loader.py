@@ -7,10 +7,9 @@ from ruamel.yaml import YAMLError
 from sisyphus.core.plan_loader import PlanLoader
 from sisyphus.utils.plan_types import (
     Background,
-    CommandInput,
+    BashVerification,
     ExecutionStatus,
     Metadata,
-    NoneVerify,
     Objectives,
     Progress,
     RequiredBackground,
@@ -36,7 +35,7 @@ async def test_load_valid_yaml(tmp_path: Path) -> None:
   updated_at: "2025-10-28T14:32:15+09:00"
 user_request:
   original: "Test"
-  timestamp: "2025-10-28"
+  created_at: "2025-10-28"
 objectives:
   core: "Test objective"
   detailed: []
@@ -96,7 +95,7 @@ async def test_save_and_reload(tmp_path: Path) -> None:
 
     plan = WorkPlan(
         metadata=Metadata(created_at="2025-01-01", updated_at="2025-01-01"),
-        user_request=UserRequest(original="Test", timestamp="2025-01-01"),
+        user_request=UserRequest(original="Test", created_at="2025-01-01"),
         objectives=Objectives(core="Test"),
         background=Background(current_situation="A", reason_for_change="B", changes_to_make="C"),
         required_background=RequiredBackground(description="Test"),
@@ -147,7 +146,7 @@ metadata:
   updated_at: "2025-01-01"
 user_request:
   original: "Test"
-  timestamp: "2025-01-01"
+  created_at: "2025-01-01"
 objectives:
   core: "Test"
 background:
@@ -183,7 +182,7 @@ final_verification: []
         loader.load()
 
 
-async def test_save_and_reload_with_verification_completed__when_completed_field_set__persists_correctly(
+async def test_save_and_reload_with_verification_verified__when_verified_field_set__persists_correctly(
     tmp_path: Path,
 ) -> None:
     # given
@@ -191,19 +190,23 @@ async def test_save_and_reload_with_verification_completed__when_completed_field
     yaml_file = tmp_path / "test.yaml"
     loader = PlanLoader(yaml_file)
 
-    verification_completed = VerificationItem(
+    verification_verified = VerificationItem(
         id="v1",
-        description="Test verification",
-        input=CommandInput(type="command", command="pytest"),
-        verify=NoneVerify(type="none"),
-        completed=True,
+        title="Test verification",
+        description="Run pytest",
+        orchestrator_manually_verified=False,
+        manual_verification_evidence="",
+        bash=[BashVerification(execute="pytest")],
+        verified=True,
     )
     verification_incomplete = VerificationItem(
         id="v2",
+        title="Test ruff check",
         description="Another test",
-        input=CommandInput(type="command", command="ruff check"),
-        verify=NoneVerify(type="none"),
-        completed=False,
+        orchestrator_manually_verified=False,
+        manual_verification_evidence="",
+        bash=[BashVerification(execute="ruff check")],
+        verified=False,
     )
 
     task = Todo(
@@ -212,12 +215,12 @@ async def test_save_and_reload_with_verification_completed__when_completed_field
         status=TodoStatus.in_progress,
         created_at="2025-01-01",
         updated_at="2025-01-01",
-        verification_spec=[verification_completed, verification_incomplete],
+        verification_spec=[verification_verified, verification_incomplete],
     )
 
     plan = WorkPlan(
         metadata=Metadata(created_at="2025-01-01", updated_at="2025-01-01"),
-        user_request=UserRequest(original="Test", timestamp="2025-01-01"),
+        user_request=UserRequest(original="Test", created_at="2025-01-01"),
         objectives=Objectives(core="Test"),
         background=Background(current_situation="A", reason_for_change="B", changes_to_make="C"),
         required_background=RequiredBackground(description="Test"),
@@ -241,20 +244,20 @@ async def test_save_and_reload_with_verification_completed__when_completed_field
     assert len(reloaded.todos) == 1
     assert len(reloaded.todos[0].verification_spec) == 2
     assert reloaded.todos[0].verification_spec[0].id == "v1"
-    assert reloaded.todos[0].verification_spec[0].completed is True
+    assert reloaded.todos[0].verification_spec[0].verified is True
     assert reloaded.todos[0].verification_spec[1].id == "v2"
-    assert reloaded.todos[0].verification_spec[1].completed is False
+    assert reloaded.todos[0].verification_spec[1].verified is False
 
 
-async def test_save_and_reload_without_completed_field__when_old_yaml__defaults_to_false(tmp_path: Path) -> None:
-    # given - YAML without completed field (backward compatibility)
+async def test_save_and_reload_without_verified_field__when_old_yaml__defaults_to_false(tmp_path: Path) -> None:
+    # given - YAML without verified field (backward compatibility)
     yaml_file = tmp_path / "test.yaml"
     yaml_content = """metadata:
   created_at: "2025-01-01"
   updated_at: "2025-01-01"
 user_request:
   original: "Test"
-  timestamp: "2025-01-01"
+  created_at: "2025-01-01"
 objectives:
   core: "Test"
 background:
@@ -286,12 +289,12 @@ todos:
     updated_at: "2025-01-01"
     verification_spec:
       - id: "v1"
+        title: "Test verification"
         description: "Test verification"
-        input:
-          type: "command"
-          command: "pytest"
-        verify:
-          type: "none"
+        orchestrator_manually_verified: false
+        manual_verification_evidence: ""
+        bash:
+          - execute: "pytest"
 success_vision: {}
 final_verification: []
 """
@@ -303,4 +306,4 @@ final_verification: []
 
     # then
     assert len(plan.todos[0].verification_spec) == 1
-    assert plan.todos[0].verification_spec[0].completed is False
+    assert plan.todos[0].verification_spec[0].verified is False

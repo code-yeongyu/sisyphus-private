@@ -691,6 +691,7 @@ def set_plan_info(
                     raise typer.Exit(1)
 
                 # 재귀 옵션 처리
+                task_ids_to_update: list[str | int]
                 if recursive:
                     descendants = navigator.get_all_descendants(value)
                     task_ids_to_update = [value] + [d.id for d in descendants]
@@ -716,7 +717,7 @@ def set_plan_info(
         raise typer.Exit(1)
 
 
-def _update_task_statuses(todos: list[Todo], task_ids: list[str], new_status: str) -> list[Todo]:
+def _update_task_statuses(todos: list[Todo], task_ids: list[str | int], new_status: str) -> list[Todo]:
     """Recursively update task statuses (immutable).
 
     Args:

@@ -10,9 +10,8 @@ from sisyphus.cli import app
 from sisyphus.core.plan_navigator import CompletionReport, PlanNavigator
 from sisyphus.utils.formatting import OutputFormat
 from sisyphus.utils.plan_types import (
-    CommandInput,
-    NoneVerify,
-    SimpleReference,
+    BashVerification,
+    ReferencePointer,
     Todo,
     TodoStatus,
     VerificationItem,
@@ -291,8 +290,8 @@ def test_plan_get_task_show_references__when_task_has_references__prints_referen
         updated_at="2025-01-01",
     )
     mock_refs = [
-        SimpleReference(ref_id="ref-1", note="First reference"),
-        SimpleReference(ref_id="ref-2", note="Second reference"),
+        ReferencePointer(type="pointer", ref_id="ref-1", notes="First reference"),
+        ReferencePointer(type="pointer", ref_id="ref-2", notes="Second reference"),
     ]
     mock_plan = MagicMock(spec=WorkPlan)
 
@@ -366,17 +365,21 @@ def test_plan_get_task_show_verification__when_task_has_verification__prints_ver
     mock_verifications = [
         VerificationItem(
             id="v1",
+            title="Verify tests",
             description="Verify tests pass",
-            input=CommandInput(type="command", command="pytest"),
-            verify=NoneVerify(type="none"),
-            completed=False,
+            orchestrator_manually_verified=False,
+            manual_verification_evidence="",
+            bash=[BashVerification(execute="pytest")],
+            verified=False,
         ),
         VerificationItem(
             id="v2",
+            title="Verify lint",
             description="Verify lint passes",
-            input=CommandInput(type="command", command="ruff check"),
-            verify=NoneVerify(type="none"),
-            completed=True,
+            orchestrator_manually_verified=False,
+            manual_verification_evidence="",
+            bash=[BashVerification(execute="ruff check")],
+            verified=True,
         ),
     ]
     mock_plan = MagicMock(spec=WorkPlan)
@@ -475,10 +478,12 @@ def test_plan_set_verification__when_verification_exists__updates_status() -> No
     # given
     verification = VerificationItem(
         id="v1",
+        title="Test verification",
         description="Test verification",
-        input=CommandInput(type="command", command="pytest"),
-        verify=NoneVerify(type="none"),
-        completed=False,
+        orchestrator_manually_verified=False,
+        manual_verification_evidence="",
+        bash=[BashVerification(execute="pytest")],
+        verified=False,
     )
     mock_task = Todo(
         id="1",
@@ -609,8 +614,8 @@ def test_get_task_references_with_rich__prints_rich_table() -> None:
         updated_at="2025-01-01",
     )
     mock_refs = [
-        SimpleReference(ref_id="ref-1", note="First reference"),
-        SimpleReference(ref_id="ref-2", note="Second reference"),
+        ReferencePointer(type="pointer", ref_id="ref-1", notes="First reference"),
+        ReferencePointer(type="pointer", ref_id="ref-2", notes="Second reference"),
     ]
     mock_plan = MagicMock(spec=WorkPlan)
 

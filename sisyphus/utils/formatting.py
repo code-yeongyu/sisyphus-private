@@ -7,7 +7,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from sisyphus.core.plan_navigator import CompletionReport
-from sisyphus.utils.plan_types import ReferenceSpec, SimpleReference, Todo, VerificationItem
+from sisyphus.utils.plan_types import ReferenceItem, ReferencePointer, Todo, VerificationItem
 
 
 class OutputFormat(Enum):
@@ -38,7 +38,7 @@ def print_task(task: Todo, format: OutputFormat = OutputFormat.PLAIN) -> None:
         if task.references:
             ref_strs = []
             for ref in task.references:
-                if isinstance(ref, SimpleReference):
+                if isinstance(ref, ReferencePointer):
                     ref_strs.append(ref.ref_id)
                 else:
                     ref_strs.append(f"{ref.type}: {getattr(ref, 'path', getattr(ref, 'url', ref.description))}")
@@ -63,7 +63,7 @@ def print_task(task: Todo, format: OutputFormat = OutputFormat.PLAIN) -> None:
         if task.references:
             ref_strs = []
             for ref in task.references:
-                if isinstance(ref, SimpleReference):
+                if isinstance(ref, ReferencePointer):
                     ref_strs.append(ref.ref_id)
                 else:
                     ref_strs.append(f"{ref.type}: {getattr(ref, 'path', getattr(ref, 'url', ref.description))}")
@@ -76,13 +76,11 @@ def print_task(task: Todo, format: OutputFormat = OutputFormat.PLAIN) -> None:
         console.print(table)
 
 
-def print_references(
-    references: list[ReferenceSpec | SimpleReference], format: OutputFormat = OutputFormat.PLAIN
-) -> None:
+def print_references(references: list[ReferenceItem], format: OutputFormat = OutputFormat.PLAIN) -> None:
     """Print references with Rich formatting.
 
     Args:
-        references: List of ReferenceSpec or SimpleReference objects to print
+        references: List of ReferenceItem objects to print
         format: Output format (PLAIN or RICH)
     """
     if not references:
@@ -92,10 +90,10 @@ def print_references(
     if format == OutputFormat.PLAIN:
         output = "References:\n"
         for idx, ref in enumerate(references, 1):
-            if isinstance(ref, SimpleReference):
-                output += f"  {idx}. Type: Simple Ref, ID: {ref.ref_id}, Note: {ref.note or '-'}\n"
+            if isinstance(ref, ReferencePointer):
+                output += f"  {idx}. Type: Pointer, ID: {ref.ref_id}, Notes: {ref.notes or '-'}\n"
             else:
-                info = getattr(ref, "path", getattr(ref, "url", getattr(ref, "code", "N/A")))
+                info = getattr(ref, "path", getattr(ref, "url", getattr(ref, "content", "N/A")))
                 output += f"  {idx}. Type: {ref.type}, Info: {info}, Description: {ref.description}\n"
         console.print(output)
     else:
@@ -105,10 +103,10 @@ def print_references(
         table.add_column("Description", style="yellow")
 
         for ref in references:
-            if isinstance(ref, SimpleReference):
-                table.add_row("Simple Ref", ref.ref_id, ref.note or "-")
+            if isinstance(ref, ReferencePointer):
+                table.add_row("Pointer", ref.ref_id, ref.notes or "-")
             else:
-                info = getattr(ref, "path", getattr(ref, "url", getattr(ref, "code", "N/A")))
+                info = getattr(ref, "path", getattr(ref, "url", getattr(ref, "content", "N/A")))
                 if len(info) > 50:
                     info = info[:47] + "..."
                 table.add_row(ref.type, info, ref.description)
@@ -158,7 +156,7 @@ def print_verification(verifications: list[VerificationItem], format: OutputForm
     if format == OutputFormat.PLAIN:
         output = "Verification Spec:\n"
         for v in verifications:
-            completed_str = "✓" if v.completed else "✗"
+            completed_str = "✓" if v.verified else "✗"
             output += f"  [{completed_str}] {v.id}: {v.description}\n"
         console.print(output)
     else:
@@ -168,7 +166,7 @@ def print_verification(verifications: list[VerificationItem], format: OutputForm
         table.add_column("Completed", style="magenta")
 
         for v in verifications:
-            completed_str = "✓" if v.completed else "✗"
+            completed_str = "✓" if v.verified else "✗"
             table.add_row(v.id, v.description, completed_str)
 
         console.print(table)

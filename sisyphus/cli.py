@@ -774,6 +774,118 @@ def bash_verify(task_id: str = typer.Argument(..., help="Task ID to verify")) ->
         raise typer.Exit(1)
 
 
+@execute_phase_app.command(name="llm-verify")
+def llm_verify(
+    task_id: str = typer.Argument(..., help="Task ID to verify"),
+    verify_id: str = typer.Option(..., "--verify-id", help="Verification item ID"),
+    evidence: str = typer.Option(..., "--evidence", help="Verification evidence"),
+) -> None:
+    """Mark LLM verification as completed (orchestrator mode)."""
+    try:
+        loader = PlanLoader()
+        plan = loader.load()
+        navigator = PlanNavigator(plan)
+
+        task = navigator.find_todo_by_id(task_id)
+        if task is None:
+            console.print(f"[red]Task not found: {task_id}[/red]")
+            raise typer.Exit(1)
+
+        now = datetime.now(UTC).isoformat()
+
+        def update_verification(todos: list[Todo]) -> list[Todo]:
+            updated: list[Todo] = []
+            for todo in todos:
+                if todo.id == task_id:
+                    updated_specs = [
+                        (
+                            v.model_copy(
+                                update={"verified": True, "verified_at": now, "verification_evidence": evidence}
+                            )
+                            if v.id == verify_id
+                            else v
+                        )
+                        for v in todo.verification_spec
+                    ]
+                    updated.append(todo.model_copy(update={"verification_spec": updated_specs}))
+                elif todo.children:
+                    updated.append(todo.model_copy(update={"children": update_verification(todo.children)}))
+                else:
+                    updated.append(todo)
+            return updated
+
+        plan = plan.model_copy(update={"todos": update_verification(plan.todos)})
+        loader.save(plan)
+
+        console.print(f"[green]✓ LLM verification marked as completed for {verify_id}[/green]")
+
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+
+
+@execute_phase_app.command(name="manual-verify")
+def manual_verify(
+    task_id: str = typer.Argument(..., help="Task ID to verify"),
+    evidence: str = typer.Option(..., "--evidence", help="Manual verification evidence"),
+) -> None:
+    """Manually verify task by orchestrator."""
+    try:
+        loader = PlanLoader()
+        plan = loader.load()
+        navigator = PlanNavigator(plan)
+
+        task = navigator.find_todo_by_id(task_id)
+        if task is None:
+            console.print(f"[red]Task not found: {task_id}[/red]")
+            raise typer.Exit(1)
+
+        def update_verification(todos: list[Todo]) -> list[Todo]:
+            updated: list[Todo] = []
+            for todo in todos:
+                if todo.id == task_id:
+                    updated_specs = [
+                        v.model_copy(
+                            update={
+                                "orchestrator_manually_verified": True,
+                                "manual_verification_evidence": evidence,
+                            }
+                        )
+                        for v in todo.verification_spec
+                    ]
+                    updated.append(todo.model_copy(update={"verification_spec": updated_specs}))
+                elif todo.children:
+                    updated.append(todo.model_copy(update={"children": update_verification(todo.children)}))
+                else:
+                    updated.append(todo)
+            return updated
+
+        plan = plan.model_copy(update={"todos": update_verification(plan.todos)})
+        loader.save(plan)
+
+        console.print(f"[green]✓ Task {task_id} manually verified by orchestrator[/green]")
+
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+
+
+@verify_phase_app.command(name="bash-verify")
+def verify_phase_bash_verify(task_id: str = typer.Argument(..., help="Task ID to verify")) -> None:
+    """Run bash verification for a task (verify phase)."""
+    bash_verify(task_id)
+
+
+@verify_phase_app.command(name="llm-verify")
+def verify_phase_llm_verify(
+    task_id: str = typer.Argument(..., help="Task ID to verify"),
+    verify_id: str = typer.Option(..., "--verify-id", help="Verification item ID"),
+    evidence: str = typer.Option(..., "--evidence", help="Verification evidence"),
+) -> None:
+    """Mark LLM verification as completed (verify phase)."""
+    llm_verify(task_id, verify_id, evidence)
+
+
 @plan_app.command(name="get")
 def get_plan_info(
     what: str = typer.Argument(..., help="What to get: task, reference"),

@@ -32,7 +32,6 @@ from sisyphus.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
 from sisyphus.utils.formatting import (
     OutputFormat,
     print_children,
-    print_completion_report,
     print_overview,
     print_references,
     print_task,

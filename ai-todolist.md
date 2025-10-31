@@ -50,7 +50,7 @@ sisyphus의 작업 계획 시스템을 ai-todolist.yaml 기반으로 재구성�
 
 # 작업 시작 여부
 
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 모든 목표 달성 여부
 
@@ -62,11 +62,7 @@ parallel_requested = FALSE
 
 # 현재 진행 중인 작업
 
-- 작업이 아직 시작되지 않았습니다.
-   - 작업을 시작할 때는 위의 `is_execution_started` 값을 TRUE로 변경하세요.
-   - 사용자가 명시적으로 "작업을 시작해"라고 말하기 전까지는 절대 작업을 시작하지 마세요.
-   - **plan reviewer로부터 OKAY를 받았다고 해도 작업을 시작하지 마세요**
-   - 사용자가 명시적으로 "작업을 시작해"라고 말하기 전까지는 절대 작업을 시작하지 마세요.
+Task 2: sisyphus verify-phase CLI 구조 구현
 
 # 필요 배경 지식
 
@@ -432,44 +428,44 @@ sequenceDiagram
 
 # TODOs
 
-- [ ] 1. sisyphus execute-phase CLI 구조 구현
+- [x] 1. sisyphus execute-phase CLI 구조 구현
 
    **참고 소스**:
    - Pattern file: `sisyphus/cli.py` (search for `@plan_app.command`, examine argumen parsing and Typer structure around line 590-890)
    - Pattern file: `sisyphus/core/plan_navigator.py` (search for `PlanNavigator` class, examine get_next_task method)
 
-   - [ ] 1.1 execute_phase_app = typer.Typer() 생성
+   - [x] 1.1 execute_phase_app = typer.Typer() 생성
 
       **구현 세부사항**:
       - 현재 코드: `plan_app = typer.Typer(name="plan", help="Work plan management")`
       - 변경 내용: `execute_phase_app = typer.Typer(name="execute-phase", help="Execute phase commands")`
       - 위치: `sisyphus/cli.py` 하단 plan_app 아래
 
-   - [ ] 1.2 app.add_typer(execute_phase_app) 등록
+   - [x] 1.2 app.add_typer(execute_phase_app) 등록
 
       **실행 명령**: `sisyphus execute-phase --help` 실행 시 서브커맨드 목록 출력 확인
 
-   - [ ] 1.3 테스트 작성 및 실행
+   - [x] 1.3 테스트 작성 및 실행
 
       **테스트 패턴 참고**: `sisyphus/tests/test_cli_plan.py` (search for `test_plan_get_current_task`, examine Typer testing pattern)
       **실행 명령**: `uv run pytest sisyphus/tests/test_cli.py -v -k execute_phase`
 
-   - [ ] 1.4 Lint 및 타입 체크
-      - [ ] `ruff check sisyphus/cli.py` → 0 errors expected
-      - [ ] `basedpyright sisyphus/cli.py` → 0 errors expected
+   - [x] 1.4 Lint 및 타입 체크
+      - [x] `ruff check sisyphus/cli.py` → 0 errors expected
+      - [x] `basedpyright sisyphus/cli.py` → 0 errors expected
 
-   - [ ] 1.5 커밋
+   - [x] 1.5 커밋
       - 프로젝트 규칙에 따라: `feat: add execute-phase CLI subcommand structure`
       - `git add sisyphus/cli.py sisyphus/tests/test_cli.py && git commit -m "..."`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `sisyphus/cli.py`에 `execute_phase_app = typer.Typer()` 추가 확인
-      - [ ] `app.add_typer(execute_phase_app)` 호출 확인
-      - [ ] `sisyphus execute-phase --help` 실행 → 도움말 출력
-      - [ ] 테스트 실행: `uv run pytest sisyphus/tests/test_cli.py -v -k execute_phase` → PASSED
-      - [ ] `ruff check sisyphus/cli.py` → 0 errors
-      - [ ] `basedpyright sisyphus/cli.py` → 0 errors
-      - [ ] git commit 완료 확인: `git log -1 --oneline`
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `sisyphus/cli.py`에 `execute_phase_app = typer.Typer()` 추가 확인
+      - [x] `app.add_typer(execute_phase_app)` 호출 확인
+      - [x] `sisyphus execute-phase --help` 실행 → 도움말 출력
+      - [x] 테스트 실행: `uv run pytest sisyphus/tests/test_cli.py -v -k execute_phase` → PASSED
+      - [x] `ruff check sisyphus/cli.py` → 0 errors
+      - [x] `basedpyright sisyphus/cli.py` → 0 errors
+      - [x] git commit 완료 확인: `git log -1 --oneline`
 
 - [ ] 2. sisyphus verify-phase CLI 구조 구현
 

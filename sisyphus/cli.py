@@ -593,6 +593,9 @@ app.add_typer(plan_app)
 execute_phase_app = typer.Typer(name="execute-phase", help="Execute phase commands")
 app.add_typer(execute_phase_app)
 
+verify_phase_app = typer.Typer(name="verify-phase", help="Verify phase commands")
+app.add_typer(verify_phase_app)
+
 
 @plan_app.command(name="get")
 def get_plan_info(

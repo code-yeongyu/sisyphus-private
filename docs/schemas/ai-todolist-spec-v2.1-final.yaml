@@ -58,7 +58,11 @@ background:
     - SQLite 데이터베이스 연동
     - Rich 기반 출력
 
-  technical_context: |
+# ============================================================================
+# REQUIRED BACKGROUND - 필수 배경 지식
+# ============================================================================
+required_background:
+  description: |
     **핵심 기술 스택**:
     - Typer: CLI 프레임워크
     - SQLite: 경량 데이터베이스
@@ -83,6 +87,63 @@ background:
 
     tests/
     └── test_todo.py
+
+  references:
+    # File Reference (type: file 명시)
+    - id: "ref_typer_example"
+      type: file
+      path: "sisyphus/cli.py"
+      description: "기존 Typer 사용 패턴"
+      retrieval:
+        type: keywords
+        keywords: ["@app.command", "typer.Option"]
+        line_range: [1, 100]
+      notes: |
+        명령어 구조 참고.
+        특히 Typer 데코레이터 패턴과 옵션 정의 확인.
+
+    # URL Reference (type: url 명시)
+    - id: "ref_typer_docs"
+      type: url
+      url: "https://typer.tiangolo.com/"
+      description: "Typer 공식 문서"
+      retrieval:
+        type: prompt
+        prompt: "Find CLI argument and option examples"
+      notes: |
+        CLI 인터페이스 설계 시 참고.
+        Argument와 Option의 차이점 이해.
+
+    # Markdown Reference (text + code_snippet 통합)
+    - id: "ref_sqlite_pattern"
+      type: markdown
+      description: "SQLite 연결 패턴"
+      content: |
+        SQLite 기본 연결 패턴:
+
+        ```python
+        import sqlite3
+
+        def get_db():
+            conn = sqlite3.connect("todo.db")
+            conn.row_factory = sqlite3.Row
+            return conn
+        ```
+
+        **주의사항**:
+        - Connection은 반드시 close() 호출
+        - Context manager 사용 권장
+
+    # Markdown Reference (일반 텍스트)
+    - id: "ref_commit_style"
+      type: markdown
+      description: "커밋 메시지 스타일"
+      content: |
+        Conventional Commits 형식:
+        - feat: 새 기능
+        - fix: 버그 수정
+        - test: 테스트 추가
+        - docs: 문서 업데이트
 
 # ============================================================================
 # SUCCESS VISION - 성공 비전
@@ -146,9 +207,9 @@ status:
     사용자의 명시적 시작 명령을 기다리는 중.
 
 # ============================================================================
-# WORK OVERVIEW - 작업 흐름 (workflow에서 이름 변경)
+# WORKFLOW - 작업 흐름
 # ============================================================================
-work_overview:
+workflow:
   dependency_diagram: |
     Phase 1: 기본 구조
     └─ Task 1: 프로젝트 초기화
@@ -163,13 +224,6 @@ work_overview:
 
   critical_path:
     - "Task 1 → Task 2 → Task 3 → (Task 4 || Task 5)"
-
-  # parallel_groups 중앙 관리 (중복 제거)
-  parallel_groups:
-    10:
-      notes: "Task 4와 5는 병렬 실행 가능 - 완전히 독립적인 작업"
-      tasks: [4, 5]
-      reason: "Task 4는 tests/ 디렉토리, Task 5는 docs/ 디렉토리 수정으로 충돌 없음"
 
 # ============================================================================
 # TODOS - 실행 항목
@@ -630,63 +684,3 @@ final_verification:
         expected_stdout: "passed"
         expected_exit_code: 0
         notes: "모든 테스트가 통과해야 함"
-
-# ============================================================================
-# REFERENCES - 참조 자료 (맨 마지막)
-# ============================================================================
-references:
-  # File Reference (type: file 명시)
-  - id: "ref_typer_example"
-    type: file
-    path: "sisyphus/cli.py"
-    description: "기존 Typer 사용 패턴"
-    retrieval:
-      type: keywords
-      keywords: ["@app.command", "typer.Option"]
-      line_range: [1, 100]
-    notes: |
-      명령어 구조 참고.
-      특히 Typer 데코레이터 패턴과 옵션 정의 확인.
-
-  # URL Reference (type: url 명시)
-  - id: "ref_typer_docs"
-    type: url
-    url: "https://typer.tiangolo.com/"
-    description: "Typer 공식 문서"
-    retrieval:
-      type: prompt
-      prompt: "Find CLI argument and option examples"
-    notes: |
-      CLI 인터페이스 설계 시 참고.
-      Argument와 Option의 차이점 이해.
-
-  # Markdown Reference (text + code_snippet 통합)
-  - id: "ref_sqlite_pattern"
-    type: markdown
-    description: "SQLite 연결 패턴"
-    content: |
-      SQLite 기본 연결 패턴:
-
-      ```python
-      import sqlite3
-
-      def get_db():
-          conn = sqlite3.connect("todo.db")
-          conn.row_factory = sqlite3.Row
-          return conn
-      ```
-
-      **주의사항**:
-      - Connection은 반드시 close() 호출
-      - Context manager 사용 권장
-
-  # Markdown Reference (일반 텍스트)
-  - id: "ref_commit_style"
-    type: markdown
-    description: "커밋 메시지 스타일"
-    content: |
-      Conventional Commits 형식:
-      - feat: 새 기능
-      - fix: 버그 수정
-      - test: 테스트 추가
-      - docs: 문서 업데이트

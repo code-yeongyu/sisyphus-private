@@ -6,8 +6,11 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
+from sisyphus.core.graph.dependencies import build_plan_graph, detect_cycles
+from sisyphus.core.plans.models import PlanDocument
 from sisyphus.utils.plan_types import (
     RetrievalType,
     TodoStatus,
@@ -1017,3 +1020,31 @@ class PlanLinter:
         if error.suggestion:
             parts.append(f"Suggestion: {error.suggestion}")
         return ". ".join(parts)
+
+    def validate_depends_on(self, plan_document: PlanDocument, plan_path: Path) -> list[str]:
+        """Validate depends_on field for all work plans.
+
+        Args:
+            plan_document: v3.0 PlanDocument instance
+            plan_path: Path to the plan file being validated
+
+        Returns:
+            List of error messages (empty if valid)
+        """
+        errors: list[str] = []
+
+        plans = {plan.id: plan for plan in plan_document.work_plans}
+
+        for plan in plan_document.work_plans:
+            for dep_id in plan.depends_on:
+                if dep_id not in plans:
+                    errors.append(f"Plan '{plan.id}' depends on '{dep_id}' which does not exist in this document")
+
+        graph = build_plan_graph(plans)
+
+        cycles = detect_cycles(graph)
+        for cycle in cycles:
+            cycle_path = " → ".join(cycle)
+            errors.append(f"Circular dependency detected: {cycle_path}")
+
+        return errors

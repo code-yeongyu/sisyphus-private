@@ -1,12 +1,12 @@
-# AI TodoList Format v2.1 - Improved Spec
-# 개선된 YAML 작업계획서 포맷
+# Todolist Example
+# 최종 개선 YAML 작업계획서 포맷
 
 # ============================================================================
 # METADATA - 문서 자체 정보
 # ============================================================================
 metadata:
-  created_at: "2025-10-31T22:24:00.000000+09:00"
-  updated_at: "2025-10-31T22:24:00.000000+09:00"
+  created_at: "2025-10-31T22:33:00.000000+09:00"
+  updated_at: "2025-10-31T22:33:00.000000+09:00"
   format_version: "2.1"
 
 # ============================================================================
@@ -14,7 +14,7 @@ metadata:
 # ============================================================================
 user_request:
   original: "Python으로 간단한 TODO CLI 도구 만들기"
-  timestamp: "2025-10-31T22:00:00.000000+09:00"
+  created_at: "2025-10-31T22:00:00.000000+09:00"  # timestamp → created_at 통일
   additional:
     - "Typer를 사용해서 CLI 인터페이스 구현"
     - "SQLite로 데이터 저장"
@@ -40,7 +40,6 @@ objectives:
 # BACKGROUND - 배경 (required_background 통합)
 # ============================================================================
 background:
-  # 기존 background 필드들
   current_situation: |
     현재 프로젝트 디렉토리가 비어있는 상태입니다.
     Python 3.12 환경에서 uv 패키지 매니저를 사용 중입니다.
@@ -59,7 +58,6 @@ background:
     - SQLite 데이터베이스 연동
     - Rich 기반 출력
 
-  # required_background에서 이동한 필드들
   technical_context: |
     **핵심 기술 스택**:
     - Typer: CLI 프레임워크
@@ -166,6 +164,13 @@ work_overview:
   critical_path:
     - "Task 1 → Task 2 → Task 3 → (Task 4 || Task 5)"
 
+  # parallel_groups 중앙 관리 (중복 제거)
+  parallel_groups:
+    10:
+      notes: "Task 4와 5는 병렬 실행 가능 - 완전히 독립적인 작업"
+      tasks: [4, 5]
+      reason: "Task 4는 tests/ 디렉토리, Task 5는 docs/ 디렉토리 수정으로 충돌 없음"
+
 # ============================================================================
 # TODOS - 실행 항목
 # ============================================================================
@@ -177,21 +182,24 @@ todos:
     title: "프로젝트 구조 생성 및 의존성 설치"
     status: pending
     parallel_group: null
-    created_at: "2025-10-31T22:24:00.000000+09:00"
-    updated_at: "2025-10-31T22:24:00.000000+09:00"
-    status_changed_at: "2025-10-31T22:24:00.000000+09:00"
+    created_at: "2025-10-31T22:33:00.000000+09:00"
+    updated_at: "2025-10-31T22:33:00.000000+09:00"
+    status_changed_at: "2025-10-31T22:33:00.000000+09:00"
 
-    # References: Pointer 방식 (ref_id로 참조)
+    # References: Pointer 방식 (type: pointer 명시)
     references:
-      - ref_id: "ref_typer_example"
-        note: "CLI 구조 참고"
+      - type: pointer
+        ref_id: "ref_typer_example"
+        notes: |
+          CLI 구조 참고.
+          특히 @app.command 데코레이터 패턴 확인.
 
     children:
       - id: "1.1"
         title: "디렉토리 구조 생성"
         status: pending
-        created_at: "2025-10-31T22:24:00.000000+09:00"
-        updated_at: "2025-10-31T22:24:00.000000+09:00"
+        created_at: "2025-10-31T22:33:00.000000+09:00"
+        updated_at: "2025-10-31T22:33:00.000000+09:00"
 
         details:
           commands:
@@ -202,9 +210,10 @@ todos:
         # Verification: bash 리스트 (여러 개 가능)
         verification_spec:
           - id: "verify_1_1_dirs"
-            name: "디렉토리 생성 확인"
+            title: "디렉토리 생성 확인"
             description: "todo-cli 디렉토리와 파일들이 정상 생성되었는지 확인"
             verified: false
+            verified_at: null
             verification_evidence: null
             orchestrator_manually_verified: false
             manual_verification_evidence: ""
@@ -213,24 +222,24 @@ todos:
                 expected_exit_code: 0
               - execute: "test -f todo-cli/__init__.py"
                 expected_exit_code: 0
-            # llm_judge는 없으면 필드 자체를 생략 (null 대신)
 
         children: []
 
       - id: "1.2"
         title: "의존성 설치"
         status: pending
-        created_at: "2025-10-31T22:24:01.000000+09:00"
-        updated_at: "2025-10-31T22:24:01.000000+09:00"
+        created_at: "2025-10-31T22:33:01.000000+09:00"
+        updated_at: "2025-10-31T22:33:01.000000+09:00"
 
         details:
           command: "uv add typer rich"
 
         verification_spec:
           - id: "verify_1_2_deps"
-            name: "의존성 설치 확인"
+            title: "의존성 설치 확인"
             description: "typer와 rich 패키지가 정상 설치되었는지 확인"
             verified: false
+            verified_at: null
             verification_evidence: null
             orchestrator_manually_verified: false
             manual_verification_evidence: ""
@@ -238,15 +247,17 @@ todos:
               - execute: "uv pip list | grep typer"
                 expected_stdout: "typer"
                 expected_exit_code: 0
+                notes: "typer 패키지가 목록에 나타나야 함"
 
         children: []
 
     # Parent-level verification
     verification_spec:
       - id: "verify_task_1_structure"
-        name: "전체 파일 개수 확인"
+        title: "전체 파일 개수 확인"
         description: "todo-cli와 tests 디렉토리에 총 5개 파일이 있는지 확인"
         verified: false
+        verified_at: null
         verification_evidence: null
         orchestrator_manually_verified: false
         manual_verification_evidence: ""
@@ -262,15 +273,16 @@ todos:
     title: "SQLite 데이터베이스 모델 구현"
     status: pending
     parallel_group: null
-    created_at: "2025-10-31T22:24:10.000000+09:00"
-    updated_at: "2025-10-31T22:24:10.000000+09:00"
+    created_at: "2025-10-31T22:33:10.000000+09:00"
+    updated_at: "2025-10-31T22:33:10.000000+09:00"
 
-    # References: Inline + Pointer 혼합 (ref_id 유무로 자동 구분)
+    # References: Inline + Pointer 혼합 (type 필드로 명시적 구분)
     references:
       # Pointer 방식
-      - ref_id: "ref_sqlite_pattern"
+      - type: pointer
+        ref_id: "ref_sqlite_pattern"
 
-      # Inline 방식 (type 필드로 구분, ref_id 없음)
+      # Inline 방식 (type 필드로 구분)
       - type: url
         url: "https://docs.python.org/3/library/sqlite3.html"
         description: "Python SQLite3 문서"
@@ -279,8 +291,8 @@ todos:
       - id: "2.1"
         title: "models.py 구현"
         status: pending
-        created_at: "2025-10-31T22:24:10.100000+09:00"
-        updated_at: "2025-10-31T22:24:10.100000+09:00"
+        created_at: "2025-10-31T22:33:10.100000+09:00"
+        updated_at: "2025-10-31T22:33:10.100000+09:00"
 
         details:
           file: "todo-cli/models.py"
@@ -293,32 +305,36 @@ todos:
         # bash 여러 개 예제
         verification_spec:
           - id: "verify_2_1_syntax"
-            name: "파이썬 문법 검증"
+            title: "파이썬 문법 검증"
             description: "models.py 파일의 Python 문법이 올바른지 확인"
             verified: false
+            verified_at: null
             verification_evidence: null
             orchestrator_manually_verified: false
             manual_verification_evidence: ""
             bash:
               - execute: "python -m py_compile todo-cli/models.py"
                 expected_exit_code: 0
+                notes: "문법 에러 없이 컴파일 성공"
               - execute: "python -c 'from todo_cli.models import Todo'"
                 expected_exit_code: 0
+                notes: "import 성공 확인"
 
         children: []
 
       - id: "2.2"
         title: "database.py 구현"
         status: pending
-        created_at: "2025-10-31T22:24:10.200000+09:00"
-        updated_at: "2025-10-31T22:24:10.200000+09:00"
+        created_at: "2025-10-31T22:33:10.200000+09:00"
+        updated_at: "2025-10-31T22:33:10.200000+09:00"
 
         # llm_judge 여러 개 예제
         verification_spec:
           - id: "verify_2_2_impl"
-            name: "구현 품질 검증"
+            title: "구현 품질 검증"
             description: "database.py의 코드 품질과 패턴이 적절한지 LLM으로 검증"
             verified: false
+            verified_at: null
             verification_evidence: null
             orchestrator_manually_verified: false
             manual_verification_evidence: ""
@@ -330,7 +346,8 @@ todos:
                   2. Error handling이 존재하는가?
                   3. Type hints가 있는가?
               - by: "external-agent"
-                bash_execute: "cat todo-cli/database.py"
+                context_commands:
+                  - "cat todo-cli/database.py"
                 instruction: |
                   위 코드의 보안 취약점을 검토:
                   1. SQL injection 가능성
@@ -341,9 +358,10 @@ todos:
     # bash + llm_judge 동시 사용 예제
     verification_spec:
       - id: "verify_task_2_tests"
-        name: "데이터베이스 테스트 통과"
+        title: "데이터베이스 테스트 통과"
         description: "database 관련 테스트가 모두 통과하는지 확인"
         verified: false
+        verified_at: null
         verification_evidence: null
         orchestrator_manually_verified: false
         manual_verification_evidence: ""
@@ -363,18 +381,19 @@ todos:
     title: "Typer CLI 명령어 구현"
     status: pending
     parallel_group: null
-    created_at: "2025-10-31T22:24:20.000000+09:00"
-    updated_at: "2025-10-31T22:24:20.000000+09:00"
+    created_at: "2025-10-31T22:33:20.000000+09:00"
+    updated_at: "2025-10-31T22:33:20.000000+09:00"
 
     references:
-      - ref_id: "ref_typer_docs"
+      - type: pointer
+        ref_id: "ref_typer_docs"
 
     children:
       - id: "3.1"
         title: "add 명령어"
         status: pending
-        created_at: "2025-10-31T22:24:20.100000+09:00"
-        updated_at: "2025-10-31T22:24:20.100000+09:00"
+        created_at: "2025-10-31T22:33:20.100000+09:00"
+        updated_at: "2025-10-31T22:33:20.100000+09:00"
 
         details:
           command_signature: "todo add <title>"
@@ -385,8 +404,8 @@ todos:
       - id: "3.2"
         title: "list 명령어"
         status: pending
-        created_at: "2025-10-31T22:24:20.200000+09:00"
-        updated_at: "2025-10-31T22:24:20.200000+09:00"
+        created_at: "2025-10-31T22:33:20.200000+09:00"
+        updated_at: "2025-10-31T22:33:20.200000+09:00"
 
         details:
           command_signature: "todo list [--all]"
@@ -397,25 +416,26 @@ todos:
       - id: "3.3"
         title: "done 명령어"
         status: pending
-        created_at: "2025-10-31T22:24:20.300000+09:00"
-        updated_at: "2025-10-31T22:24:20.300000+09:00"
+        created_at: "2025-10-31T22:33:20.300000+09:00"
+        updated_at: "2025-10-31T22:33:20.300000+09:00"
 
         children: []
 
       - id: "3.4"
         title: "delete 명령어"
         status: pending
-        created_at: "2025-10-31T22:24:20.400000+09:00"
-        updated_at: "2025-10-31T22:24:20.400000+09:00"
+        created_at: "2025-10-31T22:33:20.400000+09:00"
+        updated_at: "2025-10-31T22:33:20.400000+09:00"
 
         children: []
 
-    # llm_judge만 사용하는 예제 (bash 없음)
+    # llm_judge만 사용하는 예제 (bash 생략)
     verification_spec:
       - id: "verify_task_3_manual"
-        name: "CLI 수동 테스트"
+        title: "CLI 수동 테스트"
         description: "실제 CLI 명령어들을 수동으로 실행해보고 동작 확인"
         verified: false
+        verified_at: null
         verification_evidence: null
         orchestrator_manually_verified: false
         manual_verification_evidence: ""
@@ -435,38 +455,38 @@ todos:
   - id: 4
     title: "테스트 작성"
     status: pending
-    parallel_group: 10
-    parallel_note: "Task 4와 5는 병렬 실행 가능"
-    created_at: "2025-10-31T22:24:30.000000+09:00"
-    updated_at: "2025-10-31T22:24:30.000000+09:00"
+    parallel_group: 10  # work_overview.parallel_groups[10] 참조
+    created_at: "2025-10-31T22:33:30.000000+09:00"
+    updated_at: "2025-10-31T22:33:30.000000+09:00"
 
     children:
       - id: "4.1"
         title: "models 테스트"
         status: pending
-        created_at: "2025-10-31T22:24:30.100000+09:00"
-        updated_at: "2025-10-31T22:24:30.100000+09:00"
+        created_at: "2025-10-31T22:33:30.100000+09:00"
+        updated_at: "2025-10-31T22:33:30.100000+09:00"
         children: []
 
       - id: "4.2"
         title: "database 테스트"
         status: pending
-        created_at: "2025-10-31T22:24:30.200000+09:00"
-        updated_at: "2025-10-31T22:24:30.200000+09:00"
+        created_at: "2025-10-31T22:33:30.200000+09:00"
+        updated_at: "2025-10-31T22:33:30.200000+09:00"
         children: []
 
       - id: "4.3"
         title: "CLI 통합 테스트"
         status: pending
-        created_at: "2025-10-31T22:24:30.300000+09:00"
-        updated_at: "2025-10-31T22:24:30.300000+09:00"
+        created_at: "2025-10-31T22:33:30.300000+09:00"
+        updated_at: "2025-10-31T22:33:30.300000+09:00"
         children: []
 
     verification_spec:
       - id: "verify_task_4_coverage"
-        name: "테스트 커버리지 확인"
+        title: "테스트 커버리지 확인"
         description: "테스트 커버리지가 100%인지 확인"
         verified: false
+        verified_at: null
         verification_evidence: null
         orchestrator_manually_verified: false
         manual_verification_evidence: ""
@@ -478,17 +498,16 @@ todos:
   - id: 5
     title: "문서화"
     status: pending
-    parallel_group: 10
-    parallel_note: "Task 4와 5는 병렬 실행 가능"
-    created_at: "2025-10-31T22:24:40.000000+09:00"
-    updated_at: "2025-10-31T22:24:40.000000+09:00"
+    parallel_group: 10  # work_overview.parallel_groups[10] 참조 (중복 제거)
+    created_at: "2025-10-31T22:33:40.000000+09:00"
+    updated_at: "2025-10-31T22:33:40.000000+09:00"
 
     children:
       - id: "5.1"
         title: "README.md 작성"
         status: pending
-        created_at: "2025-10-31T22:24:40.100000+09:00"
-        updated_at: "2025-10-31T22:24:40.100000+09:00"
+        created_at: "2025-10-31T22:33:40.100000+09:00"
+        updated_at: "2025-10-31T22:33:40.100000+09:00"
 
         details:
           sections:
@@ -501,21 +520,23 @@ todos:
       - id: "5.2"
         title: "Docstring 추가"
         status: pending
-        created_at: "2025-10-31T22:24:40.200000+09:00"
-        updated_at: "2025-10-31T22:24:40.200000+09:00"
+        created_at: "2025-10-31T22:33:40.200000+09:00"
+        updated_at: "2025-10-31T22:33:40.200000+09:00"
         children: []
 
     verification_spec:
       - id: "verify_task_5_readme"
-        name: "README 품질 확인"
+        title: "README 품질 확인"
         description: "README.md에 필수 섹션이 모두 포함되었는지 확인"
         verified: false
+        verified_at: null
         verification_evidence: null
         orchestrator_manually_verified: false
         manual_verification_evidence: ""
         llm_judge:
           - by: "orchestrator-agent"
-            bash_execute: "cat README.md"
+            context_commands:
+              - "cat README.md"
             instruction: |
               README.md를 검토하고 다음이 포함되었는지 확인:
               1. Installation instructions
@@ -523,89 +544,98 @@ todos:
               3. Command reference
 
 # ============================================================================
-# FINAL VERIFICATION - 최종 검증
+# FINAL VERIFICATION - 최종 검증 (구조 통일)
 # ============================================================================
 final_verification:
-  - category: "기능 동작 확인"
-    items:
-      - id: "final_verify_cli"
-        description: "CLI 실행 확인"
-        verified: false
-        verification_evidence: null
-        orchestrator_manually_verified: false
-        manual_verification_evidence: ""
-        bash:
-          - execute: "uv run python -m todo_cli --help"
-            expected_stdout: "Usage:"
-            expected_exit_code: 0
+  # final_verification도 verification_spec과 동일 구조 (category 필드 추가)
+  - id: "final_verify_cli"
+    title: "CLI 실행 확인"
+    category: "기능 동작 확인"
+    description: "CLI 도구가 정상적으로 실행되는지 확인"
+    verified: false
+    verified_at: null
+    verification_evidence: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ""
+    bash:
+      - execute: "uv run python -m todo_cli --help"
+        expected_stdout: "Usage:"
+        expected_exit_code: 0
 
-      - id: "final_verify_e2e"
-        description: "E2E 테스트"
-        verified: false
-        verification_evidence: null
-        orchestrator_manually_verified: false
-        manual_verification_evidence: ""
-        llm_judge:
-          - by: "orchestrator-agent"
-            instruction: |
-              전체 워크플로우 테스트:
-              1. todo add "Task 1"
-              2. todo add "Task 2"
-              3. todo list
-              4. todo done 1
-              5. todo delete 2
+  - id: "final_verify_e2e"
+    title: "E2E 테스트"
+    category: "기능 동작 확인"
+    description: "전체 워크플로우가 정상 동작하는지 확인"
+    verified: false
+    verified_at: null
+    verification_evidence: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ""
+    llm_judge:
+      - by: "orchestrator-agent"
+        instruction: |
+          전체 워크플로우 테스트:
+          1. todo add "Task 1"
+          2. todo add "Task 2"
+          3. todo list
+          4. todo done 1
+          5. todo delete 2
 
-  - category: "잘못된 구현 방지"
-    items:
-      - id: "final_verify_edge_cases"
-        description: "엣지 케이스 확인"
-        verified: false
-        verification_evidence: null
-        orchestrator_manually_verified: false
-        manual_verification_evidence: ""
-        bash:
-          - execute: "uv run python -m todo_cli list"
-            expected_exit_code: 0
-            note: "빈 목록도 정상 처리"
-          - execute: "uv run python -m todo_cli done 9999"
-            expected_exit_code: 1
-            note: "존재하지 않는 ID는 에러"
+  - id: "final_verify_edge_cases"
+    title: "엣지 케이스 확인"
+    category: "잘못된 구현 방지"
+    description: "엣지 케이스가 올바르게 처리되는지 확인"
+    verified: false
+    verified_at: null
+    verification_evidence: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ""
+    bash:
+      - execute: "uv run python -m todo_cli list"
+        expected_exit_code: 0
+        notes: "빈 목록도 정상 처리"
+      - execute: "uv run python -m todo_cli done 9999"
+        expected_exit_code: 1
+        notes: "존재하지 않는 ID는 에러"
 
-  - category: "범위 준수"
-    items:
-      - id: "final_verify_no_extra_deps"
-        description: "불필요한 의존성 없는지 확인"
-        verified: false
-        verification_evidence: null
-        orchestrator_manually_verified: false
-        manual_verification_evidence: ""
-        llm_judge:
-          - by: "external-agent"
-            bash_execute: "uv pip list"
-            instruction: |
-              의존성 목록을 검토.
-              typer, rich, click(typer 의존성)만 있어야 함.
-              불필요한 패키지 없는지 확인.
+  - id: "final_verify_no_extra_deps"
+    title: "불필요한 의존성 없는지 확인"
+    category: "범위 준수"
+    description: "필요한 패키지만 설치되었는지 확인"
+    verified: false
+    verified_at: null
+    verification_evidence: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ""
+    llm_judge:
+      - by: "external-agent"
+        context_commands:
+          - "uv pip list"
+        instruction: |
+          의존성 목록을 검토.
+          typer, rich, click(typer 의존성)만 있어야 함.
+          불필요한 패키지 없는지 확인.
 
-  - category: "기존 기능 회귀 테스트"
-    items:
-      - id: "final_verify_all_tests"
-        description: "전체 테스트 스위트"
-        verified: false
-        verification_evidence: null
-        orchestrator_manually_verified: false
-        manual_verification_evidence: ""
-        bash:
-          - execute: "uv run pytest tests/ -v"
-            expected_stdout: "passed"
-            expected_exit_code: 0
-        note: "모든 테스트가 통과해야 함"
+  - id: "final_verify_all_tests"
+    title: "전체 테스트 스위트"
+    category: "기존 기능 회귀 테스트"
+    description: "모든 테스트가 통과하는지 확인"
+    verified: false
+    verified_at: null
+    verification_evidence: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ""
+    bash:
+      - execute: "uv run pytest tests/ -v"
+        expected_stdout: "passed"
+        expected_exit_code: 0
+        notes: "모든 테스트가 통과해야 함"
 
 # ============================================================================
 # REFERENCES - 참조 자료 (맨 마지막)
 # ============================================================================
 references:
-  # File Reference (keywords retrieval)
+  # File Reference (type: file 명시)
   - id: "ref_typer_example"
     type: file
     path: "sisyphus/cli.py"
@@ -614,9 +644,11 @@ references:
       type: keywords
       keywords: ["@app.command", "typer.Option"]
       line_range: [1, 100]
-    notes: "명령어 구조 참고"
+    notes: |
+      명령어 구조 참고.
+      특히 Typer 데코레이터 패턴과 옵션 정의 확인.
 
-  # URL Reference (prompt retrieval)
+  # URL Reference (type: url 명시)
   - id: "ref_typer_docs"
     type: url
     url: "https://typer.tiangolo.com/"
@@ -624,7 +656,9 @@ references:
     retrieval:
       type: prompt
       prompt: "Find CLI argument and option examples"
-    notes: "CLI 인터페이스 설계 시 참고"
+    notes: |
+      CLI 인터페이스 설계 시 참고.
+      Argument와 Option의 차이점 이해.
 
   # Markdown Reference (text + code_snippet 통합)
   - id: "ref_sqlite_pattern"

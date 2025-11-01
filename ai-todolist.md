@@ -83,7 +83,7 @@ parallel_requested = FALSE
 
 # 현재 진행 중인 작업
 
-- [x] 18. Linter 참조 검증 확장
+- [ ] 19. Legacy 변환기 (v2.1 → v3.0)
 
 # 필요한 배경지식
 

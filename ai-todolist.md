@@ -83,7 +83,7 @@ parallel_requested = FALSE
 
 # 현재 진행 중인 작업
 
-- [ ] 18. Linter 참조 검증 확장
+- [x] 18. Linter 참조 검증 확장
 
 # 필요한 배경지식
 
@@ -837,21 +837,21 @@ work_plans:
          - `git add sisyphus/core/plans/references.py tests/core/plans/test_references.py`
          - `git commit -m "feat: implement reference resolver for ref_id and inline"`
 
-   - [ ] 18. Linter 참조 검증 확장
+   - [x] 18. Linter 참조 검증 확장
 
       **참조 소스**:
       - 패턴 파일: `sisyphus/core/plan_linter.py` (Phase 2에서 확장한 파일)
 
-      - [ ] 18.1 sisyphus/core/plan_linter.py 수정
+      - [x] 18.1 sisyphus/core/plan_linter.py 수정
          - validate_references() 메서드 추가
          - ref_id 누락/중복, 인라인 길이 체크
          - **검증 명령어**: `uv run sisyphus plan lint [참조 오류 YAML]` → 오류 표시
 
-      - [ ] 18.2 Linter 참조 검증 테스트
+      - [x] 18.2 Linter 참조 검증 테스트
          - 테스트 파일: `tests/core/test_plan_linter_references.py`
          - **검증 명령어**: `uv run pytest tests/core/test_plan_linter_references.py -v` → 모든 테스트 PASSED
 
-      - [ ] 18.3 커밋
+      - [x] 18.3 커밋
          - `git add sisyphus/core/plan_linter.py tests/core/test_plan_linter_references.py`
          - `git commit -m "feat: extend linter with reference validation (ref_id, inline)"`
 

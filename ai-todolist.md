@@ -83,7 +83,13 @@ parallel_requested = FALSE
 
 # 현재 진행 중인 작업
 
-Task 16.1-16.3: sisyphus/cli.py를 554줄에서 ~100줄로 축소
+모든 작업 완료! Phase 1-6 전체 완료됨.
+Architect 피드백의 모든 이슈 해결 완료:
+- ✅ sisyphus/cli/ 디렉토리 구조 (commands → cli)
+- ✅ tests/fixtures/plans/ 생성 완료
+- ✅ .sisyphus/tasks/ 생성 완료
+- ✅ cli.py 23줄로 축소 (목표 ~100줄 대비 초과 달성)
+- ✅ 전체 테스트 통과 (397 passed, 6 skipped)
 
 # 필요한 배경지식
 
@@ -286,11 +292,11 @@ work_plans:
 
 # TODOs
 
-- [ ] **Phase 1: 스키마 및 로더 재구성**
+- [x] **Phase 1: 스키마 및 로더 재구성**
 
    **Phase 목표**: v3.0 YAML 스키마 정의, 로더 재구성, StatusManager 기본 구현
 
-   - [ ] 1. v3 Pydantic 모델 정의
+   - [x] 1. v3 Pydantic 모델 정의
 
       **참조 소스**:
       - 패턴 파일: `sisyphus/utils/plan_types.py` (WorkPlan, Todo, ReferenceItem 현재 구조 확인)
@@ -358,7 +364,7 @@ work_plans:
          - [x] basedpyright → 0 errors
          - [x] git log -1 --oneline → 커밋 확인
 
-   - [ ] 2. 로더 리팩터링
+   - [x] 2. 로더 리팩터링
 
       **참조 소스**:
       - 패턴 파일: `sisyphus/core/plan_loader.py` (현재 load() 메서드 구조)
@@ -384,21 +390,21 @@ work_plans:
          - [x] v2.1 YAML 로딩 시 UnsupportedPlanVersionError 발생 확인
          - [x] pytest 실행 → 모든 테스트 통과
 
-   - [ ] 3. 예외 정의
+   - [x] 3. 예외 정의
 
       **참조 소스**:
       - 패턴 파일: `sisyphus/utils/errors.py` (현재 예외 정의 패턴)
       - 참조 문서: `planning-memos/03-codex-phase-planning.md` (Task 1.3: 예외/유틸 정의)
 
-      - [ ] 3.1 sisyphus/core/plans/exceptions.py 생성
+      - [x] 3.1 sisyphus/core/plans/exceptions.py 생성
          - UnsupportedPlanVersionError, PlanValidationError 정의
          - **검증 명령어**: `python -c "from sisyphus.core.plans.exceptions import UnsupportedPlanVersionError"` → 성공
 
-      - [ ] 3.2 커밋
+      - [x] 3.2 커밋
          - `git add sisyphus/core/plans/exceptions.py`
          - `git commit -m "feat: add plan-specific exceptions for v3.0"`
 
-   - [ ] 4. StatusManager 기본 구현
+   - [x] 4. StatusManager 기본 구현
 
       **참조 소스**:
       - 참조 문서: `planning-memos/03-codex-phase-planning.md` (Task 1.4: status.json 관리 베이스)
@@ -426,7 +432,7 @@ work_plans:
          - 테스트 케이스: get None when missing, set_current creates file
          - **검증 명령어**: `uv run pytest tests/core/status/test_manager.py -v` → 모든 테스트 PASSED
 
-      - [ ] 4.3 커밋
+      - [x] 4.3 커밋
          - `git add sisyphus/core/status/manager.py tests/core/status/test_manager.py`
          - `git commit -m "feat: implement basic StatusManager with status.json support"`
 
@@ -436,27 +442,27 @@ work_plans:
          - [x] status.json 생성 확인 (테스트에서)
          - [x] pytest 실행 → 모든 테스트 통과
 
-   - [ ] 5. 기존 CLI 종속성 정리
+   - [x] 5. 기존 CLI 종속성 정리
 
       **참조 소스**:
       - 패턴 파일: `sisyphus/cli.py` (현재 plan_app, execute_phase_app 정의 위치)
       - 참조 문서: `planning-memos/03-codex-phase-planning.md` (Task 1.5: 기존 CLI 종속성 정리)
 
-      - [ ] 5.1 sisyphus/cli.py 수정
+      - [x] 5.1 sisyphus/cli.py 수정
          - 신규 모듈(loader, exceptions)로 import 경로 변경
          - v2 관련 로직 만나면 UnsupportedPlanVersionError 재전파
          - **검증 명령어**: `uv run sisyphus --help` → 정상 출력
 
-      - [ ] 5.2 CLI 테스트 작성
+      - [x] 5.2 CLI 테스트 작성
          - 테스트 파일: `tests/cli/test_cli_plan_load.py`
          - 테스트 케이스: 신규 로더 호출 확인, 오류 전파 확인
          - **검증 명령어**: `uv run pytest tests/cli/test_cli_plan_load.py -v` → 모든 테스트 PASSED
 
-      - [ ] 5.3 커밋
+      - [x] 5.3 커밋
          - `git add sisyphus/cli.py tests/cli/test_cli_plan_load.py`
          - `git commit -m "refactor: migrate cli.py to use new v3.0 loader and exceptions"`
 
-   - [ ] 6. 테스트 리소스 구성
+   - [x] 6. 테스트 리소스 구성
 
       **참조 소스**:
       - 참조 문서: `planning-memos/03-codex-phase-planning.md` (Task 1.6: 테스트 리소스 구성)
@@ -479,10 +485,10 @@ work_plans:
                 - inline: "Inline reference example"
       ```
 
-      - [ ] 6.1 tests/fixtures/plans/ 디렉토리 생성
-      - [ ] 6.2 v3_basic.yaml, v2_legacy.yaml 생성
-      - [ ] 6.3 tests/conftest.py에 temp_worktree fixture 추가
-      - [ ] 6.4 커밋
+      - [x] 6.1 tests/fixtures/plans/ 디렉토리 생성
+      - [x] 6.2 v3_basic.yaml, v2_legacy.yaml 생성
+      - [x] 6.3 tests/conftest.py에 temp_worktree fixture 추가
+      - [x] 6.4 커밋
          - `git add tests/fixtures/plans/ tests/conftest.py`
          - `git commit -m "test: add v3.0 and v2.1 YAML fixtures for testing"`
 
@@ -493,11 +499,11 @@ work_plans:
          - [x] CLI가 v3 로더로 계획 파일 읽기 확인 (테스트로 검증됨)
          - [x] v2 파일 로딩 시 명확한 오류 메시지 출력 확인 (테스트로 검증됨)
 
-- [ ] **Phase 2: 그래프 및 검증 코어**
+- [x] **Phase 2: 그래프 및 검증 코어**
 
    **Phase 목표**: 의존성 그래프, Linter 확장, 시각화 렌더러 구현
 
-   - [ ] 7. 의존성 그래프 구현
+   - [x] 7. 의존성 그래프 구현
 
       **참조 소스**:
       - 참조 문서: `planning-memos/03-codex-phase-planning.md` (의존성 그래프 알고리즘 섹션)
@@ -636,10 +642,10 @@ work_plans:
 
       - [x] **Phase 2 완료 검증 체크리스트**
          - [x] `uv run pytest tests/core/graph -v` → 모든 테스트 PASSED (66 passed, 6 skipped)
-         - [ ] 순환 의존성 YAML로 테스트 → 올바른 경로 표시 확인 (Phase 3 CLI 구현 후)
-         - [ ] `uv run sisyphus plan graph tests/fixtures/plans/v3_basic.yaml` → 그래프 출력 확인 (Phase 3 CLI 구현 후)
+         - [x] 순환 의존성 YAML로 테스트 → 올바른 경로 표시 확인 (Phase 3 CLI 구현 후)
+         - [x] `uv run sisyphus plan graph tests/fixtures/plans/v3_basic.yaml` → 그래프 출력 확인 (Phase 3 CLI 구현 후)
 
-- [ ] **Phase 3: CLI 리팩터링**
+- [x] **Phase 3: CLI 리팩터링**
 
    **Phase 목표**: plan/task 명령어 분리, 기존 995줄 cli.py를 ~100줄로 축소
 
@@ -749,25 +755,25 @@ work_plans:
          - `git add sisyphus/commands/task.py sisyphus/core/plan_navigator.py tests/cli/test_task_commands.py`
          - `git commit -m "feat: implement task verify commands (bash, llm, manual, status)"`
 
-   - [ ] 15. reset 명령어 재구현
+   - [x] 15. reset 명령어 재구현
 
       **참조 소스**:
       - 패턴 파일: `sisyphus/cli.py` (현재 reset 관련 로직 - search for "reset")
 
-      - [ ] 15.1 sisyphus/cli/reset.py 구현
+      - [x] 15.1 sisyphus/cli/reset.py 구현
          - sisyphus reset (notepad, sessions, logs)
          - sisyphus reset --include-task-specs (tasks, status.json 포함)
          - **검증 명령어**: `uv run sisyphus reset --help` → 옵션 표시
 
-      - [ ] 15.2 reset 명령어 테스트
+      - [x] 15.2 reset 명령어 테스트
          - 테스트 파일: `tests/cli/test_reset.py`
          - **검증 명령어**: `uv run pytest tests/cli/test_reset.py -v` → 모든 테스트 PASSED
 
-      - [ ] 15.3 커밋
+      - [x] 15.3 커밋
          - `git add sisyphus/cli/reset.py tests/cli/test_reset.py`
          - `git commit -m "feat: implement reset command with .sisyphus/ support"`
 
-   - [ ] 16. 루트 CLI 배선 및 기존 명령어 제거
+   - [x] 16. 루트 CLI 배선 및 기존 명령어 제거
 
       **참조 소스**:
       - 패턴 파일: `sisyphus/cli.py` (995줄 → ~100줄로 축소 예정)
@@ -806,7 +812,7 @@ work_plans:
          - 테스트 파일: `tests/cli/test_cli_root.py`
          - **검증 명령어**: `uv run pytest tests/cli/test_cli_root.py -v` → 16 passed ✓
 
-      - [ ] 16.3 커밋
+      - [x] 16.3 커밋
          - `git add sisyphus/cli.py sisyphus/utils/ignore.py sisyphus/utils/cli_helpers.py sisyphus/cli/work.py`
          - `git commit -m "refactor: reduce cli.py from 554 to 23 lines by extracting helpers and commands"`
 
@@ -816,24 +822,24 @@ work_plans:
          - [x] `wc -l sisyphus/cli.py` → ~100줄 확인 (실제: 23줄!)
          - [x] 기존 execute_phase_app, verify_phase_app 제거 확인
 
-- [ ] **Phase 4: 참조 시스템 및 변환기**
+- [x] **Phase 4: 참조 시스템 및 변환기**
 
    **Phase 목표**: 참조 ID/inline 처리, v2→v3 컨버터, 다중 파일 구성
 
-   - [ ] 17. 참조 해석 모듈
+   - [x] 17. 참조 해석 모듈
 
       **참조 소스**:
       - 참조 문서: `planning-memos/01-codex-architecture-response.md` (참조 시스템 섹션)
 
-      - [ ] 17.1 sisyphus/core/plans/references.py 생성
+      - [x] 17.1 sisyphus/core/plans/references.py 생성
          - ReferenceResolver (index_references, resolve_ref_id, validate_references)
          - **검증 명령어**: `python -c "from sisyphus.core.plans.references import ReferenceResolver"` → 성공
 
-      - [ ] 17.2 참조 해석 테스트
+      - [x] 17.2 참조 해석 테스트
          - 테스트 파일: `tests/core/plans/test_references.py`
          - **검증 명령어**: `uv run pytest tests/core/plans/test_references.py -v` → 모든 테스트 PASSED
 
-      - [ ] 17.3 커밋
+      - [x] 17.3 커밋
          - `git add sisyphus/core/plans/references.py tests/core/plans/test_references.py`
          - `git commit -m "feat: implement reference resolver for ref_id and inline"`
 
@@ -908,7 +914,7 @@ work_plans:
          - [x] 출력 형식이 ai-todolist.md와 동일한지 확인 ✓
          - [x] checkbox, 들여쓰기, references 포맷 보존 확인 ✓
 
-- [ ] **Phase 5: 상태 워크플로 강화**
+- [x] **Phase 5: 상태 워크플로 강화**
 
    **Phase 목표**: status.json 원자적 갱신, 세션 관리, --cwd 연동
 
@@ -1012,7 +1018,7 @@ work_plans:
          - [x] 워크트리 캐시 TTL 60초 확인 (코드 검토)
          - [x] --cwd 옵션 ./temp/에서 테스트 → 정상 동작
 
-- [ ] **Phase 6: 종합 테스트 및 문서화**
+- [x] **Phase 6: 종합 테스트 및 문서화**
 
    **Phase 목표**: 통합 테스트, 엣지 케이스, 문서화, 성능 테스트
 
@@ -1051,18 +1057,18 @@ work_plans:
          - `git add tests/edge_cases/`
          - `git commit -m "test: add edge case tests for self-reference, cycles, corruption"`
 
-   - [ ] 27. 마이그레이션 가이드 작성
+   - [x] 27. 마이그레이션 가이드 작성
 
       **참조 소스**:
       - 참조 문서: `planning-memos/03-codex-phase-planning.md` (마이그레이션 전략 섹션)
 
-      - [ ] 27.1 docs/migration-v2-to-v3.md 생성
+      - [x] 27.1 docs/migration-v2-to-v3.md 생성
          - v2.1 사용자를 위한 단계별 마이그레이션 절차
          - plan init --migrate-existing, plan convert-legacy 사용법
          - Before/After 비교
          - **검증 명령어**: `cat docs/migration-v2-to-v3.md` → 내용 확인
 
-      - [ ] 27.2 커밋
+      - [x] 27.2 커밋
          - `git add docs/migration-v2-to-v3.md`
          - `git commit -m "docs: add v2.1 to v3.0 migration guide"`
 
@@ -1205,29 +1211,29 @@ work_plans:
 
 # 최종 작업 검증 체크리스트
 
-- [ ] 1. **기능 동작 확인**
-   - [ ] plan init, plan lint, plan graph, plan convert-legacy 동작 확인
-   - [ ] task show, task current, task next, task continue 동작 확인
-   - [ ] task verify bash/llm/manual 순차 처리 확인
-   - [ ] reset 명령어 동작 확인
-   - [ ] --cwd 옵션 ./temp/에서 테스트
+- [x] 1. **기능 동작 확인**
+   - [x] plan init, plan lint, plan graph, plan convert-legacy 동작 확인
+   - [x] task show, task current, task next, task continue 동작 확인
+   - [x] task verify bash/llm/manual 순차 처리 확인
+   - [x] reset 명령어 동작 확인
+   - [x] --cwd 옵션 ./temp/에서 테스트
 
-- [ ] 2. **잘못된 구현 방지**
-   - [ ] uri와 inline 동시 사용 시 오류 확인
-   - [ ] 순환 의존성 검출 확인
-   - [ ] v2.1 YAML 로딩 시 명확한 오류 메시지
-   - [ ] execute_phase_app, verify_phase_app 완전 제거 확인
+- [x] 2. **잘못된 구현 방지**
+   - [x] uri와 inline 동시 사용 시 오류 확인
+   - [x] 순환 의존성 검출 확인
+   - [x] v2.1 YAML 로딩 시 명확한 오류 메시지
+   - [x] execute_phase_app, verify_phase_app 완전 제거 확인
 
-- [ ] 3. **범위 준수 확인**
-   - [ ] 초기 계획과 다르게 구현된 부분 없는지 확인
-   - [ ] 과도하게 구현된 기능 없는지 확인
-   - [ ] 모든 Phase 1~6 작업 완료 확인
+- [x] 3. **범위 준수 확인**
+   - [x] 초기 계획과 다르게 구현된 부분 없는지 확인
+   - [x] 과도하게 구현된 기능 없는지 확인
+   - [x] 모든 Phase 1~6 작업 완료 확인
 
-- [ ] 4. **기존 기능 회귀 테스트**
-   - [ ] 기존 ExecutionLoop 동작 확인
-   - [ ] 기존 Agent (ClaudeAgent, OpenCodeAgent) 동작 확인
-   - [ ] 기존 UI (TUI, CLI) 동작 확인
-   - [ ] 전체 테스트 스위트 실행: `uv run pytest -v` → 모든 테스트 PASSED
+- [x] 4. **기존 기능 회귀 테스트**
+   - [x] 기존 ExecutionLoop 동작 확인
+   - [x] 기존 Agent (ClaudeAgent, OpenCodeAgent) 동작 확인
+   - [x] 기존 UI (TUI, CLI) 동작 확인
+   - [x] 전체 테스트 스위트 실행: `uv run pytest -v` → 모든 테스트 PASSED
 
 ---
 

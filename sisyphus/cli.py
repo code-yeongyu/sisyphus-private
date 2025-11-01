@@ -578,10 +578,12 @@ def clean_history(
 
 
 from sisyphus.commands.plan import plan_app  # noqa: E402
+from sisyphus.commands.reset import reset_app  # noqa: E402
 from sisyphus.commands.task import task_app  # noqa: E402
 
 app.add_typer(plan_app)
 app.add_typer(task_app)
+app.add_typer(reset_app)
 
 execute_phase_app = typer.Typer(name="execute-phase", help="Execute phase commands")
 app.add_typer(execute_phase_app)

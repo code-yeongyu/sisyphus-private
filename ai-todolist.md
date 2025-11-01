@@ -83,7 +83,7 @@ parallel_requested = FALSE
 
 # 현재 진행 중인 작업
 
-- [ ] 14. task verify 명령어 구현
+- [ ] 15. reset 명령어 재구현
 
 # 필요한 배경지식
 

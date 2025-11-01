@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-DEFAULT_EXECUTE_PROMPT = """/execute
+DEFAULT_EXECUTE_PROMPT = """/execute - run 'execute' command using command tool.
 
 Execute tasks from the ai-todolist.md file by spawning executor agents.
 I am ordering you to start working.

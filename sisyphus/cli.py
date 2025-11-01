@@ -15,14 +15,11 @@ from urllib.parse import urlparse
 
 import anyio
 import typer
-from pydantic import ValidationError
 from rich.console import Console
-from ruamel.yaml import YAML, YAMLError
 
 from sisyphus.agents.claude import ClaudeAgent
 from sisyphus.agents.opencode import OpenCodeAgent
 from sisyphus.core.loop import ExecutionLoop
-from sisyphus.core.plan_linter import PlanLinter
 from sisyphus.core.plan_loader import PlanLoader
 from sisyphus.core.plan_navigator import PlanNavigator
 from sisyphus.core.session import SessionStore
@@ -31,11 +28,7 @@ from sisyphus.ui.base import create_ui
 from sisyphus.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
 from sisyphus.utils.formatting import (
     OutputFormat,
-    print_children,
     print_overview,
-    print_references,
-    print_task,
-    print_verification,
 )
 from sisyphus.utils.git import detect_base_branch, find_commits_with_files, generate_rebase_guide, is_on_main_branch
 from sisyphus.utils.logging import LoggerFactory
@@ -584,7 +577,8 @@ def clean_history(
         console.print("\n[dim]DRY RUN - no changes made[/dim]")
 
 
-plan_app = typer.Typer(name="plan", help="Work plan management")
+from sisyphus.cli.plan import plan_app  # noqa: E402
+
 app.add_typer(plan_app)
 
 execute_phase_app = typer.Typer(name="execute-phase", help="Execute phase commands")
@@ -878,116 +872,6 @@ def verify_phase_llm_verify(
 ) -> None:
     """Mark LLM verification as completed (verify phase)."""
     llm_verify(task_id, verify_id, evidence)
-
-
-@plan_app.command(name="get")
-def get_plan_info(
-    what: str = typer.Argument(..., help="What to get: task, reference"),
-    current: bool = typer.Option(False, "--current", help="Get current task"),
-    next_task: bool = typer.Option(False, "--next", help="Get next pending task"),
-    task_id: str | None = typer.Option(None, "--id", help="Specific task ID"),
-    show_references: bool = typer.Option(False, "--show-references", help="Show only references"),
-    show_children: bool = typer.Option(False, "--show-children", help="Show only children"),
-    show_verification: bool = typer.Option(False, "--show-verification", help="Show only verification spec"),
-    show_all: bool = typer.Option(False, "--show-all", help="Show complete task info (default)"),
-    rich: bool = typer.Option(False, "--rich", help="Use Rich table format (default: plain text)"),
-) -> None:
-    """Get information from work plan."""
-    output_format = OutputFormat.RICH if rich else OutputFormat.PLAIN
-
-    try:
-        loader = PlanLoader()
-        plan = loader.load()
-        navigator = PlanNavigator(plan)
-
-        match what:
-            case "task":
-                task = None
-                if current:
-                    task = navigator.get_current_task()
-                    if task is None:
-                        console.print("[yellow]작업이 시작되지 않았습니다[/yellow]")
-                        raise typer.Exit(0)
-                elif next_task:
-                    task = navigator.get_next_task()
-                    if task is None:
-                        console.print("[green]모든 작업이 완료되었습니다![/green]")
-                        raise typer.Exit(0)
-                elif task_id:
-                    task = navigator.find_todo_by_id(task_id)
-                    if task is None:
-                        console.print(f"[red]작업 ID를 찾을 수 없습니다: {task_id}[/red]")
-                        raise typer.Exit(1)
-                else:
-                    console.print("[red]--current, --next, --id 중 하나를 선택하세요[/red]")
-                    raise typer.Exit(1)
-
-                if show_references:
-                    refs = navigator.get_task_references(task.id)
-                    print_references(refs, format=output_format)
-                elif show_children:
-                    children = navigator.get_task_children(task.id)
-                    print_children(children, format=output_format)
-                elif show_verification:
-                    verifications = navigator.get_task_verification(task.id)
-                    print_verification(verifications, format=output_format)
-                else:
-                    print_task(task, format=output_format)
-
-            case "reference":
-                console.print("[yellow]Reference lookup not yet implemented[/yellow]")
-                raise typer.Exit(1)
-
-            case _:
-                console.print(f"[red]Unknown option: {what}[/red]")
-                raise typer.Exit(1)
-
-    except FileNotFoundError as e:
-        console.print(f"[red]{e}[/red]")
-        raise typer.Exit(1)
-    except ValidationError as e:
-        console.print(f"[red]YAML 검증 실패:[/red]\n{e}")
-        raise typer.Exit(1)
-
-
-@plan_app.command(name="lint")
-def lint_plan(
-    file_path: Path = typer.Option(
-        Path("./ai-todolist.yaml"),
-        "--file",
-        "-f",
-        help="YAML file path to lint",
-    ),
-) -> None:
-    """Lint work plan YAML for schema validation."""
-    try:
-        yaml = YAML()
-        yaml.preserve_quotes = True
-
-        if not file_path.exists():
-            console.print(f"[red]Error: File not found: {file_path}[/red]")
-            raise typer.Exit(1)
-
-        with file_path.open("r", encoding="utf-8") as f:
-            yaml_data = yaml.load(f)
-
-        linter = PlanLinter({})
-        errors = linter.lint(yaml_data)
-
-        if errors:
-            console.print(f"[red]✗ Validation failed: {len(errors)} error(s)[/red]\n")
-            for error in errors:
-                console.print(f"  [red]•[/red] {linter.format_error(error)}")
-            raise typer.Exit(1)
-        else:
-            console.print("[green]✓ YAML validation passed. 0 errors.[/green]")
-
-    except YAMLError as e:
-        console.print(f"[red]YAML parsing error:[/red]\n{e}")
-        raise typer.Exit(1)
-    except Exception as e:
-        console.print(f"[red]Unexpected error:[/red] {e}")
-        raise typer.Exit(1)
 
 
 if __name__ == "__main__":

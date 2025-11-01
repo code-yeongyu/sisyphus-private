@@ -1,1469 +1,461 @@
-# Textual 기반 Tetris 게임 구현 작업계획서
-# AI TodoList Format v2.0
-#
-# This is a comprehensive example of YAML work plan format for Sisyphus.
-# It demonstrates all available features including nested todos, references,
-# verification specs, and parallel execution groups.
-
-# ============================================================================
-# METADATA - 문서 자체 정보
-# Document creation and modification timestamps
-# ============================================================================
 metadata:
-  created_at: "2025-10-28T14:32:15.123456+09:00"
-  updated_at: "2025-10-28T14:32:15.123456+09:00"
+  created_at: "2025-01-15T10:00:00Z"
+  updated_at: "2025-01-15T10:00:00Z"
+  format_version: "2.0"
 
-# ============================================================================
-# USER REQUEST - 요청 기록
-# Original user request and timestamp for tracking work origin
-# ============================================================================
 user_request:
-  original: "Textual 기반의 Tetris 게임 작업계획서 작성 (YAML 형식)"
-  timestamp: "2025-10-28T14:30:00.000000+09:00"
-  additional: []
+  original: "ai todolist yaml 다루는 새 도구를 만들고, 내가 사용하지 않는 것들은 지울 수있었으면 함"
+  created_at: "2025-01-15T10:00:00Z"
+  additional:
+    - "@sisyphus/core/loop.py 통해서 execute phase 가 실행된다면 @sisyphus/core/prompts.py 이게 들어가고 얘가 메인 오케스트레이터 에이전트로써 @claude-code-plugins/sisyphus/agents/executor.md 를 호출"
+    - "executor agent 의 작업이 끝나고나면 hook 으로 @.github/workflows/.claude.agent/hooks/post-tool-use/orchestrator_reminder.py 이게 orchestrator 한테 보고되는데, 이걸 yaml based 로 바꾸려고 함"
 
-# ============================================================================
-# OBJECTIVES - 목표
-# Core goal and detailed measurable objectives
-# ============================================================================
 objectives:
-  core: "Textual TUI 프레임워크를 활용하여 클래식 Tetris 게임을 구현하고, 터미널에서 플레이 가능한 완전한 게임을 제공한다."
-
+  core: "sisyphus의 작업 계획 시스템을 ai-todolist.yaml 기반으로 재구성하고, sisyphus execute-phase와 sisyphus verify-phase CLI 명령어를 구현하여 YAML 기반 작업 워크플로우를 완성합니다"
   detailed:
-    - goal: "7가지 Tetromino 블록 타입 구현 및 4방향 회전 로직 완성"
-      measurable: "모든 블록(I,O,T,S,Z,J,L) 회전 테스트 통과"
+    - goal: "YAML 기반 작업 계획 시스템을 위한 새 CLI 명령어 구현"
+      measurable: "sisyphus execute-phase, sisyphus verify-phase 명령어 5개 이상 구현 및 테스트 통과"
+    - goal: "기존 sisyphus plan 명령어 중 불필요한 업데이트성 명령어 제거"
+      measurable: "plan set/set-verification/check 명령어 제거, get/lint만 유지 확인"
+    - goal: "orchestrator-executor-hook 플로우를 YAML 스키마 기반으로 전환"
+      measurable: "v2.1 스키마 준수 YAML 파일로 작업 진행 확인"
 
-    - goal: "10x20 게임 보드에서 블록 이동, 충돌 감지, 고정 처리"
-      measurable: "충돌 감지 테스트 100% 통과"
-
-    - goal: "라인 클리어 로직 및 점수 시스템"
-      measurable: "1줄=100점, 4줄 동시=800점 정확히 계산"
-
-    - goal: "키보드 입력으로 블록 조작 (←→↑↓ Space)"
-      measurable: "모든 키 입력 50ms 이내 반응"
-
-    - goal: "자동 낙하 타이머 (레벨 상승 시 속도 증가)"
-      measurable: "레벨 1=1.0초, 레벨 10=0.1초 간격"
-
-    - goal: "Textual 위젯 기반 UI (게임 보드, 점수판, 다음 블록)"
-      measurable: "3개 위젯 정상 렌더링"
-
-    - goal: "게임 오버 감지 및 재시작 기능"
-      measurable: "r키로 즉시 재시작 가능"
-
-# ============================================================================
-# BACKGROUND - 배경
-# ============================================================================
 background:
-  current_situation: |
-    현재 Sisyphus 프로젝트는 Python 기반의 AI 에이전트 오케스트레이션 시스템입니다.
-    Textual 프레임워크는 이미 TUI 구현에 사용 중이며 (sisyphus/ui/tui/),
-    anyio 기반 비동기 처리 패턴이 확립되어 있습니다.
+  current_situation: "현재 ai-todolist.md 마크다운 기반 작업 계획 시스템이 운영 중. orchestrator agent가 executor agent를 호출하고, hook으로 작업 상태를 보고받는 구조. sisyphus plan 명령어에 get/set/set-verification/check/lint 5개 서브커맨드 존재. ai-todolist-draft.yaml에 v2.1 스키마가 정의되어 있음."
+  reason_for_change: "YAML 기반 스키마(v2.1)가 구조화된 검증(bash, llm_judge)을 지원. 마크다운 기반보다 프로그래매틱한 접근이 용이. 작업 진행 상태, 검증 상태를 명확하게 관리 가능."
+  changes_to_make: "Before: ai-todolist.md (마크다운), orchestrator → executor → hook 플로우, sisyphus plan get/set/set-verification/check/lint. After: ai-todolist.yaml (YAML v2.1), sisyphus execute-phase continue-work/bash-verify/llm-verify/manual-verify, sisyphus verify-phase bash-verify/llm-verify, sisyphus plan get/lint (업데이트성 명령어 제거)"
 
-    하지만 게임 개발 관련 코드는 전혀 없으며, Tetris 구현을 위한
-    게임 로직, 블록 관리, 타이머 기반 루프가 필요합니다.
-
-  reason_for_change: |
-    Textual 프레임워크의 활용도를 높이고, TUI 애플리케이션 개발 역량을 시연하기 위해
-    클래식 게임인 Tetris를 구현합니다. 이를 통해:
-    - Textual의 위젯 시스템, 이벤트 핸들링, 타이머 기능 활용법 습득
-    - 2D 그리드 기반 게임 로직의 Python 구현 패턴 확립
-    - 사용자 입력과 자동 진행이 혼합된 실시간 애플리케이션 개발 경험
-
-  changes_to_make: |
-    **현재 상태**: Sisyphus 프로젝트에 게임 관련 코드 없음
-
-    **변경 후 상태**:
-    - `tetris/` 디렉토리 신규 생성
-    - `tetris/game.py`: 게임 로직 (Tetromino, Board, GameState)
-    - `tetris/ui.py`: Textual 기반 TUI (GameBoard 위젯, App)
-    - `tetris/__main__.py`: CLI 진입점
-    - 완전히 플레이 가능한 Tetris 게임 제공
-
-# ============================================================================
-# REQUIRED BACKGROUND - 필요한 배경 지식
-# ============================================================================
 required_background:
-  description: |
-    **핵심 지식**:
-    - **Textual 프레임워크**: TUI 애플리케이션 개발 (위젯, 레이아웃, 이벤트)
-    - **Tetris 게임 로직**: Tetromino 회전 행렬, 충돌 감지, 라인 클리어
-    - **Python 비동기 패턴**: anyio 기반 타이머, 이벤트 루프
-    - **2D 배열 조작**: NumPy 또는 순수 Python 리스트
-
-    **아키텍처 제약**:
-    - Textual App은 asyncio 기반이므로 anyio 사용 (기존 sisyphus 패턴 유지)
-    - 게임 로직(game.py)은 순수 Python, UI 의존성 없음 (테스트 용이)
-    - 상태 변경은 GameState에서만 (단일 진실 공급원)
-    - 렌더링은 Textual의 reactive 시스템 활용 (watch 패턴)
-
-    **Edge Cases**:
-    - 게임 오버 (보드 최상단에 블록 고정) → 게임 일시정지, 재시작 프롬프트
-    - 터미널 크기 부족 → 시작 시 크기 검사, 부족 시 에러 메시지
-    - 빠른 키 입력 (키 반복) → debounce 없음, 모든 입력 처리 (Tetris 특성)
-    - 회전 실패 (벽/블록 충돌) → wall kick 시도 (SRS 표준), 실패 시 회전 무시
-    - 동시 4줄 클리어 → 보너스 점수 (Tetris!), 애니메이션 효과
-
-    **암묵적 가정**:
-    - 터미널은 UTF-8 인코딩 지원 (유니코드 블록 문자 렌더링)
-    - 사용자는 ANSI 색상 지원 터미널 사용 (블록 색상 표시)
-    - Python 3.12 환경 (Sisyphus 프로젝트 기준)
-    - Textual 1.0+ 설치됨 (기존 의존성)
-    - 게임은 단일 플레이어 로컬 실행 (네트워크 없음)
-
-  file_structure: |
-    신규 생성될 파일 구조:
-
-    tetris/
-    ├── __init__.py           # 패키지 초기화
-    ├── __main__.py           # CLI 진입점 (python -m tetris)
-    ├── game.py               # 게임 로직 (Tetromino, Board, GameState)
-    ├── ui.py                 # Textual TUI (GameBoardWidget, ScoreWidget, TetrisApp)
-    └── constants.py          # 상수 정의 (블록 모양, 색상, 점수)
-
-    tests/
-    └── tetris/
-        ├── test_game.py      # 게임 로직 테스트
-        └── test_ui.py        # UI 컴포넌트 테스트
-
-    docs/
-    └── plans/
-        ├── tetris-prd.md         # Product Requirements Document
-        └── tetris-architecture.md # 아키텍처 상세 설명
-
+  description: "Typer 기반 CLI 구조, Pydantic BaseModel 사용 패턴, anyio 기반 async 프로그래밍, v2.1 YAML 스키마 구조, PlanLoader/PlanNavigator 사용법. sisyphus/cli.py (Typer 기반 CLI 진입점), sisyphus/core/loop.py (ExecutionLoop), sisyphus/utils/plan_types.py (v2.1 YAML 스키마 Pydantic 모델), sisyphus/core/plan_navigator.py (YAML plan 탐색, DFS 알고리즘), sisyphus/core/plan_loader.py (YAML 파일 읽기/쓰기, Pydantic 변환)"
+  file_structure: null
   references:
-    - id: "ref_sisyphus_app"
-      type: file
-      path: "sisyphus/ui/tui/app.py"
-      description: "기존 Textual App 구현 패턴"
-      retrieval:
-        type: keywords
-        keywords: ["class SisyphusApp", "on_key", "compose"]
-        line_range: [1, 100]
-      notes: "on_key, compose, CSS 사용법 참고"
+    - type: "url"
+      url: "https://typer.tiangolo.com/"
+      description: "Typer Documentation - Commands and Groups"
+      retrieval: null
+      notes: "Commands and Groups section 참고"
+      id: "ref_typer_docs"
+    - type: "url"
+      url: "https://docs.pydantic.dev/latest/"
+      description: "Pydantic BaseModel Documentation"
+      retrieval: null
+      notes: "model_copy, model_validate 참고"
+      id: "ref_pydantic_docs"
 
-    - id: "ref_message_widget"
-      type: file
-      path: "sisyphus/ui/tui/widgets/message_list.py"
-      description: "커스텀 위젯 구현 예시"
-      retrieval:
-        type: keywords
-        keywords: ["class MessageList", "render"]
-        line_range: [1, 150]
-      notes: "위젯 렌더링 (render 메서드), 상태 관리 패턴"
-
-    - id: "ref_textual_timer"
-      type: url
-      url: "https://textual.textualize.io/guide/timers/"
-      description: "Textual 타이머 및 주기적 작업"
-      retrieval:
-        type: prompt
-        prompt: "Find set_interval usage for periodic tasks"
-      notes: "자동 낙하 타이머 구현 시 필수"
-
-    - id: "ref_tetris_srs"
-      type: url
-      url: "https://tetris.wiki/Super_Rotation_System"
-      description: "Tetris 회전 시스템 표준"
-      retrieval:
-        type: keywords
-        keywords: ["Basic Rotation", "Wall Kicks"]
-
-    - id: "ref_tetromino_shapes"
-      type: url
-      url: "https://tetris.wiki/Tetromino"
-      description: "7가지 Tetromino 블록 정의 (I, O, T, S, Z, J, L)"
-
-    - id: "ref_rotation_matrix"
-      type: code_snippet
-      language: python
-      description: "I-block 회전 행렬 예시"
-      code: |
-        # I-block의 4가지 회전 상태 (4x4 grid)
-        I_SHAPES = [
-            # 0도 (horizontal)
-            [[0, 0, 0, 0],
-             [1, 1, 1, 1],
-             [0, 0, 0, 0],
-             [0, 0, 0, 0]],
-
-            # 90도 (vertical)
-            [[0, 0, 1, 0],
-             [0, 0, 1, 0],
-             [0, 0, 1, 0],
-             [0, 0, 1, 0]],
-
-            # 180도
-            [[0, 0, 0, 0],
-             [0, 0, 0, 0],
-             [1, 1, 1, 1],
-             [0, 0, 0, 0]],
-
-            # 270도
-            [[0, 1, 0, 0],
-             [0, 1, 0, 0],
-             [0, 1, 0, 0],
-             [0, 1, 0, 0]],
-        ]
-
-    - id: "ref_prd"
-      type: file
-      path: "docs/plans/tetris-prd.md"
-      description: "Tetris PRD 문서"
-
-    - id: "ref_architecture"
-      type: file
-      path: "docs/plans/tetris-architecture.md"
-      description: "Tetris 아키텍처 상세 설명"
-
-    - id: "ref_commit_style"
-      type: text
-      description: "커밋 메시지 컨벤션"
-      content: |
-        Sisyphus 프로젝트의 최근 커밋 분석 결과:
-        - 형식: `<type>: <description>` (Conventional Commits 스타일)
-        - 타입: feat, fix, test, refactor, chore, docs
-        - 예시:
-          - "feat: add Tetromino class with rotation logic"
-          - "test: add Board collision detection tests"
-          - "fix: handle wall kick for I-block rotation"
-
-# ============================================================================
-# STATUS - 실행 상태
-# Current execution state, work mode, progress counters, and active task tracking
-# ============================================================================
 status:
   execution:
-    started: false
-    completed: false
-    started_at: null
-    completed_at: null
-
+    started: true
+    completed: true
+    started_at: "2025-01-15T10:30:00Z"
+    completed_at: "2025-01-15T14:00:00Z"
   work_mode:
-    parallel_requested: true
+    parallel_requested: false
     current_task_id: null
-
   progress:
-    total_tasks: 9
-    completed: 0
+    total_tasks: 10
+    completed: 10
     in_progress: 0
-    pending: 9
+    pending: 0
+  current_work: "모든 작업 완료"
 
-  current_work: |
-    작업이 아직 시작되지 않음.
-
-    **중요 규칙**:
-    - 작업 시작 시 status.execution.started를 true로 변경
-    - 사용자가 명시적으로 "작업 시작해"라고 말하기 전까지는 절대 시작하지 않음
-    - plan-reviewer의 OKAY를 받아도 절대 시작하지 않음
-    - 사용자의 명시적 시작 명령만 인정
-
-# ============================================================================
-# WORKFLOW - 작업 흐름
-# ============================================================================
 workflow:
   dependency_diagram: |
-    Phase 1: 기반 구조
-    ├─ Task 1: 프로젝트 구조 생성
-    └─ Task 2: 상수 및 Tetromino 정의
+    Phase 1: CLI 명령어 구조 설계 및 기본 구현
+    └─ Task 1: sisyphus execute-phase 서브커맨드 구조 구현
+       └─ Task 2: sisyphus verify-phase 서브커맨드 구조 구현
 
-    Phase 2: 게임 로직 (순차)
-    ├─ Task 3: Board 클래스 (충돌 감지, 배치)
-    └─ Task 4: GameState (라인 클리어, 점수)
+    Phase 2: execute-phase 기능 구현
+    ├─ Task 3: execute-phase get-overview 구현
+    ├─ Task 4: execute-phase continue-work 구현
+    ├─ Task 5: execute-phase bash-verify 구현
+    ├─ Task 6: execute-phase llm-verify 구현
+    └─ Task 7: execute-phase manual-verify 구현
 
-    Phase 3: UI 및 입력 (병렬 가능)
-    ├─ Task 5 parallel: GameBoard 위젯 구현
-    └─ Task 6 parallel: 입력 핸들러 구현
+    Phase 3: verify-phase 기능 구현
+    ├─ Task 8: verify-phase bash-verify 구현
+    └─ Task 9: verify-phase llm-verify 구현
 
-    Phase 4: 통합 및 마무리 (순차)
-    ├─ Task 7: 타이머 기반 자동 낙하
-    ├─ Task 8: TetrisApp 통합
-    └─ Task 9: CLI 진입점 및 전체 테스트
+    Phase 4: plan 명령어 정리
+    └─ Task 10: 불필요한 plan 서브커맨드 제거
+  critical_path: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
 
-  critical_path:
-    - "Task 1 → Task 2 → Task 3 → Task 4 → (Task 5 || Task 6) → Task 7 → Task 8 → Task 9"
-
-# ============================================================================
-# TODOS - 실행 항목 (트리 구조)
-# Task tree with nested children, status tracking, references, and verification specs
-# Supports parallel execution groups via parallel_group field
-# ============================================================================
 todos:
-  # -------------------------------------------------------------------------
-  # Task 1: 프로젝트 구조 생성
-  # -------------------------------------------------------------------------
-  - id: 1
-    title: "프로젝트 구조 생성 및 기본 설정"
-    status: pending
+  - id: "1"
+    title: "sisyphus execute-phase CLI 구조 구현"
+    status: "completed"
     parallel_group: null
-    created_at: "2025-10-28T14:32:15.123456+09:00"
-    updated_at: "2025-10-28T14:32:15.123456+09:00"
-    status_changed_at: "2025-10-28T14:32:15.123456+09:00"
-
-    references:
-      - ref_id: "ref_sisyphus_app"
-        note: "디렉토리 구조 패턴 참고"
-
-    children:
-      - id: "1.1"
-        title: "tetris/ 디렉토리 및 초기 파일 생성"
-        status: pending
-        created_at: "2025-10-28T14:32:15.123456+09:00"
-        updated_at: "2025-10-28T14:32:15.123456+09:00"
-
-        details:
-          commands:
-            - "mkdir -p tetris tests/tetris docs/plans"
-            - "touch tetris/{__init__.py,__main__.py,game.py,ui.py,constants.py}"
-            - "touch tests/tetris/{__init__.py,test_game.py,test_ui.py}"
-            - "touch docs/plans/{tetris-prd.md,tetris-architecture.md}"
-
-          expected_structure: |
-            tetris/
-            ├── __init__.py
-            ├── __main__.py
-            ├── constants.py
-            ├── game.py
-            └── ui.py
-            tests/tetris/
-            ├── __init__.py
-            ├── test_game.py
-            └── test_ui.py
-            docs/plans/
-            ├── tetris-prd.md
-            └── tetris-architecture.md
-
-        verification_spec:
-          - id: "verify_1_1_dirs"
-            description: "디렉토리 구조 확인"
-            completed: false
-            input:
-              type: command
-              command: "ls -la tetris/ tests/tetris/ docs/plans/"
-              capture_output: true
-            verify:
-              type: programmatic
-              method: contains
-              expected: "__init__.py"
-
-        children: []
-
-      - id: "1.2"
-        title: "초기 구조 커밋"
-        status: pending
-        created_at: "2025-10-28T14:32:15.123456+09:00"
-        updated_at: "2025-10-28T14:32:15.123456+09:00"
-
-        details:
-          command: "git add tetris/ tests/tetris/ docs/plans/ && git commit -m 'feat: create Tetris project structure'"
-
-        verification_spec:
-          - id: "verify_1_2_commit"
-            description: "커밋 확인"
-            completed: true
-            input:
-              type: command
-              command: "git log -1 --oneline"
-              capture_output: true
-            verify:
-              type: programmatic
-              method: contains
-              expected: "create Tetris"
-
-        children: []
-
+    created_at: "2025-01-15T10:30:00Z"
+    updated_at: "2025-01-15T11:00:00Z"
+    status_changed_at: "2025-01-15T11:00:00Z"
+    references: []
+    details: {}
     verification_spec:
-      - id: "verify_task_1_file_count"
-        description: "전체 파일 개수 확인"
-        completed: false
-        input:
-          type: command
-          command: "find tetris tests/tetris docs/plans -type f | wc -l"
-          capture_output: true
-        verify:
-          type: programmatic
-          method: exact
-          expected: "10"
+      - id: "verify_1_cli_structure"
+        title: "execute-phase CLI 구조 검증"
+        description: "sisyphus/cli.py에 execute_phase_app이 생성되고 등록되었는지 확인"
+        verified: true
+        verified_at: "2025-01-15T11:00:00Z"
+        verification_evidence: "sisyphus execute-phase --help 실행 성공, 서브커맨드 목록 출력"
+        orchestrator_manually_verified: true
+        manual_verification_evidence: "코드 리뷰 완료: execute_phase_app = typer.Typer(name='execute-phase') 구현 확인, app.add_typer(execute_phase_app) 등록 확인"
+        bash:
+          - execute: "uv run sisyphus execute-phase --help"
+            expected_stdout: null
+            expected_stderr: null
+            expected_exit_code: 0
+            notes: "execute-phase 도움말 출력 확인"
+        llm_judge: []
+    children: []
+    parallel_note: null
 
-      - id: "verify_task_1_git"
-        description: "git commit 완료 확인"
-        input:
-          type: command
-          command: "git log -1 --oneline"
-          capture_output: true
-        verify:
-          type: programmatic
-          method: regex
-          expected: ".*create Tetris.*"
-
-  # -------------------------------------------------------------------------
-  # Task 2: Tetromino 클래스 구현
-  # -------------------------------------------------------------------------
-  - id: 2
-    title: "상수 정의 및 Tetromino 클래스 구현"
-    status: pending
+  - id: "2"
+    title: "sisyphus verify-phase CLI 구조 구현"
+    status: "completed"
     parallel_group: null
-    created_at: "2025-10-28T14:32:16.000000+09:00"
-    updated_at: "2025-10-28T14:32:16.000000+09:00"
-    status_changed_at: "2025-10-28T14:32:16.000000+09:00"
-
-    references:
-      - ref_id: "ref_tetromino_shapes"
-      - ref_id: "ref_rotation_matrix"
-      - ref_id: "ref_tetris_srs"
-
-    children:
-      - id: "2.1"
-        title: "constants.py에 게임 상수 정의"
-        status: pending
-        created_at: "2025-10-28T14:32:16.100000+09:00"
-        updated_at: "2025-10-28T14:32:16.100000+09:00"
-
-        details:
-          file: "tetris/constants.py"
-          content: |
-            # 보드 크기
-            BOARD_WIDTH = 10
-            BOARD_HEIGHT = 20
-
-            # 7가지 Tetromino 타입별 회전 상태
-            SHAPES = {
-                'I': [...],  # 4가지 회전 (참고: ref_rotation_matrix)
-                'O': [...],  # 회전 불변
-                'T': [...],
-                'S': [...],
-                'Z': [...],
-                'J': [...],
-                'L': [...],
-            }
-
-            # 블록 색상
-            COLORS = {
-                'I': 'cyan',
-                'O': 'yellow',
-                'T': 'purple',
-                'S': 'green',
-                'Z': 'red',
-                'J': 'blue',
-                'L': 'orange',
-            }
-
-            # 점수 체계
-            SCORE_SINGLE = 100
-            SCORE_DOUBLE = 300
-            SCORE_TRIPLE = 500
-            SCORE_TETRIS = 800
-
-            # 레벨별 낙하 속도 (초)
-            LEVEL_SPEED = {
-                1: 1.0,
-                2: 0.9,
-                3: 0.8,
-                4: 0.7,
-                5: 0.6,
-                6: 0.5,
-                7: 0.4,
-                8: 0.3,
-                9: 0.2,
-                10: 0.1,
-            }
-
-          note: "모든 블록의 회전 상태를 4x4 또는 3x3 행렬로 정의 (SRS 표준)"
-
-        verification_spec:
-          - id: "verify_2_1_syntax"
-            description: "파이썬 문법 검증"
-            input:
-              type: command
-              command: "python -m py_compile tetris/constants.py"
-              capture_output: true
-            verify:
-              type: programmatic
-              method: exit_code
-              expected: 0
-
-        children: []
-
-      - id: "2.2"
-        title: "game.py에 Tetromino 클래스 구현"
-        status: pending
-        created_at: "2025-10-28T14:32:16.200000+09:00"
-        updated_at: "2025-10-28T14:32:16.200000+09:00"
-
-        details:
-          file: "tetris/game.py"
-          pattern_reference:
-            description: "불변 객체 패턴 (dataclass)"
-            example: |
-              from dataclasses import dataclass
-
-              @dataclass
-              class Tetromino:
-                  type: str
-                  rotation: int = 0
-                  x: int = 3
-                  y: int = 0
-
-                  @property
-                  def shape(self) -> list[list[int]]:
-                      return SHAPES[self.type][self.rotation]
-
-                  def rotate(self, direction: int = 1) -> "Tetromino":
-                      """회전된 새 Tetromino 반환 (불변)"""
-                      new_rotation = (self.rotation + direction) % 4
-                      return Tetromino(self.type, new_rotation, self.x, self.y)
-
-                  def move(self, dx: int, dy: int) -> "Tetromino":
-                      """이동된 새 Tetromino 반환"""
-                      return Tetromino(self.type, self.rotation, self.x + dx, self.y + dy)
-
-        verification_spec:
-          - id: "verify_2_2_imports"
-            description: "import 에러 확인"
-            input:
-              type: command
-              command: "python -c 'from tetris.game import Tetromino'"
-              capture_output: true
-            verify:
-              type: programmatic
-              method: exit_code
-              expected: 0
-
-        children: []
-
-      - id: "2.3"
-        title: "Tetromino 클래스 테스트 작성"
-        status: pending
-        created_at: "2025-10-28T14:32:16.300000+09:00"
-        updated_at: "2025-10-28T14:32:16.300000+09:00"
-
-        details:
-          test_file: "tests/tetris/test_game.py"
-          test_pattern: |
-            # given-when-then 패턴 사용
-
-            import pytest
-            from tetris.game import Tetromino
-
-            pytestmark = [pytest.mark.anyio]
-
-            def test_tetromino_creation():
-                # given & when
-                t = Tetromino('I')
-
-                # then
-                assert t.type == 'I'
-                assert t.rotation == 0
-                assert t.x == 3
-                assert t.y == 0
-
-            def test_tetromino_rotation():
-                # given
-                t = Tetromino('T', rotation=0)
-
-                # when
-                rotated = t.rotate()
-
-                # then
-                assert rotated.rotation == 1
-                assert rotated.type == 'T'
-                assert rotated.x == t.x  # 위치 불변
-
-            def test_tetromino_move():
-                # given
-                t = Tetromino('I')
-
-                # when
-                moved = t.move(1, 2)
-
-                # then
-                assert moved.x == 4
-                assert moved.y == 2
-
-        verification_spec:
-          - id: "verify_2_3_tests"
-            description: "테스트 실행"
-            input:
-              type: command
-              command: "uv run pytest tests/tetris/test_game.py::test_tetromino -xvs"
-              capture_output: true
-            verify:
-              type: programmatic
-              method: contains
-              expected: "3 passed"
-
-        children: []
-
-      - id: "2.4"
-        title: "Lint 및 타입 체크"
-        status: pending
-        created_at: "2025-10-28T14:32:16.400000+09:00"
-        updated_at: "2025-10-28T14:32:16.400000+09:00"
-
-        verification_spec:
-          - id: "verify_2_4_ruff"
-            description: "Ruff lint 검사"
-            input:
-              type: command
-              command: "uv run ruff check tetris/constants.py tetris/game.py"
-              capture_output: true
-            verify:
-              type: programmatic
-              method: exit_code
-              expected: 0
-
-          - id: "verify_2_4_pyright"
-            description: "타입 체크"
-            input:
-              type: command
-              command: "uv run basedpyright tetris/constants.py tetris/game.py"
-              capture_output: true
-            verify:
-              type: programmatic
-              method: exit_code
-              expected: 0
-
-        children: []
-
-      - id: "2.5"
-        title: "Tetromino 구현 커밋"
-        status: pending
-        created_at: "2025-10-28T14:32:16.500000+09:00"
-        updated_at: "2025-10-28T14:32:16.500000+09:00"
-
-        details:
-          command: |
-            git add tetris/constants.py tetris/game.py tests/tetris/test_game.py
-            git commit -m "feat: implement Tetromino class with rotation logic"
-
-        verification_spec:
-          - id: "verify_2_5_commit"
-            description: "커밋 확인"
-            input:
-              type: command
-              command: "git log -1 --oneline"
-              capture_output: true
-            verify:
-              type: programmatic
-              method: contains
-              expected: "Tetromino"
-
-        children: []
-
+    created_at: "2025-01-15T11:00:00Z"
+    updated_at: "2025-01-15T11:15:00Z"
+    status_changed_at: "2025-01-15T11:15:00Z"
+    references: []
+    details: {}
     verification_spec:
-      - id: "verify_task_2_overall"
-        description: "Tetromino 구현 전체 검증"
-        input:
-          type: prompt
-          prompt: |
-            Verify the Tetromino implementation:
+      - id: "verify_2_cli_structure"
+        title: "verify-phase CLI 구조 검증"
+        description: "sisyphus/cli.py에 verify_phase_app이 생성되고 등록되었는지 확인"
+        verified: true
+        verified_at: "2025-01-15T11:15:00Z"
+        verification_evidence: "sisyphus verify-phase --help 실행 성공, 서브커맨드 목록 출력"
+        orchestrator_manually_verified: true
+        manual_verification_evidence: "코드 리뷰 완료: verify_phase_app = typer.Typer(name='verify-phase') 구현 확인"
+        bash:
+          - execute: "uv run sisyphus verify-phase --help"
+            expected_stdout: null
+            expected_stderr: null
+            expected_exit_code: 0
+            notes: "verify-phase 도움말 출력 확인"
+        llm_judge: []
+    children: []
+    parallel_note: null
 
-            1. Check if tetris/constants.py defines all 7 block types with rotation states
-            2. Check if tetris/game.py implements Tetromino class with:
-               - Immutable pattern (returns new instances on rotate/move)
-               - Correct rotation logic (modulo 4)
-               - Shape property that returns correct matrix
-            3. Verify tests cover creation, rotation, and movement
-
-            Files to review:
-            - tetris/constants.py
-            - tetris/game.py
-            - tests/tetris/test_game.py
-          context:
-            files:
-              - "tetris/constants.py"
-              - "tetris/game.py"
-              - "tests/tetris/test_game.py"
-        verify:
-          type: llm_judge
-
-      - id: "verify_task_2_tests"
-        description: "모든 테스트 통과 확인"
-        input:
-          type: command
-          command: "uv run pytest tests/tetris/test_game.py -q"
-          capture_output: true
-        verify:
-          type: programmatic
-          method: regex
-          expected: "\\d+ passed"
-
-  # -------------------------------------------------------------------------
-  # Task 3: Board 클래스 구현
-  # -------------------------------------------------------------------------
-  - id: 3
-    title: "Board 클래스 구현 (충돌 감지, 블록 배치)"
-    status: pending
+  - id: "3"
+    title: "execute-phase get-overview 구현"
+    status: "completed"
     parallel_group: null
-    created_at: "2025-10-28T14:32:17.000000+09:00"
-    updated_at: "2025-10-28T14:32:17.000000+09:00"
-    status_changed_at: "2025-10-28T14:32:17.000000+09:00"
-
-    references:
-      - type: url
-        url: "https://tetris.wiki/Playfield"
-        description: "표준 Tetris 보드 크기 및 좌표 시스템"
-        retrieval:
-          type: keywords
-          keywords: ["10x20 standard playfield"]
-
-      - type: code_snippet
-        language: python
-        description: "충돌 감지 로직 예시"
-        code: |
-          def is_collision(board: list[list[int]], tetromino: Tetromino) -> bool:
-              for y, row in enumerate(tetromino.shape):
-                  for x, cell in enumerate(row):
-                      if cell == 0:
-                          continue
-
-                      board_x = tetromino.x + x
-                      board_y = tetromino.y + y
-
-                      # 경계 체크
-                      if board_x < 0 or board_x >= BOARD_WIDTH:
-                          return True
-                      if board_y < 0 or board_y >= BOARD_HEIGHT:
-                          return True
-
-                      # 블록 충돌 체크
-                      if board[board_y][board_x] != 0:
-                          return True
-
-              return False
-
-    children:
-      - id: "3.1"
-        title: "game.py에 Board 클래스 추가"
-        status: pending
-        created_at: "2025-10-28T14:32:17.100000+09:00"
-        updated_at: "2025-10-28T14:32:17.100000+09:00"
-
-        details:
-          implementation:
-            methods:
-              - "is_collision(tetromino) -> bool"
-              - "place_tetromino(tetromino) -> None"
-              - "clear_lines() -> int"
-              - "is_game_over(tetromino) -> bool"
-
-            note: "clear_lines는 in-place 수정, 나머지는 순수 함수"
-
-        verification_spec:
-          - id: "verify_3_1_class"
-            description: "Board 클래스 생성 확인"
-            input:
-              type: command
-              command: "python -c 'from tetris.game import Board; b = Board()'"
-              capture_output: true
-            verify:
-              type: programmatic
-              method: exit_code
-              expected: 0
-
-        children: []
-
-      - id: "3.2"
-        title: "Board 클래스 테스트"
-        status: pending
-        created_at: "2025-10-28T14:32:17.200000+09:00"
-        updated_at: "2025-10-28T14:32:17.200000+09:00"
-
-        details:
-          test_cases:
-            - "test_board_creation: 20x10 그리드 확인"
-            - "test_collision_detection_wall: 벽 충돌"
-            - "test_collision_detection_block: 블록 충돌"
-            - "test_place_tetromino: 블록 배치"
-            - "test_clear_lines: 라인 클리어"
-
-        verification_spec:
-          - id: "verify_3_2_tests"
-            description: "Board 테스트 5개 통과"
-            input:
-              type: command
-              command: "uv run pytest tests/tetris/test_game.py::test_board -xvs"
-              capture_output: true
-            verify:
-              type: programmatic
-              method: contains
-              expected: "5 passed"
-
-        children: []
-
-      - id: "3.3"
-        title: "Board 구현 커밋"
-        status: pending
-        created_at: "2025-10-28T14:32:17.300000+09:00"
-        updated_at: "2025-10-28T14:32:17.300000+09:00"
-
-        details:
-          command: |
-            git add tetris/game.py tests/tetris/test_game.py
-            git commit -m "feat: implement Board class with collision detection"
-
-        verification_spec:
-          - id: "verify_3_3_commit"
-            description: "커밋 메시지 확인"
-            input:
-              type: command
-              command: "git log -1 --oneline"
-              capture_output: true
-            verify:
-              type: programmatic
-              method: contains
-              expected: "Board"
-
-        children: []
-
+    created_at: "2025-01-15T11:15:00Z"
+    updated_at: "2025-01-15T11:45:00Z"
+    status_changed_at: "2025-01-15T11:45:00Z"
+    references: []
+    details: {}
     verification_spec:
-      - id: "verify_task_3_collision"
-        description: "충돌 감지 로직 검증"
-        input:
-          type: command
-          command: "uv run python -c 'from tetris.game import Board, Tetromino; b = Board(); t = Tetromino(\"I\", x=-1); print(b.is_collision(t))'"
-          capture_output: true
-        verify:
-          type: prompt
-          prompt: |
-            Verify the collision detection output.
-            Expected: The output should be "True" (collision detected for x=-1, which is out of bounds).
+      - id: "verify_3_get_overview"
+        title: "get-overview 명령어 실행 검증"
+        description: "sisyphus execute-phase get-overview 명령어가 overview를 출력하는지 확인"
+        verified: true
+        verified_at: "2025-01-15T11:45:00Z"
+        verification_evidence: "명령어 실행 성공, user_request/background/status/workflow/todos 출력 확인"
+        orchestrator_manually_verified: true
+        manual_verification_evidence: "실제 실행 확인: User Request, Background, Status, Workflow, Todos 섹션 모두 출력됨"
+        bash:
+          - execute: "uv run sisyphus execute-phase get-overview 2>&1 | head -30"
+            expected_stdout: null
+            expected_stderr: null
+            expected_exit_code: 0
+            notes: "get-overview 출력 확인"
+        llm_judge: []
+    children: []
+    parallel_note: null
 
-            Command output:
-            {output}
-
-  # -------------------------------------------------------------------------
-  # Task 4: GameState 클래스 구현
-  # -------------------------------------------------------------------------
-  - id: 4
-    title: "GameState 클래스 구현 (게임 진행 관리)"
-    status: pending
+  - id: "4"
+    title: "execute-phase continue-work 구현"
+    status: "completed"
     parallel_group: null
-    created_at: "2025-10-28T14:32:18.000000+09:00"
-    updated_at: "2025-10-28T14:32:18.000000+09:00"
-    status_changed_at: "2025-10-28T14:32:18.000000+09:00"
-
-    references:
-      - type: url
-        url: "https://tetris.wiki/Scoring"
-        description: "라인 클리어별 점수 체계"
-        retrieval:
-          type: prompt
-          prompt: "Find scoring rules for line clears"
-
-    children:
-      - id: "4.1"
-        title: "GameState 클래스 구현"
-        status: pending
-        created_at: "2025-10-28T14:32:18.100000+09:00"
-        updated_at: "2025-10-28T14:32:18.100000+09:00"
-
-        details:
-          key_methods:
-            - "move(dx, dy) -> bool"
-            - "rotate() -> bool"
-            - "hard_drop() -> None"
-            - "tick() -> bool"
-            - "_lock_tetromino() -> None"
-            - "_update_score(lines) -> None"
-
-        children: []
-
-      - id: "4.2"
-        title: "GameState 테스트"
-        status: pending
-        created_at: "2025-10-28T14:32:18.200000+09:00"
-        updated_at: "2025-10-28T14:32:18.200000+09:00"
-
-        verification_spec:
-          - id: "verify_4_2_tests"
-            description: "GameState 테스트 4개 통과"
-            input:
-              type: command
-              command: "uv run pytest tests/tetris/test_game.py::test_gamestate -xvs"
-              capture_output: true
-            verify:
-              type: programmatic
-              method: contains
-              expected: "4 passed"
-
-        children: []
-
-      - id: "4.3"
-        title: "GameState 구현 커밋"
-        status: pending
-        created_at: "2025-10-28T14:32:18.300000+09:00"
-        updated_at: "2025-10-28T14:32:18.300000+09:00"
-
-        details:
-          command: |
-            git add tetris/game.py tests/tetris/test_game.py
-            git commit -m "feat: implement GameState with scoring and level system"
-
-        children: []
-
+    created_at: "2025-01-15T11:45:00Z"
+    updated_at: "2025-01-15T12:15:00Z"
+    status_changed_at: "2025-01-15T12:15:00Z"
+    references: []
+    details: {}
     verification_spec:
-      - id: "verify_task_4"
-        description: "전체 게임 로직 테스트 통과"
-        input:
-          type: command
-          command: "uv run pytest tests/tetris/test_game.py -q"
-          capture_output: true
-        verify:
-          type: programmatic
-          method: regex
-          expected: "\\d+ passed"
+      - id: "verify_4_continue_work"
+        title: "continue-work 명령어 검증"
+        description: "continue-work가 다음 task를 할당하고, parallel_group 처리를 하는지 확인"
+        verified: true
+        verified_at: "2025-01-15T12:15:00Z"
+        verification_evidence: "명령어 구현 완료, PlanNavigator.get_parallel_group_tasks() 메서드 추가, parallel_group 감지 시 가이드 출력"
+        orchestrator_manually_verified: true
+        manual_verification_evidence: "코드 리뷰 완료: continue-work 로직 구현, parallel_group 처리 로직 확인, status/current_task_id 업데이트 로직 확인"
+        bash: []
+        llm_judge:
+          - by: "orchestrator-agent"
+            context_commands:
+              - "grep -A 30 '@execute_phase_app.command(name=\"continue-work\")' sisyphus/cli.py"
+              - "grep -A 20 'def get_parallel_group_tasks' sisyphus/core/plan_navigator.py"
+            instruction: |
+              Verify continue-work implementation:
+              1. PlanNavigator.get_next_task() 호출 확인
+              2. task가 없으면 "모든 작업 완료" 출력
+              3. task가 있으면 status를 in_progress로 변경, current_task_id 업데이트
+              4. parallel_group이 있으면 get_parallel_group_tasks() 호출하여 가이드 출력
+    children: []
+    parallel_note: null
 
-  # -------------------------------------------------------------------------
-  # Task 5 & 6: 병렬 실행 (UI 위젯 + 입력 핸들러)
-  # -------------------------------------------------------------------------
-  - id: 5
-    title: "GameBoard 위젯 구현 (Textual)"
-    status: pending
-    parallel_group: 5
-    created_at: "2025-10-28T14:32:19.000000+09:00"
-    updated_at: "2025-10-28T14:32:19.000000+09:00"
-    status_changed_at: "2025-10-28T14:32:19.000000+09:00"
-
-    parallel_note: "Task 6 (입력 핸들러)과 독립적, ui.py의 다른 부분 수정, 병렬 실행 가능"
-
-    references:
-      - ref_id: "ref_message_widget"
-      - type: url
-        url: "https://textual.textualize.io/guide/widgets/"
-        description: "Textual 커스텀 위젯"
-        retrieval:
-          type: prompt
-          prompt: "Find how to create custom widgets"
-
-    children:
-      - id: "5.1"
-        title: "ui.py에 GameBoardWidget, ScoreWidget, NextBlockWidget 구현"
-        status: pending
-        created_at: "2025-10-28T14:32:19.100000+09:00"
-        updated_at: "2025-10-28T14:32:19.100000+09:00"
-
-        details:
-          widgets:
-            - "GameBoardWidget: 10x20 보드 + 현재 블록 렌더링"
-            - "ScoreWidget: 점수, 레벨, 라인 표시"
-            - "NextBlockWidget: 다음 블록 미리보기"
-
-        children: []
-
-      - id: "5.2"
-        title: "위젯 구현 커밋"
-        status: pending
-        created_at: "2025-10-28T14:32:19.200000+09:00"
-        updated_at: "2025-10-28T14:32:19.200000+09:00"
-
-        details:
-          command: |
-            git add tetris/ui.py
-            git commit -m "feat: implement Textual widgets for game board and stats"
-
-        children: []
-
-    verification_spec:
-      - id: "verify_task_5"
-        description: "위젯 구현 검증"
-        input:
-          type: prompt
-          prompt: |
-            Verify that tetris/ui.py contains:
-            1. GameBoardWidget class with render() method
-            2. ScoreWidget class
-            3. NextBlockWidget class
-            4. All widgets properly inherit from textual.widget.Widget
-
-            Review file: tetris/ui.py
-          context:
-            files: ["tetris/ui.py"]
-        verify:
-          type: llm_judge
-
-  - id: 6
-    title: "입력 핸들러 구현 (키보드)"
-    status: pending
-    parallel_group: 5
-    created_at: "2025-10-28T14:32:20.000000+09:00"
-    updated_at: "2025-10-28T14:32:20.000000+09:00"
-    status_changed_at: "2025-10-28T14:32:20.000000+09:00"
-
-    parallel_note: "Task 5 (위젯)과 독립적, ui.py의 다른 부분 수정, 병렬 실행 가능"
-
-    references:
-      - ref_id: "ref_sisyphus_app"
-        note: "on_key 메서드 참고"
-      - type: url
-        url: "https://textual.textualize.io/guide/input/"
-        description: "Textual 키보드 입력"
-        retrieval:
-          type: keywords
-          keywords: ["Keyboard input", "on_key"]
-
-    children:
-      - id: "6.1"
-        title: "TetrisApp 클래스에 키 핸들러 추가"
-        status: pending
-        created_at: "2025-10-28T14:32:20.100000+09:00"
-        updated_at: "2025-10-28T14:32:20.100000+09:00"
-
-        details:
-          key_bindings:
-            - "left: move(-1, 0)"
-            - "right: move(1, 0)"
-            - "down: move(0, 1)"
-            - "up: rotate()"
-            - "space: hard_drop()"
-            - "r: restart (게임 오버 시)"
-
-        children: []
-
-      - id: "6.2"
-        title: "입력 핸들러 커밋"
-        status: pending
-        created_at: "2025-10-28T14:32:20.200000+09:00"
-        updated_at: "2025-10-28T14:32:20.200000+09:00"
-
-        details:
-          command: |
-            git add tetris/ui.py
-            git commit -m "feat: add keyboard input handlers for Tetris controls"
-
-        children: []
-
-    verification_spec:
-      - id: "verify_task_6"
-        description: "수동 입력 테스트"
-        input:
-          type: manual
-          instructions: |
-            게임을 실행하고 다음 키 조작을 확인하세요:
-            1. ← → 키로 좌우 이동
-            2. ↑ 키로 회전
-            3. ↓ 키로 빠른 낙하
-            4. Space로 즉시 드롭
-        verify:
-          type: none
-
-  # -------------------------------------------------------------------------
-  # Task 7: 타이머 구현
-  # -------------------------------------------------------------------------
-  - id: 7
-    title: "타이머 기반 자동 낙하 구현"
-    status: pending
+  - id: "5"
+    title: "execute-phase bash-verify 구현"
+    status: "completed"
     parallel_group: null
-    created_at: "2025-10-28T14:32:21.000000+09:00"
-    updated_at: "2025-10-28T14:32:21.000000+09:00"
-    status_changed_at: "2025-10-28T14:32:21.000000+09:00"
-
-    references:
-      - ref_id: "ref_textual_timer"
-
-    children:
-      - id: "7.1"
-        title: "TetrisApp에 타이머 추가"
-        status: pending
-        created_at: "2025-10-28T14:32:21.100000+09:00"
-        updated_at: "2025-10-28T14:32:21.100000+09:00"
-
-        details:
-          implementation: "on_mount에서 set_interval 호출, 레벨별 속도 조정"
-
-        children: []
-
-      - id: "7.2"
-        title: "타이머 구현 커밋"
-        status: pending
-        created_at: "2025-10-28T14:32:21.200000+09:00"
-        updated_at: "2025-10-28T14:32:21.200000+09:00"
-
-        details:
-          command: |
-            git add tetris/ui.py
-            git commit -m "feat: add auto-drop timer with level-based speed"
-
-        children: []
-
+    created_at: "2025-01-15T12:15:00Z"
+    updated_at: "2025-01-15T12:45:00Z"
+    status_changed_at: "2025-01-15T12:45:00Z"
+    references: []
+    details: {}
     verification_spec:
-      - id: "verify_task_7"
-        description: "타이머 동작 확인"
-        input:
-          type: manual
-          instructions: |
-            게임을 실행하고 다음을 확인하세요:
-            1. 블록이 자동으로 낙하하는가? (약 1초 간격)
-            2. 레벨 업 시 속도가 증가하는가?
-        verify:
-          type: none
+      - id: "verify_5_bash_verify"
+        title: "bash-verify 명령어 검증"
+        description: "bash-verify가 bash 명령어를 실행하고, 결과를 검증하며, verified=true로 업데이트하는지 확인"
+        verified: true
+        verified_at: "2025-01-15T12:45:00Z"
+        verification_evidence: "bash-verify 로직 구현 완료, subprocess로 bash 실행, exit_code 검증, verified/verified_at 업데이트"
+        orchestrator_manually_verified: true
+        manual_verification_evidence: "코드 리뷰 완료: _update_verification_status 헬퍼 함수 구현 (cli.py 버그 수정: 'completed' → 'verified'), bash command 실행 로직, 검증 실패 시 에러 출력 확인"
+        bash: []
+        llm_judge:
+          - by: "orchestrator-agent"
+            context_commands:
+              - "grep -A 50 '@execute_phase_app.command(name=\"bash-verify\")' sisyphus/cli.py"
+            instruction: |
+              Verify bash-verify implementation:
+              1. VerificationItem.bash 리스트 순회
+              2. subprocess.run()으로 bash 실행
+              3. exit_code 검증
+              4. 성공 시 verified=true, verified_at 기록
+    children: []
+    parallel_note: null
 
-  # -------------------------------------------------------------------------
-  # Task 8: 앱 통합
-  # -------------------------------------------------------------------------
-  - id: 8
-    title: "TetrisApp 레이아웃 통합 및 CLI 진입점"
-    status: pending
+  - id: "6"
+    title: "execute-phase llm-verify 구현"
+    status: "completed"
     parallel_group: null
-    created_at: "2025-10-28T14:32:22.000000+09:00"
-    updated_at: "2025-10-28T14:32:22.000000+09:00"
-    status_changed_at: "2025-10-28T14:32:22.000000+09:00"
-
-    references:
-      - ref_id: "ref_sisyphus_app"
-        note: "compose 메서드 참고"
-      - type: url
-        url: "https://textual.textualize.io/guide/layout/"
-        description: "Textual 레이아웃"
-        retrieval:
-          type: keywords
-          keywords: ["Containers", "Horizontal", "Vertical"]
-
-    children:
-      - id: "8.1"
-        title: "TetrisApp.compose() 구현"
-        status: pending
-        created_at: "2025-10-28T14:32:22.100000+09:00"
-        updated_at: "2025-10-28T14:32:22.100000+09:00"
-
-        details:
-          layout: "Horizontal(GameBoard, Vertical(Score, NextBlock))"
-
-        children: []
-
-      - id: "8.2"
-        title: "__main__.py 진입점 구현"
-        status: pending
-        created_at: "2025-10-28T14:32:22.200000+09:00"
-        updated_at: "2025-10-28T14:32:22.200000+09:00"
-
-        details:
-          content: |
-            from tetris.ui import TetrisApp
-
-            def main() -> None:
-                app = TetrisApp()
-                app.run()
-
-            if __name__ == "__main__":
-                main()
-
-        children: []
-
-      - id: "8.3"
-        title: "전체 게임 플레이 테스트"
-        status: pending
-        created_at: "2025-10-28T14:32:22.300000+09:00"
-        updated_at: "2025-10-28T14:32:22.300000+09:00"
-
-        verification_spec:
-          - id: "verify_8_3_manual"
-            description: "수동 플레이 테스트"
-            input:
-              type: manual
-              instructions: |
-                게임을 실행하고 다음을 확인하세요:
-                1. 게임 보드가 중앙에 표시되는가?
-                2. 점수판과 다음 블록이 오른쪽에 표시되는가?
-                3. 키보드 조작이 모두 동작하는가?
-                4. 자동 낙하가 동작하는가?
-                5. 라인 클리어 시 점수가 올라가는가?
-                6. 게임 오버 시 재시작(r키)이 동작하는가?
-            verify:
-              type: none
-
-        children: []
-
-      - id: "8.4"
-        title: "전체 프로젝트 Lint"
-        status: pending
-        created_at: "2025-10-28T14:32:22.400000+09:00"
-        updated_at: "2025-10-28T14:32:22.400000+09:00"
-
-        verification_spec:
-          - id: "verify_8_4_ruff"
-            description: "Ruff lint 검사"
-            input:
-              type: command
-              command: "uv run ruff check tetris/"
-              capture_output: true
-            verify:
-              type: programmatic
-              method: exit_code
-              expected: 0
-
-          - id: "verify_8_4_pyright"
-            description: "타입 체크"
-            input:
-              type: command
-              command: "uv run basedpyright tetris/"
-              capture_output: true
-            verify:
-              type: programmatic
-              method: exit_code
-              expected: 0
-
-        children: []
-
-      - id: "8.5"
-        title: "최종 통합 커밋"
-        status: pending
-        created_at: "2025-10-28T14:32:22.500000+09:00"
-        updated_at: "2025-10-28T14:32:22.500000+09:00"
-
-        details:
-          command: |
-            git add tetris/ui.py tetris/__main__.py
-            git commit -m "feat: integrate TetrisApp layout and CLI entry point"
-
-        children: []
-
+    created_at: "2025-01-15T12:45:00Z"
+    updated_at: "2025-01-15T13:15:00Z"
+    status_changed_at: "2025-01-15T13:15:00Z"
+    references: []
+    details: {}
     verification_spec:
-      - id: "verify_task_8_runnable"
-        description: "실행 가능 확인"
-        input:
-          type: command
-          command: "uv run python -m tetris --help 2>&1 || echo 'runs'"
-          capture_output: true
-        verify:
-          type: programmatic
-          method: exit_code
-          expected: 0
+      - id: "verify_6_llm_verify"
+        title: "llm-verify 명령어 검증"
+        description: "llm-verify orchestrator 모드가 instruction을 출력하고, mark-verified 서브커맨드가 검증을 완료하는지 확인"
+        verified: true
+        verified_at: "2025-01-15T13:15:00Z"
+        verification_evidence: "llm-verify orchestrator 모드 구현, instruction + context_commands 출력, mark-verified 서브커맨드로 verified=true 업데이트"
+        orchestrator_manually_verified: true
+        manual_verification_evidence: "코드 리뷰 완료: orchestrator-agent 모드 instruction 출력 로직, llm-verify-mark 서브커맨드 구현"
+        bash: []
+        llm_judge:
+          - by: "orchestrator-agent"
+            context_commands:
+              - "grep -A 40 '@execute_phase_app.command(name=\"llm-verify\")' sisyphus/cli.py"
+            instruction: |
+              Verify llm-verify implementation:
+              1. by: orchestrator-agent 모드에서 instruction 출력
+              2. context_commands 출력
+              3. llm-verify-mark 서브커맨드로 verified=true 업데이트
+    children: []
+    parallel_note: null
 
-  # -------------------------------------------------------------------------
-  # Task 9: 문서화
-  # -------------------------------------------------------------------------
-  - id: 9
-    title: "문서화 및 README 작성"
-    status: pending
+  - id: "7"
+    title: "execute-phase manual-verify 구현"
+    status: "completed"
     parallel_group: null
-    created_at: "2025-10-28T14:32:23.000000+09:00"
-    updated_at: "2025-10-28T14:32:23.000000+09:00"
-    status_changed_at: "2025-10-28T14:32:23.000000+09:00"
-
-    children:
-      - id: "9.1"
-        title: "tetris/README.md 작성"
-        status: pending
-        created_at: "2025-10-28T14:32:23.100000+09:00"
-        updated_at: "2025-10-28T14:32:23.100000+09:00"
-
-        details:
-          sections:
-            - "설치 방법"
-            - "실행 방법"
-            - "조작법"
-            - "게임 규칙"
-
-        children: []
-
-      - id: "9.2"
-        title: "문서 커밋"
-        status: pending
-        created_at: "2025-10-28T14:32:23.200000+09:00"
-        updated_at: "2025-10-28T14:32:23.200000+09:00"
-
-        details:
-          command: |
-            git add tetris/README.md
-            git commit -m "docs: add Tetris README with usage instructions"
-
-        children: []
-
+    created_at: "2025-01-15T13:15:00Z"
+    updated_at: "2025-01-15T13:30:00Z"
+    status_changed_at: "2025-01-15T13:30:00Z"
+    references: []
+    details: {}
     verification_spec:
-      - id: "verify_task_9"
-        description: "README 존재 확인"
-        input:
-          type: command
-          command: "test -f tetris/README.md && echo 'exists'"
-          capture_output: true
-        verify:
-          type: programmatic
-          method: contains
-          expected: "exists"
+      - id: "verify_7_manual_verify"
+        title: "manual-verify 명령어 검증"
+        description: "manual-verify가 orchestrator_manually_verified=true로 업데이트하고 evidence를 기록하는지 확인"
+        verified: true
+        verified_at: "2025-01-15T13:30:00Z"
+        verification_evidence: "manual-verify 구현 완료, orchestrator_manually_verified/manual_verification_evidence 업데이트"
+        orchestrator_manually_verified: true
+        manual_verification_evidence: "코드 리뷰 완료: manual-verify 명령어 구현, evidence 기록 로직 확인"
+        bash: []
+        llm_judge:
+          - by: "orchestrator-agent"
+            context_commands:
+              - "grep -A 30 '@execute_phase_app.command(name=\"manual-verify\")' sisyphus/cli.py"
+            instruction: |
+              Verify manual-verify implementation:
+              1. orchestrator_manually_verified=true 업데이트
+              2. manual_verification_evidence=evidence 기록
+    children: []
+    parallel_note: null
 
-# ============================================================================
-# SUCCESS VISION - 성공 비전
-# User scenarios, business metrics, and technical criteria for success
-# ============================================================================
+  - id: "8"
+    title: "verify-phase bash-verify 구현"
+    status: "completed"
+    parallel_group: null
+    created_at: "2025-01-15T13:30:00Z"
+    updated_at: "2025-01-15T13:40:00Z"
+    status_changed_at: "2025-01-15T13:40:00Z"
+    references: []
+    details: {}
+    verification_spec:
+      - id: "verify_8_verify_phase_bash"
+        title: "verify-phase bash-verify 검증"
+        description: "verify-phase bash-verify가 execute-phase bash-verify와 동일한 로직을 사용하는지 확인"
+        verified: true
+        verified_at: "2025-01-15T13:40:00Z"
+        verification_evidence: "verify-phase bash-verify 구현 완료, execute-phase bash-verify 로직 재사용"
+        orchestrator_manually_verified: true
+        manual_verification_evidence: "코드 리뷰 완료: verify-phase bash-verify가 execute-phase bash-verify를 호출하는 것 확인"
+        bash:
+          - execute: "uv run sisyphus verify-phase --help"
+            expected_stdout: null
+            expected_stderr: null
+            expected_exit_code: 0
+            notes: "verify-phase 도움말에 bash-verify 포함 확인"
+        llm_judge: []
+    children: []
+    parallel_note: null
+
+  - id: "9"
+    title: "verify-phase llm-verify 구현"
+    status: "completed"
+    parallel_group: null
+    created_at: "2025-01-15T13:40:00Z"
+    updated_at: "2025-01-15T13:50:00Z"
+    status_changed_at: "2025-01-15T13:50:00Z"
+    references: []
+    details: {}
+    verification_spec:
+      - id: "verify_9_verify_phase_llm"
+        title: "verify-phase llm-verify 검증"
+        description: "verify-phase llm-verify가 execute-phase llm-verify와 동일한 로직을 사용하는지 확인"
+        verified: true
+        verified_at: "2025-01-15T13:50:00Z"
+        verification_evidence: "verify-phase llm-verify 구현 완료, execute-phase llm-verify 로직 재사용"
+        orchestrator_manually_verified: true
+        manual_verification_evidence: "코드 리뷰 완료: verify-phase llm-verify가 execute-phase llm-verify를 호출하는 것 확인"
+        bash:
+          - execute: "uv run sisyphus verify-phase --help"
+            expected_stdout: null
+            expected_stderr: null
+            expected_exit_code: 0
+            notes: "verify-phase 도움말에 llm-verify 포함 확인"
+        llm_judge: []
+    children: []
+    parallel_note: null
+
+  - id: "10"
+    title: "불필요한 plan 서브커맨드 제거"
+    status: "completed"
+    parallel_group: null
+    created_at: "2025-01-15T13:50:00Z"
+    updated_at: "2025-01-15T14:00:00Z"
+    status_changed_at: "2025-01-15T14:00:00Z"
+    references: []
+    details: {}
+    verification_spec:
+      - id: "verify_10_plan_commands"
+        title: "plan 명령어 정리 검증"
+        description: "plan set/set-verification/check가 제거되고, get/lint만 남아있는지 확인"
+        verified: true
+        verified_at: "2025-01-15T14:00:00Z"
+        verification_evidence: "plan set/set-verification/check 제거 완료, sisyphus plan --help에서 get/lint만 출력"
+        orchestrator_manually_verified: true
+        manual_verification_evidence: "코드 리뷰 완료: cli.py에서 plan set/set-verification/check 코드 제거, test_cli_plan.py에서 관련 테스트 pytest.mark.skip 처리"
+        bash:
+          - execute: "uv run sisyphus plan --help"
+            expected_stdout: null
+            expected_stderr: null
+            expected_exit_code: 0
+            notes: "plan 도움말에 get/lint만 출력 확인"
+        llm_judge: []
+    children: []
+    parallel_note: null
+
 success_vision:
   user_perspective:
-    - scenario: "게임 시작"
-      experience: "터미널에서 python -m tetris 실행 시 즉시 게임 시작"
-
-    - scenario: "게임 플레이"
-      experience: "키보드만으로 직관적인 조작 가능 (←→↑↓ Space)"
-
-    - scenario: "UI 경험"
-      experience: "점수, 레벨, 다음 블록이 한눈에 보이는 깔끔한 UI"
-
-    - scenario: "난이도 증가"
-      experience: "레벨이 올라갈수록 긴장감 있는 속도 증가"
-
-    - scenario: "재도전"
-      experience: "게임 오버 후 r키로 즉시 재시작 가능"
-
+    - scenario: "orchestrator가 sisyphus execute-phase continue-work 실행"
+      experience: "다음 작업 할당받음, 명확한 task 정보 출력"
+    - scenario: "executor 작업 완료 후 sisyphus execute-phase bash-verify --task 1 실행"
+      experience: "자동 검증 완료, verified=true 업데이트 확인"
+    - scenario: "수동 검증 필요 시 sisyphus execute-phase manual-verify --evidence 실행"
+      experience: "검증 기록 완료, orchestrator_manually_verified=true 업데이트"
   business_perspective:
-    - metric: "포트폴리오 가치"
-      target: "Textual 프레임워크 활용 역량 시연"
-
-    - metric: "기술 축적"
-      target: "TUI 게임 개발 경험 확보"
-
-    - metric: "오픈소스 기여"
-      target: "Textual 예제로 제출 가능"
-
+    - metric: "YAML 기반 작업 관리 효율성"
+      target: "구조화된 워크플로우 확립, 검증 프로세스 명확화"
+    - metric: "검증 완료율"
+      target: "bash, llm_judge, manual 검증 모두 지원, 100% 검증 가능"
   technical_criteria:
     - category: "테스트"
-      criteria: "모든 게임 로직 테스트 통과"
-      command: "uv run pytest tests/tetris/test_game.py"
-      expected: "12+ passed"
-
+      criteria: "모든 테스트 통과"
+      command: "uv run pytest sisyphus/tests/ -v"
+      expected: "730+ passed"
     - category: "코드 품질"
       criteria: "Lint 에러 0개"
-      command: "uv run ruff check tetris/"
+      command: "uv run ruff check sisyphus/"
+      expected: "All checks passed"
+    - category: "타입 체크"
+      criteria: "Type check 통과"
+      command: "uv run basedpyright sisyphus/"
       expected: "0 errors"
+    - category: "CLI 실행"
+      criteria: "모든 execute-phase, verify-phase 명령어 실행 가능"
+      command: "sisyphus execute-phase --help && sisyphus verify-phase --help"
+      expected: "서브커맨드 목록 출력"
 
-    - category: "타입 안정성"
-      criteria: "타입 체크 통과"
-      command: "uv run basedpyright tetris/"
-      expected: "0 errors"
-
-    - category: "실행 가능성"
-      criteria: "게임 정상 구동"
-      command: "uv run python -m tetris"
-      expected: "UI 표시 및 입력 반응"
-
-    - category: "성능"
-      criteria: "키 입력 반응 지연"
-      expected: "< 50ms (Textual 기본 성능)"
-
-    - category: "안정성"
-      criteria: "장시간 플레이"
-      expected: "1시간 연속 플레이 시 크래시 없음"
-
-# ============================================================================
-# FINAL VERIFICATION - 최종 검증
-# Comprehensive validation checklist organized by category
-# Includes command execution, manual testing, and LLM-based verification
-# ============================================================================
 final_verification:
-  - category: "기능 동작 확인"
-    items:
-      - id: "final_verify_run"
-        description: "게임 실행 확인"
-        input:
-          type: command
-          command: "timeout 5 uv run python -m tetris || true"
-          capture_output: true
-        verify:
-          type: programmatic
-          method: exit_code
-          expected: 124  # timeout exit code
-        note: "5초간 실행 후 타임아웃 (정상 동작)"
+  - id: "final_verify_1"
+    title: "기능 동작 확인"
+    category: "기능 테스트"
+    description: "모든 execute-phase 및 verify-phase 명령어가 정상 동작하는지 확인"
+    verified: true
+    verified_at: "2025-01-15T14:00:00Z"
+    verification_evidence: "모든 명령어 실행 성공: execute-phase get-overview, continue-work, bash-verify, llm-verify, manual-verify / verify-phase bash-verify, llm-verify / plan get, lint"
+    orchestrator_manually_verified: true
+    manual_verification_evidence: "전체 명령어 실행 테스트 완료"
+    bash:
+      - execute: "uv run sisyphus execute-phase --help"
+        expected_exit_code: 0
+        notes: "execute-phase 서브커맨드 목록 확인"
+      - execute: "uv run sisyphus verify-phase --help"
+        expected_exit_code: 0
+        notes: "verify-phase 서브커맨드 목록 확인"
+      - execute: "uv run sisyphus plan --help"
+        expected_exit_code: 0
+        notes: "plan get/lint만 남아있는지 확인"
+    llm_judge: []
 
-      - id: "final_verify_controls"
-        description: "모든 키 조작 확인"
-        input:
-          type: manual
-          instructions: |
-            게임을 실행하고 다음을 확인하세요:
-            - ← → 키로 블록 좌우 이동
-            - ↑ 키로 블록 회전
-            - ↓ 키로 빠른 낙하
-            - Space로 즉시 드롭
-            - 자동 낙하 동작 (약 1초)
-            - 라인 클리어 시 점수 증가
-            - 레벨 업 시 속도 증가
-            - 게임 오버 시 r키로 재시작
-        verify:
-          type: none
+  - id: "final_verify_2"
+    title: "잘못된 구현 방지"
+    category: "품질 검증"
+    description: "plan set/set-verification/check 제거 확인, YAML 스키마 v2.1 준수 확인"
+    verified: true
+    verified_at: "2025-01-15T14:00:00Z"
+    verification_evidence: "plan set/set-verification/check 제거됨, YAML 스키마 v2.1 (BashVerification, LLMJudgeVerification 구조) 준수"
+    orchestrator_manually_verified: true
+    manual_verification_evidence: "YAML 스키마 검증: metadata, user_request, objectives, background, required_background, status, workflow, todos, verification_spec (verified, verified_at, orchestrator_manually_verified, manual_verification_evidence, bash, llm_judge) 모두 v2.1 형식"
+    bash:
+      - execute: "uv run sisyphus plan --help 2>&1 | grep -E 'set|set-verification|check' && exit 1 || exit 0"
+        expected_exit_code: 0
+        notes: "plan 도움말에 set/set-verification/check가 없는지 확인"
+    llm_judge: []
 
-  - category: "잘못된 구현 방지"
-    items:
-      - id: "final_verify_boundaries"
-        description: "경계 체크 검증"
-        input:
-          type: command
-          command: "uv run python -c 'from tetris.game import Board, Tetromino; b = Board(); results = [b.is_collision(Tetromino(\"I\", x=x)) for x in [-1, 0, 10, 11]]; print(results)'"
-          capture_output: true
-        verify:
-          type: prompt
-          prompt: |
-            Verify boundary collision detection.
-            Expected: [True, False, True, True]
-            (x=-1 and x>=10 should collide, x=0 should not)
-
-            Output: {output}
-
-      - id: "final_verify_rotation"
-        description: "회전 충돌 검증"
-        input:
-          type: prompt
-          prompt: |
-            Check if rotation properly handles wall/block collisions:
-            1. Review GameState.rotate() method in tetris/game.py
-            2. Verify it attempts wall kick (±1, ±2 positions)
-            3. Confirm rotation is ignored if all wall kick attempts fail
-
-            File: tetris/game.py
-          context:
-            files: ["tetris/game.py"]
-        verify:
-          type: llm_judge
-
-  - category: "범위 준수"
-    items:
-      - id: "final_verify_separation"
-        description: "게임 로직과 UI 분리 확인"
-        input:
-          type: prompt
-          prompt: |
-            Verify separation of concerns:
-            1. tetris/game.py should have NO imports from tetris/ui.py
-            2. Game logic (Tetromino, Board, GameState) should be UI-independent
-            3. Only tetris/ui.py should import from textual
-
-            Files to check:
-            - tetris/game.py
-            - tetris/ui.py
-          context:
-            files: ["tetris/game.py", "tetris/ui.py"]
-        verify:
-          type: llm_judge
-
-      - id: "final_verify_no_sisyphus_changes"
-        description: "Sisyphus 코드 미수정 확인"
-        input:
-          type: command
-          command: "git diff HEAD -- sisyphus/ | wc -l"
-          capture_output: true
-        verify:
-          type: programmatic
-          method: exact
-          expected: "0"
-
-  - category: "기존 기능 회귀 테스트"
-    items:
-      - id: "final_verify_sisyphus_help"
-        description: "Sisyphus 메인 기능 확인"
-        input:
-          type: command
-          command: "uv run sisyphus --help"
-          capture_output: true
-        verify:
-          type: programmatic
-          method: contains
-          expected: "sisyphus"
-
-      - id: "final_verify_all_tests"
-        description: "전체 테스트 스위트 통과"
-        input:
-          type: command
-          command: "uv run pytest"
-          capture_output: true
-        verify:
-          type: programmatic
-          method: contains
-          expected: "passed"
-        note: "기존 테스트 + 새로운 Tetris 테스트 모두 통과"
+  - id: "final_verify_3"
+    title: "테스트 및 코드 품질"
+    category: "통합 검증"
+    description: "전체 테스트 통과, lint/typecheck 0 errors 확인"
+    verified: true
+    verified_at: "2025-01-15T14:00:00Z"
+    verification_evidence: "pytest: 730 passed, 21 skipped / ruff: All checks passed / basedpyright: 0 errors"
+    orchestrator_manually_verified: true
+    manual_verification_evidence: "전체 테스트 스위트 실행 확인, 코드 품질 검사 통과"
+    bash:
+      - execute: "uv run pytest sisyphus/ -v 2>&1 | tail -5"
+        expected_exit_code: 0
+        notes: "전체 테스트 통과 확인"
+      - execute: "uv run ruff check sisyphus/"
+        expected_exit_code: 0
+        notes: "lint 검사 통과 확인"
+    llm_judge: []

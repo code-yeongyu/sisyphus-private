@@ -841,7 +841,7 @@ sequenceDiagram
           # verified=true, verification_evidence 업데이트
       ```
 
-   - [x] 6.3 external-agent 모드 구현 (optional - 추후 확장)
+   - [ ] 6.3 external-agent 모드 구현 (optional - 추후 확장)
 
       **참고**: `sisyphus/agents/claude.py` (ClaudeAgent 사용 패턴)
       **로직**:

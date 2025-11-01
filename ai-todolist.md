@@ -83,7 +83,7 @@ parallel_requested = FALSE
 
 # 현재 진행 중인 작업
 
-- [ ] 15. reset 명령어 재구현
+- [x] 16. 루트 CLI 배선 및 기존 명령어 제거
 
 # 필요한 배경지식
 

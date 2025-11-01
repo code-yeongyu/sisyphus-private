@@ -83,7 +83,7 @@ parallel_requested = FALSE
 
 # 현재 진행 중인 작업
 
-Task 28: API 문서 업데이트 (진행 중)
+Task 29: README 및 예제 업데이트 (진행 중)
 
 # 필요한 배경지식
 
@@ -1074,19 +1074,19 @@ work_plans:
          - Pydantic 모델 (v3.0)
          - **검증 명령어**: `cat docs/api.md` → 내용 확인
 
-      - [ ] 28.2 커밋
+      - [x] 28.2 커밋
          - `git add docs/api.md`
          - `git commit -m "docs: update API documentation for v3.0"`
 
-   - [ ] 29. README 및 예제 업데이트
+   - [x] 29. README 및 예제 업데이트
 
-      - [ ] 29.1 README.md, examples/ 수정
+      - [x] 29.1 README.md, examples/ 수정
          - Quick Start 갱신
          - v3.0 예제 추가
          - sisyphus plan graph 출력 예시
          - **검증 명령어**: `cat README.md` → 내용 확인
 
-      - [ ] 29.2 커밋
+      - [x] 29.2 커밋
          - `git add README.md examples/`
          - `git commit -m "docs: update README and examples for v3.0"`
 

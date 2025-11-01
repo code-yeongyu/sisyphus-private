@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -11,14 +12,53 @@ import anyio
 
 
 class SessionStore:
-    """Manage session persistence with file locking"""
+    """Manage session persistence with file locking
 
-    def __init__(self, base_dir: Path = Path("./sessions")) -> None:
+    Sessions are stored in .sisyphus/sessions/ directory, with worktree-aware
+    detection to support multiple git worktrees.
+    """
+
+    def __init__(self, base_dir: Path | None = None) -> None:
+        """Initialize SessionStore with worktree-aware session directory.
+
+        Args:
+            base_dir: Optional base directory for sessions.
+                     If None, uses .sisyphus/sessions/ in worktree root.
+        """
+        if base_dir is None:
+            worktree_root = self._detect_worktree_sync()
+            base_dir = worktree_root / ".sisyphus" / "sessions"
+
         self.base_dir = base_dir
         self.base_dir.mkdir(exist_ok=True, parents=True)
         self.sessions_file = self.base_dir / "sessions.json"
         self.backup_file = self.base_dir / "sessions.json.bak"
         self.lock = anyio.Lock()
+
+    def _detect_worktree_sync(self) -> Path:
+        """Synchronous worktree detection (blocking).
+
+        Uses git rev-parse --show-toplevel to detect worktree root.
+        Falls back to current directory if not in git repository.
+
+        Returns:
+            Path to worktree root or current directory
+        """
+
+        try:
+            result = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            if result.returncode == 0:
+                return Path(result.stdout.strip())
+        except Exception:
+            pass
+
+        return Path.cwd()
 
     def _remove_path_sync(self, path: Path) -> None:
         if path.is_dir():

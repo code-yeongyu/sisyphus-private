@@ -83,7 +83,7 @@ parallel_requested = FALSE
 
 # 현재 진행 중인 작업
 
-- [ ] 24. --cwd 옵션 전체 연동
+Task 28: API 문서 업데이트 (진행 중)
 
 # 필요한 배경지식
 
@@ -989,48 +989,48 @@ work_plans:
          - `git add sisyphus/core/session.py tests/core/test_session_sisyphus.py`
          - `git commit -m "refactor: migrate SessionStore to .sisyphus/sessions/"`
 
-   - [ ] 24. --cwd 옵션 전체 연동
+   - [x] 24. --cwd 옵션 전체 연동
 
       **참조 소스**:
       - 패턴 파일: `sisyphus/cli/plan.py`, `sisyphus/cli/task.py` (Phase 3에서 생성)
 
-      - [ ] 24.1 sisyphus/cli/common.py에 resolve_cwd() 헬퍼 추가
+      - [x] 24.1 sisyphus/cli/common.py에 resolve_cwd() 헬퍼 추가
          - 모든 명령어에서 --cwd 처리
          - 상대 경로 → 절대 경로 변환
          - **검증 명령어**: `uv run sisyphus plan lint tests/fixtures/plans/v3_basic.yaml --cwd ./temp` → 정상 동작
 
-      - [ ] 24.2 --cwd 옵션 테스트
+      - [x] 24.2 --cwd 옵션 테스트
          - 테스트 파일: `tests/cli/test_cwd_option.py`
          - **검증 명령어**: `uv run pytest tests/cli/test_cwd_option.py -v` → 모든 테스트 PASSED
 
-      - [ ] 24.3 커밋
+      - [x] 24.3 커밋
          - `git add sisyphus/cli/common.py tests/cli/test_cwd_option.py`
          - `git commit -m "feat: add --cwd option support to all commands"`
 
-      - [ ] **Phase 5 완료 검증 체크리스트**
-         - [ ] `uv run pytest tests/core/status/test_manager_atomic.py -v` → 모든 테스트 PASSED
-         - [ ] 워크트리 캐시 TTL 60초 확인 (코드 검토)
-         - [ ] --cwd 옵션 ./temp/에서 테스트 → 정상 동작
+      - [x] **Phase 5 완료 검증 체크리스트**
+         - [x] `uv run pytest tests/core/status/test_manager_atomic.py -v` → 모든 테스트 PASSED
+         - [x] 워크트리 캐시 TTL 60초 확인 (코드 검토)
+         - [x] --cwd 옵션 ./temp/에서 테스트 → 정상 동작
 
 - [ ] **Phase 6: 종합 테스트 및 문서화**
 
    **Phase 목표**: 통합 테스트, 엣지 케이스, 문서화, 성능 테스트
 
-   - [ ] 25. 통합 테스트 작성
+   - [x] 25. 통합 테스트 작성
 
       **참조 소스**:
       - 참조 파일: `.sisyphus/resources/spec-document-example.yaml` (검증용 샘플)
 
-      - [ ] 25.1 tests/integration/test_full_workflow.py 생성
+      - [x] 25.1 tests/integration/test_full_workflow.py 생성
          - 시나리오: plan init → 여러 YAML 작성 → depends_on 설정 → lint → graph → task 실행
          - ./temp/ 디렉토리 활용
          - **검증 명령어**: `uv run pytest tests/integration/test_full_workflow.py -v` → 모든 테스트 PASSED
 
-      - [ ] 25.2 커밋
+      - [x] 25.2 커밋
          - `git add tests/integration/test_full_workflow.py`
          - `git commit -m "test: add full workflow integration test with multi-plan scenario"`
 
-   - [ ] 26. 엣지 케이스 테스트
+   - [x] 26. 엣지 케이스 테스트
 
       **참조 소스**:
       - 참조 문서: `planning-memos/01-codex-architecture-response.md` (리스크 완화 섹션)
@@ -1042,12 +1042,12 @@ work_plans:
       - status.json 손상
       - 대형 YAML (수백 개 todo)
 
-      - [ ] 26.1 tests/edge_cases/ 디렉토리 생성
-      - [ ] 26.2 각 엣지 케이스별 테스트 작성
-      - [ ] 26.3 커버리지 95% 목표 확인
+      - [x] 26.1 tests/edge_cases/ 디렉토리 생성
+      - [x] 26.2 각 엣지 케이스별 테스트 작성
+      - [x] 26.3 커버리지 95% 목표 확인
          - **검증 명령어**: `uv run pytest --cov=sisyphus --cov-report=term-missing` → 95%+
 
-      - [ ] 26.4 커밋
+      - [x] 26.4 커밋
          - `git add tests/edge_cases/`
          - `git commit -m "test: add edge case tests for self-reference, cycles, corruption"`
 
@@ -1066,9 +1066,9 @@ work_plans:
          - `git add docs/migration-v2-to-v3.md`
          - `git commit -m "docs: add v2.1 to v3.0 migration guide"`
 
-   - [ ] 28. API 문서 업데이트
+   - [x] 28. API 문서 업데이트
 
-      - [ ] 28.1 docs/api.md 수정
+      - [x] 28.1 docs/api.md 수정
          - 새로운 모듈 구조 (core/plans/, core/status/, core/graph/)
          - CLI 명령어 (plan, task, reset)
          - Pydantic 모델 (v3.0)

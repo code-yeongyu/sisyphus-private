@@ -83,7 +83,7 @@ parallel_requested = FALSE
 
 # 현재 진행 중인 작업
 
-- [ ] 19. Legacy 변환기 (v2.1 → v3.0)
+- [ ] 24. --cwd 옵션 전체 연동
 
 # 필요한 배경지식
 
@@ -855,7 +855,7 @@ work_plans:
          - `git add sisyphus/core/plan_linter.py tests/core/test_plan_linter_references.py`
          - `git commit -m "feat: extend linter with reference validation (ref_id, inline)"`
 
-   - [ ] 19. YAML → Markdown 변환기
+   - [x] 19. YAML → Markdown 변환기
 
       **목적**: WorkPlan YAML을 `/plan` 커맨드 형식의 Markdown (ai-todolist.md)으로 변환
 
@@ -870,68 +870,68 @@ work_plans:
       - Todo.children → 들여쓰기된 하위 체크리스트
       - references → 하단 링크 섹션
 
-      - [ ] 19.1 sisyphus/core/exporters/markdown.py 생성
+      - [x] 19.1 sisyphus/core/exporters/markdown.py 생성
          - MarkdownExporter.export(plan_document: PlanDocument) → str
          - ai-todolist.md 형식으로 포맷팅
          - **검증 명령어**: `python -c "from sisyphus.core.exporters.markdown import MarkdownExporter"` → 성공
 
-      - [ ] 19.2 Markdown 변환기 테스트
+      - [x] 19.2 Markdown 변환기 테스트
          - 테스트 파일: `tests/core/exporters/test_markdown.py`
-         - **검증 명령어**: `uv run pytest tests/core/exporters/test_markdown.py -v` → 모든 테스트 PASSED
+         - **검증 명령어**: `uv run pytest tests/core/exporters/test_markdown.py -v` → 모든 테스트 PASSED (20 tests)
 
-      - [ ] 19.3 커밋
+      - [x] 19.3 커밋
          - `git add sisyphus/core/exporters/markdown.py tests/core/exporters/test_markdown.py`
-         - `git commit -m "feat: add YAML to Markdown exporter"`
+         - `git commit -m "feat: add YAML to Markdown exporter"` → 74f3a0d
 
-   - [ ] 20. plan export 명령어
+   - [x] 20. plan export 명령어
 
       **목적**: WorkPlan YAML을 읽어 Markdown으로 출력
 
       **참조 소스**:
       - 패턴 파일: `sisyphus/commands/plan.py` (Phase 3에서 생성)
 
-      - [ ] 20.1 sisyphus/commands/plan.py에 export 명령어 추가
+      - [x] 20.1 sisyphus/commands/plan.py에 export 명령어 추가
          - plan export <yaml_path> [--output <md_path>]
          - 출력: stdout 또는 지정된 파일
-         - **검증 명령어**: `uv run sisyphus plan export .sisyphus/tasks/test.yaml` → Markdown 출력
+         - **검증 명령어**: `uv run sisyphus plan export .sisyphus/tasks/test.yaml` → Markdown 출력 ✓
 
-      - [ ] 20.2 export 명령어 테스트
+      - [x] 20.2 export 명령어 테스트
          - 테스트 파일: `tests/cli/test_plan_export.py`
-         - **검증 명령어**: `uv run pytest tests/cli/test_plan_export.py -v` → 모든 테스트 PASSED
+         - **검증 명령어**: `uv run pytest tests/cli/test_plan_export.py -v` → 7 tests PASSED ✓
 
-      - [ ] 20.3 커밋
+      - [x] 20.3 커밋
          - `git add sisyphus/commands/plan.py tests/cli/test_plan_export.py`
-         - `git commit -m "feat: add plan export command for YAML to Markdown conversion"`
+         - `git commit -m "feat: add plan export command for YAML to Markdown conversion"` → 19daf8f ✓
 
-      - [ ] **Phase 4 완료 검증 체크리스트**
-         - [ ] `uv run sisyphus plan export .sisyphus/tasks/test.yaml` → Markdown 출력 성공
-         - [ ] 출력 형식이 ai-todolist.md와 동일한지 확인
-         - [ ] checkbox, 들여쓰기, references 포맷 보존 확인
+      - [x] **Phase 4 완료 검증 체크리스트**
+         - [x] `uv run sisyphus plan export .sisyphus/tasks/test.yaml` → Markdown 출력 성공 ✓
+         - [x] 출력 형식이 ai-todolist.md와 동일한지 확인 ✓
+         - [x] checkbox, 들여쓰기, references 포맷 보존 확인 ✓
 
 - [ ] **Phase 5: 상태 워크플로 강화**
 
    **Phase 목표**: status.json 원자적 갱신, 세션 관리, --cwd 연동
 
-   - [ ] 21. StatusManager 원자적 쓰기
+   - [x] 21. StatusManager 원자적 쓰기
 
       **참조 소스**:
       - 패턴 파일: `sisyphus/core/status/manager.py` (Phase 1에서 생성)
       - 참조 문서: `planning-memos/01-codex-architecture-response.md` (status.json 관리 섹션)
 
-      - [ ] 21.1 sisyphus/core/status/manager.py 수정
+      - [x] 21.1 sisyphus/core/status/manager.py 수정
          - 임시파일 + atomic rename (anyio.open_file + rename)
          - anyio.Lock 활용
          - **검증 명령어**: `python -c "from sisyphus.core.status.manager import StatusManager; StatusManager.set_current(...)"` → 성공
 
-      - [ ] 21.2 원자적 쓰기 테스트
+      - [x] 21.2 원자적 쓰기 테스트
          - 테스트 파일: `tests/core/status/test_manager_atomic.py`
          - **검증 명령어**: `uv run pytest tests/core/status/test_manager_atomic.py -v` → 모든 테스트 PASSED
 
-      - [ ] 21.3 커밋
+      - [x] 21.3 커밋
          - `git add sisyphus/core/status/manager.py tests/core/status/test_manager_atomic.py`
          - `git commit -m "feat: add atomic writes to StatusManager with anyio"`
 
-   - [ ] 22. 워크트리 감지 통합
+   - [x] 22. 워크트리 감지 통합
 
       **참조 소스**:
       - 참조 문서: `planning-memos/03-codex-phase-planning.md` (Task 5.2: 워크트리 감지 통합)
@@ -958,34 +958,34 @@ work_plans:
               return time.time() - cls._cache_timestamp > cls.CACHE_TTL
       ```
 
-      - [ ] 22.1 sisyphus/core/status/manager.py 확장
+      - [x] 22.1 sisyphus/core/status/manager.py 확장
          - git worktree list --porcelain 캐싱 (TTL 60초)
          - detect_worktree(), list_all() API
          - **검증 명령어**: `python -c "from sisyphus.core.status.manager import StatusManager; StatusManager.detect_worktree()"` → 성공
 
-      - [ ] 22.2 워크트리 감지 테스트
+      - [x] 22.2 워크트리 감지 테스트
          - 테스트 파일: `tests/core/status/test_worktree_detection.py`
          - **검증 명령어**: `uv run pytest tests/core/status/test_worktree_detection.py -v` → 모든 테스트 PASSED
 
-      - [ ] 22.3 커밋
+      - [x] 22.3 커밋
          - `git add sisyphus/core/status/manager.py tests/core/status/test_worktree_detection.py`
          - `git commit -m "feat: add worktree detection with 60s TTL caching"`
 
-   - [ ] 23. 세션 관리 연동
+   - [x] 23. 세션 관리 연동
 
       **참조 소스**:
       - 패턴 파일: `sisyphus/core/session.py` (현재 SessionStore)
 
-      - [ ] 23.1 sisyphus/core/session.py 수정
+      - [x] 23.1 sisyphus/core/session.py 수정
          - SessionStore가 .sisyphus/sessions/ 사용
          - status.json과 연동
          - **검증 명령어**: `python -c "from sisyphus.core.session import SessionStore"` → 성공
 
-      - [ ] 23.2 세션 관리 테스트
+      - [x] 23.2 세션 관리 테스트
          - 테스트 파일: `tests/core/test_session_sisyphus.py`
          - **검증 명령어**: `uv run pytest tests/core/test_session_sisyphus.py -v` → 모든 테스트 PASSED
 
-      - [ ] 23.3 커밋
+      - [x] 23.3 커밋
          - `git add sisyphus/core/session.py tests/core/test_session_sisyphus.py`
          - `git commit -m "refactor: migrate SessionStore to .sisyphus/sessions/"`
 

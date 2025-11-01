@@ -675,7 +675,7 @@ work_plans:
          - `git add sisyphus/cli/plan.py tests/cli/test_plan_commands.py`
          - `git commit -m "feat: implement plan commands (lint, overview, init, graph)"`
 
-   - [ ] 13. task 명령어 구현
+   - [x] 13. task 명령어 구현
 
       **참조 소스**:
       - 패턴 파일: `sisyphus/cli.py` (현재 execute_phase_app 명령어들)
@@ -697,17 +697,17 @@ work_plans:
         4. --no-tui 옵션에 따라 UIProtocol 선택 (TUI/CLI)
         5. ExecutionLoop.run() 호출하여 기존 로직 재사용
 
-      - [ ] 13.1 sisyphus/cli/task.py 구현
+      - [x] 13.1 sisyphus/cli/task.py 구현
          - task show, task current, task next, task continue
          - MultiPlanNavigator 사용 (위 전략 따름)
          - task continue는 ExecutionLoop 통합 (위 단계 따름)
          - **검증 명령어**: `uv run sisyphus task --help` → 명령어 목록 표시
 
-      - [ ] 13.2 task 명령어 테스트
+      - [x] 13.2 task 명령어 테스트
          - 테스트 파일: `tests/cli/test_task_commands.py`
          - **검증 명령어**: `uv run pytest tests/cli/test_task_commands.py -v` → 모든 테스트 PASSED
 
-      - [ ] 13.3 커밋
+      - [x] 13.3 커밋
          - `git add sisyphus/cli/task.py tests/cli/test_task_commands.py`
          - `git commit -m "feat: implement task commands (show, current, next, continue)"`
 

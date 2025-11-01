@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import time
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -22,6 +23,11 @@ class StatusFile(BaseModel):
 
 
 class StatusManager:
+    # Worktree cache (class-level)
+    _worktree_cache: dict[Path, list[Path]] | None = None
+    _cache_timestamp: float | None = None
+    CACHE_TTL = 60.0  # 60초
+
     def __init__(self, status_path: Path) -> None:
         self.status_path = status_path
         self.backup_path = status_path.parent / f"{status_path.name}.bak"
@@ -74,3 +80,62 @@ class StatusManager:
                 if temp_file.exists():
                     await anyio.to_thread.run_sync(temp_file.unlink)
                 raise
+
+    @classmethod
+    def _is_cache_expired(cls) -> bool:
+        if cls._cache_timestamp is None:
+            return True
+        return time.time() - cls._cache_timestamp > cls.CACHE_TTL
+
+    @classmethod
+    async def _refresh_worktree_cache(cls) -> None:
+        result = await anyio.run_process(
+            ["git", "worktree", "list", "--porcelain"],
+            check=False,
+        )
+
+        if result.returncode != 0:
+            cls._worktree_cache = {}
+            cls._cache_timestamp = time.time()
+            return
+
+        output = result.stdout.decode("utf-8")
+        worktrees: dict[Path, list[Path]] = {}
+        current_worktree: Path | None = None
+
+        for line in output.strip().split("\n"):
+            if not line:
+                continue
+            if line.startswith("worktree "):
+                current_worktree = Path(line.split(" ", 1)[1])
+                worktrees[current_worktree] = []
+            elif line.startswith("branch ") and current_worktree:
+                worktrees[current_worktree].append(Path(line.split(" ", 1)[1]))
+
+        cls._worktree_cache = worktrees
+        cls._cache_timestamp = time.time()
+
+    @classmethod
+    async def detect_worktree(cls) -> Path:
+        if cls._is_cache_expired():
+            await cls._refresh_worktree_cache()
+
+        result = await anyio.run_process(
+            ["git", "rev-parse", "--show-toplevel"],
+            check=False,
+        )
+
+        if result.returncode != 0:
+            return Path.cwd()
+
+        return Path(result.stdout.decode("utf-8").strip())
+
+    @classmethod
+    async def list_all(cls) -> list[Path]:
+        if cls._is_cache_expired():
+            await cls._refresh_worktree_cache()
+
+        if cls._worktree_cache is None:
+            return []
+
+        return list(cls._worktree_cache.keys())

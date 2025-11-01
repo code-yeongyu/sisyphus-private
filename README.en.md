@@ -111,33 +111,214 @@ After installation, you can run Sisyphus directly:
 sisyphus work
 ```
 
-### First Task
+### Quick Start
 
-1. **Create Work Plan** - Make an `ai-todolist.md` file.
-   - Write what to build.
-   - Write how to build it.
-   - List tasks with checkboxes (`- [ ]`).
-   - *This is how it works now, but automatic work plan generation will be released soon.*
+Sisyphus v3.0 uses **WorkPlan YAML files** for structured task management.
 
-2. **Run Sisyphus**
-   ```sh
-   uv run sisyphus work
-   ```
+#### 1. Initialize a Work Plan
 
-3. **Observe** - TUI appears showing the agents working.
-   - Check progress in chat log
-   - View current stage in status panel
-   - Send messages if needed
+```sh
+# Create a new plan template
+uv run sisyphus plan init --destination .sisyphus/tasks/my-project.yaml
+```
 
-4. **Complete** - Sisyphus notifies when all tasks are done.
+This creates a v3.0 YAML file with the following structure:
+
+```yaml
+version: "3.0"
+metadata:
+  created_at: "2025-11-02T00:00:00Z"
+work_plans:
+  - id: plan-main
+    name: "My Project Plan"
+    depends_on: []  # Optional: list plan IDs this depends on
+    todos:
+      - id: "1"
+        title: "Implement feature X"
+        description: "Add user authentication"
+        status: pending
+        references:
+          - inline: "Use JWT tokens for session management"
+        verification_spec:
+          - type: bash
+            description: "Run tests"
+            command: "pytest tests/test_auth.py"
+```
+
+#### 2. Edit Your Plan
+
+Open `.sisyphus/tasks/my-project.yaml` and customize:
+- `todos`: Your task list with IDs, titles, descriptions
+- `depends_on`: Plan dependencies (for multi-plan projects)
+- `references`: Inline notes or external URLs
+- `verification_spec`: Automated checks (bash commands, etc.)
+
+#### 3. Validate Your Plan
+
+```sh
+# Check for errors, cycles, missing dependencies
+uv run sisyphus plan lint .sisyphus/tasks/
+
+# Visualize dependency graph
+uv run sisyphus plan graph .sisyphus/tasks/ --format ascii
+```
+
+Example graph output:
+```
+plan-foundation
+  └─> plan-main
+      └─> plan-testing
+```
+
+#### 4. Execute Tasks
+
+```sh
+# Start working on tasks with Claude agent
+uv run sisyphus task continue --execute claude:sonnet
+```
+
+The TUI appears showing agent progress:
+- Live chat log with agent's work
+- Current task status
+- Real-time verification results
+
+#### 5. Track Progress
+
+```sh
+# Show current task
+uv run sisyphus task current
+
+# Show next task
+uv run sisyphus task next
+
+# Export YAML to Markdown for review
+uv run sisyphus plan export .sisyphus/tasks/my-project.yaml
+```
 
 ---
 
 ## Commands
 
-### `sisyphus work`
+### Plan Management (`sisyphus plan`)
 
-Starts the work. Uses Claude agent and TUI mode by default.
+#### `sisyphus plan init`
+
+Create a new v3.0 WorkPlan template.
+
+```sh
+# Create in default location (.sisyphus/tasks/)
+uv run sisyphus plan init
+
+# Specify custom path
+uv run sisyphus plan init --destination .sisyphus/tasks/feature-auth.yaml
+```
+
+#### `sisyphus plan lint`
+
+Validate YAML structure, dependencies, and references.
+
+```sh
+# Lint all plans in directory
+uv run sisyphus plan lint .sisyphus/tasks/
+
+# Lint specific file
+uv run sisyphus plan lint .sisyphus/tasks/my-plan.yaml
+```
+
+Checks for:
+- Circular dependencies (A depends on B, B depends on A)
+- Missing plan files
+- Invalid reference IDs
+- Malformed YAML structure
+
+#### `sisyphus plan graph`
+
+Visualize plan dependencies.
+
+```sh
+# ASCII format (terminal-friendly)
+uv run sisyphus plan graph .sisyphus/tasks/ --format ascii
+
+# Mermaid format (for documentation)
+uv run sisyphus plan graph .sisyphus/tasks/ --format mermaid
+
+# PNG format (requires graphviz)
+uv run sisyphus plan graph .sisyphus/tasks/ --format png --output graph.png
+```
+
+#### `sisyphus plan export`
+
+Convert YAML to Markdown format (ai-todolist.md style).
+
+```sh
+# Output to stdout
+uv run sisyphus plan export .sisyphus/tasks/my-plan.yaml
+
+# Save to file
+uv run sisyphus plan export .sisyphus/tasks/my-plan.yaml --output ai-todolist.md
+```
+
+#### `sisyphus plan overview`
+
+Show summary of all plans and current status.
+
+```sh
+uv run sisyphus plan overview
+```
+
+### Task Execution (`sisyphus task`)
+
+#### `sisyphus task continue`
+
+Resume or start task execution with agents.
+
+```sh
+# Use Claude agent with TUI
+uv run sisyphus task continue --execute claude:sonnet
+
+# CLI mode (no TUI)
+uv run sisyphus task continue --execute claude:sonnet --no-tui
+```
+
+#### `sisyphus task current`
+
+Show the currently active task.
+
+```sh
+uv run sisyphus task current
+```
+
+#### `sisyphus task next`
+
+Show the next pending task.
+
+```sh
+uv run sisyphus task next
+```
+
+#### `sisyphus task show`
+
+Display details of a specific task.
+
+```sh
+uv run sisyphus task show --id 1
+```
+
+#### `sisyphus task verify`
+
+Run verification checks for tasks.
+
+```sh
+# Run bash verification commands
+uv run sisyphus task verify bash
+
+# Manual verification status
+uv run sisyphus task verify status
+```
+
+### Legacy Support (`sisyphus work`)
+
+The original `sisyphus work` command still works for v2.1 compatibility.
 
 ```sh
 # Basic execution (Claude + TUI)
@@ -352,37 +533,86 @@ uv run sisyphus work --theme latte
 
 ---
 
-## Work Plan (`ai-todolist.md`)
+## Work Plans (v3.0 YAML)
 
-This is Sisyphus's boulder. Fortunately, Sisyphus can push the boulder to the mountain top. Just keep pushing.
+Sisyphus v3.0 uses structured YAML files instead of Markdown. This enables:
+- **Dependency management**: Define which plans must complete before others
+- **Automated validation**: Lint checks for cycles, missing references, invalid structure
+- **Graph visualization**: See your project's dependency tree
+- **Programmatic access**: Query and update tasks via CLI
 
 ### Basic Structure
 
-  ```markdown
-  # User Request
+```yaml
+version: "3.0"
 
-  Write what to build here.
+metadata:
+  created_at: "2025-11-02T00:00:00Z"
 
-  ## Task List
+work_plans:
+  - id: plan-main
+    name: "My Project"
+    depends_on: []  # Optional: list plan IDs this depends on
 
-  - [ ] Task 1: Database schema design
-  - [ ] Task 2: API endpoint implementation
-  - [ ] Task 3: Test code writing
+    todos:
+      - id: "1"
+        title: "Database schema design"
+        description: "Create PostgreSQL tables and indexes"
+        status: pending
 
-  ## Completion Flag
+        children:  # Optional nested subtasks
+          - id: "1.1"
+            title: "Users table"
+            status: pending
 
-  is_all_goals_accomplished = FALSE
-  ```
+        references:  # Context and documentation
+          - inline: "Use UUID for primary keys"
+
+        verification_spec:  # Automated checks
+          - type: bash
+            description: "Check migration files"
+            command: "ls migrations/*.sql"
+
+      - id: "2"
+        title: "API endpoint implementation"
+        status: pending
+
+    references:  # Plan-level references
+      - ref_id: "postgres_docs"
+        uri: "https://postgresql.org/docs/"
+```
 
 ### Important Rules
 
-1. **Checkboxes are sacred** - `- [ ]` is incomplete, `- [x]` is complete
-2. **Completion flag doesn't lie** - Only changes to `TRUE` when all tasks are done
-3. **Sisyphus reads this document repeatedly** - Write clearly
+1. **Status values**: `pending`, `in_progress`, `completed`, `blocked`
+2. **Dependencies are validated**: Circular dependencies trigger lint errors
+3. **References support inline or URI**: Use `inline` for quick notes, `uri` for external docs
+4. **Children are limited to 1 level**: No deeply nested hierarchies
 
-When work is complete:
-- All checkboxes become `- [x]`
-- `is_all_goals_accomplished = TRUE`
+### Examples
+
+See the `examples/` directory for complete examples:
+- **`simple-project.yaml`**: Basic single-plan project
+- **`multi-plan-dependencies.yaml`**: Multi-plan with dependency graph
+
+```bash
+# Browse examples
+cat examples/simple-project.yaml
+
+# Try the examples
+uv run sisyphus plan lint examples/simple-project.yaml
+uv run sisyphus plan graph examples/multi-plan-dependencies.yaml --format ascii
+```
+
+### Migration from v2.1 (ai-todolist.md)
+
+If you have an old Markdown-based plan, use the converter:
+
+```bash
+uv run sisyphus plan convert-legacy ai-todolist.md --output .sisyphus/tasks/main.yaml
+```
+
+See `docs/migration-v2-to-v3.md` for detailed migration guide.
 
 ---
 
@@ -448,61 +678,66 @@ rm ./sessions/sessions.json
 
 ---
 
-## Work Plan Management (`sisyphus plan`)
+## Advanced Features
 
-Sisyphus provides CLI commands to programmatically query and manipulate YAML work plans. These commands are designed for use within agent loops to track progress and manage task completion.
+### Multi-Plan Projects
 
-### Task Filtering and Completion Tracking
-
-#### Query with Filters
-
-Filter task information to show only what you need:
+For large projects, split work into multiple interdependent plans:
 
 ```bash
-# Get only references
-sisyphus plan get task --id 1 --show-references
+# Create foundation plan
+uv run sisyphus plan init --destination .sisyphus/tasks/foundation.yaml
 
-# Get only child tasks
-sisyphus plan get task --id 1 --show-children
+# Create main plan (depends on foundation)
+uv run sisyphus plan init --destination .sisyphus/tasks/main.yaml
 
-# Get only verification spec
-sisyphus plan get task --id 1 --show-verification
+# Edit main.yaml to add dependency:
+# depends_on: ["plan-foundation"]
+
+# Visualize the full graph
+uv run sisyphus plan graph .sisyphus/tasks/ --format ascii
 ```
 
-#### Recursive Task Completion
+Output:
+```
+plan-foundation
+  └─> plan-main
+```
 
-Mark a task and all its children as completed in one command:
+Sisyphus will automatically:
+1. Execute plan-foundation first
+2. Wait until all tasks complete
+3. Move to plan-main automatically
+
+### Working with Multiple Worktrees
+
+Sisyphus v3.0 supports Git worktrees for parallel development:
 
 ```bash
-# Mark task and all children as completed
-sisyphus plan set task-status 1 --status completed --recursive
+# Create worktree for feature branch
+git worktree add ../sisyphus-feature feature/auth
+
+# Each worktree has independent status
+cd ../sisyphus-feature
+uv run sisyphus task continue  # Works on feature/auth tasks
+
+cd ../sisyphus
+uv run sisyphus task continue  # Works on main branch tasks
 ```
 
-#### Verification Item Tracking
+The `.sisyphus/status.json` file tracks the current plan per worktree.
 
-Track individual verification items within a task:
+### Custom Working Directory
+
+Use `--cwd` to run Sisyphus from a different directory:
 
 ```bash
-# Mark verification item as completed
-sisyphus plan set-verification 1 v1 --completed
+# Manage tasks in a subdirectory
+uv run sisyphus plan lint --cwd ./temp/
 
-# Mark as not completed
-sisyphus plan set-verification 1 v1 --not-completed
+# Execute tasks in experimental directory
+uv run sisyphus task continue --cwd ./experiments/ --execute claude:sonnet
 ```
-
-#### Completion Check
-
-Check if a task can be completed by analyzing all children and verifications:
-
-```bash
-# Check if task can be completed (checks all children + verifications)
-sisyphus plan check 1
-```
-
-This generates a comprehensive report showing:
-- Child task status (completed, in_progress, pending counts)
-- Verification item progress (completed/total)
-- Whether the task can be marked as completed
 
 ---
 

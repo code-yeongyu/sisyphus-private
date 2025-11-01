@@ -1,0 +1,68 @@
+# Multi-Plan Dependencies Example
+# Demonstrates plan dependencies and dependency graph features
+
+version: "3.0"
+
+metadata:
+  created_at: "2025-11-02T00:00:00Z"
+
+work_plans:
+  # Foundation plan - no dependencies
+  - id: plan-foundation
+    name: "Foundation Infrastructure"
+    depends_on: []
+
+    todos:
+      - id: "1"
+        title: "Setup database schema"
+        status: pending
+        description: "Create PostgreSQL tables and indexes"
+
+      - id: "2"
+        title: "Setup authentication service"
+        status: pending
+        description: "Implement JWT-based auth"
+
+  # Main plan - depends on foundation
+  - id: plan-main
+    name: "Core Features"
+    depends_on: ["plan-foundation"]  # Must complete foundation first
+
+    todos:
+      - id: "1"
+        title: "Implement user management API"
+        status: pending
+        description: "CRUD endpoints for users"
+
+        references:
+          - inline: "Requires auth service from plan-foundation"
+
+      - id: "2"
+        title: "Add business logic layer"
+        status: pending
+
+  # Testing plan - depends on main
+  - id: plan-testing
+    name: "Testing & QA"
+    depends_on: ["plan-main"]  # Must complete main features first
+
+    todos:
+      - id: "1"
+        title: "Write integration tests"
+        status: pending
+
+        verification_spec:
+          - type: bash
+            description: "Run full test suite"
+            command: "pytest tests/integration/ -v"
+
+      - id: "2"
+        title: "Performance benchmarks"
+        status: pending
+
+# Dependency graph visualization:
+# plan-foundation
+#   └─> plan-main
+#       └─> plan-testing
+#
+# Run: sisyphus plan graph examples/ --format ascii

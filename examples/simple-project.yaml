@@ -1,0 +1,68 @@
+# Simple Project Example
+# A basic v3.0 WorkPlan demonstrating core features
+
+version: "3.0"
+
+metadata:
+  created_at: "2025-11-02T00:00:00Z"
+  updated_at: "2025-11-02T00:00:00Z"
+
+work_plans:
+  - id: plan-simple
+    name: "Simple TODO CLI Project"
+    depends_on: []  # No dependencies - standalone plan
+
+    todos:
+      - id: "1"
+        title: "Setup project structure"
+        description: "Create directories and initialize Python package"
+        status: pending
+
+        references:
+          - inline: "Use Python 3.12+ with uv package manager"
+
+        children:
+          - id: "1.1"
+            title: "Create directory structure"
+            status: pending
+
+          - id: "1.2"
+            title: "Initialize pyproject.toml"
+            status: pending
+
+        verification_spec:
+          - type: bash
+            description: "Check directory exists"
+            command: "test -d todo-cli && echo 'Directory exists'"
+            expected_output: "Directory exists"
+
+      - id: "2"
+        title: "Implement CLI commands"
+        description: "Add Typer-based CLI with add/list/done commands"
+        status: pending
+
+        references:
+          - inline: "Use Typer for CLI framework, Rich for output formatting"
+
+        verification_spec:
+          - type: bash
+            description: "Test CLI installation"
+            command: "uv run todo-cli --help"
+
+      - id: "3"
+        title: "Write tests"
+        description: "Add pytest tests with 90%+ coverage"
+        status: pending
+
+        verification_spec:
+          - type: bash
+            description: "Run test suite"
+            command: "uv run pytest tests/ -v"
+            expected_output: "passed"
+
+    references:
+      - ref_id: "ref_typer_docs"
+        uri: "https://typer.tiangolo.com/"
+
+      - ref_id: "ref_pytest_docs"
+        uri: "https://docs.pytest.org/"

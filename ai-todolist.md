@@ -855,54 +855,58 @@ work_plans:
          - `git add sisyphus/core/plan_linter.py tests/core/test_plan_linter_references.py`
          - `git commit -m "feat: extend linter with reference validation (ref_id, inline)"`
 
-   - [ ] 19. Legacy 변환기 (v2.1 → v3.0)
+   - [ ] 19. YAML → Markdown 변환기
+
+      **목적**: WorkPlan YAML을 `/plan` 커맨드 형식의 Markdown (ai-todolist.md)으로 변환
 
       **참조 소스**:
-      - 패턴 파일: `sisyphus/utils/plan_types.py` (v2.1 모델 구조)
-      - 참조 문서: `planning-memos/03-codex-phase-planning.md` (Task 4.3: Legacy 변환기)
+      - 패턴 파일: `~/.claude/commands/plan.md` (출력 형식 참고)
+      - 모델 파일: `sisyphus/core/plans/models.py` (v3.0 WorkPlan 구조)
 
-      **ReferenceItem 변환 매핑 규칙**:
-      - `ReferencePointer(type="pointer", ref_id="X")` → `ref_id="X"` 유지, uri/inline 없음
-      - `FileReference(type="file", path="/a/b.txt", id="Y")` → `ref_id="Y", uri="file:///a/b.txt"`
-      - `URLReference(type="url", url="https://...", id="Z")` → `ref_id="Z", uri="https://..."`
-      - `MarkdownReference(type="markdown", content="...", id="W")` → `ref_id="W", inline="..."` (content 그대로)
+      **변환 규칙**:
+      - WorkPlan.name → "# 사용자의 최초 요청"
+      - WorkPlan.todos → "# TODOs" 섹션의 체크리스트
+      - Todo.status → checkbox 상태 ([x] or [ ])
+      - Todo.children → 들여쓰기된 하위 체크리스트
+      - references → 하단 링크 섹션
 
-      - [ ] 19.1 sisyphus/core/converters/legacy.py 생성
-         - LegacyPlanAdapter.convert()
-         - v2.1 읽기 → v3.0 모델로 변환 → .sisyphus/tasks/ 저장
-         - 위 매핑 규칙에 따라 ReferenceItem 변환
-         - **검증 명령어**: `python -c "from sisyphus.core.converters.legacy import LegacyPlanAdapter"` → 성공
+      - [ ] 19.1 sisyphus/core/exporters/markdown.py 생성
+         - MarkdownExporter.export(plan_document: PlanDocument) → str
+         - ai-todolist.md 형식으로 포맷팅
+         - **검증 명령어**: `python -c "from sisyphus.core.exporters.markdown import MarkdownExporter"` → 성공
 
-      - [ ] 19.2 Legacy 변환기 테스트
-         - 테스트 파일: `tests/core/converters/test_legacy.py`
-         - **검증 명령어**: `uv run pytest tests/core/converters/test_legacy.py -v` → 모든 테스트 PASSED
+      - [ ] 19.2 Markdown 변환기 테스트
+         - 테스트 파일: `tests/core/exporters/test_markdown.py`
+         - **검증 명령어**: `uv run pytest tests/core/exporters/test_markdown.py -v` → 모든 테스트 PASSED
 
       - [ ] 19.3 커밋
-         - `git add sisyphus/core/converters/legacy.py tests/core/converters/test_legacy.py`
-         - `git commit -m "feat: add v2.1 to v3.0 plan converter"`
+         - `git add sisyphus/core/exporters/markdown.py tests/core/exporters/test_markdown.py`
+         - `git commit -m "feat: add YAML to Markdown exporter"`
 
-   - [ ] 20. plan convert-legacy 명령어
+   - [ ] 20. plan export 명령어
+
+      **목적**: WorkPlan YAML을 읽어 Markdown으로 출력
 
       **참조 소스**:
-      - 패턴 파일: `sisyphus/cli/plan.py` (Phase 3에서 생성)
+      - 패턴 파일: `sisyphus/commands/plan.py` (Phase 3에서 생성)
 
-      - [ ] 20.1 sisyphus/cli/plan.py에 convert-legacy 명령어 추가
-         - plan convert-legacy <path>
-         - 출력: .sisyphus/tasks/ 하위에 변환된 YAML
-         - **검증 명령어**: `uv run sisyphus plan convert-legacy tests/fixtures/plans/v2_legacy.yaml` → 변환 파일 생성
+      - [ ] 20.1 sisyphus/commands/plan.py에 export 명령어 추가
+         - plan export <yaml_path> [--output <md_path>]
+         - 출력: stdout 또는 지정된 파일
+         - **검증 명령어**: `uv run sisyphus plan export .sisyphus/tasks/test.yaml` → Markdown 출력
 
-      - [ ] 20.2 convert-legacy 명령어 테스트
-         - 테스트 파일: `tests/cli/test_plan_convert.py`
-         - **검증 명령어**: `uv run pytest tests/cli/test_plan_convert.py -v` → 모든 테스트 PASSED
+      - [ ] 20.2 export 명령어 테스트
+         - 테스트 파일: `tests/cli/test_plan_export.py`
+         - **검증 명령어**: `uv run pytest tests/cli/test_plan_export.py -v` → 모든 테스트 PASSED
 
       - [ ] 20.3 커밋
-         - `git add sisyphus/cli/plan.py tests/cli/test_plan_convert.py`
-         - `git commit -m "feat: add plan convert-legacy command for v2.1 migration"`
+         - `git add sisyphus/commands/plan.py tests/cli/test_plan_export.py`
+         - `git commit -m "feat: add plan export command for YAML to Markdown conversion"`
 
       - [ ] **Phase 4 완료 검증 체크리스트**
-         - [ ] `uv run sisyphus plan convert-legacy tests/fixtures/plans/v2_legacy.yaml` → 변환 성공
-         - [ ] .sisyphus/tasks/에 변환된 YAML 생성 확인
-         - [ ] 참조 포맷 보존 확인 (ref_id, inline)
+         - [ ] `uv run sisyphus plan export .sisyphus/tasks/test.yaml` → Markdown 출력 성공
+         - [ ] 출력 형식이 ai-todolist.md와 동일한지 확인
+         - [ ] checkbox, 들여쓰기, references 포맷 보존 확인
 
 - [ ] **Phase 5: 상태 워크플로 강화**
 

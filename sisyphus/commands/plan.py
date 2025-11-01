@@ -4,17 +4,21 @@ from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 
+import anyio
+import sniffio
 import typer
 from pydantic import ValidationError
 from rich.console import Console
 from ruamel.yaml import YAML, YAMLError
 
 from sisyphus.commands.common import resolve_cwd
+from sisyphus.core.exporters.markdown import MarkdownExporter
 from sisyphus.core.graph.dependencies import build_plan_graph
 from sisyphus.core.graph.renderer import AsciiRenderer, MermaidRenderer
 from sisyphus.core.plan_linter import PlanLinter
 from sisyphus.core.plan_loader import PlanLoader
 from sisyphus.core.plan_navigator import PlanNavigator
+from sisyphus.core.plans.loader import load_plan
 from sisyphus.core.plans.models import PlanDocument
 from sisyphus.utils.formatting import (
     OutputFormat,
@@ -306,4 +310,50 @@ def get_plan_info(
         raise typer.Exit(1)
     except ValidationError as e:
         console.print(f"[red]YAML 검증 실패:[/red]\n{e}")
+        raise typer.Exit(1)
+
+
+@plan_app.command(name="export")
+def export_plan(
+    yaml_path: Path = typer.Argument(..., help="Path to YAML plan file"),
+    output: Path | None = typer.Option(None, "--output", "-o", help="Output Markdown file path (default: stdout)"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+) -> None:
+    """Export WorkPlan YAML to Markdown format."""
+
+    working_dir = resolve_cwd(cwd)
+    resolved_yaml = working_dir / yaml_path if not yaml_path.is_absolute() else yaml_path
+
+    if not resolved_yaml.exists():
+        console.print(f"[red]Error: File not found: {resolved_yaml}[/red]")
+        raise typer.Exit(1)
+
+    async def _load_and_export() -> str:
+        try:
+            plan_doc = await load_plan(resolved_yaml)
+            return MarkdownExporter.export(plan_doc)
+        except Exception as e:
+            console.print(f"[red]Error loading plan:[/red] {e}")
+            raise typer.Exit(1)
+
+    try:
+        # Check if already in async context (pytest-anyio)
+        try:
+            sniffio.current_async_library()
+            # Already in async context - use anyio.from_thread.run_sync
+            markdown = anyio.from_thread.run_sync(_load_and_export)
+        except sniffio.AsyncLibraryNotFoundError:
+            # Not in async context, use anyio.run
+            markdown = anyio.run(_load_and_export)
+
+        if output:
+            resolved_output = working_dir / output if not output.is_absolute() else output
+            resolved_output.parent.mkdir(parents=True, exist_ok=True)
+            resolved_output.write_text(markdown, encoding="utf-8")
+            console.print(f"[green]✓ Markdown exported to: {resolved_output}[/green]")
+        else:
+            print(markdown)
+
+    except Exception as e:
+        console.print(f"[red]Export failed:[/red] {e}")
         raise typer.Exit(1)

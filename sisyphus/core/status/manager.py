@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import shutil
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -22,6 +24,14 @@ class StatusFile(BaseModel):
 class StatusManager:
     def __init__(self, status_path: Path) -> None:
         self.status_path = status_path
+        self.backup_path = status_path.parent / f"{status_path.name}.bak"
+        self.lock = anyio.Lock()
+
+    def _remove_path_sync(self, path: Path) -> None:
+        if path.is_dir():
+            shutil.rmtree(path)
+        else:
+            path.unlink()
 
     async def get(self) -> StatusFile:
         if not self.status_path.exists():
@@ -45,7 +55,22 @@ class StatusManager:
             ),
         )
 
-        self.status_path.parent.mkdir(parents=True, exist_ok=True)
+        async with self.lock:
+            self.status_path.parent.mkdir(parents=True, exist_ok=True)
 
-        async with await anyio.open_file(self.status_path, "w", encoding="utf-8") as f:
-            await f.write(json.dumps(status.model_dump(), indent=2, ensure_ascii=False))
+            if self.status_path.exists():
+                if self.backup_path.exists():
+                    await anyio.to_thread.run_sync(self._remove_path_sync, self.backup_path)
+                await anyio.to_thread.run_sync(self.status_path.rename, self.backup_path)
+
+            temp_file = self.status_path.parent / f"{self.status_path.name}.tmp.{uuid.uuid4().hex}"
+            try:
+                async with await anyio.open_file(temp_file, "w", encoding="utf-8") as f:
+                    await f.write(json.dumps(status.model_dump(), indent=2, ensure_ascii=False))
+                    await f.flush()
+
+                await anyio.to_thread.run_sync(temp_file.rename, self.status_path)
+            except Exception:
+                if temp_file.exists():
+                    await anyio.to_thread.run_sync(temp_file.unlink)
+                raise

@@ -1,0 +1,11 @@
+version: "2.1"
+metadata:
+  created_at: "2024-10-01T10:00:00Z"
+work_plans:
+  - name: "Legacy Plan"
+    todos:
+      - id: "1"
+        title: "Legacy Task"
+        status: pending
+        references: []
+        verification_spec: []

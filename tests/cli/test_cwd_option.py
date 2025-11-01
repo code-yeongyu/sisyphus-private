@@ -393,7 +393,7 @@ def test_task_continue__with_cwd_option__resolves_path(tmp_path: Path) -> None:
 
 def test_resolve_cwd__with_none__returns_current_directory() -> None:
     # given
-    from sisyphus.commands.common import resolve_cwd
+    from sisyphus.cli.common import resolve_cwd
 
     # when
     result = resolve_cwd(None)
@@ -406,7 +406,7 @@ def test_resolve_cwd__with_relative_path__converts_to_absolute(tmp_path: Path) -
     # given
     import os
 
-    from sisyphus.commands.common import resolve_cwd
+    from sisyphus.cli.common import resolve_cwd
 
     original_cwd = Path.cwd()
     try:
@@ -426,7 +426,7 @@ def test_resolve_cwd__with_relative_path__converts_to_absolute(tmp_path: Path) -
 
 def test_resolve_cwd__with_absolute_path__returns_as_is(tmp_path: Path) -> None:
     # given
-    from sisyphus.commands.common import resolve_cwd
+    from sisyphus.cli.common import resolve_cwd
 
     # when
     result = resolve_cwd(str(tmp_path))

@@ -11,7 +11,7 @@ from pydantic import ValidationError
 from rich.console import Console
 from ruamel.yaml import YAML, YAMLError
 
-from sisyphus.commands.common import resolve_cwd
+from sisyphus.cli.common import resolve_cwd
 from sisyphus.core.exporters.markdown import MarkdownExporter
 from sisyphus.core.graph.dependencies import build_plan_graph
 from sisyphus.core.graph.renderer import AsciiRenderer, MermaidRenderer

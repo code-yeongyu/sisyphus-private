@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 import typer
 from rich.console import Console
 
-from sisyphus.commands.common import resolve_cwd
+from sisyphus.cli.common import resolve_cwd
 from sisyphus.core.plan_loader import PlanLoader
 from sisyphus.core.plan_navigator import PlanNavigator
 from sisyphus.utils.formatting import OutputFormat, print_task

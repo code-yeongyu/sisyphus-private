@@ -1,0 +1,18 @@
+version: "3.0"
+metadata:
+  created_at: "2025-11-01T10:00:00Z"
+  updated_at: "2025-11-01T10:00:00Z"
+work_plans:
+  - id: plan-test
+    name: "Test Plan"
+    depends_on: []
+    todos:
+      - id: "1"
+        title: "Test Task"
+        description: "Test description for basic task"
+        status: pending
+        children: []
+        references:
+          - inline: "Inline reference example for testing"
+        verification_spec: []
+    references: []

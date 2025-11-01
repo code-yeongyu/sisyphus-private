@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from sisyphus.core.status.manager import CurrentPlan, StatusFile, StatusManager
+from sisyphus.core.status.manager import StatusFile, StatusManager
 
 pytestmark = [pytest.mark.anyio]
 

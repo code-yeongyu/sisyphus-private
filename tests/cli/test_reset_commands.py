@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from sisyphus.commands.reset import reset_app
+from sisyphus.cli.reset import reset_app
 
 pytestmark = [pytest.mark.anyio]
 

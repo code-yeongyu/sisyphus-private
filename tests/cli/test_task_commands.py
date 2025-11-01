@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from sisyphus.commands.task import task_app
+from sisyphus.cli.task import task_app
 
 pytestmark = [pytest.mark.anyio]
 

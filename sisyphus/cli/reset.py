@@ -5,7 +5,7 @@ import shutil
 import typer
 from rich.console import Console
 
-from sisyphus.commands.common import resolve_cwd
+from sisyphus.cli.common import resolve_cwd
 
 reset_app = typer.Typer(name="reset", help="Reset Sisyphus state")
 console = Console()

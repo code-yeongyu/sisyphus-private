@@ -11,6 +11,7 @@ from typing import Any
 
 from sisyphus.core.graph.dependencies import build_plan_graph, detect_cycles
 from sisyphus.core.plans.models import PlanDocument
+from sisyphus.core.plans.references import ReferenceResolver
 from sisyphus.utils.plan_types import (
     RetrievalType,
     TodoStatus,
@@ -1046,5 +1047,29 @@ class PlanLinter:
         for cycle in cycles:
             cycle_path = " → ".join(cycle)
             errors.append(f"Circular dependency detected: {cycle_path}")
+
+        return errors
+
+    def validate_references(self, plan_document: PlanDocument) -> list[str]:
+        """Validate all references in v3.0 plan document.
+
+        Args:
+            plan_document: v3.0 PlanDocument instance
+
+        Returns:
+            List of error messages (empty if valid)
+        """
+        errors: list[str] = []
+
+        for work_plan in plan_document.work_plans:
+            ref_errors = ReferenceResolver.validate_references(work_plan)
+            errors.extend(ref_errors)
+
+            for ref_item in work_plan.references:
+                if ref_item.inline and len(ref_item.inline) > 500:
+                    errors.append(
+                        f"WorkPlan '{work_plan.name}': inline reference too long "
+                        f"({len(ref_item.inline)} chars, recommend < 500)"
+                    )
 
         return errors

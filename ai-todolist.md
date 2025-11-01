@@ -83,7 +83,7 @@ parallel_requested = FALSE
 
 # 현재 진행 중인 작업
 
-모든 작업 완료! Phase 1-6 전체 완료됨.
+Task 16.1-16.3: sisyphus/cli.py를 554줄에서 ~100줄로 축소
 
 # 필요한 배경지식
 
@@ -796,19 +796,19 @@ work_plans:
       - task_app.verify(status)
       ```
 
-      - [ ] 16.1 sisyphus/cli.py 대폭 축소
+      - [x] 16.1 sisyphus/cli.py 대폭 축소
          - plan_app, task_app, reset_app import 및 마운트만 유지
          - execute_phase_app, verify_phase_app 제거
-         - 995줄 → ~100줄 목표
-         - **검증 명령어**: `wc -l sisyphus/cli.py` → ~100줄
+         - 554줄 → 23줄 완료 (목표 ~100줄 대비 훨씬 초과 달성)
+         - **검증 명령어**: `wc -l sisyphus/cli.py` → 23줄 ✓
 
-      - [ ] 16.2 루트 CLI 테스트
+      - [x] 16.2 루트 CLI 테스트
          - 테스트 파일: `tests/cli/test_cli_root.py`
-         - **검증 명령어**: `uv run pytest tests/cli/test_cli_root.py -v` → 모든 테스트 PASSED
+         - **검증 명령어**: `uv run pytest tests/cli/test_cli_root.py -v` → 16 passed ✓
 
       - [ ] 16.3 커밋
-         - `git add sisyphus/cli.py tests/cli/test_cli_root.py`
-         - `git commit -m "refactor: reduce cli.py from 995 to ~100 lines, remove deprecated commands"`
+         - `git add sisyphus/cli.py sisyphus/utils/ignore.py sisyphus/utils/cli_helpers.py sisyphus/cli/work.py`
+         - `git commit -m "refactor: reduce cli.py from 554 to 23 lines by extracting helpers and commands"`
 
       - [ ] **Phase 3 완료 검증 체크리스트**
          - [ ] `uv run sisyphus plan --help` → 명령어 목록 확인

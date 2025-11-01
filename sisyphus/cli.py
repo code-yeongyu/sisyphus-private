@@ -406,9 +406,6 @@ def run(
     execute_agent = create_agent(execute_spec, execute_sdk_options, exec_bin, opencode_server_url)
     verify_agent = create_agent(verify_spec, verify_sdk_options, ver_bin, opencode_server_url) if verify_spec else None
 
-    # DEBUG: Confirm verify_agent creation
-    console.print(f"[yellow]DEBUG: verify_spec={verify_spec}, verify_agent={verify_agent}[/yellow]")
-
     resolved_theme = resolve_theme(theme)
     ui = create_ui("cli" if no_tui else "tui", theme=resolved_theme if not no_tui else None)
 

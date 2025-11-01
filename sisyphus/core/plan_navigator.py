@@ -249,3 +249,31 @@ class PlanNavigator:
             verification_summary=verification_summary,
             can_complete=can_complete,
         )
+
+    def next_unverified(self) -> tuple[VerificationItem, int, int] | None:
+        """Get next unverified verification item across all tasks.
+
+        Returns:
+            Tuple of (verification_item, current_index, total_count) or None if all verified
+            - current_index: 1-based index (e.g., 1 for first item)
+            - total_count: total number of verification items
+        """
+        all_verifications: list[tuple[VerificationItem, Todo]] = []
+
+        def collect_verifications(todos: list[Todo]) -> None:
+            for todo in todos:
+                for verify_item in todo.verification_spec:
+                    all_verifications.append((verify_item, todo))
+                if todo.children:
+                    collect_verifications(todo.children)
+
+        collect_verifications(self.plan.todos)
+
+        if not all_verifications:
+            return None
+
+        for idx, (verify_item, _) in enumerate(all_verifications):
+            if not verify_item.verified:
+                return (verify_item, idx + 1, len(all_verifications))
+
+        return None

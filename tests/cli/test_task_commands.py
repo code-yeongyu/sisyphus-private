@@ -345,3 +345,366 @@ def test_continue__shows_not_implemented_message(tmp_path: Path) -> None:
     # then
     assert result.exit_code == 1
     assert "not yet implemented" in result.stdout
+
+
+def test_verify_bash__with_bash_verification__executes_and_marks_verified(tmp_path: Path) -> None:
+    # given
+    yaml_file = tmp_path / "ai-todolist.yaml"
+    yaml_content = """metadata:
+  created_at: "2025-01-01T00:00:00Z"
+  updated_at: "2025-01-01T00:00:00Z"
+user_request:
+  original: "Test"
+  created_at: "2025-01-01T00:00:00Z"
+  additional: []
+objectives:
+  core: "Test"
+background:
+  current_situation: "Test"
+  reason_for_change: "Test"
+  changes_to_make: "Test"
+required_background:
+  description: "Test"
+  references: []
+status:
+  execution:
+    started: true
+    completed: false
+  work_mode:
+    parallel_requested: false
+    current_task_id: "1"
+  progress:
+    total_tasks: 1
+    completed: 0
+    in_progress: 1
+    pending: 0
+  current_work: ""
+workflow:
+  dependency_diagram: ""
+todos:
+  - id: "1"
+    title: "Test Task"
+    status: in_progress
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec:
+      - id: "v1"
+        title: "Test Verification"
+        description: "Test bash verification"
+        verified: false
+        orchestrator_manually_verified: false
+        manual_verification_evidence: ""
+        bash:
+          - execute: "echo hello"
+            expected_exit_code: 0
+        llm_judge: []
+success_vision:
+  user_perspective: []
+  business_perspective: []
+  technical_criteria: []
+final_verification: []
+"""
+    yaml_file.write_text(yaml_content)
+
+    # when
+    result = runner.invoke(task_app, ["verify", "bash", "--cwd", str(tmp_path)])
+
+    # then
+    assert result.exit_code == 0
+    assert "검증 1/1" in result.stdout
+    assert "Test Verification" in result.stdout
+    assert "✓ 성공" in result.stdout
+
+
+def test_verify_bash__with_all_verified__shows_completion_message(tmp_path: Path) -> None:
+    # given
+    yaml_file = tmp_path / "ai-todolist.yaml"
+    yaml_content = """metadata:
+  created_at: "2025-01-01T00:00:00Z"
+  updated_at: "2025-01-01T00:00:00Z"
+user_request:
+  original: "Test"
+  created_at: "2025-01-01T00:00:00Z"
+  additional: []
+objectives:
+  core: "Test"
+background:
+  current_situation: "Test"
+  reason_for_change: "Test"
+  changes_to_make: "Test"
+required_background:
+  description: "Test"
+  references: []
+status:
+  execution:
+    started: true
+    completed: false
+  work_mode:
+    parallel_requested: false
+  progress:
+    total_tasks: 0
+    completed: 0
+    in_progress: 0
+    pending: 0
+  current_work: ""
+workflow:
+  dependency_diagram: ""
+todos:
+  - id: "1"
+    title: "Test Task"
+    status: completed
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec:
+      - id: "v1"
+        title: "Test Verification"
+        description: "Test"
+        verified: true
+        verified_at: "2025-01-01T00:00:00Z"
+        orchestrator_manually_verified: false
+        manual_verification_evidence: ""
+        bash:
+          - execute: "echo verified"
+            expected_exit_code: 0
+        llm_judge: []
+success_vision:
+  user_perspective: []
+  business_perspective: []
+  technical_criteria: []
+final_verification: []
+"""
+    yaml_file.write_text(yaml_content)
+
+    # when
+    result = runner.invoke(task_app, ["verify", "bash", "--cwd", str(tmp_path)])
+
+    # then
+    assert result.exit_code == 0
+    assert "모든 검증이 완료되었습니다" in result.stdout
+
+
+def test_verify_status__with_mixed_verifications__shows_status(tmp_path: Path) -> None:
+    # given
+    yaml_file = tmp_path / "ai-todolist.yaml"
+    yaml_content = """metadata:
+  created_at: "2025-01-01T00:00:00Z"
+  updated_at: "2025-01-01T00:00:00Z"
+user_request:
+  original: "Test"
+  created_at: "2025-01-01T00:00:00Z"
+  additional: []
+objectives:
+  core: "Test"
+background:
+  current_situation: "Test"
+  reason_for_change: "Test"
+  changes_to_make: "Test"
+required_background:
+  description: "Test"
+  references: []
+status:
+  execution:
+    started: true
+    completed: false
+  work_mode:
+    parallel_requested: false
+  progress:
+    total_tasks: 0
+    completed: 0
+    in_progress: 0
+    pending: 0
+  current_work: ""
+workflow:
+  dependency_diagram: ""
+todos:
+  - id: "1"
+    title: "Test Task"
+    status: in_progress
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec:
+      - id: "v1"
+        title: "Verified Item"
+        description: "Test"
+        verified: true
+        verified_at: "2025-01-01T00:00:00Z"
+        orchestrator_manually_verified: false
+        manual_verification_evidence: ""
+        bash:
+          - execute: "echo verified"
+            expected_exit_code: 0
+        llm_judge: []
+      - id: "v2"
+        title: "Unverified Item"
+        description: "Test"
+        verified: false
+        orchestrator_manually_verified: false
+        manual_verification_evidence: ""
+        bash:
+          - execute: "echo test"
+            expected_exit_code: 0
+        llm_judge: []
+success_vision:
+  user_perspective: []
+  business_perspective: []
+  technical_criteria: []
+final_verification: []
+"""
+    yaml_file.write_text(yaml_content)
+
+    # when
+    result = runner.invoke(task_app, ["verify", "status", "--cwd", str(tmp_path)])
+
+    # then
+    assert result.exit_code == 0
+    assert "검증 상태: 1/2 완료" in result.stdout
+    assert "Verified Item" in result.stdout
+    assert "Unverified Item" in result.stdout
+    assert "남은 검증: 1개" in result.stdout
+
+
+def test_verify_llm_mark__with_valid_verify_id__marks_verified(tmp_path: Path) -> None:
+    # given
+    yaml_file = tmp_path / "ai-todolist.yaml"
+    yaml_content = """metadata:
+  created_at: "2025-01-01T00:00:00Z"
+  updated_at: "2025-01-01T00:00:00Z"
+user_request:
+  original: "Test"
+  created_at: "2025-01-01T00:00:00Z"
+  additional: []
+objectives:
+  core: "Test"
+background:
+  current_situation: "Test"
+  reason_for_change: "Test"
+  changes_to_make: "Test"
+required_background:
+  description: "Test"
+  references: []
+status:
+  execution:
+    started: true
+    completed: false
+  work_mode:
+    parallel_requested: false
+  progress:
+    total_tasks: 0
+    completed: 0
+    in_progress: 0
+    pending: 0
+  current_work: ""
+workflow:
+  dependency_diagram: ""
+todos:
+  - id: "1"
+    title: "Test Task"
+    status: in_progress
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec:
+      - id: "v1"
+        title: "LLM Verification"
+        description: "Test"
+        verified: false
+        orchestrator_manually_verified: false
+        manual_verification_evidence: ""
+        bash: []
+        llm_judge:
+          - by: orchestrator-agent
+            context_commands: []
+            instruction: "Check something"
+success_vision:
+  user_perspective: []
+  business_perspective: []
+  technical_criteria: []
+final_verification: []
+"""
+    yaml_file.write_text(yaml_content)
+
+    # when
+    result = runner.invoke(
+        task_app, ["verify", "llm-mark", "v1", "--evidence", "LLM verified", "--cwd", str(tmp_path)]
+    )
+
+    # then
+    assert result.exit_code == 0
+    assert "LLM 검증이 완료 표시되었습니다" in result.stdout
+
+
+def test_verify_manual_mark__with_valid_verify_id__marks_verified(tmp_path: Path) -> None:
+    # given
+    yaml_file = tmp_path / "ai-todolist.yaml"
+    yaml_content = """metadata:
+  created_at: "2025-01-01T00:00:00Z"
+  updated_at: "2025-01-01T00:00:00Z"
+user_request:
+  original: "Test"
+  created_at: "2025-01-01T00:00:00Z"
+  additional: []
+objectives:
+  core: "Test"
+background:
+  current_situation: "Test"
+  reason_for_change: "Test"
+  changes_to_make: "Test"
+required_background:
+  description: "Test"
+  references: []
+status:
+  execution:
+    started: true
+    completed: false
+  work_mode:
+    parallel_requested: false
+  progress:
+    total_tasks: 0
+    completed: 0
+    in_progress: 0
+    pending: 0
+  current_work: ""
+workflow:
+  dependency_diagram: ""
+todos:
+  - id: "1"
+    title: "Test Task"
+    status: in_progress
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec:
+      - id: "v1"
+        title: "Manual Verification"
+        description: "Test"
+        verified: false
+        orchestrator_manually_verified: false
+        manual_verification_evidence: ""
+        bash:
+          - execute: "echo manual"
+            expected_exit_code: 0
+        llm_judge: []
+success_vision:
+  user_perspective: []
+  business_perspective: []
+  technical_criteria: []
+final_verification: []
+"""
+    yaml_file.write_text(yaml_content)
+
+    # when
+    result = runner.invoke(
+        task_app, ["verify", "manual-mark", "v1", "--evidence", "Manually checked", "--cwd", str(tmp_path)]
+    )
+
+    # then
+    assert result.exit_code == 0
+    assert "수동 검증이 완료 표시되었습니다" in result.stdout

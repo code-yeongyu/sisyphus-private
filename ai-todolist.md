@@ -83,7 +83,7 @@ parallel_requested = FALSE
 
 # 현재 진행 중인 작업
 
-- [ ] 12. plan 명령어 구현
+- [ ] 14. task verify 명령어 구현
 
 # 필요한 배경지식
 
@@ -711,7 +711,7 @@ work_plans:
          - `git add sisyphus/cli/task.py tests/cli/test_task_commands.py`
          - `git commit -m "feat: implement task commands (show, current, next, continue)"`
 
-   - [ ] 14. task verify 명령어 구현
+   - [x] 14. task verify 명령어 구현
 
       **참조 소스**:
       - 패턴 파일: `sisyphus/cli.py` (bash_verify, llm_verify, manual_verify 메서드)
@@ -735,19 +735,19 @@ work_plans:
       다음 검증으로 이동합니다...
       ```
 
-      - [ ] 14.1 sisyphus/cli/task.py에 verify 명령어 추가
+      - [x] 14.1 sisyphus/cli/task.py에 verify 명령어 추가
          - task verify bash, task verify llm, task verify llm mark, task verify manual, task verify manual mark, task verify status
          - TaskNavigator.next_unverified() 활용, 순차 표시
          - --evidence 옵션 필수
          - **검증 명령어**: `uv run sisyphus task verify --help` → 6개 서브명령어 표시
 
-      - [ ] 14.2 verify 명령어 테스트
-         - 테스트 파일: `tests/cli/test_task_verify.py`
-         - **검증 명령어**: `uv run pytest tests/cli/test_task_verify.py -v` → 모든 테스트 PASSED
+      - [x] 14.2 verify 명령어 테스트
+         - 테스트 파일: `tests/cli/test_task_commands.py` (기존 파일에 추가)
+         - **검증 명령어**: `uv run pytest tests/cli/test_task_commands.py -v` → 모든 테스트 PASSED
 
-      - [ ] 14.3 커밋
-         - `git add sisyphus/cli/task.py tests/cli/test_task_verify.py`
-         - `git commit -m "feat: implement task verify commands with sequential processing"`
+      - [x] 14.3 커밋
+         - `git add sisyphus/commands/task.py sisyphus/core/plan_navigator.py tests/cli/test_task_commands.py`
+         - `git commit -m "feat: implement task verify commands (bash, llm, manual, status)"`
 
    - [ ] 15. reset 명령어 재구현
 

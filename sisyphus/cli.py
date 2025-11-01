@@ -445,13 +445,11 @@ def run(
 
 @app.command(name="reset")
 def reset(
-    include_task_specs: bool = typer.Option(
-        False, "--include-task-specs", help="Also delete ai-todolist.md and notepad.md"
-    ),
+    include_task_specs: bool = typer.Option(False, "--include-task-specs", help="Also delete ai-todolist.md"),
 ) -> None:
-    """Clean up generated files (sessions/, logs/, optionally docs)."""
-    base_targets = [Path("sessions"), Path("logs")]
-    doc_targets = [Path("ai-todolist.md"), Path("notepad.md")]
+    """Clean up generated files (sessions/, logs/, notepad.md, optionally ai-todolist.md)."""
+    base_targets = [Path("sessions"), Path("logs"), Path("notepad.md")]
+    doc_targets = [Path("ai-todolist.md")]
     targets = base_targets + (doc_targets if include_task_specs else [])
 
     for target in targets:

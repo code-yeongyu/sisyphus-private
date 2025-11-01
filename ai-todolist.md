@@ -83,7 +83,7 @@ parallel_requested = FALSE
 
 # 현재 진행 중인 작업
 
-- [x] 17. 참조 해석 모듈
+- [ ] 18. Linter 참조 검증 확장
 
 # 필요한 배경지식
 

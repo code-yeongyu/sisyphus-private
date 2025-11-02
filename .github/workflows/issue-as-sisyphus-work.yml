@@ -76,14 +76,14 @@ jobs:
 
       - name: Setup Claude Code configuration
         run: |
-          if [ -d ".github/workflows/.claude.sisyphus" ]; then
+          if [ -d "sisyphus-setup-dot-claude" ]; then
             # Copy to user config (~/.claude)
             mkdir -p ~/.claude
-            cp -r .github/workflows/.claude.sisyphus/* ~/.claude/
-            echo "Copied .claude.sisyphus configuration to ~/.claude"
+            cp -r sisyphus-setup-dot-claude/* ~/.claude/
+            echo "Copied sisyphus-setup-dot-claude configuration to ~/.claude"
             ls -la ~/.claude
           else
-            echo "No .github/workflows/.claude.sisyphus directory found, skipping configuration copy"
+            echo "No sisyphus-setup-dot-claude directory found, skipping configuration copy"
           fi
 
       - name: Setup GitHub CLI authentication
@@ -117,6 +117,7 @@ jobs:
           uv sync
 
       - name: Set environments for work
+        working-directory: projects/sisyphus-cli
         run: |
           uv run sisyphus reset --include-task-specs
 
@@ -140,6 +141,7 @@ jobs:
           claude plugin install sisyphus@sisyphus-marketplace
 
       - name: Run Sisyphus
+        working-directory: projects/sisyphus-cli
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           uv run sisyphus work --no-tui

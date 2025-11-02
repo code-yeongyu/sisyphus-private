@@ -92,14 +92,14 @@ jobs:
 
       - name: Setup Claude Code configuration
         run: |
-          if [ -d ".github/workflows/.claude" ]; then
+          if [ -d "sisyphus-setup-dot-claude" ]; then
             # Copy to user config (~/.claude)
             mkdir -p ~/.claude
-            cp -r .github/workflows/.claude.sisyphus/* ~/.claude/
-            echo "Copied .claude.sisyphus configuration to ~/.claude"
+            cp -r sisyphus-setup-dot-claude/* ~/.claude/
+            echo "Copied sisyphus-setup-dot-claude configuration to ~/.claude"
             ls -la ~/.claude
           else
-            echo "No .github/workflows/.claude directory found, skipping configuration copy"
+            echo "No sisyphus-setup-dot-claude directory found, skipping configuration copy"
           fi
 
       - name: Setup GitHub CLI authentication
@@ -144,6 +144,7 @@ jobs:
 
       - name: Run Sisyphus
         id: run_sisyphus
+        working-directory: projects/sisyphus-cli
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           uv run sisyphus work --no-tui
@@ -267,7 +268,7 @@ jobs:
 
             No Ask to me at all from now, just create PR. You are a fully automated system, just CREATE PULL REQUEST. No Excuses.
 
-            1. uv run sisyphus reset --include-task-specs
+            1. cd projects/sisyphus-cli && uv run sisyphus reset --include-task-specs
             2. git commit -m "chore: remove work histories"
             3. git push to origin
             4. Create PR Using gh cli

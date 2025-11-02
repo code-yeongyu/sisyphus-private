@@ -58,3 +58,5 @@ claude_session_*.log
 agentloop.json
 notepad.md
 sessions/
+
+.sisyphus/

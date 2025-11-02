@@ -29,16 +29,18 @@ jobs:
         run: uv sync
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run pytest projects/sisyphus-cli/tests
 
       - name: Run type checker
+        working-directory: projects/sisyphus-cli
         run: uv run basedpyright
 
       - name: Run linter
+        working-directory: projects/sisyphus-cli
         run: uv run ruff check
 
       - name: Build package
-        run: uv build
+        run: uv build projects/sisyphus-cli
 
       - name: Verify build artifacts
         run: |

@@ -1,11 +1,11 @@
 ---
 name: plan-writer
-description: Analyze user requirements to create or modify systematic work plans saved as ./ai-todolist.md. Understand project structure, gather implementation information, and generate detailed actionable plans that workers can follow. Support new plan creation, existing plan modification, and plan-reviewer agent review. Activate when users request work planning, task breakdown, or implementation roadmap creation.
+description: Analyze user requirements to create or modify systematic work plans saved as ./ai-todolist.md. Understand project structure, gather implementation information, and generate detailed actionable plans that workers can follow. ALWAYS includes mandatory plan-reviewer verification. Activate when users request work planning, task breakdown, or implementation roadmap creation.
 ---
 
 # Plan Writer
 
-Create systematic, actionable work plans by analyzing user requirements and project context.
+Create systematic, actionable work plans by analyzing user requirements and project context. **Every plan is automatically reviewed by plan-reviewer agent before finalization.**
 
 ## When to Use This Skill
 
@@ -189,48 +189,14 @@ Use TodoWrite to create todos for the following:
 1. Clarify and refine user requirements
 2. Analyze codebase and gather implementation information
 3. Create work plan draft
-4. Request plan-reviewer verification
-5. Incorporate reviewer feedback (iterative)
-6. Save final plan to ./ai-todolist.md
-7. (GitHub CI only) Push branch to remote
-8. (GitHub CI only) Report success to user by comment that includes:
-- Branch Name
-- file permalink (make sure it is from that actual branch's permalink)
+4. Request plan-reviewer verification (MANDATORY)
+5. Incorporate reviewer feedback and iterate until "OKAY"
+6. Save final approved plan to ./ai-todolist.md
 
 Mark each step as 'pending' initially, then update to 'in_progress' and 'completed' as you work through them.
 ```
 
 This ensures full visibility into the plan creation process and allows for proper task tracking.
-
-### Phase 0.5: Repository Preparation (ALWAYS EXECUTE AFTER TODOWRITE)
-
-Before starting any plan creation work, ALWAYS execute these steps in order:
-
-1. **Create New Branch**
-   ```bash
-   # Generate branch name with timestamp
-   BRANCH_NAME="plan-writer/$(date +%Y%m%d-%H%M%S)"
-   git checkout -b "$BRANCH_NAME"
-   ```
-   - Branch naming: `plan-writer/YYYYMMDD-HHMMSS`
-   - This ensures each plan creation is on a fresh branch
-
-2. **Reset Work Environment**
-   ```bash
-   uv run sisyphus reset --include-task-specs
-   ```
-   - Removes: `sessions/`, `logs/`, `ai-todolist.md`, `notepad.md`
-   - Ensures clean slate for new work plan
-
-3. **Commit Reset State**
-   ```bash
-   git add -A
-   git commit -m "chore: reset work environment for new plan"
-   ```
-   - Commits the cleaned state
-   - Provides baseline for plan generation
-
-**CRITICAL**: These steps are MANDATORY before proceeding to Phase 1. Do NOT skip or reorder them.
 
 ### Phase 1: Initial Analysis and Information Gathering
 
@@ -250,38 +216,107 @@ Check user request for mode indicators:
    - Set priorities
    - Review phased implementation feasibility
 
-#### 1.3 Codebase Analysis for Implementation
-1. **Find Related Code Patterns**
-   - Search for similar functionality already implemented
-   - Identify existing patterns that can be reused or extended
-   - Look for related modules and components
-   - **CRITICAL**: Capture file paths + searchable concepts for every relevant pattern found
+#### 1.3 MASSIVE PARALLEL INFORMATION GATHERING (CRITICAL PHASE)
 
-2. **Analyze Implementation Context**
-   - Find where similar features are implemented
-   - Understand how existing code handles similar requirements
-   - Identify integration points and dependencies
-   - **CRITICAL**: Note down patterns with searchable keywords (prepare to cite file paths with search terms)
+**CORE PRINCIPLE: PARALLEL EXECUTION FIRST**
 
-3. **Extract Project Conventions**
-   ```bash
-   git log -10 --oneline
+🚀 **Performance Target**: Launch 15-25 parallel tool calls in a SINGLE message for maximum efficiency.
+
+**MANDATORY PARALLEL EXECUTION STRATEGY:**
+
+1. **Launch ALL Independent Read-Only Operations Simultaneously**
+   - **NEVER execute tools sequentially during information gathering**
+   - **ALWAYS use single message with multiple tool use blocks**
+   - Over-fetch rather than under-fetch - gather 10x more context than initially seems necessary
+   - Better to have unused context than miss critical information
+
+2. **Tool Categories to Parallelize:**
+
+   **A. File Reading (Read tool) - Launch 10-15 in parallel:**
    ```
-   - Learn commit message patterns from recent commits
-   - Observe code organization and naming conventions
-   - Understand testing and validation approaches used in project
+   Launch simultaneously:
+   - Read: package.json / pyproject.toml / Cargo.toml (dependencies)
+   - Read: README.md / CONTRIBUTING.md (project conventions)
+   - Read: .github/workflows/* (CI/CD patterns)
+   - Read: All relevant source files identified from user request
+   - Read: Test files matching the feature domain
+   - Read: Configuration files (tsconfig, .eslintrc, pytest.ini, etc.)
+   - Read: API route files / controller files
+   - Read: Database model/schema files
+   - Read: Component/module files related to feature
+   - Read: Utility/helper files that might be relevant
+   ```
 
-#### 1.4 Smart Code Exploration
-1. **Semantic Code Search**
-   - Use `ck --sem "[concept]"` for understanding code by meaning
-   - Use `ck --hybrid "[keyword]"` for both exact and semantic matches
-   - Fallback to `Grep` for specific text patterns
+   **B. Code Search (Grep/Glob) - Launch 5-10 in parallel:**
+   ```
+   Launch simultaneously:
+   - Grep: Search for similar feature implementations
+   - Grep: Search for API endpoint patterns
+   - Grep: Search for database query patterns
+   - Grep: Search for test patterns
+   - Grep: Search for error handling patterns
+   - Grep: Search for validation logic
+   - Glob: Find all test files matching domain
+   - Glob: Find all component files in feature area
+   - Glob: Find configuration files
+   ```
 
-2. **Pattern Discovery**
-   - Identify existing implementation patterns in project
-   - Find reusable components and conventions
-   - Map architectural decisions from actual code
-   - **CRITICAL**: Assess pattern complexity → determine if code snippets needed in plan
+   **C. External Context (WebFetch/mcp__zen__chat) - Launch 3-5 in parallel:**
+   ```
+   Launch simultaneously:
+   - WebFetch: Framework documentation for key features
+   - WebFetch: Library API references
+   - mcp__zen__chat with perplexity: Latest best practices research
+   - mcp__zen__chat with perplexity: Performance optimization patterns
+   - mcp__zen__chat with perplexity: Security considerations for feature type
+   ```
+
+   **D. Codebase Exploration (Task with Explore agent) - Launch 2-4 in parallel:**
+   ```
+   Launch simultaneously:
+   - Task(Explore): "Find all authentication-related code"
+   - Task(Explore): "Locate API endpoint implementation patterns"
+   - Task(Explore): "Discover testing strategies in codebase"
+   - Task(Explore): "Map data flow for similar features"
+   ```
+
+   **E. Project History (Bash) - Launch 3-5 in parallel:**
+   ```
+   Launch simultaneously:
+   - Bash: git log -20 --oneline (commit patterns)
+   - Bash: git log --grep="feature" -10 (similar feature commits)
+   - Bash: git diff main...HEAD --stat (recent changes)
+   - Bash: find . -name "*.test.*" | head -20 (test file patterns)
+   - Bash: ls -la .github/workflows/ (CI setup)
+   ```
+
+3. **Information Gathering Checklist (Verify Before Moving to Phase 2):**
+
+   Before proceeding to plan creation, ensure you have gathered:
+
+   - [ ] **Project Structure**: README, package.json/pyproject.toml, directory structure
+   - [ ] **Similar Features**: 3-5 files implementing related functionality
+   - [ ] **Test Patterns**: 2-3 test files showing project testing style
+   - [ ] **API/Endpoint Patterns**: Existing route/controller implementations
+   - [ ] **Data Models**: Relevant schema/model definitions
+   - [ ] **Configuration**: Build config, linter config, env variables
+   - [ ] **Commit History**: 10-20 recent commits for message patterns
+   - [ ] **External Documentation**: Framework docs, library APIs (2-3 sources)
+   - [ ] **Best Practices Research**: Latest patterns from web search (2-3 queries)
+   - [ ] **Architectural Context**: How feature fits into existing system
+
+   **If any checkbox is unchecked → Launch another round of parallel searches immediately**
+
+4. **Context Extraction & Pattern Capture (During Parallel Execution):**
+
+   As results arrive from parallel tools:
+   - **CRITICAL**: Capture file paths + searchable concepts for EVERY relevant pattern
+   - Note architectural decisions (SSR/CSR, sync/async, state management)
+   - Document error handling approaches
+   - Record testing strategies and patterns
+   - Map integration points and dependencies
+   - Extract project conventions (naming, structure, commit messages)
+   - **CRITICAL**: Assess pattern complexity → mark which need code snippets in plan
 
 ### Phase 2: Plan Creation
 
@@ -992,7 +1027,7 @@ When user reports a bug, ask:
 
 ##### Quality Checklist for Bug Fix Plans
 
-Before requesting plan-reviewer, verify:
+Before requesting plan-reviewer (MANDATORY), verify:
 
 - [ ] **Bug Existence Proven**
   - Current behavior is observable and specific
@@ -1119,11 +1154,11 @@ Before requesting plan-reviewer, verify:
 
 **Decision Matrix:**
 
-| Task Complexity | File Reference | Searchable Concept | Code Snippet |
-|----------------|----------------|-------------------|--------------|
-| Simple (add field, import module) | Required | Required | Skip |
-| Moderate (implement endpoint, add validation) | Required | Required | Optional |
-| Complex (optimistic updates, multi-step flow) | Required | Required | Required |
+| Task Complexity                               | File Reference | Searchable Concept | Code Snippet |
+| --------------------------------------------- | -------------- | ------------------ | ------------ |
+| Simple (add field, import module)             | Required       | Required           | Skip         |
+| Moderate (implement endpoint, add validation) | Required       | Required           | Optional     |
+| Complex (optimistic updates, multi-step flow) | Required       | Required           | Required     |
 
 ##### Examples: Good vs Bad References
 
@@ -1175,31 +1210,44 @@ Before requesting plan-reviewer, verify:
 ```
 [FAIL] **Why bad**: No searchable concept, no explanation of what "properly" means, no business logic documented.
 
-### Phase 3: Review Processing (ALWAYS, MUST)
+### Phase 3: Mandatory Review Processing (ALWAYS EXECUTE)
 
-**CRITICAL**: The plan-reviewer requires ONLY the file location. DO NOT mention:
-- "This is my first draft"
-- "I reflected your feedback"
-- "This is the Nth revision"
-- Any other context about iterations or improvements
+**CRITICAL: Plan review by plan-reviewer agent is MANDATORY. No plan is finalized without "OKAY" approval.**
 
-The reviewer will REJECT any submission that includes such information.
+**Review Protocol:**
 
-1. **Request Review from plan-reviewer**
+1. **The plan-reviewer requires ONLY the file location. DO NOT include:**
+   - "This is my first draft"
+   - "I reflected your feedback"
+   - "This is the Nth revision"
+   - Any other context about iterations or improvements
+
+   The reviewer will REJECT any submission that includes such information.
+
+2. **Request Review from plan-reviewer**
    ```python
    Task(
-       subagent_type="sisyphus:plan-reviewer",
+       subagent_type="plan-reviewer",
        description="Review work plan",
-       prompt="@./ai-todolist.md"
+       prompt="./ai-todolist.md"
    )
    ```
 
-2. **Incorporate Feedback**
-   - Complete if approved ("OKAY")
-   - Modify plan and re-review if improvements requested
-   - **Infinite Loop until "OKAY"**
-     - ALWAYS send ONLY the file path: `"@./ai-todolist.md"`
+3. **Incorporate Feedback (Iterative Loop)**
+   - If approved ("OKAY") → Proceed to Phase 4
+   - If improvements requested → Modify plan and re-request review
+   - **Infinite Loop until "OKAY"**:
+     - Read reviewer feedback carefully
+     - Make ALL requested changes
+     - Re-submit with ONLY file path: `"./ai-todolist.md"`
      - NEVER add context about revisions, feedback, or iterations
+     - Repeat until reviewer responds "OKAY"
+
+**Important Notes:**
+- Review is NOT optional - it is a required quality gate
+- Do NOT skip review even if you think the plan is perfect
+- Do NOT proceed to final output without "OKAY" from reviewer
+- Plan may require multiple revision rounds - this is normal and expected
 
 ### Phase 4: Edit Mode Processing (If Editing Existing Plan)
 
@@ -1217,6 +1265,10 @@ When modifying existing plan:
    - Reflect new requirements
    - Update progress status
 
+4. **Submit for Review (MANDATORY)**
+   - Even edits must go through review process
+   - Follow same review protocol as new plans
+
 ### Phase 5: Final Output
 
 1. **Save Plan**
@@ -1224,56 +1276,28 @@ When modifying existing plan:
    - Use standard template for new plans
    - Preserve structure for edited plans
 
-2. **Create TodoWrite Items**
-   - Add each implementation step as a todo
-   - Format: Clear, actionable items
-   - Workers will check these off during execution
-
-3. **Commit Plan to Git**
-   ```bash
-   git add ai-todolist.md
-   git commit -m "plan: create work plan"
-   ```
-   - Commits the finalized plan to the branch
-
-4. **GitHub CI: Push Branch to Remote**
-
-   **Only execute this step if running in GitHub CI environment** (check for `GITHUB_ACTIONS` or `CI` environment variables):
-
-   ```bash
-   # Get current branch name
-   BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-
-   # Push branch to remote
-   git push -u origin "$BRANCH_NAME"
-   ```
-
-   - Pushes the plan-writer branch to remote for further processing
-   - This allows the subsequent workflow (sisyphus-trigger) to access the plan
-
-5. **Success Report**
+2. **Success Report**
    - Confirm plan saved to `./ai-todolist.md`
    - State number of action items created
    - Report language used in the plan (Korean/English/etc.)
-   - **GitHub CI only**: Report branch name and push status
+   - Confirm plan has been reviewed and approved
    - Provide next steps for execution
 
    Example report:
    ```
-   Plan creation complete!
+   ✅ Plan creation complete!
 
    * Plan file: ./ai-todolist.md
    * Total action items: N
    * Language: English
-   * Branch: plan-writer/YYYYMMDD-HHMMSS
-   * Status: ✅ Pushed to remote
+   * Review status: ✅ Approved by plan-reviewer
 
-   The plan is ready for execution.
+   The plan is ready for execution. You can start work when ready.
    ```
 
 ## Quality Checklist
 
-**Before finalizing the plan, verify ALL of these criteria:**
+**Before requesting plan-reviewer (MANDATORY), verify ALL of these criteria:**
 
 ### Criterion 1: Clarity of Work Content
 
@@ -1380,6 +1404,7 @@ When modifying existing plan:
 4. **Verifiability**: All steps must be objectively testable
 5. **Maintain Existing Patterns**: Keep project's existing style
 6. **Big Picture First**: WHY, WHAT, HOW before diving into tasks
+7. **Mandatory Review**: ALL plans must receive "OKAY" from plan-reviewer before finalization
 
 ## Success Indicators
 
@@ -1393,37 +1418,5 @@ Plan creation is complete when:
 - Big picture is clear (WHY, WHAT, HOW, Success Vision)
 - Project conventions are accurately reflected
 - Language is consistent with user's request
+- **Plan has been reviewed and approved ("OKAY") by plan-reviewer**
 - User can immediately begin execution by following the plan
-
-## GitHub CI Context Handling
-
-**When execution context is GitHub CI/CD environment:**
-
-### Context Recognition
-Identify GitHub CI execution by:
-- Environment variables (GITHUB_ACTIONS, CI, etc.)
-- Presence of workflow run context
-- Issue/PR references in conversation history
-
-### Communication Protocol
-1. **Review All Conversation History**
-   - Read all prior comments and discussions on the issue/PR
-   - Understand full context of user requests and team discussions
-   - Identify any prior decisions or constraints mentioned
-
-2. **Use GitHub Comments for Communication**
-   - Post clarifying questions as GitHub comments
-   - Wait for user responses via comments
-   - Document all clarifications in the conversation thread
-
-3. **Adapt Workflow for Asynchronous Communication**
-   - Structure questions to minimize back-and-forth rounds
-   - Group related questions together
-   - Provide multiple options when applicable to speed up decision-making
-
-4. **Reference GitHub Context**
-   - Link to specific code lines when discussing implementation
-   - Reference previous commits or PRs when relevant
-   - Use GitHub's markdown features for clear communication
-
-**Key Principle**: In GitHub CI context, treat comments as the primary communication channel, not real-time chat. Be comprehensive in each interaction to account for asynchronous response times. And always write the full ai-todolist.md file as a single comment.

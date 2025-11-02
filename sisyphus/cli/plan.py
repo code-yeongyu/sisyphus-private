@@ -13,7 +13,7 @@ from ruamel.yaml import YAML, YAMLError
 
 from sisyphus.cli.common import resolve_cwd
 from sisyphus.core.exporters.markdown import MarkdownExporter
-from sisyphus.core.graph.dependencies import build_plan_graph
+from sisyphus.core.graph.dependencies import build_plan_graph, detect_cycles, discover_plan_files
 from sisyphus.core.graph.renderer import AsciiRenderer, MermaidRenderer
 from sisyphus.core.plan_linter import PlanLinter
 from sisyphus.core.plan_loader import PlanLoader
@@ -201,27 +201,83 @@ def show_graph(
 ) -> None:
     """Display plan dependency graph."""
     working_dir = resolve_cwd(cwd)
-    plan_path = working_dir / "ai-todolist.yaml"
+    tasks_dir = working_dir / ".sisyphus" / "tasks"
 
     try:
         yaml = YAML()
-        if not plan_path.exists():
-            console.print(f"[red]Error: File not found: {plan_path}[/red]")
+        all_plans = []
+        plan_to_file = {}
+
+        if tasks_dir.exists():
+            plan_files = discover_plan_files(working_dir)
+            if not plan_files:
+                console.print(f"[red]Error: No YAML files found in {tasks_dir}[/red]")
+                raise typer.Exit(1)
+
+            for plan_file in plan_files:
+                with plan_file.open("r", encoding="utf-8") as f:
+                    yaml_data = yaml.load(f)
+                try:
+                    plan_doc = PlanDocument(**yaml_data)
+                    for work_plan in plan_doc.work_plans:
+                        plan_to_file[work_plan.id] = plan_file
+                    all_plans.extend(plan_doc.work_plans)
+                except ValidationError:
+                    console.print(f"[yellow]Warning: Skipping {plan_file.name} (invalid v3.0 format)[/yellow]")
+                    continue
+        else:
+            plan_path = working_dir / "ai-todolist.yaml"
+
+            if not plan_path.exists():
+                console.print(
+                    f"[red]Error: No plan files found.[/red]\n"
+                    f"Expected either:\n"
+                    f"  - {tasks_dir}/*.yaml (v3.0 format)\n"
+                    f"  - {plan_path} (v2.1 format)"
+                )
+                raise typer.Exit(1)
+
+            with plan_path.open("r", encoding="utf-8") as f:
+                yaml_data = yaml.load(f)
+
+            try:
+                plan_doc = PlanDocument(**yaml_data)
+                for work_plan in plan_doc.work_plans:
+                    plan_to_file[work_plan.id] = plan_path
+                all_plans.extend(plan_doc.work_plans)
+            except ValidationError:
+                console.print(
+                    "[yellow]Warning: File is not v3.0 format. Graph command requires v3.0 with depends_on.[/yellow]"
+                )
+                raise typer.Exit(1)
+
+        if not all_plans:
+            console.print("[red]Error: No valid plans found[/red]")
             raise typer.Exit(1)
 
-        with plan_path.open("r", encoding="utf-8") as f:
-            yaml_data = yaml.load(f)
+        plans = {plan.id: plan for plan in all_plans}
+        graph = build_plan_graph(plans)
 
-        try:
-            plan_doc = PlanDocument(**yaml_data)
-        except ValidationError:
+        cycles = detect_cycles(graph)
+        if cycles:
+            console.print("[red]✗ Circular dependency detected![/red]\n")
+            for i, cycle in enumerate(cycles, 1):
+                console.print(f"[yellow]Cycle {i}:[/yellow]")
+                for j, plan_id in enumerate(cycle):
+                    file_path = plan_to_file.get(plan_id, Path("unknown"))
+                    relative_path = file_path.relative_to(working_dir) if file_path != Path("unknown") else file_path
+                    arrow = " → " if j < len(cycle) - 1 else " → (loops back to start)"
+                    console.print(f"  {plan_id:<20} [dim](in {relative_path})[/dim]{arrow}")
+                console.print()
+
             console.print(
-                "[yellow]Warning: File is not v3.0 format. Graph command requires v3.0 with depends_on.[/yellow]"
+                "[yellow]How to fix:[/yellow]\n"
+                "  1. Open the file(s) listed above\n"
+                "  2. Find the 'depends_on' field for each plan\n"
+                "  3. Remove one dependency to break the cycle\n"
+                "  4. Run 'sisyphus plan graph' again to verify\n"
             )
             raise typer.Exit(1)
-
-        plans = {plan.id: plan for plan in plan_doc.work_plans}
-        graph = build_plan_graph(plans)
 
         if format == GraphFormat.ASCII:
             renderer = AsciiRenderer()

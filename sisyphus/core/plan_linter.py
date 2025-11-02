@@ -1039,14 +1039,19 @@ class PlanLinter:
         for plan in plan_document.work_plans:
             for dep_id in plan.depends_on:
                 if dep_id not in plans:
-                    errors.append(f"Plan '{plan.id}' depends on '{dep_id}' which does not exist in this document")
+                    errors.append(
+                        f"Plan '{plan.id}' depends on non-existent plan '{dep_id}'. "
+                        f"Available plans: {', '.join(plans.keys())}"
+                    )
 
         graph = build_plan_graph(plans)
 
         cycles = detect_cycles(graph)
         for cycle in cycles:
-            cycle_path = " → ".join(cycle)
-            errors.append(f"Circular dependency detected: {cycle_path}")
+            cycle_path = " → ".join(cycle + [cycle[0]])
+            errors.append(
+                f"Circular dependency: {cycle_path}. Please review the 'depends_on' fields to break this cycle."
+            )
 
         return errors
 

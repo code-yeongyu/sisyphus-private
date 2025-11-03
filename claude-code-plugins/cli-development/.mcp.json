@@ -1,7 +1,0 @@
-{
-  "terminalcp": {
-    "type": "stdio",
-    "command": "npx",
-    "args": ["-y", "@mariozechner/terminalcp@latest", "--mcp"]
-  }
-}

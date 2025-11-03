@@ -6,16 +6,6 @@
   },
   "plugins": [
     {
-      "name": "sisyphus",
-      "source": "./claude-code-plugins/sisyphus",
-      "description": "Essential setups for sisyphus, for making work plans and manual executions",
-      "version": "0.1.0",
-      "author": {
-        "name": "YeonGyu Kim",
-        "email": "public.kim.yeon.gyu@gmail.com"
-      }
-    },
-    {
       "name": "basic-web-development",
       "source": "./claude-code-plugins/basic-web-development",
       "description": "Web development tools with Playwright browser automation via MCP",

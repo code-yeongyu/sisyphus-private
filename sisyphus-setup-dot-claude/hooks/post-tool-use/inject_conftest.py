@@ -1,15 +1,16 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.14"
 # dependencies = [
 #     "orjson",
 #     "toml>=0.10.2",
 # ]
 # ///
-# pyright: reportMissingImports=false
+# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportImplicitRelativeImport=false
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import sys
 from datetime import datetime
@@ -18,6 +19,9 @@ from typing import Any, Literal, NotRequired, TypedDict
 
 import orjson
 import toml
+
+sys.path.insert(0, str(Path(__file__).parent))
+from _shared_transcript_analyzer import TranscriptAnalyzer
 
 
 class ReadToolInput(TypedDict):
@@ -32,50 +36,6 @@ class PostToolUseInput(TypedDict):
     hook_event_name: str
     tool_input: ReadToolInput
     tool_response: dict[str, Any]
-
-
-class ToolUseBlock(TypedDict):
-    type: Literal["tool_use"]
-    name: Literal["Read"] | str
-    id: str
-    input: dict[str, Any]
-
-
-class ToolResultBlock(TypedDict):
-    type: Literal["tool_result"]
-    tool_use_id: str
-    content: str | list[dict[str, Any]]
-    is_error: NotRequired[bool]
-
-
-class TextBlock(TypedDict):
-    type: Literal["text"]
-    text: str
-
-
-ContentBlock = ToolUseBlock | ToolResultBlock | TextBlock
-
-
-class AssistantMessage(TypedDict):
-    role: Literal["assistant"]
-    content: list[ContentBlock]
-
-
-class UserMessage(TypedDict):
-    role: Literal["user"]
-    content: str | list[ContentBlock]
-
-
-class TranscriptEntry(TypedDict):
-    type: Literal["user", "assistant"]
-    message: AssistantMessage | UserMessage
-    timestamp: NotRequired[str]
-
-
-class RawTranscriptEntry(TypedDict):
-    type: str
-    message: dict[str, Any]
-    timestamp: NotRequired[str]
 
 
 class ConftestInfo(TypedDict):
@@ -160,19 +120,19 @@ class ConftestFinder:
         self.test_file = Path(test_file_path).resolve()
         self.project_root = Path(cwd).resolve() if cwd else ProjectRootFinder.find_root(self.test_file.parent)
 
-    def find_conftests(self) -> list[ConftestInfo]:
+    async def find_conftests(self) -> list[ConftestInfo]:
         if not self.project_root:
             return []
 
-        conftest_infos = self._collect_upward_conftests()
+        conftest_infos = await self._collect_upward_conftests()
         existing_paths = {info["path"] for info in conftest_infos}
 
-        package_conftests = self._collect_mirrored_package_conftests(existing_paths)
+        package_conftests = await self._collect_mirrored_package_conftests(existing_paths)
         conftest_infos.extend(package_conftests)
 
         return sorted(conftest_infos, key=lambda x: x["distance"])
 
-    def _collect_upward_conftests(self) -> list[ConftestInfo]:
+    async def _collect_upward_conftests(self) -> list[ConftestInfo]:
         conftest_infos: list[ConftestInfo] = []
 
         if not self.project_root:
@@ -196,18 +156,17 @@ class ConftestFinder:
                     path_str = str(conftest_path)
 
                 try:
-                    file_content = conftest_path.read_bytes()
-                    file_hash = hashlib.sha256(file_content).hexdigest()[:16]
+                    content_hash = await self._hash_file_content(conftest_path)
                     last_modified = datetime.fromtimestamp(conftest_path.stat().st_mtime).isoformat()
                 except OSError:
-                    file_hash = "unknown"
+                    content_hash = "unknown"
                     last_modified = "unknown"
 
                 conftest_infos.append(
                     ConftestInfo(
                         path=path_str,
                         distance=distance,
-                        hash=file_hash,
+                        hash=content_hash,
                         last_modified=last_modified,
                     )
                 )
@@ -220,7 +179,7 @@ class ConftestFinder:
 
         return conftest_infos
 
-    def _collect_mirrored_package_conftests(self, existing_paths: set[str]) -> list[ConftestInfo]:
+    async def _collect_mirrored_package_conftests(self, existing_paths: set[str]) -> list[ConftestInfo]:
         conftest_infos: list[ConftestInfo] = []
 
         if not self.project_root:
@@ -254,23 +213,31 @@ class ConftestFinder:
 
                 if path_str not in existing_paths:
                     try:
-                        file_content = pkg_conftest.read_bytes()
-                        file_hash = hashlib.sha256(file_content).hexdigest()[:16]
+                        content_hash = await self._hash_file_content(pkg_conftest)
                         last_modified = datetime.fromtimestamp(pkg_conftest.stat().st_mtime).isoformat()
                     except OSError:
-                        file_hash = "unknown"
+                        content_hash = "unknown"
                         last_modified = "unknown"
 
                     conftest_infos.append(
                         ConftestInfo(
                             path=path_str,
                             distance=self.PACKAGE_CONFTEST_DISTANCE_OFFSET + i,
-                            hash=file_hash,
+                            hash=content_hash,
                             last_modified=last_modified,
                         )
                     )
 
         return conftest_infos
+
+    @staticmethod
+    async def _hash_file_content(file_path: Path) -> str:
+        try:
+            content = file_path.read_text(encoding="utf-8")
+            stripped = content.strip()
+            return hashlib.sha256(stripped.encode("utf-8")).hexdigest()[:16]
+        except OSError:
+            return "error"
 
 
 class ConftestInjector:
@@ -282,13 +249,11 @@ class ConftestInjector:
         self.session_id = session_id
 
     def _generate_todo_id(self, conftest_info: ConftestInfo) -> str:
-        """Generate todo ID for a conftest file."""
         distance = conftest_info["distance"]
         path_id = conftest_info["path"].replace("/", "-").replace(".py", "")
         return f"read-conftest-d{distance}-{path_id}"
 
     def _mark_todo_completed(self, todo_id: str) -> None:
-        """Mark an existing todo item as completed."""
         self.TODOS_DIR.mkdir(parents=True, exist_ok=True)
         todo_file = self.TODOS_DIR / f"{self.session_id}-agent-{self.session_id}.json"
 
@@ -310,6 +275,42 @@ class ConftestInjector:
             todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
         except OSError:
             pass
+
+    def _check_and_complete_existing_todos(self, conftest_path: Path) -> None:
+        todo_file = self.TODOS_DIR / f"{self.session_id}-agent-{self.session_id}.json"
+
+        if not todo_file.exists():
+            return
+
+        try:
+            todos = orjson.loads(todo_file.read_bytes())
+        except (orjson.JSONDecodeError, OSError):
+            return
+
+        if not isinstance(todos, list):
+            return
+
+        modified = False
+        conftest_path_str = str(conftest_path.resolve())
+
+        for todo in todos:
+            todo_id = todo.get("id", "")
+            if not todo_id.startswith("read-conftest-"):
+                continue
+
+            if todo.get("status") == "completed":
+                continue
+
+            todo_content = todo.get("content", "")
+            if conftest_path_str in todo_content:
+                todo["status"] = "completed"
+                modified = True
+
+        if modified:
+            try:
+                todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            except OSError:
+                pass
 
     def _add_todo_item(self, conftest_info: ConftestInfo) -> None:
         self.TODOS_DIR.mkdir(parents=True, exist_ok=True)
@@ -361,70 +362,25 @@ class ConftestInjector:
         except OSError:
             pass
 
-    def _has_conftest_been_read(self, conftest_path: Path) -> bool:
-        if not self.transcript_path.exists():
-            return False
-
-        try:
-            conftest_path_str = str(conftest_path.resolve())
-            transcript_content = self.transcript_path.read_text(encoding="utf-8")
-
-            for line in transcript_content.splitlines():
-                if not line.strip():
-                    continue
-
-                try:
-                    entry: RawTranscriptEntry = orjson.loads(line)
-                except orjson.JSONDecodeError:
-                    continue
-
-                if not isinstance(entry, dict):
-                    continue
-
-                if entry.get("type") != "assistant":
-                    continue
-
-                message = entry.get("message")
-                if not isinstance(message, dict):
-                    continue
-
-                if message.get("role") != "assistant":
-                    continue
-
-                content = message.get("content")
-                if not isinstance(content, list):
-                    continue
-
-                for block in content:
-                    if not isinstance(block, dict):
-                        continue
-
-                    if block.get("type") != "tool_use":
-                        continue
-
-                    if block.get("name") != "Read":
-                        continue
-
-                    tool_input = block.get("input")
-                    if not isinstance(tool_input, dict):
-                        continue
-
-                    if tool_input.get("file_path") == conftest_path_str:
-                        return True
-
-            return False
-
-        except OSError:
-            return False
-
-    def check_and_inject(self, conftest_info: ConftestInfo) -> str:
+    async def check_and_inject(
+        self, conftest_info: ConftestInfo, already_read: tuple[dict[str, str], set[str]]
+    ) -> str:
         path = conftest_info["path"]
 
         full_path = self.project_root / path
         if not full_path.exists():
             return ""
 
-        if self._has_conftest_been_read(full_path):
+        real_path = str(full_path.resolve())
+        already_read_paths, already_read_hashes = already_read
+
+        if real_path in already_read_paths:
+            if already_read_paths[real_path] == conftest_info["hash"]:
+                todo_id = self._generate_todo_id(conftest_info)
+                self._mark_todo_completed(todo_id)
+                return ""
+
+        if conftest_info["hash"] in already_read_hashes:
             todo_id = self._generate_todo_id(conftest_info)
             self._mark_todo_completed(todo_id)
             return ""
@@ -445,7 +401,7 @@ class HookHandler:
     def __init__(self) -> None:
         self.test_detector = TestFileDetector()
 
-    def handle(self) -> None:
+    async def handle(self) -> None:
         hook_filename = Path(__file__).stem.replace("_", "-")
 
         try:
@@ -476,6 +432,18 @@ class HookHandler:
             print(f"[{hook_filename}] Skipping: Self-reference detected")
             sys.exit(0)
 
+        if Path(file_path).name == "conftest.py":
+            session_id = data["session_id"]
+            transcript_path = data["transcript_path"]
+            cwd = data["cwd"]
+
+            conftest_path = Path(file_path).resolve()
+            injector = ConftestInjector(conftest_path.parent, transcript_path, session_id)
+            injector._check_and_complete_existing_todos(conftest_path)
+
+            print(f"[{hook_filename}] Success: Conftest todos updated")
+            sys.exit(0)
+
         if not self.test_detector.is_test_file(file_path):
             print(f"[{hook_filename}] Skipping: Not a test file")
             sys.exit(0)
@@ -488,7 +456,7 @@ class HookHandler:
             print(f"[{hook_filename}] Skipping: No project root found")
             sys.exit(0)
 
-        conftest_infos = finder.find_conftests()
+        conftest_infos = await finder.find_conftests()
 
         if not conftest_infos:
             print(f"[{hook_filename}] Success: No conftest files found")
@@ -496,12 +464,14 @@ class HookHandler:
 
         session_id = data["session_id"]
         injector = ConftestInjector(finder.project_root, transcript_path, session_id)
-        messages_to_inject: list[str] = []
 
-        for conftest_info in conftest_infos:
-            message = injector.check_and_inject(conftest_info)
-            if message:
-                messages_to_inject.append(message)
+        analyzer = TranscriptAnalyzer(Path(transcript_path))
+        already_read = await analyzer.get_already_read_contents([".py"])
+
+        tasks = [injector.check_and_inject(info, already_read) for info in conftest_infos]
+        messages = await asyncio.gather(*tasks)
+
+        messages_to_inject = [msg for msg in messages if msg]
 
         if messages_to_inject:
             combined_message = "\n\n".join(messages_to_inject)
@@ -512,13 +482,13 @@ class HookHandler:
         sys.exit(0)
 
 
-def main() -> None:
+async def main() -> None:
     hook_filename = Path(__file__).stem.replace("_", "-")
     print(f"\n[{hook_filename}]", file=sys.stderr)
 
     handler = HookHandler()
-    handler.handle()
+    await handler.handle()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -1,10 +1,11 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
 #   "comment-parser>=1.2.4"
 # ]
 # ///
+# pyright: reportMissingImports=false, reportAttributeAccessIssue=false, reportArgumentType=false
 
 from __future__ import annotations
 
@@ -249,6 +250,9 @@ def _process_multiedit_tool(tool_input: MultiEditToolInput, file_path: str) -> l
         if ext == "py" and is_python_type_comment(text):
             continue
 
+        if ext == "py" and is_pep723_metadata(text):
+            continue
+
         line = get_comment_line(comment)
         all_findings.append((file_path, line, text.strip()))
 
@@ -270,23 +274,6 @@ def build_error_message(findings: list[tuple[str, int, str]]) -> str:
     """Build the standard error message for detected comments and docstrings."""
     if not findings:
         return ""
-
-    cwd = Path.cwd()
-
-    file_path = findings[0][0] if findings else ""
-    try:
-        path_obj = Path(file_path).resolve()
-        if path_obj.is_relative_to(cwd):
-            display_path = str(path_obj.relative_to(cwd))
-        else:
-            display_path = file_path
-    except (ValueError, OSError):
-        display_path = file_path
-
-    comments_xml = f'<comments file="{display_path}">\n'
-    for _, line, comment in findings:
-        comments_xml += f'\t<comment line-number="{line}">{comment}</comment>\n'
-    comments_xml += "</comments>"
 
     msg = "COMMENT/DOCSTRING DETECTED - IMMEDIATE ACTION REQUIRED\n\n"
     msg += "Your recent changes contain comments or docstrings, which triggered this hook.\n"
@@ -318,8 +305,10 @@ def build_error_message(findings: list[tuple[str, int, str]]) -> str:
     )
     msg += "MANDATORY REQUIREMENT: You must acknowledge this hook message and take one of the above actions.\n"
     msg += "Review in the above priority order and take the corresponding action EVERY TIME this appears.\n\n"
-    msg += "Detected comments/docstrings:\n"
-    msg += comments_xml
+    msg += "Detected comments/docstrings:\n\n"
+
+    for i, (_, line, comment) in enumerate(findings, 1):
+        msg += f"[{i}] Line {line}: {comment}\n"
 
     return msg
 
@@ -339,6 +328,8 @@ def check_comments_in_content(
 
     if ext != "py":
         return findings
+
+    pep723_line_ranges: list[tuple[int, int]] = get_pep723_block_ranges(content)
 
     comments: list[Any] = extract_comments_from_string(content, file_path)
 
@@ -361,7 +352,11 @@ def check_comments_in_content(
         if ext == "py" and is_python_type_comment(text):
             continue
 
-        line: int = get_comment_line(comment) + base_line - 1
+        comment_line: int = get_comment_line(comment)
+        if is_line_in_pep723_block(comment_line, pep723_line_ranges):
+            continue
+
+        line: int = comment_line + base_line - 1
         findings.append((file_path, line, text.strip()))
 
     docstrings: list[tuple[str, int, str]] = extract_docstrings_from_string(content, file_path)
@@ -527,13 +522,62 @@ def normalize_comment(text: str) -> str:
 def is_shebang_comment(comment_text: str) -> bool:
     """Check if comment is a shebang line (for any script language)."""
     stripped: str = comment_text.strip()
-    return stripped.startswith("!/")
+    return stripped.startswith("!")
 
 
 def is_bdd_comment(comment_text: str) -> bool:
     """Check if comment is a BDD keyword."""
     stripped: str = comment_text.strip().lower()
     return stripped in BDD_KEYWORDS
+
+
+def is_pep723_metadata(comment_text: str) -> bool:
+    """Check if comment is PEP 723 inline script metadata."""
+    stripped: str = comment_text.strip().lower()
+
+    if stripped.startswith("///"):
+        return True
+
+    pep723_keywords = [
+        "requires-python",
+        "dependencies",
+        "script",
+    ]
+
+    for keyword in pep723_keywords:
+        if keyword in stripped:
+            return True
+
+    return False
+
+
+def get_pep723_block_ranges(content: str) -> list[tuple[int, int]]:
+    ranges: list[tuple[int, int]] = []
+    lines: list[str] = content.split("\n")
+
+    in_block: bool = False
+    block_start: int = 0
+
+    for idx, line in enumerate(lines, start=1):
+        stripped: str = line.strip()
+
+        if stripped.startswith("# ///"):
+            if not in_block:
+                in_block = True
+                block_start = idx
+            else:
+                ranges.append((block_start, idx))
+                in_block = False
+                block_start = 0
+
+    return ranges
+
+
+def is_line_in_pep723_block(line_number: int, ranges: list[tuple[int, int]]) -> bool:
+    for start, end in ranges:
+        if start <= line_number <= end:
+            return True
+    return False
 
 
 def is_python_type_comment(comment_text: str) -> bool:
@@ -544,6 +588,7 @@ def is_python_type_comment(comment_text: str) -> bool:
         "type:",
         "noqa",
         "pyright:",
+        "basedpyright:",
         "ruff:",
         "mypy:",
         "pylint:",

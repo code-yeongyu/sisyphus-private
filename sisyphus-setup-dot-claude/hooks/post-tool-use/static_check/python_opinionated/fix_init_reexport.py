@@ -1,10 +1,11 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
 #   "ast-grep-py>=0.24.1",
 # ]
 # ///
+# pyright: reportMissingImports=false, reportMissingModuleSource=false
 """
 Auto-fix hook for converting implicit imports to explicit re-exports in __init__.py.
 Automatically converts 'from X import Y' to 'from X import Y as Y' for items in __all__.

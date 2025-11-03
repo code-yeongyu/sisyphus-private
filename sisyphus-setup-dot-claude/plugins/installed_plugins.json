@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "plugins": {
+    "sisyphus@sisyphus-marketplace": {
+      "version": "unknown",
+      "installedAt": "2025-10-29T02:46:32.548Z",
+      "lastUpdated": "2025-10-29T02:46:32.548Z",
+      "installPath": "/Users/yeongyu/local-workspaces/sisyphus/claude-code-plugins/sisyphus",
+      "gitCommitSha": "40e06cc1fe14df777d43985e563ab057bf41a9b2",
+      "isLocal": true
+    },
+    "cc-plus@cc-plus-marketplace": {
+      "version": "unknown",
+      "installedAt": "2025-11-01T13:05:32.029Z",
+      "lastUpdated": "2025-11-01T22:22:30.000Z",
+      "installPath": "/Users/yeongyu/local-workspaces/advanced-claude-code/claude-code-plugins/cc-plus",
+      "gitCommitSha": "ca54f50ed1cb5a9ab3f0e8c1d5f7e9e0c8b5a3f2",
+      "isLocal": true
+    },
+    "indent@indent-marketplace": {
+      "version": "unknown",
+      "installedAt": "2025-11-03T10:59:43.825Z",
+      "lastUpdated": "2025-11-03T10:59:43.825Z",
+      "installPath": "/Users/yeongyu/.claude/plugins/marketplaces/indent-marketplace/plugins/indent",
+      "gitCommitSha": "45169fa092875029f0ef03b459f1700cec9051f5",
+      "isLocal": true
+    }
+  }
+}

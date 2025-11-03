@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
@@ -128,6 +128,43 @@ class LanguageGuideChecker:
         except OSError:
             pass
 
+    def _check_and_complete_existing_todos(self) -> None:
+        """Check existing todos and mark as completed if guide has been read in transcript."""
+        todo_file = self.TODOS_DIR / f"{self.session_id}-agent-{self.session_id}.json"
+
+        if not todo_file.exists():
+            return
+
+        try:
+            todos = orjson.loads(todo_file.read_bytes())
+        except (orjson.JSONDecodeError, OSError):
+            return
+
+        if not isinstance(todos, list):
+            return
+
+        modified = False
+        for todo in todos:
+            todo_id = todo.get("id", "")
+            if not todo_id.startswith("read-guide-"):
+                continue
+
+            if todo.get("status") == "completed":
+                continue
+
+            lang_ext = todo_id.replace("read-guide-", "").lower()
+            guide_path = self.MODULAR_PROMPTS_DIR / f"{lang_ext}.md"
+
+            if guide_path.exists() and self._has_guide_been_read(guide_path):
+                todo["status"] = "completed"
+                modified = True
+
+        if modified:
+            try:
+                todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            except OSError:
+                pass
+
     def _get_guide_path(self, extension: str) -> Path | None:
         if not extension or not extension.startswith("."):
             return None
@@ -239,8 +276,14 @@ class LanguageGuideChecker:
 
     def check_and_inject(self, file_path: str) -> str:
         path = Path(file_path)
-        extension = path.suffix
 
+        if path.parent == self.MODULAR_PROMPTS_DIR and path.suffix == ".md":
+            file_extension = path.stem.upper()
+            todo_id = self._generate_todo_id(file_extension)
+            self._mark_todo_completed(todo_id)
+            return ""
+
+        extension = path.suffix
         guide_path = self._get_guide_path(extension)
         if not guide_path:
             return ""

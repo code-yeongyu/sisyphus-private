@@ -1,10 +1,11 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
 #   "ast-grep-py>=0.24.1",
 # ]
 # ///
+# pyright: reportMissingImports=false, reportMissingModuleSource=false
 """
 Match-case detector hook for Claude Code (PostToolUse version).
 Detects if-elif-else chains that can be converted to match-case statements.

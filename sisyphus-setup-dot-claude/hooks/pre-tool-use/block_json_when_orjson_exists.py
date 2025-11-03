@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
@@ -6,6 +6,7 @@
 #   "ast-grep-py>=0.24.1",
 # ]
 # ///
+# pyright: reportMissingImports=false, reportMissingModuleSource=false
 """
 JSON blocker hook for Claude Code when orjson is available.
 Blocks edits that use json when orjson is available in the project.

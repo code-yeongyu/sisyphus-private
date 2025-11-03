@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.14"
+# dependencies = []
+# ///
 """
 UserPromptSubmit hook that generates system reminder context in pure Python.
 This is a Python-only implementation without external shell script dependencies.
@@ -12,7 +16,13 @@ import json
 import os
 import sys
 from datetime import datetime
+from pathlib import Path
 from typing import NamedTuple
+
+DEFAULT_MODEL_NAME = "claude-sonnet-4-5-20250929"
+PROMPT_CACHE_LIMIT = 200_000
+EXTENDED_CONTEXT_LIMIT = 800_000
+TOTAL_CONTEXT_LIMIT = PROMPT_CACHE_LIMIT + EXTENDED_CONTEXT_LIMIT
 
 
 def main() -> None:
@@ -21,7 +31,6 @@ def main() -> None:
 
 
 async def _main() -> None:
-    """Async main function that handles the hook logic."""
     try:
         json.load(sys.stdin)
 
@@ -36,8 +45,6 @@ async def _main() -> None:
 
 
 class CommandResult(NamedTuple):
-    """Result from running a command."""
-
     stdout: str
     stderr: str
     returncode: int
@@ -161,7 +168,14 @@ def check_virtual_env(package_manager: str | None = None) -> list[str]:
         return messages
 
     virtual_env = os.environ.get("VIRTUAL_ENV")
-    run_command_str = "uv run" if package_manager == "uv" else "'uv run' or 'poetry run'"
+    run_command_str: str
+    match package_manager:
+        case "uv":
+            run_command_str = "uv run"
+        case "poetry":
+            run_command_str = "poetry run"
+        case _:
+            run_command_str = "the appropriate command for using venv"
 
     if virtual_env and local_venv:
         real_virtual_env = os.path.realpath(virtual_env)
@@ -180,7 +194,7 @@ def check_virtual_env(package_manager: str | None = None) -> list[str]:
     elif local_venv and not virtual_env:
         messages.extend(
             [
-                "[NOTICE] Local virtual environment found but not activated",
+                "[WARNING] Local virtual environment found but not activated",
                 f"Local project venv: {local_venv}",
                 f"Consider using {run_command_str} for project-specific commands.",
                 f"Or activate the venv: source {local_venv}/bin/activate",
@@ -190,16 +204,133 @@ def check_virtual_env(package_manager: str | None = None) -> list[str]:
     return messages
 
 
+def find_current_session_transcript() -> Path | None:
+    try:
+        projects_dir = Path.home() / ".claude" / "projects"
+        if not projects_dir.exists():
+            return None
+
+        transcripts = []
+        for project_dir in projects_dir.iterdir():
+            if not project_dir.is_dir():
+                continue
+
+            for transcript_file in project_dir.glob("*.jsonl"):
+                if transcript_file.name.startswith("agent-"):
+                    continue
+                transcripts.append(transcript_file)
+
+        if not transcripts:
+            return None
+
+        most_recent = max(transcripts, key=lambda p: p.stat().st_mtime)
+        return most_recent
+
+    except Exception:
+        return None
+
+
+def calculate_context_usage(transcript_path: Path) -> dict[str, int | float | str]:
+    try:
+        last_input_tokens = 0
+        last_cache_read = 0
+        total_output = 0
+        model_name = DEFAULT_MODEL_NAME
+
+        with transcript_path.open("r") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+
+                try:
+                    data = json.loads(line)
+                    if data.get("type") != "assistant":
+                        continue
+
+                    message = data.get("message", {})
+                    usage = message.get("usage", {})
+
+                    if usage:
+                        last_input_tokens = usage.get("input_tokens", 0)
+                        last_cache_read = usage.get("cache_read_input_tokens", 0)
+                        total_output += usage.get("output_tokens", 0)
+
+                        if "model" in message:
+                            model_name = message["model"]
+
+                except json.JSONDecodeError:
+                    continue
+
+        current_context = last_input_tokens + last_cache_read
+        usage_percent = (current_context / TOTAL_CONTEXT_LIMIT * 100) if TOTAL_CONTEXT_LIMIT > 0 else 0
+        remaining_percent = 100 - usage_percent
+
+        return {
+            "input_tokens": last_input_tokens,
+            "output_tokens": total_output,
+            "cache_creation": 0,
+            "cache_read": last_cache_read,
+            "actual_context": current_context,
+            "context_limit": TOTAL_CONTEXT_LIMIT,
+            "total_processed": current_context + total_output,
+            "usage_percent": usage_percent,
+            "remaining_percent": remaining_percent,
+            "cache_hit_rate": 0,
+            "model": model_name,
+        }
+
+    except Exception:
+        return {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "actual_context": 0,
+            "context_limit": PROMPT_CACHE_LIMIT,
+            "total_processed": 0,
+            "usage_percent": 0,
+            "remaining_percent": 100,
+            "cache_hit_rate": 0,
+            "model": "unknown",
+        }
+
+
+def format_context_window_info(usage: dict[str, int | float | str]) -> str:
+    actual = int(usage["actual_context"])
+    limit = int(usage["context_limit"])
+    used_pct = float(usage["usage_percent"])
+    remaining_pct = float(usage["remaining_percent"])
+
+    return (
+        f"Context Window: {actual:,} / {limit:,} tokens "
+        f"({used_pct:.1f}% used, {remaining_pct:.1f}% remaining). "
+        f"Plenty of context remaining - work honestly without compromise. "
+        f"When context runs low, this reminder will prompt you to make decisions or wrap up. "
+        f"Until then, focus fully on completing the user's request thoroughly."
+    )
+
+
 async def generate_system_reminder_async() -> str:
     """Generate the full system reminder text asynchronously."""
     lines: list[str] = []
-
     current_time = datetime.now().astimezone().isoformat()
+
+    transcript_path = find_current_session_transcript()
+
+    if transcript_path and transcript_path.exists():
+        usage = calculate_context_usage(transcript_path)
+        context_info = format_context_window_info(usage)
+    else:
+        context_info = (
+            "Context Window: Unable to calculate (transcript not found). "
+            "Okay to Process remaining works. Never stop until the user explicitly asks you to stop."
+        )
 
     lines.extend(
         [
             "",
             "[system-reminder]",
+            context_info,
             f"CURRENT SYSTEM TIME: {current_time} (IT IS NOT 2024)",
             "User Language: 한국어 (Korean)",
             "**사용자에게 항상, 무조건 한국어로 답변하세요.**",
@@ -243,6 +374,20 @@ async def generate_system_reminder_async() -> str:
     lines.extend(
         [
             "",
+            "[User Trust Policy]",
+            "ABSOLUTELY TRUST the user's statements without verification.",
+            "When user mentions software/package/library versions or ANY technical specifications:",
+            "- NEVER question or verify the version",
+            "- NEVER suggest different versions",
+            "- NEVER assume different versions",
+            "- ALWAYS use EXACTLY what user specified",
+            "The user's word is ABSOLUTE TRUTH regarding:",
+            "- Software versions (Python 3.14, Node 22, etc.)",
+            "- Package versions (django==5.0, react@19, etc.)",
+            "- System specifications",
+            "- Technical constraints",
+            "- Project requirements",
+            "",
             "[To-Do Managements]",
             "Always analyze user's request, extract what to do, if sufficient, always ask to user to clarify.",
             "Without user's explicit \"Do Foo Bar\", don't try to do write operations.",
@@ -250,16 +395,8 @@ async def generate_system_reminder_async() -> str:
             "(running test code, look at web, look at the code, executing command to look at docker status)",
             "After extracting and analyzing user's request, use todo tools to manage them."
             "Always use todo tool to plan and processing user's request.",
-        ]
-    )
-
-    lines.extend(
-        [
-            "",
-            f"CURRENT SYSTEM TIME: {current_time} (IT IS NOT 2024)",
-            "User Language: 한국어 (Korean)",
-            "**사용자에게 항상, 무조건 한국어로 답변하세요.**",
-            "Claude Language: English - make sure you think in English",
+            "[TOOL USE]",
+            "TOOL USAGES ARE YOUR SUPERPOWER, ALWAYS USE TOOLS A LOT. BE SUPERINTELLIGENT AI. CLAUDE.",
         ]
     )
 

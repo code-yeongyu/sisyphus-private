@@ -1,8 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
 # dependencies = ["toml>=0.10.2"]
 # ///
+# pyright: reportMissingImports=false, reportMissingModuleSource=false
 
 from __future__ import annotations
 

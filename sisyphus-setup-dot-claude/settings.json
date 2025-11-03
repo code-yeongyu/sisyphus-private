@@ -1,146 +1,166 @@
 {
-    "$schema": "https://json.schemastore.org/claude-code-settings.json",
-    "env": {
-        "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "64000",
-        "USE_BUILTIN_RIPGREP": "0",
-        "BASH_DEFAULT_TIMEOUT_MS": "300000",
-        "BASH_MAX_TIMEOUT_MS": "1800000",
-        "MCP_TIMEOUT": "60000",
-        "MCP_TOOL_TIMEOUT": "300000"
-    },
-    "permissions": {
-        "allow": [
-            "Read",
-            "Glob",
-            "Write",
-            "Edit",
-            "WebFetch(domain:*)",
-            "Bash(git status:*)",
-            "Bash(git diff:*)",
-            "Bash(git log:*)",
-            "Bash(git branch:*)",
-            "Bash(git show:*)",
-            "Bash(git blame:*)",
-            "Bash(git rev-parse:*)",
-            "Bash(gh pr view:*)",
-            "Bash(gh pr diff:*)",
-            "Bash(gh pr list:*)",
-            "Bash(gh pr checks:*)",
-            "Bash(gh api:*)",
-            "Bash(gh run view:*)",
-            "Bash(gh run list:*)",
-            "Bash(gh issue list:*)",
-            "Bash(gh --help:*)",
-            "Bash(jq:*)",
-            "Bash(tail:*)",
-            "Bash(head:*)",
-            "Bash(cat:*)",
-            "Bash(wc:*)",
-            "Bash(pytest:*)",
-            "Bash(poetry run pytest:*)",
-            "Bash(poetry run python -m pytest:*)",
-            "Bash(uv run pytest:*)",
-            "Bash(uv run python -m pytest:*)",
-            "Bash(python:*)",
-            "Bash(python3:*)",
-            "Bash(python -c:*)",
-            "Bash(rg:*)",
-            "Bash(grep:*)",
-            "Bash(find:*)",
-            "Bash(cd:*)",
-            "Bash(ls:*)",
-            "Bash(which:*)",
-            "Bash(git add:*)",
-            "Bash(git commit:*)",
-            "Bash(touch:*)",
-            "Bash(poetry install:*)",
-            "Bash(pnpm:*)",
-            "Bash(uv venv:*)",
-            "Bash(python manage.py shell -c:*)",
-            "Bash(node -v:*)",
-            "Bash(poetry run python -m py_compile:*)",
-            "Bash(ruff:*)",
-            "Bash(poetry run ruff:*)",
-            "Bash(ruff check:*)",
-            "Bash(ruff format:*)",
-            "Bash(poetry run ruff check:*)",
-            "Bash(poetry run ruff format:*)",
-            "Bash(uv run ruff:*)",
-            "Bash(uv run ruff check:*)",
-            "Bash(uv run ruff format:*)",
-            "Bash(git status | cat:*)",
-            "Bash(git diff | cat:*)",
-            "Bash(git diff --staged | cat:*)",
-            "Bash(git log:* | cat:*)",
-            "Bash(git branch --show-current | cat:*)",
-            "Bash(gh pr view:* | jq:*)",
-            "Bash(gh api:* | jq:*)",
-            "Bash(gh run view:* | tail:*)",
-            "mcp__sequential-thinking__sequentialthinking"
-        ],
-        "deny": [
-            "mcp__serena__insert_after_symbol",
-            "mcp__serena__replace_symbol_body",
-            "mcp__serena__insert_before_symbol"
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "USE_BUILTIN_RIPGREP": "0",
+    "BASH_DEFAULT_TIMEOUT_MS": "300000",
+    "BASH_MAX_TIMEOUT_MS": "1800000",
+    "MCP_TIMEOUT": "60000",
+    "MCP_TOOL_TIMEOUT": "300000"
+  },
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Write",
+      "Edit",
+      "WebFetch(domain:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git show:*)",
+      "Bash(git blame:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh api:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh --help:*)",
+      "Bash(jq:*)",
+      "Bash(tail:*)",
+      "Bash(head:*)",
+      "Bash(cat:*)",
+      "Bash(wc:*)",
+      "Bash(pytest:*)",
+      "Bash(poetry run pytest:*)",
+      "Bash(poetry run python -m pytest:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(uv run python -m pytest:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(python -c:*)",
+      "Bash(rg:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(cd:*)",
+      "Bash(ls:*)",
+      "Bash(which:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(touch:*)",
+      "Bash(poetry install:*)",
+      "Bash(pnpm:*)",
+      "Bash(uv venv:*)",
+      "Bash(python manage.py shell -c:*)",
+      "Bash(node -v:*)",
+      "Bash(poetry run python -m py_compile:*)",
+      "Bash(ruff:*)",
+      "Bash(poetry run ruff:*)",
+      "Bash(ruff check:*)",
+      "Bash(ruff format:*)",
+      "Bash(poetry run ruff check:*)",
+      "Bash(poetry run ruff format:*)",
+      "Bash(uv run ruff:*)",
+      "Bash(uv run ruff check:*)",
+      "Bash(uv run ruff format:*)",
+      "Bash(git status | cat:*)",
+      "Bash(git diff | cat:*)",
+      "Bash(git diff --staged | cat:*)",
+      "Bash(git log:* | cat:*)",
+      "Bash(git branch --show-current | cat:*)",
+      "Bash(gh pr view:* | jq:*)",
+      "Bash(gh api:* | jq:*)",
+      "Bash(gh run view:* | tail:*)",
+      "mcp__sequential-thinking__sequentialthinking"
+    ],
+    "deny": [
+      "mcp__serena__insert_after_symbol",
+      "mcp__serena__replace_symbol_body",
+      "mcp__serena__insert_before_symbol"
+    ]
+  },
+  "model": "sonnet",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --script ~/.claude/hooks/user_prompt_submit.py"
+          }
         ]
-    },
-    "model": "sonnet",
-    "hooks": {
-        "UserPromptSubmit": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "uv run python ~/.claude/hooks/user-prompt-submit/system_reminder.py"
-                    }
-                ]
-            }
-        ],
-        "PreToolUse": [
-            {
-                "matcher": "Bash",
-                "hooks": [ ]
-            },
-            {
-                "matcher": "Write|Edit|MultiEdit",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "uv run python ~/.claude/hooks/pre-tool-use/block_asyncio_when_anyio_exists.py"
-                    },
-                    {
-                        "type": "command",
-                        "command": "uv run python ~/.claude/hooks/pre-tool-use/block_json_when_orjson_exists.py"
-                    }
-                ]
-            }
-        ],
-        "PostToolUse": [
-            {
-                "matcher": ".*",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "uv run python ~/.claude/hooks/post_tool_use.py"
-                    }
-                ]
-            }
-        ],
-        "Stop": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "uv run .github/workflows/.claude.agent/stop/check_uncommitted_changes.py"
-                    }
-                ]
-            }
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --script ~/.claude/hooks/pre_tool_use.py"
+          }
         ]
-    },
-    "alwaysThinkingEnabled": false,
-    "disableBypassPermissionsMode": "disable",
-    "feedbackSurveyState": {
-        "lastShownTime": 1754041351589
-    },
-    "DISABLE_AUTOUPDATER": "1"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --script ~/.claude/hooks/post_tool_use.py"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --script ~/.claude/hooks/stop.py"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --script ~/.claude/hooks/pre_compact.py"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --script ~/.claude/hooks/session_end.py"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bunx --bun ccusage statusline"
+  },
+  "enabledPlugins": {
+    "sisyphus@sisyphus-marketplace": false,
+    "cc-plus@cc-plus-marketplace": true,
+    "indent@indent-marketplace": false
+  },
+  "alwaysThinkingEnabled": false,
+  "disableBypassPermissionsMode": "disable",
+  "feedbackSurveyState": {
+    "lastShownTime": 1754041351589
+  },
+  "DISABLE_AUTOUPDATER": "1"
 }

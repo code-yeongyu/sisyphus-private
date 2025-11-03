@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
@@ -107,7 +107,7 @@ class KnowledgeInfo(TypedDict):
 
 
 class KnowledgeFinder:
-    KNOWLEDGE_FILES = ["claude.md", "agents.md", "readme.md"]
+    KNOWLEDGE_FILES = ["claude.md", "agents.md"]
 
     def __init__(self, file_path: str, cwd: str | None = None) -> None:
         self.file_path = Path(file_path).resolve()
@@ -134,8 +134,8 @@ class KnowledgeFinder:
         except ValueError:
             return []
 
-        knowledge_infos: list[KnowledgeInfo] = []
-        seen_files: set[str] = set()
+        # === PHASE 1: Collect all candidate files with distances ===
+        candidates: list[tuple[Path, int]] = []
         current_dir = self.file_path.parent
         distance = 0
 
@@ -144,40 +144,117 @@ class KnowledgeFinder:
             if current_dir != self.project_root:
                 for file in current_dir.iterdir():
                     if file.is_file() and file.name.lower() in self.KNOWLEDGE_FILES:
-                        try:
-                            relative_path = file.relative_to(self.project_root)
-                            path_str = str(relative_path)
-                        except ValueError:
-                            path_str = str(file)
-
-                        normalized_path = path_str.lower()
-                        if normalized_path not in seen_files:
-                            seen_files.add(normalized_path)
-                            file_type = "claude" if "claude" in file.name.lower() else "agents"
-
-                            try:
-                                file_content = file.read_bytes()
-                                file_hash = hashlib.sha256(file_content).hexdigest()[:16]
-                                last_modified = datetime.fromtimestamp(file.stat().st_mtime).isoformat()
-                            except OSError:
-                                file_hash = "unknown"
-                                last_modified = "unknown"
-
-                            knowledge_infos.append(
-                                KnowledgeInfo(
-                                    path=path_str,
-                                    distance=distance,
-                                    type=file_type,
-                                    hash=file_hash,
-                                    last_modified=last_modified,
-                                )
-                            )
+                        candidates.append((file, distance))
 
             if current_dir == self.project_root:
                 break
 
             current_dir = current_dir.parent
             distance += 1
+
+        # === PHASE 2: Deduplicate by resolved path (symlink deduplication) ===
+        # Key: resolved path string, Value: (original path, distance)
+        unique_by_realpath: dict[str, tuple[Path, int]] = {}
+
+        for file_path, dist in candidates:
+            try:
+                real_path = file_path.resolve()
+                real_path_str = str(real_path)
+
+                if real_path_str in unique_by_realpath:
+                    existing_path, existing_dist = unique_by_realpath[real_path_str]
+
+                    # Keep the better one based on:
+                    # 1. Closer distance
+                    # 2. Same distance but has "agents" in name
+                    should_replace = False
+
+                    if dist < existing_dist:
+                        should_replace = True
+                    elif dist == existing_dist:
+                        # Prefer agents.md
+                        has_agents = "agents" in file_path.name.lower()
+                        existing_has_agents = "agents" in existing_path.name.lower()
+                        if has_agents and not existing_has_agents:
+                            should_replace = True
+
+                    if should_replace:
+                        unique_by_realpath[real_path_str] = (file_path, dist)
+                else:
+                    unique_by_realpath[real_path_str] = (file_path, dist)
+
+            except OSError:
+                # Skip files that can't be resolved (circular symlinks, etc.)
+                continue
+
+        # === PHASE 3: Group by content hash ===
+        # Key: SHA256 hash of stripped content
+        # Value: list of (original_path, distance, resolved_path_str)
+        content_groups: dict[str, list[tuple[Path, int, str]]] = {}
+
+        for real_path_str, (file_path, dist) in unique_by_realpath.items():
+            try:
+                # Read from the real file
+                real_path = Path(real_path_str)
+                content = real_path.read_text(encoding="utf-8").strip()
+                content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+                if content_hash not in content_groups:
+                    content_groups[content_hash] = []
+
+                content_groups[content_hash].append((file_path, dist, real_path_str))
+
+            except OSError:
+                # Skip files that can't be read
+                continue
+
+        # === PHASE 4: Select one file per content group ===
+        selected_files: list[tuple[Path, int, str]] = []
+
+        for content_hash, group in content_groups.items():
+            # Sort by priority:
+            # 1. Has "agents" in filename (descending - True first)
+            # 2. Distance (ascending - smaller first)
+            def priority_key(item: tuple[Path, int, str]) -> tuple[bool, int]:
+                file_path, dist, _ = item
+                has_agents = "agents" in file_path.name.lower()
+                return (not has_agents, dist)  # not has_agents: False < True, so agents comes first
+
+            group.sort(key=priority_key)
+            selected_files.append(group[0])  # Pick the best one
+
+        # === PHASE 5: Create KnowledgeInfo objects ===
+        knowledge_infos: list[KnowledgeInfo] = []
+
+        for file_path, dist, real_path_str in selected_files:
+            try:
+                relative_path = file_path.relative_to(self.project_root)
+                path_str = str(relative_path)
+            except ValueError:
+                path_str = str(file_path)
+
+            # Determine file type from filename
+            file_type = "claude" if "claude" in file_path.name.lower() else "agents"
+
+            # Read metadata
+            try:
+                real_path = Path(real_path_str)
+                file_content = real_path.read_bytes()
+                file_hash = hashlib.sha256(file_content).hexdigest()[:16]
+                last_modified = datetime.fromtimestamp(real_path.stat().st_mtime).isoformat()
+            except OSError:
+                file_hash = "unknown"
+                last_modified = "unknown"
+
+            knowledge_infos.append(
+                KnowledgeInfo(
+                    path=path_str,
+                    distance=dist,
+                    type=file_type,
+                    hash=file_hash,
+                    last_modified=last_modified,
+                )
+            )
 
         return sorted(knowledge_infos, key=lambda x: x["distance"])
 
@@ -220,6 +297,69 @@ class KnowledgeInjector:
             todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
         except OSError:
             pass
+
+    def _check_and_complete_existing_todos(self, knowledge_path: Path) -> None:
+        todo_file = self.TODOS_DIR / f"{self.session_id}-agent-{self.session_id}.json"
+
+        if not todo_file.exists():
+            return
+
+        try:
+            todos = orjson.loads(todo_file.read_bytes())
+        except (orjson.JSONDecodeError, OSError):
+            return
+
+        if not isinstance(todos, list):
+            return
+
+        modified = False
+
+        knowledge_original = str(knowledge_path)
+        try:
+            knowledge_resolved = str(knowledge_path.resolve())
+        except OSError:
+            knowledge_resolved = knowledge_original
+
+        for todo in todos:
+            todo_id = todo.get("id", "")
+            if not todo_id.startswith("read-knowledge-"):
+                continue
+
+            if todo.get("status") == "completed":
+                continue
+
+            todo_content = todo.get("content", "")
+
+            if knowledge_original in todo_content or knowledge_resolved in todo_content:
+                todo["status"] = "completed"
+                modified = True
+                continue
+
+            try:
+                parts = todo_content.split(": ", 1)
+                if len(parts) == 2:
+                    todo_file_path = parts[1].strip()
+
+                    try:
+                        todo_file_resolved = str(Path(todo_file_path).resolve())
+
+                        if todo_file_resolved == knowledge_resolved:
+                            todo["status"] = "completed"
+                            modified = True
+                            continue
+                    except OSError:
+                        if todo_file_path == knowledge_original:
+                            todo["status"] = "completed"
+                            modified = True
+                            continue
+            except (ValueError, IndexError):
+                pass
+
+        if modified:
+            try:
+                todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            except OSError:
+                pass
 
     def _add_todo_item(self, knowledge_info: KnowledgeInfo) -> None:
         self.TODOS_DIR.mkdir(parents=True, exist_ok=True)
@@ -277,7 +417,12 @@ class KnowledgeInjector:
             return False
 
         try:
-            knowledge_path_str = str(knowledge_path.resolve())
+            knowledge_original = str(knowledge_path)
+            try:
+                knowledge_resolved = str(knowledge_path.resolve())
+            except OSError:
+                knowledge_resolved = knowledge_original
+
             transcript_content = self.transcript_path.read_text(encoding="utf-8")
 
             for line in transcript_content.splitlines():
@@ -320,8 +465,21 @@ class KnowledgeInjector:
                     if not isinstance(tool_input, dict):
                         continue
 
-                    if tool_input.get("file_path") == knowledge_path_str:
+                    file_path_from_tool = tool_input.get("file_path")
+                    if not file_path_from_tool:
+                        continue
+
+                    if file_path_from_tool == knowledge_original:
                         return True
+                    if file_path_from_tool == knowledge_resolved:
+                        return True
+
+                    try:
+                        tool_path_resolved = str(Path(file_path_from_tool).resolve())
+                        if tool_path_resolved == knowledge_resolved:
+                            return True
+                    except OSError:
+                        pass
 
             return False
 
@@ -395,6 +553,19 @@ class HookHandler:
 
         if Path(file_path).resolve() == Path(__file__).resolve():
             print(f"[{hook_filename}] Skipping: Self-reference detected")
+            sys.exit(0)
+
+        if Path(file_path).name.lower() in ["claude.md", "agents.md"]:
+            session_id = data["session_id"]
+            transcript_path = data["transcript_path"]
+            cwd = data["cwd"]
+
+            knowledge_path = Path(file_path).resolve()
+            finder = KnowledgeFinder(file_path, cwd)
+            injector = KnowledgeInjector(finder.project_root, transcript_path, session_id)
+            injector._check_and_complete_existing_todos(knowledge_path)
+
+            print(f"[{hook_filename}] Success: Knowledge todos updated")
             sys.exit(0)
 
         cwd = data["cwd"]

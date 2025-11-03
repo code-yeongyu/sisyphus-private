@@ -1,8 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
 # dependencies = ["toml>=0.10.2"]
 # ///
+# pyright: reportMissingImports=false, reportMissingModuleSource=false
 
 from __future__ import annotations
 
@@ -155,7 +156,7 @@ def main() -> None:
         sys.exit(0)
 
     results = execute_typecheck(config, file_path)
-    handle_results_and_exit(results)
+    handle_results_and_exit(results, file_path)
 
 
 def get_target_file_path(input_data: str) -> str | None:
@@ -230,7 +231,7 @@ def execute_typecheck(config: TypeCheckConfiguration, file_path: str) -> TypeChe
     )
 
 
-def handle_results_and_exit(results: TypeCheckResults) -> None:
+def handle_results_and_exit(results: TypeCheckResults, file_path: str = "") -> None:
     """Handle type check results and exit with appropriate code."""
     if results.exit_code == 0:
         print("[typecheck-hook] Success: No type errors found")
@@ -240,6 +241,10 @@ def handle_results_and_exit(results: TypeCheckResults) -> None:
     if results.output:
         message_parts.append("\n")
         message_parts.append(_wrap_in_xml_tags("basedpyright", results.output))
+        message_parts.append("\n")
+
+    if file_path and is_pep723_script(file_path) and "reportMissingImports" in results.output:
+        message_parts.append(_get_pep723_missing_imports_note())
         message_parts.append("\n")
 
     message_parts.append(_get_error_fix_reminder())
@@ -482,12 +487,52 @@ def _is_valid_python_file(file_path: str) -> bool:
 
 
 def _get_error_fix_reminder() -> str:
-    """Get reminder message about fixing type errors."""
     return (
         "\n**CRITICAL: DO NOT IGNORE THESE TYPE ERRORS!**\n"
         "You MUST fix ALL type errors shown above.\n"
         "These errors indicate potential runtime issues and must be resolved.\n"
         "The code may fail at runtime if these type errors are not addressed."
+    )
+
+
+def is_pep723_script(file_path: str) -> bool:
+    if not file_path or not Path(file_path).exists():
+        return False
+
+    try:
+        with open(file_path, encoding="utf-8") as f:
+            lines = f.readlines()
+
+        if not lines:
+            return False
+
+        if not lines[0].startswith("#!"):
+            return False
+
+        for line in lines[1:20]:
+            stripped = line.strip()
+            if stripped.startswith("# ///"):
+                return True
+            if stripped and not stripped.startswith("#"):
+                break
+
+        return False
+    except Exception:
+        return False
+
+
+def _get_pep723_missing_imports_note() -> str:
+    return (
+        "\nNOTE: For PEP 723 scripts with reportMissingImports errors:\n"
+        "Add the following comment at the top of your file (after shebang and PEP 723 block):\n"
+        "# pyright: reportMissingImports=false\n"
+        "\nExample:\n"
+        "#!/usr/bin/env -S uv run --script\n"
+        "# /// script\n"
+        '# requires-python = ">=3.11"\n'
+        '# dependencies = ["requests>=2.32.0"]\n'
+        "# ///\n"
+        "# pyright: reportMissingImports=false\n"
     )
 
 

@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 
 import asyncio
 import json
@@ -106,10 +110,7 @@ Current system time: {current_time}
         git_lines = ["[GIT INFO]"]
         if "branch" in git_info:
             git_lines.append(f"Git branch: {git_info['branch']}")
-        if all(
-            k in git_info
-            for k in ["commit_hash", "commit_message", "commit_author", "commit_time"]
-        ):
+        if all(k in git_info for k in ["commit_hash", "commit_message", "commit_author", "commit_time"]):
             git_lines.append(
                 f"Git commit: [{git_info['commit_hash']}] "
                 f'"{git_info["commit_message"]}" by {git_info["commit_author"]} ({git_info["commit_time"]})'

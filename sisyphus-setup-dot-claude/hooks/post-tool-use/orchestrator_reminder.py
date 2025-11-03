@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 
 import json
 import sys
@@ -48,6 +52,90 @@ def find_uncompleted_todos(cwd: str) -> list[str]:
     return uncompleted
 
 
+def find_pre_compact_backups(session_id: str) -> list[Path]:
+    """Find pre-compact backup files for session (oldest to newest)."""
+    backup_dir = Path.home() / ".claude" / "pre-compact-session-histories"
+    if not backup_dir.exists():
+        return []
+
+    backups = list(backup_dir.glob(f"{session_id}-*.jsonl"))
+    backups.sort(key=lambda p: p.name)  # Sort by name (timestamp order)
+    return backups
+
+
+def check_execute_in_transcript(transcript_path: Path) -> bool:
+    """Check if transcript contains /execute command."""
+    try:
+        with transcript_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+
+                try:
+                    data = json.loads(line)
+
+                    if data.get("type") != "user":
+                        continue
+
+                    message = data.get("message", {})
+                    content = message.get("content", [])
+
+                    match content:
+                        case str():
+                            if "<command-name>/execute</command-name>" in content:
+                                return True
+                        case list():
+                            for item in content:
+                                if isinstance(item, dict):
+                                    text = item.get("text", "")
+                                    if "<command-name>/execute</command-name>" in text:
+                                        return True
+
+                except json.JSONDecodeError:
+                    continue
+
+        return False
+
+    except Exception:
+        return False
+
+
+def has_execute_command(session_id: str) -> bool:
+    """
+    Check if /execute command exists in transcript.
+    Checks both current transcript and pre-compact backups.
+    """
+    if not session_id:
+        return False
+
+    # 1. Find current transcript
+    projects_dir = Path.home() / ".claude" / "projects"
+    if not projects_dir.exists():
+        return False
+
+    transcript_path = None
+    for project_dir in projects_dir.iterdir():
+        if not project_dir.is_dir():
+            continue
+
+        session_file = project_dir / f"{session_id}.jsonl"
+        if session_file.exists():
+            transcript_path = session_file
+            break
+
+    # 2. Check current transcript
+    if transcript_path and check_execute_in_transcript(transcript_path):
+        return True
+
+    # 3. Check pre-compact backups (IMPORTANT!)
+    backups = find_pre_compact_backups(session_id)
+    for backup_path in backups:
+        if check_execute_in_transcript(backup_path):
+            return True
+
+    return False
+
+
 def main() -> int:
     EXECUTOR = "executor"
 
@@ -61,6 +149,12 @@ def main() -> int:
 
     if subagent_type == EXECUTOR:
         print("Skipping orchestrator hook: This is an executor agent", file=sys.stderr)
+        return 0
+
+    # Check if /execute command exists in transcript
+    session_id = input_data.get("session_id", "")
+    if not has_execute_command(session_id):
+        print("Skipping orchestrator hook: No /execute command in transcript", file=sys.stderr)
         return 0
 
     cwd = input_data.get("cwd", ".")
@@ -94,8 +188,8 @@ YOUR VERIFICATION DUTIES (DO NOT SKIP ANY):
 - Review: MANUALLY verify their work matches the goal - assume they cut corners
 - Verify: Verify test code: Naive test cases, redundant test cases, duplicated test cases.
   (Make sure test code should reflect the spec and also clear.)
-  Run global tests (ex: pytest .) and lint(ex: ruff check .) and typecheck
-  (ex: basedpyright .), consider executor as a liar. Use playwright mcp, tmux cli, python
+  Run global tests (ex: pytest .) and lint(ex: ruff check .) and typecheck (ex: basedpyright .),
+  consider executor as a liar. Use playwright mcp, tmux cli, python
 - Check notepad.md: Verify executor documented work with REAL findings, not placeholders
 - Commit: After verification, ensure all changes committed. Check git commit and status
 
@@ -175,6 +269,12 @@ If the executor agent has completed tasks but checkboxes remain unchecked:
 YOU (the orchestrator) MUST manually update the checkboxes in ai-todolist.md
 Use TodoWrite or Edit tools to mark completed tasks as [x]
 Do NOT leave completed tasks unchecked - this blocks progress tracking
+
+[IMPORTANT - NO RESPONSE FROM EXECUTOR?]
+"EXECUTOR 의 작업 완수를 기다린다" 라는 개념은 없습니다.
+만약 EXECUTOR 가 답변을 제공하지 않았다면, 자신의 task 를 끝냈다고 보고한것과 마찬가지입니다.
+작업 완수로 간주하고 똑같이 검수하세요.
+다시 강조합니다. "작업 완료를 기다린다" 는 개념은 없습니다.
 
 [CRITICAL - NEVER STOP]
 TASKS ARE NOT COMPLETE IN @ai-todolist.md

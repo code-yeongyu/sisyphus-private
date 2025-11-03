@@ -1,0 +1,26 @@
+{
+  "sisyphus-marketplace": {
+    "source": {
+      "source": "directory",
+      "path": "/Users/yeongyu/local-workspaces/sisyphus"
+    },
+    "installLocation": "/Users/yeongyu/local-workspaces/sisyphus",
+    "lastUpdated": "2025-10-24T01:56:42.358Z"
+  },
+  "cc-plus-marketplace": {
+    "source": {
+      "source": "github",
+      "repo": "code-yeongyu/cc-plus"
+    },
+    "installLocation": "/Users/yeongyu/.claude/plugins/marketplaces/cc-plus-marketplace",
+    "lastUpdated": "2025-11-01T13:21:10.906Z"
+  },
+  "indent-marketplace": {
+    "source": {
+      "source": "github",
+      "repo": "indentcorp/claude-code-marketplace"
+    },
+    "installLocation": "/Users/yeongyu/.claude/plugins/marketplaces/indent-marketplace",
+    "lastUpdated": "2025-11-03T11:00:14.754Z"
+  }
+}

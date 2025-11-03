@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """
 PostToolUse hook executor that reads settings.json and executes matching hooks.
 
@@ -34,7 +38,7 @@ POST_TOOL_USE_CONFIG: list[HookMatcher] = [
         hooks=[
             HookCommand(
                 type="command",
-                command="~/.claude/hooks/post-tool-use/system-reminder.sh",
+                command="uv run ~/.claude/hooks/post-tool-use/delegation_enforcer.py",
                 asyncable=False,
             ),
             HookCommand(
@@ -54,12 +58,27 @@ POST_TOOL_USE_CONFIG: list[HookMatcher] = [
             ),
             HookCommand(
                 type="command",
+                command="uv run ~/.claude/hooks/post-tool-use/inject_readme.py",
+                asyncable=False,
+            ),
+            HookCommand(
+                type="command",
                 command="uv run ~/.claude/hooks/post-tool-use/inject_knowledge.py",
                 asyncable=False,
             ),
             HookCommand(
                 type="command",
                 command="uv run ~/.claude/hooks/post-tool-use/inject_language_guide.py",
+                asyncable=False,
+            ),
+            HookCommand(
+                type="command",
+                command="uv run ~/.claude/hooks/post-tool-use/inject_rules.py",
+                asyncable=False,
+            ),
+            HookCommand(
+                type="command",
+                command="uv run ~/.claude/hooks/post-tool-use/system_reminder.py",
                 asyncable=False,
             ),
         ],
@@ -74,12 +93,22 @@ POST_TOOL_USE_CONFIG: list[HookMatcher] = [
             ),
             HookCommand(
                 type="command",
+                command="uv run ~/.claude/hooks/post-tool-use/inject_readme.py",
+                asyncable=False,
+            ),
+            HookCommand(
+                type="command",
                 command="uv run ~/.claude/hooks/post-tool-use/inject_knowledge.py",
                 asyncable=False,
             ),
             HookCommand(
                 type="command",
                 command="uv run ~/.claude/hooks/post-tool-use/inject_language_guide.py",
+                asyncable=False,
+            ),
+            HookCommand(
+                type="command",
+                command="uv run ~/.claude/hooks/post-tool-use/inject_rules.py",
                 asyncable=False,
             ),
         ],
@@ -104,12 +133,12 @@ POST_TOOL_USE_CONFIG: list[HookMatcher] = [
         hooks=[
             HookCommand(
                 type="command",
-                command="uv run ~/.claude/hooks/post-tool-use/remind_tmux_sessions.py",
+                command="uv run ~/.claude/hooks/post-tool-use/remind_terminalcp_usage.py",
                 asyncable=True,
             ),
             HookCommand(
                 type="command",
-                command="uv run ~/.claude/hooks/post-tool-use/remind_tmux_usage.py",
+                command="uv run ~/.claude/hooks/post-tool-use/remind_terminalcp_cleanup.py",
                 asyncable=True,
             ),
         ],
@@ -206,7 +235,15 @@ async def _main() -> int:
             returncode, _stdout, stderr = result
             if returncode == 2 and stderr:
                 claude_needs_to_know = True
-                print(stderr, file=sys.stderr, end="")
+                filtered_stderr = "\n".join(
+                    line
+                    for line in stderr.splitlines()
+                    if "RuntimeWarning: The global interpreter lock (GIL)" not in line
+                    and "orjson.orjson" not in line
+                    and "PYTHON_GIL=0" not in line
+                )
+                if filtered_stderr:
+                    print(filtered_stderr, file=sys.stderr, end="")
 
     for hook in sync_hooks:
         returncode, _stdout, stderr = await execute_hook_async(hook.command, stdin_data, current_cwd)
@@ -214,7 +251,15 @@ async def _main() -> int:
         if returncode == 2 and stderr:
             claude_needs_to_know = True
             print(f"Hook Executed: {hook.command}", file=sys.stderr)
-            print(stderr, file=sys.stderr, end="")
+            filtered_stderr = "\n".join(
+                line
+                for line in stderr.splitlines()
+                if "RuntimeWarning: The global interpreter lock (GIL)" not in line
+                and "orjson.orjson" not in line
+                and "PYTHON_GIL=0" not in line
+            )
+            if filtered_stderr:
+                print(filtered_stderr, file=sys.stderr, end="")
 
     exit_code = 0
     if claude_needs_to_know:

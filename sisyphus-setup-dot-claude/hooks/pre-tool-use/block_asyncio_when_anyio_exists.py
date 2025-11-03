@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
@@ -6,6 +6,7 @@
 #   "ast-grep-py>=0.24.1",
 # ]
 # ///
+# pyright: reportMissingImports=false, reportMissingModuleSource=false
 """
 Asyncio blocker hook for Claude Code when anyio is available.
 Blocks edits that use asyncio when anyio is available in the project.

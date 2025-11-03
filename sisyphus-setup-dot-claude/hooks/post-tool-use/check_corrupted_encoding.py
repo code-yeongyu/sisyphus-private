@@ -1,10 +1,11 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
 #   "chardet>=5.2.0",
 # ]
 # ///
+# pyright: reportMissingImports=false, reportMissingModuleSource=false
 """
 Post-tool-use corrupted encoding checker for Claude Code.
 Checks files after they've been written/edited for encoding issues and reports warnings.

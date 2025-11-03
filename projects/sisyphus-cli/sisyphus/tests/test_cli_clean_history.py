@@ -23,7 +23,7 @@ def test_clean_history__on_main_branch__exits_with_error(tmp_path: Path, monkeyp
     monkeypatch.chdir(tmp_path)
 
     # when
-    with patch("sisyphus.cli.is_on_main_branch") as mock_on_main:
+    with patch("sisyphus.cli.work.is_on_main_branch") as mock_on_main:
         mock_on_main.return_value = True
         result = runner.invoke(app, ["clean-history"])
 
@@ -45,8 +45,8 @@ def test_clean_history__no_base_branch_detected__exits_with_error(
 
     # when
     with (
-        patch("sisyphus.cli.is_on_main_branch") as mock_on_main,
-        patch("sisyphus.cli.detect_base_branch") as mock_detect,
+        patch("sisyphus.cli.work.is_on_main_branch") as mock_on_main,
+        patch("sisyphus.cli.work.detect_base_branch") as mock_detect,
     ):
         mock_on_main.return_value = False
         mock_detect.return_value = None
@@ -71,8 +71,8 @@ def test_clean_history__with_base_branch_option__uses_specified_branch(
 
     # when
     with (
-        patch("sisyphus.cli.is_on_main_branch") as mock_on_main,
-        patch("sisyphus.cli.find_commits_with_files") as mock_find,
+        patch("sisyphus.cli.work.is_on_main_branch") as mock_on_main,
+        patch("sisyphus.cli.work.find_commits_with_files") as mock_find,
     ):
         mock_on_main.return_value = False
         mock_find.return_value = []
@@ -98,9 +98,9 @@ def test_clean_history__no_commits_found__shows_success_message(
 
     # when
     with (
-        patch("sisyphus.cli.is_on_main_branch") as mock_on_main,
-        patch("sisyphus.cli.detect_base_branch") as mock_detect,
-        patch("sisyphus.cli.find_commits_with_files") as mock_find,
+        patch("sisyphus.cli.work.is_on_main_branch") as mock_on_main,
+        patch("sisyphus.cli.work.detect_base_branch") as mock_detect,
+        patch("sisyphus.cli.work.find_commits_with_files") as mock_find,
     ):
         mock_on_main.return_value = False
         mock_detect.return_value = "origin/main"
@@ -137,9 +137,9 @@ def test_clean_history__with_commits__shows_warning_and_guide(tmp_path: Path, mo
 
     # when
     with (
-        patch("sisyphus.cli.is_on_main_branch") as mock_on_main,
-        patch("sisyphus.cli.detect_base_branch") as mock_detect,
-        patch("sisyphus.cli.find_commits_with_files") as mock_find,
+        patch("sisyphus.cli.work.is_on_main_branch") as mock_on_main,
+        patch("sisyphus.cli.work.detect_base_branch") as mock_detect,
+        patch("sisyphus.cli.work.find_commits_with_files") as mock_find,
     ):
         mock_on_main.return_value = False
         mock_detect.return_value = "origin/main"
@@ -173,10 +173,10 @@ def test_clean_history__user_confirms__shows_rebase_guide(tmp_path: Path, monkey
 
     # when
     with (
-        patch("sisyphus.cli.is_on_main_branch") as mock_on_main,
-        patch("sisyphus.cli.detect_base_branch") as mock_detect,
-        patch("sisyphus.cli.find_commits_with_files") as mock_find,
-        patch("sisyphus.cli.generate_rebase_guide") as mock_guide,
+        patch("sisyphus.cli.work.is_on_main_branch") as mock_on_main,
+        patch("sisyphus.cli.work.detect_base_branch") as mock_detect,
+        patch("sisyphus.cli.work.find_commits_with_files") as mock_find,
+        patch("sisyphus.cli.work.generate_rebase_guide") as mock_guide,
     ):
         mock_on_main.return_value = False
         mock_detect.return_value = "origin/main"
@@ -211,10 +211,10 @@ def test_clean_history__dry_run_mode__skips_confirmation(tmp_path: Path, monkeyp
 
     # when
     with (
-        patch("sisyphus.cli.is_on_main_branch") as mock_on_main,
-        patch("sisyphus.cli.detect_base_branch") as mock_detect,
-        patch("sisyphus.cli.find_commits_with_files") as mock_find,
-        patch("sisyphus.cli.generate_rebase_guide") as mock_guide,
+        patch("sisyphus.cli.work.is_on_main_branch") as mock_on_main,
+        patch("sisyphus.cli.work.detect_base_branch") as mock_detect,
+        patch("sisyphus.cli.work.find_commits_with_files") as mock_find,
+        patch("sisyphus.cli.work.generate_rebase_guide") as mock_guide,
     ):
         mock_on_main.return_value = False
         mock_detect.return_value = "origin/main"
@@ -247,9 +247,9 @@ def test_clean_history__user_declines__exits_gracefully(tmp_path: Path, monkeypa
 
     # when
     with (
-        patch("sisyphus.cli.is_on_main_branch") as mock_on_main,
-        patch("sisyphus.cli.detect_base_branch") as mock_detect,
-        patch("sisyphus.cli.find_commits_with_files") as mock_find,
+        patch("sisyphus.cli.work.is_on_main_branch") as mock_on_main,
+        patch("sisyphus.cli.work.detect_base_branch") as mock_detect,
+        patch("sisyphus.cli.work.find_commits_with_files") as mock_find,
     ):
         mock_on_main.return_value = False
         mock_detect.return_value = "origin/main"
@@ -274,9 +274,9 @@ def test_clean_history__autodetects_base_branch_when_not_specified(
 
     # when
     with (
-        patch("sisyphus.cli.is_on_main_branch") as mock_on_main,
-        patch("sisyphus.cli.detect_base_branch") as mock_detect,
-        patch("sisyphus.cli.find_commits_with_files") as mock_find,
+        patch("sisyphus.cli.work.is_on_main_branch") as mock_on_main,
+        patch("sisyphus.cli.work.detect_base_branch") as mock_detect,
+        patch("sisyphus.cli.work.find_commits_with_files") as mock_find,
     ):
         mock_on_main.return_value = False
         mock_detect.return_value = "origin/master"
@@ -301,9 +301,9 @@ def test_clean_history__passes_file_patterns_to_find_commits(tmp_path: Path, mon
 
     # when
     with (
-        patch("sisyphus.cli.is_on_main_branch") as mock_on_main,
-        patch("sisyphus.cli.detect_base_branch") as mock_detect,
-        patch("sisyphus.cli.find_commits_with_files") as mock_find,
+        patch("sisyphus.cli.work.is_on_main_branch") as mock_on_main,
+        patch("sisyphus.cli.work.detect_base_branch") as mock_detect,
+        patch("sisyphus.cli.work.find_commits_with_files") as mock_find,
     ):
         mock_on_main.return_value = False
         mock_detect.return_value = "origin/main"

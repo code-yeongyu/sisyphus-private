@@ -32,7 +32,7 @@ def test_plan_get_task_current__when_not_started__shows_message() -> None:
     mock_plan.status = mock_status
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
         mock_loader_instance = MagicMock()
         mock_loader_instance.load.return_value = mock_plan
         mock_loader.return_value = mock_loader_instance
@@ -50,8 +50,8 @@ def test_plan_get_task_next__when_no_pending__shows_completed_message() -> None:
     mock_plan.todos = []
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
             mock_loader_instance = MagicMock()
             mock_loader_instance.load.return_value = mock_plan
             mock_loader.return_value = mock_loader_instance
@@ -79,9 +79,9 @@ def test_plan_get_task_id__when_task_exists__prints_task() -> None:
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
-            with patch("sisyphus.cli.print_task") as mock_print_task:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
+            with patch("sisyphus.cli.plan.print_task") as mock_print_task:
                 mock_loader_instance = MagicMock()
                 mock_loader_instance.load.return_value = mock_plan
                 mock_loader.return_value = mock_loader_instance
@@ -102,8 +102,8 @@ def test_plan_get_task_id__when_task_not_found__shows_error() -> None:
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
             mock_loader_instance = MagicMock()
             mock_loader_instance.load.return_value = mock_plan
             mock_loader.return_value = mock_loader_instance
@@ -124,8 +124,8 @@ def test_plan_get_task__when_no_option_provided__shows_error() -> None:
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
             mock_loader_instance = MagicMock()
             mock_loader_instance.load.return_value = mock_plan
             mock_loader.return_value = mock_loader_instance
@@ -145,8 +145,8 @@ def test_plan_get_reference__shows_not_implemented() -> None:
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
             mock_loader_instance = MagicMock()
             mock_loader_instance.load.return_value = mock_plan
             mock_loader.return_value = mock_loader_instance
@@ -172,7 +172,7 @@ def test_plan_set_current_task__when_valid_id__updates_plan() -> None:
     mock_plan.status = mock_status
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
         mock_loader_instance = MagicMock()
         mock_loader_instance.load.return_value = mock_plan
         mock_loader.return_value = mock_loader_instance
@@ -192,7 +192,7 @@ def test_plan_set_task_status__when_no_status_option__shows_error() -> None:
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
         mock_loader_instance = MagicMock()
         mock_loader_instance.load.return_value = mock_plan
         mock_loader.return_value = mock_loader_instance
@@ -210,8 +210,8 @@ def test_plan_set_task_status__when_task_not_found__shows_error() -> None:
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
             mock_loader_instance = MagicMock()
             mock_loader_instance.load.return_value = mock_plan
             mock_loader.return_value = mock_loader_instance
@@ -237,8 +237,8 @@ def test_plan_set_task_status__when_valid__updates_status() -> None:
     mock_plan.todos = [mock_task]
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
             mock_loader_instance = MagicMock()
             mock_loader_instance.load.return_value = mock_plan
             mock_loader.return_value = mock_loader_instance
@@ -258,7 +258,7 @@ def test_plan_set_task_status__when_valid__updates_status() -> None:
 
 def test_plan_get__when_file_not_found__shows_error() -> None:
     # given / when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
         mock_loader_instance = MagicMock()
         mock_loader_instance.load.side_effect = FileNotFoundError("작업계획서를 찾을 수 없습니다")
         mock_loader.return_value = mock_loader_instance
@@ -273,7 +273,7 @@ def test_plan_get__when_file_not_found__shows_error() -> None:
 @pytest.mark.skip(reason="Command removed in Task 10")
 def test_plan_set__when_file_not_found__shows_error() -> None:
     # given / when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
         mock_loader_instance = MagicMock()
         mock_loader_instance.load.side_effect = FileNotFoundError("작업계획서를 찾을 수 없습니다")
         mock_loader.return_value = mock_loader_instance
@@ -302,9 +302,9 @@ def test_plan_get_task_show_references__when_task_has_references__prints_referen
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
-            with patch("sisyphus.cli.print_references") as mock_print_references:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
+            with patch("sisyphus.cli.plan.print_references") as mock_print_references:
                 mock_loader_instance = MagicMock()
                 mock_loader_instance.load.return_value = mock_plan
                 mock_loader.return_value = mock_loader_instance
@@ -338,9 +338,9 @@ def test_plan_get_task_show_children__when_task_has_children__prints_children() 
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
-            with patch("sisyphus.cli.print_children") as mock_print_children:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
+            with patch("sisyphus.cli.plan.print_children") as mock_print_children:
                 mock_loader_instance = MagicMock()
                 mock_loader_instance.load.return_value = mock_plan
                 mock_loader.return_value = mock_loader_instance
@@ -391,9 +391,9 @@ def test_plan_get_task_show_verification__when_task_has_verification__prints_ver
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
-            with patch("sisyphus.cli.print_verification") as mock_print_verification:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
+            with patch("sisyphus.cli.plan.print_verification") as mock_print_verification:
                 mock_loader_instance = MagicMock()
                 mock_loader_instance.load.return_value = mock_plan
                 mock_loader.return_value = mock_loader_instance
@@ -423,9 +423,9 @@ def test_plan_get_task__when_no_filter_specified__prints_full_task() -> None:
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
-            with patch("sisyphus.cli.print_task") as mock_print_task:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
+            with patch("sisyphus.cli.plan.print_task") as mock_print_task:
                 mock_loader_instance = MagicMock()
                 mock_loader_instance.load.return_value = mock_plan
                 mock_loader.return_value = mock_loader_instance
@@ -462,8 +462,8 @@ def test_plan_set_task_status_recursive__when_task_has_children__updates_all() -
     mock_plan.todos = [parent]
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
             mock_loader_instance = MagicMock()
             mock_loader_instance.load.return_value = mock_plan
             mock_loader.return_value = mock_loader_instance
@@ -505,8 +505,8 @@ def test_plan_set_verification__when_verification_exists__updates_status() -> No
     mock_plan.todos = [mock_task]
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
             mock_loader_instance = MagicMock()
             mock_loader_instance.load.return_value = mock_plan
             mock_loader.return_value = mock_loader_instance
@@ -532,8 +532,8 @@ def test_plan_set_verification__when_verification_not_found__shows_error() -> No
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
             mock_loader_instance = MagicMock()
             mock_loader_instance.load.return_value = mock_plan
             mock_loader.return_value = mock_loader_instance
@@ -565,9 +565,9 @@ def test_plan_check__when_task_exists__prints_report() -> None:
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
-            with patch("sisyphus.cli.print_completion_report") as mock_print_report:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
+            with patch("sisyphus.cli.plan.print_completion_report") as mock_print_report:
                 mock_loader_instance = MagicMock()
                 mock_loader_instance.load.return_value = mock_plan
                 mock_loader.return_value = mock_loader_instance
@@ -596,9 +596,9 @@ def test_get_task_with_rich_option__prints_rich_table() -> None:
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
-            with patch("sisyphus.cli.print_task") as mock_print_task:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
+            with patch("sisyphus.cli.plan.print_task") as mock_print_task:
                 mock_loader_instance = MagicMock()
                 mock_loader_instance.load.return_value = mock_plan
                 mock_loader.return_value = mock_loader_instance
@@ -630,10 +630,10 @@ def test_get_task_references_with_rich__prints_rich_table() -> None:
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
-            with patch("sisyphus.cli.print_task"):
-                with patch("sisyphus.cli.print_references") as mock_print_refs:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
+            with patch("sisyphus.cli.plan.print_task"):
+                with patch("sisyphus.cli.plan.print_references") as mock_print_refs:
                     mock_loader_instance = MagicMock()
                     mock_loader_instance.load.return_value = mock_plan
                     mock_loader.return_value = mock_loader_instance
@@ -665,9 +665,9 @@ def test_check_completion_with_rich__prints_rich_panel() -> None:
     mock_plan = MagicMock(spec=WorkPlan)
 
     # when
-    with patch("sisyphus.cli.PlanLoader") as mock_loader:
-        with patch("sisyphus.cli.PlanNavigator") as mock_navigator_class:
-            with patch("sisyphus.cli.print_completion_report") as mock_print_report:
+    with patch("sisyphus.cli.plan.PlanLoader") as mock_loader:
+        with patch("sisyphus.cli.plan.PlanNavigator") as mock_navigator_class:
+            with patch("sisyphus.cli.plan.print_completion_report") as mock_print_report:
                 mock_loader_instance = MagicMock()
                 mock_loader_instance.load.return_value = mock_plan
                 mock_loader.return_value = mock_loader_instance

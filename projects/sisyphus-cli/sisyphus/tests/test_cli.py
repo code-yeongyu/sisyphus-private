@@ -11,7 +11,8 @@ import typer
 from sisyphus.agents.base import Agent
 from sisyphus.agents.claude import ClaudeAgent
 from sisyphus.agents.opencode import OpenCodeAgent
-from sisyphus.cli import create_agent, resolve_binary, run, validate_url
+from sisyphus.cli.work import run
+from sisyphus.utils.cli_helpers import create_agent, resolve_binary, validate_url
 
 pytestmark = [pytest.mark.anyio()]
 
@@ -227,25 +228,29 @@ async def test_create_agent_empty_json() -> None:
 async def test_run_agent_and_execute_conflict() -> None:
     """Cannot use --agent with --execute simultaneously."""
     # given/when/then
+    mock_ctx = MagicMock()
+    mock_ctx.invoked_subcommand = None
     with pytest.raises(typer.BadParameter, match="Cannot use --agent with --execute or --verify"):
-        run(agent="claude", execute="opencode")
+        run(ctx=mock_ctx, agent="claude", execute="opencode")
 
 
 async def test_run_agent_and_verify_conflict() -> None:
     """Cannot use --agent with --verify simultaneously."""
     # given/when/then
+    mock_ctx = MagicMock()
+    mock_ctx.invoked_subcommand = None
     with pytest.raises(typer.BadParameter, match="Cannot use --agent with --execute or --verify"):
-        run(agent="claude", verify="opencode")
+        run(ctx=mock_ctx, agent="claude", verify="opencode")
 
 
 async def test_run_defaults_to_claude() -> None:
     """Defaults to claude when no agent is specified."""
     # given/when/then
     # run() calls anyio.run() so mock handling is required
-    with patch("sisyphus.cli.create_agent") as mock_create_agent:
-        with patch("sisyphus.cli.create_ui") as mock_create_ui:
-            with patch("sisyphus.cli.SessionStore") as mock_session_store:
-                with patch("sisyphus.cli.anyio.run"):
+    with patch("sisyphus.cli.work.create_agent") as mock_create_agent:
+        with patch("sisyphus.cli.work.create_ui") as mock_create_ui:
+            with patch("sisyphus.cli.work.SessionStore") as mock_session_store:
+                with patch("sisyphus.cli.work.anyio.run"):
                     # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
@@ -253,9 +258,12 @@ async def test_run_defaults_to_claude() -> None:
                     mock_create_ui.return_value = mock_ui
                     mock_store = MagicMock()
                     mock_session_store.return_value = mock_store
+                    mock_ctx = MagicMock()
+                    mock_ctx.invoked_subcommand = None
 
                     # when
                     run(
+                        ctx=mock_ctx,
                         agent=None,
                         execute=None,
                         verify=None,
@@ -281,10 +289,10 @@ async def test_run_defaults_to_claude() -> None:
 async def test_run_execute_without_verify() -> None:
     """Uses only --execute (no verify)."""
     # given/when/then
-    with patch("sisyphus.cli.create_agent") as mock_create_agent:
-        with patch("sisyphus.cli.create_ui") as mock_create_ui:
-            with patch("sisyphus.cli.SessionStore") as mock_session_store:
-                with patch("sisyphus.cli.anyio.run"):
+    with patch("sisyphus.cli.work.create_agent") as mock_create_agent:
+        with patch("sisyphus.cli.work.create_ui") as mock_create_ui:
+            with patch("sisyphus.cli.work.SessionStore") as mock_session_store:
+                with patch("sisyphus.cli.work.anyio.run"):
                     # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
@@ -292,9 +300,12 @@ async def test_run_execute_without_verify() -> None:
                     mock_create_ui.return_value = mock_ui
                     mock_store = MagicMock()
                     mock_session_store.return_value = mock_store
+                    mock_ctx = MagicMock()
+                    mock_ctx.invoked_subcommand = None
 
                     # when
                     run(
+                        ctx=mock_ctx,
                         agent=None,
                         execute="opencode",
                         verify=None,
@@ -320,10 +331,10 @@ async def test_run_execute_without_verify() -> None:
 async def test_run_execute_and_verify() -> None:
     """Uses both --execute and --verify."""
     # given/when/then
-    with patch("sisyphus.cli.create_agent") as mock_create_agent:
-        with patch("sisyphus.cli.create_ui") as mock_create_ui:
-            with patch("sisyphus.cli.SessionStore") as mock_session_store:
-                with patch("sisyphus.cli.anyio.run"):
+    with patch("sisyphus.cli.work.create_agent") as mock_create_agent:
+        with patch("sisyphus.cli.work.create_ui") as mock_create_ui:
+            with patch("sisyphus.cli.work.SessionStore") as mock_session_store:
+                with patch("sisyphus.cli.work.anyio.run"):
                     # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
@@ -331,9 +342,12 @@ async def test_run_execute_and_verify() -> None:
                     mock_create_ui.return_value = mock_ui
                     mock_store = MagicMock()
                     mock_session_store.return_value = mock_store
+                    mock_ctx = MagicMock()
+                    mock_ctx.invoked_subcommand = None
 
                     # when
                     run(
+                        ctx=mock_ctx,
                         agent=None,
                         execute="claude:sonnet",
                         verify="opencode",
@@ -361,10 +375,10 @@ async def test_run_execute_and_verify() -> None:
 async def test_run_binary_resolution() -> None:
     """Tests binary resolution priority."""
     # given/when/then
-    with patch("sisyphus.cli.create_agent") as mock_create_agent:
-        with patch("sisyphus.cli.create_ui") as mock_create_ui:
-            with patch("sisyphus.cli.SessionStore") as mock_session_store:
-                with patch("sisyphus.cli.anyio.run"):
+    with patch("sisyphus.cli.work.create_agent") as mock_create_agent:
+        with patch("sisyphus.cli.work.create_ui") as mock_create_ui:
+            with patch("sisyphus.cli.work.SessionStore") as mock_session_store:
+                with patch("sisyphus.cli.work.anyio.run"):
                     # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
@@ -372,9 +386,12 @@ async def test_run_binary_resolution() -> None:
                     mock_create_ui.return_value = mock_ui
                     mock_store = MagicMock()
                     mock_session_store.return_value = mock_store
+                    mock_ctx = MagicMock()
+                    mock_ctx.invoked_subcommand = None
 
                     # when
                     run(
+                        ctx=mock_ctx,
                         agent=None,
                         execute="opencode",
                         verify="opencode",
@@ -405,10 +422,10 @@ async def test_run_binary_resolution() -> None:
 async def test_run_opencode_server_url_validation() -> None:
     """Validates OpenCode server URL."""
     # given/when/then
-    with patch("sisyphus.cli.create_agent") as mock_create_agent:
-        with patch("sisyphus.cli.create_ui") as mock_create_ui:
-            with patch("sisyphus.cli.SessionStore") as mock_session_store:
-                with patch("sisyphus.cli.anyio.run"):
+    with patch("sisyphus.cli.work.create_agent") as mock_create_agent:
+        with patch("sisyphus.cli.work.create_ui") as mock_create_ui:
+            with patch("sisyphus.cli.work.SessionStore") as mock_session_store:
+                with patch("sisyphus.cli.work.anyio.run"):
                     # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
@@ -416,9 +433,12 @@ async def test_run_opencode_server_url_validation() -> None:
                     mock_create_ui.return_value = mock_ui
                     mock_store = MagicMock()
                     mock_session_store.return_value = mock_store
+                    mock_ctx = MagicMock()
+                    mock_ctx.invoked_subcommand = None
 
                     # when
                     run(
+                        ctx=mock_ctx,
                         agent=None,
                         execute="opencode",
                         verify=None,
@@ -443,9 +463,14 @@ async def test_run_opencode_server_url_validation() -> None:
 
 async def test_run_opencode_invalid_url() -> None:
     """OpenCode invalid URL."""
-    # given/when/then
+    # given
+    mock_ctx = MagicMock()
+    mock_ctx.invoked_subcommand = None
+
+    # when/then
     with pytest.raises(typer.BadParameter, match="Invalid URL"):
         run(
+            ctx=mock_ctx,
             agent=None,
             execute="opencode",
             verify=None,
@@ -465,10 +490,10 @@ async def test_run_opencode_invalid_url() -> None:
 async def test_run_ui_mode_cli() -> None:
     """Selects CLI mode with --no-tui flag."""
     # given/when/then
-    with patch("sisyphus.cli.create_agent") as mock_create_agent:
-        with patch("sisyphus.cli.create_ui") as mock_create_ui:
-            with patch("sisyphus.cli.SessionStore") as mock_session_store:
-                with patch("sisyphus.cli.anyio.run"):
+    with patch("sisyphus.cli.work.create_agent") as mock_create_agent:
+        with patch("sisyphus.cli.work.create_ui") as mock_create_ui:
+            with patch("sisyphus.cli.work.SessionStore") as mock_session_store:
+                with patch("sisyphus.cli.work.anyio.run"):
                     # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
@@ -476,9 +501,12 @@ async def test_run_ui_mode_cli() -> None:
                     mock_create_ui.return_value = mock_ui
                     mock_store = MagicMock()
                     mock_session_store.return_value = mock_store
+                    mock_ctx = MagicMock()
+                    mock_ctx.invoked_subcommand = None
 
                     # when
                     run(
+                        ctx=mock_ctx,
                         agent=None,
                         execute=None,
                         verify=None,
@@ -502,10 +530,10 @@ async def test_run_ui_mode_cli() -> None:
 async def test_run_ui_mode_tui() -> None:
     """Selects TUI mode by default."""
     # given/when/then
-    with patch("sisyphus.cli.create_agent") as mock_create_agent:
-        with patch("sisyphus.cli.create_ui") as mock_create_ui:
-            with patch("sisyphus.cli.SessionStore") as mock_session_store:
-                with patch("sisyphus.cli.anyio.run"):
+    with patch("sisyphus.cli.work.create_agent") as mock_create_agent:
+        with patch("sisyphus.cli.work.create_ui") as mock_create_ui:
+            with patch("sisyphus.cli.work.SessionStore") as mock_session_store:
+                with patch("sisyphus.cli.work.anyio.run"):
                     # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
@@ -513,9 +541,12 @@ async def test_run_ui_mode_tui() -> None:
                     mock_create_ui.return_value = mock_ui
                     mock_store = MagicMock()
                     mock_session_store.return_value = mock_store
+                    mock_ctx = MagicMock()
+                    mock_ctx.invoked_subcommand = None
 
                     # when
                     run(
+                        ctx=mock_ctx,
                         agent=None,
                         execute=None,
                         verify=None,
@@ -538,10 +569,10 @@ async def test_run_ui_mode_tui() -> None:
 async def test_run_verify_only_uses_claude_for_both() -> None:
     """When only verify is specified, agent is set to claude so both execute/verify use claude."""
     # given/when/then
-    with patch("sisyphus.cli.create_agent") as mock_create_agent:
-        with patch("sisyphus.cli.create_ui") as mock_create_ui:
-            with patch("sisyphus.cli.SessionStore") as mock_session_store:
-                with patch("sisyphus.cli.anyio.run"):
+    with patch("sisyphus.cli.work.create_agent") as mock_create_agent:
+        with patch("sisyphus.cli.work.create_ui") as mock_create_ui:
+            with patch("sisyphus.cli.work.SessionStore") as mock_session_store:
+                with patch("sisyphus.cli.work.anyio.run"):
                     # Mock setup
                     mock_agent = MagicMock(spec=Agent)
                     mock_create_agent.return_value = mock_agent
@@ -549,9 +580,12 @@ async def test_run_verify_only_uses_claude_for_both() -> None:
                     mock_create_ui.return_value = mock_ui
                     mock_store = MagicMock()
                     mock_session_store.return_value = mock_store
+                    mock_ctx = MagicMock()
+                    mock_ctx.invoked_subcommand = None
 
                     # when
                     run(
+                        ctx=mock_ctx,
                         agent=None,
                         execute=None,
                         verify="opencode",

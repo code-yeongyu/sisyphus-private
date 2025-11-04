@@ -10,7 +10,7 @@ from sisyphus.cli.common import resolve_cwd
 from sisyphus.core.plan_loader import PlanLoader
 from sisyphus.core.plan_navigator import PlanNavigator
 from sisyphus.utils.formatting import OutputFormat, print_task
-from sisyphus.utils.plan_types import Todo
+from sisyphus.utils.plan_types import Todo, TodoStatus
 
 task_app = typer.Typer(name="task", help="Task execution commands")
 console = Console()
@@ -131,13 +131,80 @@ def show_previous(
 def continue_work(
     cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
+    """Continue working on current or next task."""
     working_dir = resolve_cwd(cwd)
-    console.print(f"[yellow]Working directory: {working_dir}[/yellow]")
-    console.print(
-        "[yellow]task continue command is not yet implemented.[/yellow]\n"
-        "[yellow]This command will integrate with ExecutionLoop to resume work.[/yellow]"
-    )
-    raise typer.Exit(1)
+    plan_path = working_dir / "ai-todolist.yaml"
+
+    try:
+        loader = PlanLoader(plan_path)
+        plan = loader.load()
+        navigator = PlanNavigator(plan)
+
+        if not plan.status.execution.started:
+            first_task = navigator.get_next_task(current_id=None)
+            if first_task is None:
+                console.print("[red]작업이 없습니다[/red]")
+                raise typer.Exit(1)
+
+            plan.status.execution.started = True
+            plan.status.execution.started_at = datetime.now(UTC).isoformat()
+            plan.status.work_mode.current_task_id = str(first_task.id)
+
+            first_task.status = TodoStatus.in_progress
+            first_task.status_changed_at = datetime.now(UTC).isoformat()
+
+            loader.save(plan)
+            console.print(f"[green]작업을 시작합니다: {first_task.title}[/green]")
+            return
+
+        current_task_id = plan.status.work_mode.current_task_id
+        if current_task_id is None:
+            console.print("[red]현재 작업 ID가 없습니다[/red]")
+            raise typer.Exit(1)
+
+        report = navigator.check_task_completion(current_task_id)
+
+        if not report.can_complete:
+            console.print("[yellow]다음 작업으로 넘어갈 수 없습니다[/yellow]")
+
+            if not report.all_children_completed:
+                descendants = navigator.get_all_descendants(current_task_id)
+                console.print(f"자식 작업: {report.children_summary['completed']}/{len(descendants)} 완료")
+
+            if not report.all_verifications_completed:
+                console.print(
+                    f"검증: {report.verification_summary['completed']}/{report.verification_summary['total']} 완료"
+                )
+
+            raise typer.Exit(1)
+
+        current_task = navigator.find_todo_by_id(current_task_id)
+        if current_task is None:
+            console.print("[red]현재 작업을 찾을 수 없습니다[/red]")
+            raise typer.Exit(1)
+
+        current_task.status = TodoStatus.completed
+        current_task.status_changed_at = datetime.now(UTC).isoformat()
+
+        next_task = navigator.get_next_task(current_task_id)
+        if next_task is None:
+            plan.status.execution.completed = True
+            plan.status.execution.completed_at = datetime.now(UTC).isoformat()
+            plan.status.work_mode.current_task_id = None
+            loader.save(plan)
+            console.print("[green]모든 작업이 완료되었습니다![/green]")
+            return
+
+        next_task.status = TodoStatus.in_progress
+        next_task.status_changed_at = datetime.now(UTC).isoformat()
+        plan.status.work_mode.current_task_id = str(next_task.id)
+
+        loader.save(plan)
+        console.print(f"[green]다음 작업으로 이동: {next_task.title}[/green]")
+
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
 
 
 @verify_app.command(name="bash")

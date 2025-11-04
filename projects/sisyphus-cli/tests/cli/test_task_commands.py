@@ -338,13 +338,260 @@ final_verification: []
     assert "모든 작업이 완료되었습니다" in result.stdout
 
 
-def test_continue__shows_not_implemented_message(tmp_path: Path) -> None:
-    # given - when
+def test_continue__when_not_started__starts_first_task(tmp_path: Path) -> None:
+    # given
+    yaml_file = tmp_path / "ai-todolist.yaml"
+    yaml_content = """metadata:
+  created_at: "2025-01-01T00:00:00Z"
+  updated_at: "2025-01-01T00:00:00Z"
+user_request:
+  original: "Test"
+  created_at: "2025-01-01T00:00:00Z"
+  additional: []
+objectives:
+  core: "Test"
+background:
+  current_situation: "Test"
+  reason_for_change: "Test"
+  changes_to_make: "Test"
+required_background:
+  description: "Test"
+  references: []
+status:
+  execution:
+    started: false
+    completed: false
+  work_mode:
+    parallel_requested: false
+  progress:
+    total_tasks: 1
+    completed: 0
+    in_progress: 0
+    pending: 1
+  current_work: ""
+workflow:
+  dependency_diagram: ""
+todos:
+  - id: "1"
+    title: "First Task"
+    status: pending
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec: []
+success_vision:
+  user_perspective: []
+  business_perspective: []
+  technical_criteria: []
+final_verification: []
+"""
+    yaml_file.write_text(yaml_content)
+
+    # when
+    result = runner.invoke(task_app, ["continue", "--cwd", str(tmp_path)])
+
+    # then
+    assert result.exit_code == 0
+    assert "작업을 시작합니다" in result.stdout
+    assert "First Task" in result.stdout
+
+
+def test_continue__when_verification_incomplete__rejects_with_message(tmp_path: Path) -> None:
+    # given
+    yaml_file = tmp_path / "ai-todolist.yaml"
+    yaml_content = """metadata:
+  created_at: "2025-01-01T00:00:00Z"
+  updated_at: "2025-01-01T00:00:00Z"
+user_request:
+  original: "Test"
+  created_at: "2025-01-01T00:00:00Z"
+  additional: []
+objectives:
+  core: "Test"
+background:
+  current_situation: "Test"
+  reason_for_change: "Test"
+  changes_to_make: "Test"
+required_background:
+  description: "Test"
+  references: []
+status:
+  execution:
+    started: true
+    completed: false
+  work_mode:
+    parallel_requested: false
+    current_task_id: "1"
+  progress:
+    total_tasks: 1
+    completed: 0
+    in_progress: 1
+    pending: 0
+  current_work: ""
+workflow:
+  dependency_diagram: ""
+todos:
+  - id: "1"
+    title: "Task with Verification"
+    status: in_progress
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec:
+      - id: "v1"
+        title: "Unverified Item"
+        description: "Test"
+        verified: false
+        orchestrator_manually_verified: false
+        manual_verification_evidence: ""
+        bash:
+          - execute: "echo test"
+            expected_exit_code: 0
+        llm_judge: []
+success_vision:
+  user_perspective: []
+  business_perspective: []
+  technical_criteria: []
+final_verification: []
+"""
+    yaml_file.write_text(yaml_content)
+
+    # when
     result = runner.invoke(task_app, ["continue", "--cwd", str(tmp_path)])
 
     # then
     assert result.exit_code == 1
-    assert "not yet implemented" in result.stdout
+    assert "다음 작업으로 넘어갈 수 없습니다" in result.stdout
+    assert "검증: 0/1 완료" in result.stdout
+
+
+def test_continue__when_all_complete__moves_to_next_task(tmp_path: Path) -> None:
+    # given
+    yaml_file = tmp_path / "ai-todolist.yaml"
+    yaml_content = """metadata:
+  created_at: "2025-01-01T00:00:00Z"
+  updated_at: "2025-01-01T00:00:00Z"
+user_request:
+  original: "Test"
+  created_at: "2025-01-01T00:00:00Z"
+  additional: []
+objectives:
+  core: "Test"
+background:
+  current_situation: "Test"
+  reason_for_change: "Test"
+  changes_to_make: "Test"
+required_background:
+  description: "Test"
+  references: []
+status:
+  execution:
+    started: true
+    completed: false
+  work_mode:
+    parallel_requested: false
+    current_task_id: "1"
+  progress:
+    total_tasks: 2
+    completed: 0
+    in_progress: 1
+    pending: 1
+  current_work: ""
+workflow:
+  dependency_diagram: ""
+todos:
+  - id: "1"
+    title: "First Task"
+    status: in_progress
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec: []
+  - id: "2"
+    title: "Second Task"
+    status: pending
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec: []
+success_vision:
+  user_perspective: []
+  business_perspective: []
+  technical_criteria: []
+final_verification: []
+"""
+    yaml_file.write_text(yaml_content)
+
+    # when
+    result = runner.invoke(task_app, ["continue", "--cwd", str(tmp_path)])
+
+    # then
+    assert result.exit_code == 0
+    assert "다음 작업으로 이동" in result.stdout
+    assert "Second Task" in result.stdout
+
+
+def test_continue__when_last_task_complete__marks_all_complete(tmp_path: Path) -> None:
+    # given
+    yaml_file = tmp_path / "ai-todolist.yaml"
+    yaml_content = """metadata:
+  created_at: "2025-01-01T00:00:00Z"
+  updated_at: "2025-01-01T00:00:00Z"
+user_request:
+  original: "Test"
+  created_at: "2025-01-01T00:00:00Z"
+  additional: []
+objectives:
+  core: "Test"
+background:
+  current_situation: "Test"
+  reason_for_change: "Test"
+  changes_to_make: "Test"
+required_background:
+  description: "Test"
+  references: []
+status:
+  execution:
+    started: true
+    completed: false
+  work_mode:
+    parallel_requested: false
+    current_task_id: "1"
+  progress:
+    total_tasks: 1
+    completed: 0
+    in_progress: 1
+    pending: 0
+  current_work: ""
+workflow:
+  dependency_diagram: ""
+todos:
+  - id: "1"
+    title: "Last Task"
+    status: in_progress
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec: []
+success_vision:
+  user_perspective: []
+  business_perspective: []
+  technical_criteria: []
+final_verification: []
+"""
+    yaml_file.write_text(yaml_content)
+
+    # when
+    result = runner.invoke(task_app, ["continue", "--cwd", str(tmp_path)])
+
+    # then
+    assert result.exit_code == 0
+    assert "모든 작업이 완료되었습니다" in result.stdout
 
 
 def test_verify_bash__with_bash_verification__executes_and_marks_verified(tmp_path: Path) -> None:

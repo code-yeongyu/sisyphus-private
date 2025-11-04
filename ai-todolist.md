@@ -52,7 +52,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- [x] 3. PlanLinter에 empty todos 검증 추가
+- [x] 4. `continue_work` 명령어 완전 구현
 
 # 필수 배경 지식
 Sisyphus CLI는 Python 3.12+ 기반의 LLM agent orchestration CLI입니다.
@@ -429,7 +429,7 @@ docs: update docs
       - [x] `uv run ruff check projects/sisyphus-cli/sisyphus/core/plan_linter.py` → 0 errors 확인
       - [x] git commit 완료?
 
-- [ ] 4. `continue_work` 명령어 완전 구현
+- [x] 4. `continue_work` 명령어 완전 구현
 
    **참고 소스**:
    - 파일: `projects/sisyphus-cli/sisyphus/cli/task.py` (line 101-111, 현재 스텁)

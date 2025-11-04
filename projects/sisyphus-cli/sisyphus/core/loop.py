@@ -8,7 +8,8 @@ from typing import TYPE_CHECKING
 
 import anyio
 
-from sisyphus.core.prompts import DEFAULT_EXECUTE_PROMPT, DEFAULT_VERIFY_PROMPT
+from sisyphus.core.plans.loader import load_plan
+from sisyphus.core.prompts import DEFAULT_EXECUTE_PROMPT, DEFAULT_VERIFY_PROMPT, build_execute_prompt
 from sisyphus.utils.errors import PromptTooLongError, RetryRequiredError, SessionLimitError, SessionResumeError
 from sisyphus.utils.session_limit import sleep_until_next_hour, sleep_until_reset
 
@@ -94,7 +95,26 @@ class ExecutionLoop:
         """
         await self.ui.initialize()
 
-        await self._run_unified_mode(DEFAULT_EXECUTE_PROMPT, execute_extra, DEFAULT_VERIFY_PROMPT, verify_extra)
+        execute_prompt = DEFAULT_EXECUTE_PROMPT
+        if self.task_validator and self.task_validator.todolist_path:
+            try:
+                plan_doc = await load_plan(self.task_validator.todolist_path)
+                uncompleted_todos = []
+                for plan in plan_doc.work_plans:
+                    for todo in plan.todos:
+                        if todo.status != "completed":
+                            uncompleted_todos.append(f"  - [{todo.id}] {todo.title}")
+
+                if uncompleted_todos:
+                    todo_summary = "\n".join(uncompleted_todos[:10])
+                    if len(uncompleted_todos) > 10:
+                        todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
+
+                    execute_prompt = build_execute_prompt(str(self.task_validator.todolist_path), todo_summary)
+            except Exception:
+                pass
+
+        await self._run_unified_mode(execute_prompt, execute_extra, DEFAULT_VERIFY_PROMPT, verify_extra)
 
     async def _run_unified_mode(
         self,
@@ -361,8 +381,10 @@ class ExecutionLoop:
                     tg.start_soon(consume_stream)
                     tg.start_soon(monitor_input)
             except* SessionLimitError as exception_group:
-                # Extract first SessionLimitError from ExceptionGroup
-                session_limit_error = exception_group.exceptions[0]
+                first_exception = exception_group.exceptions[0]
+                if not isinstance(first_exception, SessionLimitError):
+                    raise
+                session_limit_error = first_exception
 
                 self.execute_logger.error(
                     f"Session limit reached: {session_limit_error}",
@@ -378,7 +400,6 @@ class ExecutionLoop:
                     await self.ui.show_status("Reset time unknown, waiting until next hour...")
                     await sleep_until_next_hour(self.ui)
 
-                # Re-raise for outer loop to continue
                 raise session_limit_error
             except* Exception as exception_group:
                 sdk_error_detected = False
@@ -562,8 +583,10 @@ class ExecutionLoop:
                     tg.start_soon(consume_stream)
                     tg.start_soon(monitor_input)
             except* SessionLimitError as exception_group:
-                # Extract first SessionLimitError from ExceptionGroup
-                session_limit_error = exception_group.exceptions[0]
+                first_exception = exception_group.exceptions[0]
+                if not isinstance(first_exception, SessionLimitError):
+                    raise
+                session_limit_error = first_exception
 
                 self.verify_logger.error(
                     f"Session limit reached: {session_limit_error}",
@@ -579,7 +602,6 @@ class ExecutionLoop:
                     await self.ui.show_status("Reset time unknown, waiting until next hour...")
                     await sleep_until_next_hour(self.ui)
 
-                # Re-raise for outer loop to continue
                 raise session_limit_error
             except* Exception as exception_group:
                 sdk_error_detected = False

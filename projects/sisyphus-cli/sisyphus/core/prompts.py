@@ -1,29 +1,58 @@
 from __future__ import annotations
 
-DEFAULT_EXECUTE_PROMPT = """/execute - run 'execute' command using command tool.
 
-Execute tasks from the ai-todolist.md file by spawning executor agents.
+def build_execute_prompt(plan_path: str, current_todo_summary: str) -> str:
+    """Build execute prompt with plan path and current todo overview.
+
+    Args:
+        plan_path: Path to the YAML plan file (e.g., '.sisyphus/tasks/feature.yaml')
+        current_todo_summary: Brief summary of current uncompleted todos
+
+    Returns:
+        Formatted execute prompt string
+    """
+    return f"""/execute-yaml {plan_path}
+
+Execute tasks from the YAML work plan at {plan_path} by spawning executor agents.
+I am ordering you to start working.
+
+## Current Work Overview
+
+**Plan**: {plan_path}
+**Uncompleted Tasks**:
+{current_todo_summary}
+
+⚠️ **THESE TASKS ABOVE ARE YOUR CURRENT WORK ITEMS. START FROM HERE.**
+
+---
+
+{DEFAULT_EXECUTE_PROMPT}"""
+
+
+DEFAULT_EXECUTE_PROMPT = """/execute-yaml
+
+Execute tasks from the YAML work plan by spawning **sisyphus-executor** agents.
 I am ordering you to start working.
 
 ## Your Mission
 
-This ai-todolist.md is **not completed yet**. You must execute all remaining tasks with extreme
+This YAML work plan is **not completed yet**. You must execute all remaining tasks with extreme
 diligence and verification.
 
 If you need to use interactive CLI tools, use `terminalcp` for proper terminal interaction.
 
 ## Critical Requirements
 
-Every time you call an executor agent, you MUST:
+Every time you call the **sisyphus-executor** agent, you MUST:
 
 1. **Demand detailed proof**: Require the executor to provide very detailed responses
    proving they have properly completed the work
 2. **Never trust blindly**: Do NOT trust the executor's completion signal without verification
 3. **Always verify**: Read the global tests and the actual code they worked on to review
    their work
-4. **Uncheck if incomplete**: If the executor's work was not done properly, uncheck the
-   checkbox
-5. **Retry with feedback**: Call the executor again, mention the mistake they made,
+4. **Revert status if incomplete**: If the executor's work was not done properly, change the
+   todo status back from `completed` to `in_progress`
+5. **Retry with feedback**: Call the **sisyphus-executor** agent again, mention the mistake they made,
    tell them not to make such mistakes, and have them redo the original task properly
 
 ## Critical Warning
@@ -36,13 +65,12 @@ and program to become irreversibly broken.
 
 ## Completion Requirements
 
-When ALL tasks are truly completed and verified, you MUST do BOTH of these:
+When ALL tasks are truly completed and verified, you MUST:
 
-1. **Set the flag**: Change `is_all_goals_accomplished = FALSE` to
-   `is_all_goals_accomplished = TRUE` in the ai-todolist.md file
-2. **Check all boxes**: Change every `- [ ]` to `- [x]` for every completed task
+1. **Update all statuses**: Ensure every todo has `status: completed` in the YAML work plan
+2. **Verify completion**: All todos should show `status: completed`, no `pending` or `in_progress` remaining
 
-## How to Find Unchecked Items
+## How to Find Incomplete Items
 
 ⚠️ **WARNING**: Do NOT rely ONLY on searching the file with rg/grep!
 
@@ -50,50 +78,44 @@ When ALL tasks are truly completed and verified, you MUST do BOTH of these:
 
 ⚠️ If you see tasks listed in your prompt, they are NOT complete!
 
-You can also use this command to find unchecked checkboxes IN THE FILE:
+You can also read the YAML file and check todos with `status: pending` or `status: in_progress`.
 
-```bash
-grep -n '\\- \\[ \\]' ai-todolist.md
-```
-
-But if this returns 0 results, it does NOT necessarily mean you're done. Always check the
+But if this shows 0 results, it does NOT necessarily mean you're done. Always check the
 task list in your current prompt first!
 
 ## Your Responsibility
 
-You are personally responsible for ensuring EVERY checkbox item actually works.
+You are personally responsible for ensuring EVERY todo item actually works.
 
-Before checking a box, you MUST:
+Before marking a todo as complete, you MUST:
 
 - Actually test the feature/fix yourself
 - Run the tests if they exist
-- Verify the code does what the checkbox says
-- Only then change `- [ ]` to `- [x]`
+- Verify the code does what the todo says
+- Only then update the status to `completed`
 
-**DO NOT check boxes without verifying.**
+**DO NOT mark todos as completed without verifying.**
 
-**DO NOT set `is_all_goals_accomplished = TRUE` unless:**
-- EVERY checkbox is checked `[x]`
-- AND you've personally verified each one works
+**ALL todos must have `status: completed` AND you've personally verified each one works**
 
 ## Verification Process
 
 For each task:
 
 1. Read the task requirements carefully
-2. Review the executor's implementation
+2. Review the **sisyphus-executor** agent's implementation
 3. Run any relevant tests (`pytest`, `npm test`, etc.)
 4. Test the functionality manually
 5. Check for edge cases and error handling
-6. Only mark complete if everything works correctly
+6. Only mark status as `completed` if everything works correctly
 
 ## If Tasks Fail Verification
 
-When an executor fails:
+When an sisyphus-executor agent fails:
 
 1. Document what went wrong specifically
-2. Uncheck the checkbox `[x]` → `[ ]`
-3. Call the executor again with clear feedback:
+2. Revert the status: `completed` → `in_progress`
+3. Call the **sisyphus-executor** agent again with clear feedback:
    - "Your previous implementation of [task] failed because [reason]"
    - "You must [specific fix needed]"
    - "Do not make this mistake again"
@@ -102,7 +124,7 @@ When an executor fails:
 ## Success Criteria
 
 ✅ **Task is complete when:**
-- Checkbox is checked `[x]`
+- Todo status is `completed`
 - Code is implemented correctly
 - Tests pass (if applicable)
 - Functionality works as specified
@@ -119,7 +141,8 @@ When an executor fails:
 ---
 
 Remember: Your job is to be a strict, thorough reviewer. The quality of the final product
-depends on your diligence in verifying every single task.
+depends on your diligence in verifying every single task. **Always use the sisyphus-executor agent
+for YAML v3.0 work plans.**
 """
 
 DEFAULT_VERIFY_PROMPT = (

@@ -12,7 +12,11 @@ import typer
 from rich.console import Console
 
 from sisyphus.core.loop import ExecutionLoop
+from sisyphus.core.plan_linter import PlanLinter
+from sisyphus.core.plans.loader import load_plan
+from sisyphus.core.plans.models import TodoStatus
 from sisyphus.core.session import SessionStore
+from sisyphus.core.status.manager import StatusManager
 from sisyphus.core.tasks import TaskValidator
 from sisyphus.ui.base import create_ui
 from sisyphus.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
@@ -40,6 +44,167 @@ SISYPHUS_IGNORE_PATTERNS = [
 ]
 
 
+async def _validate_plan(plan_path: Path, ui: UIProtocol) -> None:
+    """Validate YAML plan with PlanLinter (순환참조, 의존성 완료 체크).
+
+    Scope: 단일 YAML 파일 내부 work_plans 간 검증
+
+    Args:
+        plan_path: Path to YAML plan file
+        ui: UI Protocol implementation
+
+    Raises:
+        ValueError: If validation fails
+    """
+
+    # YAML 파싱 (async)
+    try:
+        plan_doc = await load_plan(plan_path)
+    except Exception as e:
+        await ui.show_status(f"[red]Failed to load plan: {e}[/red]")
+        raise ValueError(f"Plan load failed: {plan_path}") from e
+
+    # PlanLinter 검증 (순환참조, 존재하지 않는 depends_on)
+    linter = PlanLinter(schema_doc={})
+    depends_errors = linter.validate_depends_on(plan_doc, plan_path)
+
+    if depends_errors:
+        await ui.show_status(
+            "[bold red]Plan validation failed (lint errors):[/bold red]\n\n"
+            + "\n".join(f"  - {err}" for err in depends_errors)
+            + "\n\nFix: Address all lint errors before running 'sisyphus work'."
+        )
+        raise ValueError(f"Lint validation failed: {len(depends_errors)} errors")
+
+    # 의존성 완료 여부 체크 (단일 PlanDocument 내부만)
+    plans_map = {plan.id: plan for plan in plan_doc.work_plans}
+
+    for plan in plan_doc.work_plans:
+        for dep_id in plan.depends_on:
+            # 같은 파일 내부의 의존 플랜만 체크
+            if dep_id in plans_map:
+                dep_plan = plans_map[dep_id]
+                # 모든 todos가 completed인지 체크
+                all_completed = all(t.status == TodoStatus.completed for t in dep_plan.todos)
+                if not all_completed:
+                    incomplete_count = sum(1 for t in dep_plan.todos if t.status != TodoStatus.completed)
+                    await ui.show_status(
+                        f"[red]Dependency not completed:[/red]\n\n"
+                        f"  Plan '{plan.id}' depends on '{dep_id}', "
+                        f"but '{dep_id}' has {incomplete_count} incomplete todo(s).\n\n"
+                        + "Fix: Complete all todos in dependent plans first."
+                    )
+                    raise ValueError(f"Dependency '{dep_id}' not completed")
+
+
+async def _detect_plan_path(ui: UIProtocol) -> Path | None:
+    """Detect YAML plan file with improved UX.
+
+    Priority:
+    1. Error if ai-todolist.md exists (Markdown not supported)
+    2. Auto-select if .sisyphus/tasks/**/*.yaml == 1 file (재귀 탐색)
+    3. Error if multiple YAML files (need manual selection)
+
+    Args:
+        ui: UI Protocol implementation
+
+    Returns:
+        Path to YAML file or None
+
+    Raises:
+        ValueError: If Markdown exists or multiple plans found
+    """
+
+    # 0. 워크트리 루트 먼저 감지 (모든 경로 체크의 기준점)
+    worktree_root = await StatusManager.detect_worktree()
+
+    # 1. Markdown 에러 (워크트리 기준으로 체크)
+    markdown_path = worktree_root / "ai-todolist.md"
+    if markdown_path.exists():
+        await ui.show_status(
+            "[bold red]ERROR: ai-todolist.md not supported in v3.0 work command.[/bold red]\n\n"
+            "Migration options:\n"
+            "1. Manual: Create YAML plan with 'vi .sisyphus/tasks/my-plan.yaml'\n"
+            "2. Use legacy v2.1 workflow (if available in your version)\n\n"
+            "v3.0 YAML template example:\n"
+            '  version: "3.0"\n'
+            "  metadata:\n"
+            '    created_at: "2025-11-04T00:00:00Z"\n'
+            "  work_plans:\n"
+            '    - id: "plan-001"\n'
+            '      name: "My Work"\n'
+            "      todos: [...]"
+        )
+        raise ValueError("Markdown not supported")
+
+    # 2. YAML 파일 재귀 탐색 (워크트리 기준 경로)
+    tasks_dir = worktree_root / ".sisyphus" / "tasks"
+
+    if not tasks_dir.exists():
+        await ui.show_status(
+            "[yellow]No '.sisyphus/tasks/' directory found.[/yellow]\n\n"
+            "Create v3.0 YAML plan:\n"
+            "  mkdir -p .sisyphus/tasks\n"
+            "  vi .sisyphus/tasks/my-plan.yaml"
+        )
+        return None
+
+    # 재귀 탐색 + 대소문자 무시 (glob은 대소문자 구분하므로 양쪽 다 검색)
+    yaml_files = []
+    for pattern in ("**/*.yaml", "**/*.yml", "**/*.YAML", "**/*.YML"):
+        yaml_files.extend(tasks_dir.glob(pattern))
+    # 중복 제거 (같은 파일이 여러 패턴에 매칭될 수 있음)
+    yaml_files = list(set(yaml_files))
+
+    if len(yaml_files) == 0:
+        await ui.show_status(
+            "[yellow]No YAML plans in '.sisyphus/tasks/'.[/yellow]\n\n"
+            "Create v3.0 YAML plan:\n"
+            "  vi .sisyphus/tasks/my-plan.yaml"
+        )
+        return None
+    elif len(yaml_files) == 1:
+        return yaml_files[0].absolute()
+    else:
+        # 다중 YAML: 사용자 선택 입력 (사용자 요청 반영)
+        rel_paths = [f.relative_to(worktree_root) for f in yaml_files]
+
+        # CLI 모드: typer.prompt 사용 가능
+        # TUI 모드: ui.get_input() 사용 (UIProtocol 메서드)
+        await ui.show_status(
+            f"[yellow]Multiple YAML plans found ({len(yaml_files)} files).[/yellow]\n\nAvailable plans:"
+        )
+
+        for idx, path in enumerate(rel_paths, start=1):
+            await ui.show_status(f"  {idx}. {path}")
+
+        # 입력 받기 (TUI: get_input returns queued input, CLI: typer.prompt with anyio wrapper)
+        # UIProtocol.get_input() signature: async def get_input(self) -> str | None (NO parameters)
+
+        # TUI 모드: show_status로 프롬프트 표시 후 get_input() 호출
+        if isinstance(ui, TUI):
+            await ui.show_status(f"\n[yellow]Enter selection (1-{len(yaml_files)}):[/yellow]")
+            selection = await ui.get_input()
+            if selection is None:
+                raise ValueError("User cancelled selection")
+        else:
+            # CLI 모드: anyio.to_thread.run_sync로 typer.prompt 래핑 (이벤트 루프 블로킹 방지)
+            selection = str(
+                await anyio.to_thread.run_sync(
+                    lambda: typer.prompt(f"Select plan (1-{len(yaml_files)})", default=1, type=int)
+                )
+            )
+
+        try:
+            idx = int(selection) - 1
+            if idx < 0 or idx >= len(yaml_files):
+                raise ValueError("Index out of range")
+            return yaml_files[idx].absolute()
+        except (ValueError, IndexError) as e:
+            await ui.show_status(f"[red]Invalid selection: {selection}[/red]")
+            raise ValueError(f"Invalid plan selection: {selection}") from e
+
+
 async def _main_cli(
     execute_agent: Agent,
     verify_agent: Agent | None,
@@ -62,7 +227,10 @@ async def _main_cli(
 
     logger_factory = LoggerFactory()
 
-    task_validator = TaskValidator() if Path("ai-todolist.md").exists() else None
+    plan_path = await _detect_plan_path(ui)
+    if plan_path:
+        await _validate_plan(plan_path, ui)
+    task_validator = TaskValidator(plan_path) if plan_path else None
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,
@@ -134,7 +302,10 @@ async def _main_tui(
                 raise TimeoutError("TUI initialization timeout")
 
             logger_factory = LoggerFactory()
-            task_validator = TaskValidator() if Path("ai-todolist.md").exists() else None
+            plan_path = await _detect_plan_path(ui)
+            if plan_path:
+                await _validate_plan(plan_path, ui)
+            task_validator = TaskValidator(plan_path) if plan_path else None
 
             if isinstance(ui, TUI):
                 ui.set_task_validator(task_validator)

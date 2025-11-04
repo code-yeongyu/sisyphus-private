@@ -535,41 +535,22 @@ async def test_yaml_check_all_goals_accomplished_completed(tmp_path: Path) -> No
     # given
     yaml_file = tmp_path / "test.yaml"
     yaml_content = """
+version: "3.0"
 metadata:
   created_at: "2025-01-01"
-  updated_at: "2025-01-01"
-user_request:
-  original: "Test"
-  created_at: "2025-01-01"
-objectives:
-  core: "Test objective"
-background:
-  current_situation: "A"
-  reason_for_change: "B"
-  changes_to_make: "C"
-required_background:
-  description: "Test"
-status:
-  execution:
-    started: true
-    completed: true
-  work_mode:
-    parallel_requested: false
-    current_task_id: null
-  progress:
-    total_tasks: 0
-    completed: 0
-    in_progress: 0
-    pending: 0
-  current_work: "None"
-workflow:
-  dependency_diagram: "Test"
-todos: []
-success_vision:
-  user_perspective: []
-  business_perspective: []
-  technical_criteria: []
-final_verification: []
+work_plans:
+  - id: "test-plan"
+    name: "Test Plan"
+    depends_on: []
+    todos:
+      - id: "task-1"
+        title: "Task 1"
+        status: "completed"
+        children: null
+      - id: "task-2"
+        title: "Task 2"
+        status: "completed"
+        children: null
 """
     yaml_file.write_text(yaml_content, encoding="utf-8")
     validator = TaskValidator(yaml_file)
@@ -585,41 +566,22 @@ async def test_yaml_check_all_goals_accomplished_not_completed(tmp_path: Path) -
     # given
     yaml_file = tmp_path / "test.yaml"
     yaml_content = """
+version: "3.0"
 metadata:
   created_at: "2025-01-01"
-  updated_at: "2025-01-01"
-user_request:
-  original: "Test"
-  created_at: "2025-01-01"
-objectives:
-  core: "Test objective"
-background:
-  current_situation: "A"
-  reason_for_change: "B"
-  changes_to_make: "C"
-required_background:
-  description: "Test"
-status:
-  execution:
-    started: true
-    completed: false
-  work_mode:
-    parallel_requested: false
-    current_task_id: null
-  progress:
-    total_tasks: 0
-    completed: 0
-    in_progress: 0
-    pending: 0
-  current_work: "None"
-workflow:
-  dependency_diagram: "Test"
-todos: []
-success_vision:
-  user_perspective: []
-  business_perspective: []
-  technical_criteria: []
-final_verification: []
+work_plans:
+  - id: "test-plan"
+    name: "Test Plan"
+    depends_on: []
+    todos:
+      - id: "task-1"
+        title: "Task 1"
+        status: "completed"
+        children: null
+      - id: "task-2"
+        title: "Task 2"
+        status: "pending"
+        children: null
 """
     yaml_file.write_text(yaml_content, encoding="utf-8")
     validator = TaskValidator(yaml_file)
@@ -635,41 +597,22 @@ async def test_yaml_check_all_goals_accomplished_yml_extension(tmp_path: Path) -
     # given
     yaml_file = tmp_path / "test.yml"
     yaml_content = """
+version: "3.0"
 metadata:
   created_at: "2025-01-01"
-  updated_at: "2025-01-01"
-user_request:
-  original: "Test"
-  created_at: "2025-01-01"
-objectives:
-  core: "Test objective"
-background:
-  current_situation: "A"
-  reason_for_change: "B"
-  changes_to_make: "C"
-required_background:
-  description: "Test"
-status:
-  execution:
-    started: true
-    completed: true
-  work_mode:
-    parallel_requested: false
-    current_task_id: null
-  progress:
-    total_tasks: 0
-    completed: 0
-    in_progress: 0
-    pending: 0
-  current_work: "None"
-workflow:
-  dependency_diagram: "Test"
-todos: []
-success_vision:
-  user_perspective: []
-  business_perspective: []
-  technical_criteria: []
-final_verification: []
+work_plans:
+  - id: "test-plan"
+    name: "Test Plan"
+    depends_on: []
+    todos:
+      - id: "task-1"
+        title: "Task 1"
+        status: "completed"
+        children: null
+      - id: "task-2"
+        title: "Task 2"
+        status: "completed"
+        children: null
 """
     yaml_file.write_text(yaml_content, encoding="utf-8")
     validator = TaskValidator(yaml_file)

@@ -575,6 +575,18 @@ class PlanLinter:
             self._check_type(todos, "todos", "list")
             return
 
+        if len(todos) == 0:
+            self.errors.append(
+                LintError(
+                    location="todos",
+                    message="Empty todos list",
+                    expected="at least one todo",
+                    actual="empty list",
+                    suggestion="Add at least one todo item to the todos list",
+                )
+            )
+            return
+
         for i, todo in enumerate(todos):
             self._validate_todo(todo, f"todos[{i}]")
 

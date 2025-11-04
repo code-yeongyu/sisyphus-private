@@ -27,7 +27,15 @@ async def test_lint_valid_yaml__when_all_fields_present__returns_no_errors() -> 
             "current_work": "None",
         },
         "workflow": {"dependency_diagram": "Test"},
-        "todos": [],
+        "todos": [
+            {
+                "id": "1",
+                "title": "Test task",
+                "status": "pending",
+                "created_at": "2025-01-01",
+                "updated_at": "2025-01-01",
+            }
+        ],
         "success_vision": {},
         "final_verification": [],
     }
@@ -673,7 +681,15 @@ async def test_lint_final_verification_v2_1__when_category_field_present__return
             "current_work": "None",
         },
         "workflow": {"dependency_diagram": "Test"},
-        "todos": [],
+        "todos": [
+            {
+                "id": "1",
+                "title": "Task",
+                "status": "pending",
+                "created_at": "2025-01-01",
+                "updated_at": "2025-01-01",
+            }
+        ],
         "success_vision": {},
         "final_verification": [
             {
@@ -693,3 +709,35 @@ async def test_lint_final_verification_v2_1__when_category_field_present__return
 
     # then
     assert len(errors) == 0
+
+
+async def test_validate_todos__if_empty__returns_error() -> None:
+    # given
+    linter = PlanLinter({})
+    data = {
+        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
+        "user_request": {"original": "Test", "created_at": "2025-01-01"},
+        "objectives": {"core": "Test"},
+        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
+        "required_background": {"description": "Test"},
+        "status": {
+            "execution": {"started": False, "completed": False},
+            "work_mode": {"parallel_requested": False},
+            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+            "current_work": "None",
+        },
+        "workflow": {"dependency_diagram": "Test"},
+        "todos": [],
+        "success_vision": {},
+        "final_verification": [],
+    }
+
+    # when
+    errors = linter.lint(data)
+
+    # then
+    assert len(errors) == 1
+    assert errors[0].location == "todos"
+    assert "empty" in errors[0].message.lower()
+    assert errors[0].expected == "at least one todo"
+    assert errors[0].actual == "empty list"

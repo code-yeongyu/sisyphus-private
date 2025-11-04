@@ -79,6 +79,39 @@ class PlanNavigator:
 
         return None
 
+    def get_previous_task(self, current_id: str | None = None) -> Todo | None:
+        """Get previous task in DFS traversal order (reverse).
+
+        Reverse DFS order:
+        1. current=None or first task → return None
+        2. Has previous sibling → return last descendant of previous sibling
+        3. No previous sibling → return parent
+
+        Example DFS order: 1 → 1.1 → 1.1.1 → 1.1.2 → 1.2 → 2
+        - current="1.2" → previous="1.1.2" (last descendant of 1.1)
+        - current="1.1" → previous="1" (parent)
+        - current="1" → previous=None (first task)
+        """
+        if current_id is None:
+            current_id = self.plan.status.work_mode.current_task_id
+
+        if current_id is None:
+            return None
+
+        current = self.find_todo_by_id(current_id)
+        if current is None:
+            raise ValueError(f"작업 ID를 찾을 수 없습니다: {current_id}")
+
+        siblings = self._get_siblings(current_id)
+        if siblings is not None:
+            for i, sibling in enumerate(siblings):
+                if sibling.id == current_id and i > 0:
+                    previous_sibling = siblings[i - 1]
+                    return self._get_last_descendant(previous_sibling)
+
+        parent = self._find_parent(current_id)
+        return parent
+
     def find_todo_by_id(self, target_id: str | int) -> Todo | None:
         """Find todo by ID (e.g. "1", "1.1", "1.1.2")."""
         return self._find_in_list(self.plan.todos, target_id)
@@ -137,6 +170,13 @@ class PlanNavigator:
                 if parent:
                     return parent
         return None
+
+    def _get_last_descendant(self, todo: Todo) -> Todo:
+        """Get last descendant (deepest rightmost node) of a todo."""
+        current = todo
+        while current.children:
+            current = current.children[-1]
+        return current
 
     def get_task_references(self, task_id: str | int) -> list[Any]:
         """Get references for a specific task."""

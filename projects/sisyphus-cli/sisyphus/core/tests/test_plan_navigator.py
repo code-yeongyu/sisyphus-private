@@ -868,3 +868,149 @@ async def test_check_task_completion__when_task_not_found__raises_value_error() 
     # when & then
     with pytest.raises(ValueError, match="작업 ID를 찾을 수 없습니다: 999"):
         navigator.check_task_completion("999")
+
+
+async def test_get_previous_task__if_current_none__returns_none() -> None:
+    # given
+    todos = [
+        Todo(id="1", title="Task 1", status=TodoStatus.pending, created_at="2025-01-01", updated_at="2025-01-01"),
+    ]
+    plan = create_minimal_plan(todos=todos, current_task_id=None)
+    navigator = PlanNavigator(plan)
+
+    # when
+    previous = navigator.get_previous_task()
+
+    # then
+    assert previous is None
+
+
+async def test_get_previous_task__if_first_task__returns_none() -> None:
+    # given
+    todos = [
+        Todo(id="1", title="Task 1", status=TodoStatus.in_progress, created_at="2025-01-01", updated_at="2025-01-01"),
+        Todo(id="2", title="Task 2", status=TodoStatus.pending, created_at="2025-01-01", updated_at="2025-01-01"),
+    ]
+    plan = create_minimal_plan(todos=todos, current_task_id="1")
+    navigator = PlanNavigator(plan)
+
+    # when
+    previous = navigator.get_previous_task()
+
+    # then
+    assert previous is None
+
+
+async def test_get_previous_task__if_second_task__returns_first() -> None:
+    # given
+    todos = [
+        Todo(id="1", title="Task 1", status=TodoStatus.completed, created_at="2025-01-01", updated_at="2025-01-01"),
+        Todo(id="2", title="Task 2", status=TodoStatus.in_progress, created_at="2025-01-01", updated_at="2025-01-01"),
+    ]
+    plan = create_minimal_plan(todos=todos, current_task_id="2")
+    navigator = PlanNavigator(plan)
+
+    # when
+    previous = navigator.get_previous_task()
+
+    # then
+    assert previous is not None
+    assert previous.id == "1"
+
+
+async def test_get_previous_task__if_first_child__returns_parent() -> None:
+    # given
+    todos = [
+        Todo(
+            id="1",
+            title="Parent",
+            status=TodoStatus.completed,
+            created_at="2025-01-01",
+            updated_at="2025-01-01",
+            children=[
+                Todo(
+                    id="1.1",
+                    title="Child 1",
+                    status=TodoStatus.in_progress,
+                    created_at="2025-01-01",
+                    updated_at="2025-01-01",
+                ),
+            ],
+        ),
+    ]
+    plan = create_minimal_plan(todos=todos, current_task_id="1.1")
+    navigator = PlanNavigator(plan)
+
+    # when
+    previous = navigator.get_previous_task()
+
+    # then
+    assert previous is not None
+    assert previous.id == "1"
+
+
+async def test_get_previous_task__if_second_sibling__returns_last_descendant_of_first() -> None:
+    # given
+    todos = [
+        Todo(
+            id="1",
+            title="Task 1",
+            status=TodoStatus.completed,
+            created_at="2025-01-01",
+            updated_at="2025-01-01",
+            children=[
+                Todo(
+                    id="1.1",
+                    title="Child 1.1",
+                    status=TodoStatus.completed,
+                    created_at="2025-01-01",
+                    updated_at="2025-01-01",
+                    children=[
+                        Todo(
+                            id="1.1.1",
+                            title="Grandchild 1.1.1",
+                            status=TodoStatus.completed,
+                            created_at="2025-01-01",
+                            updated_at="2025-01-01",
+                        ),
+                        Todo(
+                            id="1.1.2",
+                            title="Grandchild 1.1.2",
+                            status=TodoStatus.completed,
+                            created_at="2025-01-01",
+                            updated_at="2025-01-01",
+                        ),
+                    ],
+                ),
+                Todo(
+                    id="1.2",
+                    title="Child 1.2",
+                    status=TodoStatus.in_progress,
+                    created_at="2025-01-01",
+                    updated_at="2025-01-01",
+                ),
+            ],
+        ),
+    ]
+    plan = create_minimal_plan(todos=todos, current_task_id="1.2")
+    navigator = PlanNavigator(plan)
+
+    # when
+    previous = navigator.get_previous_task()
+
+    # then
+    assert previous is not None
+    assert previous.id == "1.1.2"
+
+
+async def test_get_previous_task__if_task_not_found__raises_value_error() -> None:
+    # given
+    todos = [
+        Todo(id="1", title="Task 1", status=TodoStatus.pending, created_at="2025-01-01", updated_at="2025-01-01"),
+    ]
+    plan = create_minimal_plan(todos=todos, current_task_id="999")
+    navigator = PlanNavigator(plan)
+
+    # when & then
+    with pytest.raises(ValueError, match="작업 ID를 찾을 수 없습니다: 999"):
+        navigator.get_previous_task()

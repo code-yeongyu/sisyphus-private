@@ -43,7 +43,7 @@ sisyphus CLI에 `continue-work`와 `show previous` 명령어를 구현하여 작
 - 변경: 완전 구현된 `continue_work`, 새로운 `show_previous` 명령어
 
 # 작업 시작 여부
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 전체 목표 달성 여부
 is_all_goals_accomplished = FALSE
@@ -52,11 +52,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- 작업이 아직 시작되지 않았습니다.
-   - 작업을 시작할 때 위의 `is_execution_started` 값을 TRUE로 변경하세요.
-   - 사용자가 명시적으로 "작업을 시작해"라고 말하기 전까지 작업을 시작하지 마세요.
-   - **plan reviewer로부터 OKAY를 받았더라도 작업을 시작하지 마세요**
-   - 사용자가 명시적으로 "작업을 시작해"라고 말하기 전까지 작업을 시작하지 마세요.
+- [x] 3. PlanLinter에 empty todos 검증 추가
 
 # 필수 배경 지식
 Sisyphus CLI는 Python 3.12+ 기반의 LLM agent orchestration CLI입니다.
@@ -169,7 +165,7 @@ docs: update docs
 
 # TODOs
 
-- [ ] 1. PlanNavigator에 `get_previous_task()` 메서드 추가
+- [x] 1. PlanNavigator에 `get_previous_task()` 메서드 추가
 
    **참고 소스**:
    - 파일: `projects/sisyphus-cli/sisyphus/core/plan_navigator.py` (line 40-80에서 `get_next_task` 찾기)
@@ -280,7 +276,7 @@ docs: update docs
       - [ ] `uv run basedpyright projects/sisyphus-cli/sisyphus/core/plan_navigator.py` → 0 errors 확인
       - [ ] git commit 완료? (`git log -1 --oneline` 확인)
 
-- [ ] 2. `show previous` CLI 명령어 구현
+- [x] 2. `show previous` CLI 명령어 구현
 
    ### show previous의 정확한 동작
 
@@ -297,7 +293,7 @@ docs: update docs
    - 파일: `projects/sisyphus-cli/sisyphus/cli/task.py` (line 75-98에서 `show_next` 찾기)
    - 패턴: `show_next`와 동일한 구조, `navigator.get_next_task()` → `navigator.get_previous_task()` 변경
 
-   - [ ] 2.1 구현: `show_previous` 함수 추가
+   - [x] 2.1 구현: `show_previous` 함수 추가
 
       **코드 패턴 참조**: `show_next` (line 75-98)
 
@@ -345,7 +341,7 @@ docs: update docs
         ```
       - 이유: 작업 시작 전과 첫 작업 도달 구분
 
-   - [ ] 2.2 테스트: CLI 명령어 테스트 작성
+   - [x] 2.2 테스트: CLI 명령어 테스트 작성
 
       **테스트 파일**: `tests/cli/test_task_commands.py` (새로 생성 또는 기존 파일)
 
@@ -353,11 +349,11 @@ docs: update docs
       - 첫 작업일 때: "첫 작업입니다" 메시지
       - 이전 작업 있을 때: task 정보 출력
 
-   - [ ] 2.3 Lint 및 type check
-      - [ ] `uv run ruff check projects/sisyphus-cli/sisyphus/cli/task.py` → 0 errors
-      - [ ] `uv run basedpyright projects/sisyphus-cli/sisyphus/cli/task.py` → 0 errors
+   - [x] 2.3 Lint 및 type check
+      - [x] `uv run ruff check projects/sisyphus-cli/sisyphus/cli/task.py` → 0 errors
+      - [x] `uv run basedpyright projects/sisyphus-cli/sisyphus/cli/task.py` → 0 errors
 
-   - [ ] 2.4 수동 테스트
+   - [x] 2.4 수동 테스트
 
       **실행 명령어**: `uv run sisyphus task previous --cwd /path/to/test/plan`
 
@@ -365,26 +361,26 @@ docs: update docs
       - 첫 작업: "[yellow]첫 작업입니다[/yellow]"
       - 이전 작업 존재: task ID, title 출력
 
-   - [ ] 2.5 커밋
+   - [x] 2.5 커밋
       - 예시: `git add projects/sisyphus-cli/sisyphus/cli/task.py projects/sisyphus-cli/tests/cli/test_task_commands.py && git commit -m "feat: add show previous command"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `show_previous` 함수가 `task.py`에 정확히 추가되었는가?
-      - [ ] `@task_app.command(name="previous")` decorator가 있는가?
-      - [ ] `navigator.get_previous_task()` 호출하는가?
-      - [ ] 테스트가 작성되었는가?
-      - [ ] `uv run sisyphus task previous` 명령어가 작동하는가?
-      - [ ] `uv run ruff check projects/sisyphus-cli/sisyphus/cli/task.py` → 0 errors 확인
-      - [ ] `uv run basedpyright projects/sisyphus-cli/sisyphus/cli/task.py` → 0 errors 확인
-      - [ ] git commit 완료?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `show_previous` 함수가 `task.py`에 정확히 추가되었는가?
+      - [x] `@task_app.command(name="previous")` decorator가 있는가?
+      - [x] `navigator.get_previous_task()` 호출하는가?
+      - [x] 테스트가 작성되었는가?
+      - [x] `uv run sisyphus task previous` 명령어가 작동하는가?
+      - [x] `uv run ruff check projects/sisyphus-cli/sisyphus/cli/task.py` → 0 errors 확인
+      - [x] `uv run basedpyright projects/sisyphus-cli/sisyphus/cli/task.py` → 0 errors 확인
+      - [x] git commit 완료?
 
-- [ ] 3. PlanLinter에 empty todos 검증 추가
+- [x] 3. PlanLinter에 empty todos 검증 추가
 
    **참고 소스**:
    - 파일: `projects/sisyphus-cli/sisyphus/core/plan_linter.py` (line 568-579에서 `_validate_todos` 찾기)
    - 로직: `todos`가 empty list일 때 LintError 추가
 
-   - [ ] 3.1 구현: `_validate_todos`에 empty check 추가
+   - [x] 3.1 구현: `_validate_todos`에 empty check 추가
 
       **검색할 패턴**: `_validate_todos` 함수 (line 568-579)
 
@@ -394,7 +390,7 @@ docs: update docs
       - 조건: `if isinstance(todos, list) and len(todos) == 0:`
       - 에러: `LintError(location="todos", message="Empty todos list", expected="at least one todo", actual="empty list")`
 
-   - [ ] 3.2 테스트: empty todos 케이스 테스트 추가
+   - [x] 3.2 테스트: empty todos 케이스 테스트 추가
 
       **테스트 파일**: `projects/sisyphus-cli/sisyphus/core/tests/test_plan_linter.py`
 
@@ -412,26 +408,26 @@ docs: update docs
           assert any(e.location == "todos" and "empty" in e.message.lower() for e in errors)
       ```
 
-   - [ ] 3.3 Lint 및 type check
-      - [ ] `uv run ruff check projects/sisyphus-cli/sisyphus/core/plan_linter.py` → 0 errors
-      - [ ] `uv run basedpyright projects/sisyphus-cli/sisyphus/core/plan_linter.py` → 0 errors
+   - [x] 3.3 Lint 및 type check
+      - [x] `uv run ruff check projects/sisyphus-cli/sisyphus/core/plan_linter.py` → 0 errors
+      - [x] `uv run basedpyright projects/sisyphus-cli/sisyphus/core/plan_linter.py` → 0 errors
 
-   - [ ] 3.4 테스트 실행
+   - [x] 3.4 테스트 실행
 
       **실행 명령어**: `uv run pytest projects/sisyphus-cli/sisyphus/core/tests/test_plan_linter.py::test_validate_todos__if_empty__returns_error -xvs`
 
       **예상 출력**: PASSED
 
-   - [ ] 3.5 커밋
+   - [x] 3.5 커밋
       - 예시: `git add projects/sisyphus-cli/sisyphus/core/plan_linter.py projects/sisyphus-cli/sisyphus/core/tests/test_plan_linter.py && git commit -m "feat: add empty todos validation to PlanLinter"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `_validate_todos`에 empty check 로직이 추가되었는가?
-      - [ ] LintError가 올바르게 생성되는가?
-      - [ ] 테스트가 통과하는가?
-      - [ ] `uv run pytest projects/sisyphus-cli/sisyphus/core/tests/test_plan_linter.py -xvs` → PASSED 확인
-      - [ ] `uv run ruff check projects/sisyphus-cli/sisyphus/core/plan_linter.py` → 0 errors 확인
-      - [ ] git commit 완료?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `_validate_todos`에 empty check 로직이 추가되었는가?
+      - [x] LintError가 올바르게 생성되는가?
+      - [x] 테스트가 통과하는가?
+      - [x] `uv run pytest projects/sisyphus-cli/sisyphus/core/tests/test_plan_linter.py -xvs` → PASSED 확인
+      - [x] `uv run ruff check projects/sisyphus-cli/sisyphus/core/plan_linter.py` → 0 errors 확인
+      - [x] git commit 완료?
 
 - [ ] 4. `continue_work` 명령어 완전 구현
 

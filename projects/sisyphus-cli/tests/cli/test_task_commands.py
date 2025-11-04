@@ -708,3 +708,195 @@ final_verification: []
     # then
     assert result.exit_code == 0
     assert "수동 검증이 완료 표시되었습니다" in result.stdout
+
+
+def test_previous__with_not_started__shows_not_started_message(tmp_path: Path) -> None:
+    # given
+    yaml_file = tmp_path / "ai-todolist.yaml"
+    yaml_content = """metadata:
+  created_at: "2025-01-01T00:00:00Z"
+  updated_at: "2025-01-01T00:00:00Z"
+user_request:
+  original: "Test"
+  created_at: "2025-01-01T00:00:00Z"
+  additional: []
+objectives:
+  core: "Test"
+background:
+  current_situation: "Test"
+  reason_for_change: "Test"
+  changes_to_make: "Test"
+required_background:
+  description: "Test"
+  references: []
+status:
+  execution:
+    started: false
+    completed: false
+  work_mode:
+    parallel_requested: false
+  progress:
+    total_tasks: 1
+    completed: 0
+    in_progress: 0
+    pending: 1
+  current_work: ""
+workflow:
+  dependency_diagram: ""
+todos:
+  - id: "1"
+    title: "First Task"
+    status: pending
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec: []
+success_vision:
+  user_perspective: []
+  business_perspective: []
+  technical_criteria: []
+final_verification: []
+"""
+    yaml_file.write_text(yaml_content)
+
+    # when
+    result = runner.invoke(task_app, ["previous", "--cwd", str(tmp_path)])
+
+    # then
+    assert result.exit_code == 0
+    assert "작업이 시작되지 않았습니다" in result.stdout
+
+
+def test_previous__with_first_task__shows_first_task_message(tmp_path: Path) -> None:
+    # given
+    yaml_file = tmp_path / "ai-todolist.yaml"
+    yaml_content = """metadata:
+  created_at: "2025-01-01T00:00:00Z"
+  updated_at: "2025-01-01T00:00:00Z"
+user_request:
+  original: "Test"
+  created_at: "2025-01-01T00:00:00Z"
+  additional: []
+objectives:
+  core: "Test"
+background:
+  current_situation: "Test"
+  reason_for_change: "Test"
+  changes_to_make: "Test"
+required_background:
+  description: "Test"
+  references: []
+status:
+  execution:
+    started: true
+    completed: false
+  work_mode:
+    parallel_requested: false
+    current_task_id: "1"
+  progress:
+    total_tasks: 2
+    completed: 0
+    in_progress: 1
+    pending: 1
+  current_work: ""
+workflow:
+  dependency_diagram: ""
+todos:
+  - id: "1"
+    title: "First Task"
+    status: in_progress
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec: []
+  - id: "2"
+    title: "Second Task"
+    status: pending
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec: []
+success_vision:
+  user_perspective: []
+  business_perspective: []
+  technical_criteria: []
+final_verification: []
+"""
+    yaml_file.write_text(yaml_content)
+
+    # when
+    result = runner.invoke(task_app, ["previous", "--cwd", str(tmp_path)])
+
+    # then
+    assert result.exit_code == 0
+    assert "첫 작업입니다" in result.stdout
+
+
+def test_previous__with_second_task__shows_previous_task(tmp_path: Path) -> None:
+    # given
+    yaml_file = tmp_path / "ai-todolist.yaml"
+    yaml_content = """metadata:
+  created_at: "2025-01-01T00:00:00Z"
+  updated_at: "2025-01-01T00:00:00Z"
+user_request:
+  original: "Test"
+  created_at: "2025-01-01T00:00:00Z"
+  additional: []
+objectives:
+  core: "Test"
+background:
+  current_situation: "Test"
+  reason_for_change: "Test"
+  changes_to_make: "Test"
+required_background:
+  description: "Test"
+  references: []
+status:
+  execution:
+    started: true
+    completed: false
+  work_mode:
+    parallel_requested: false
+    current_task_id: "2"
+  progress:
+    total_tasks: 2
+    completed: 1
+    in_progress: 1
+    pending: 0
+  current_work: ""
+workflow:
+  dependency_diagram: ""
+todos:
+  - id: "1"
+    title: "First Task"
+    status: completed
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec: []
+  - id: "2"
+    title: "Second Task"
+    status: in_progress
+    created_at: "2025-01-01T00:00:00Z"
+    updated_at: "2025-01-01T00:00:00Z"
+    references: []
+    children: []
+    verification_spec: []
+success_vision:
+  user_perspective: []
+  business_perspective: []
+  technical_criteria: []
+final_verification: []
+"""
+    yaml_file.write_text(yaml_content)
+
+    # when
+    result = runner.invoke(task_app, ["previous", "--cwd", str(tmp_path)])
+
+    # then
+    assert result.exit_code == 0
+    assert "First Task" in result.stdout

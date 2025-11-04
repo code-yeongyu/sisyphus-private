@@ -98,6 +98,35 @@ def show_next(
         raise typer.Exit(1)
 
 
+@task_app.command(name="previous")
+def show_previous(
+    rich: bool = typer.Option(False, "--rich", help="Use Rich table format"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+) -> None:
+    working_dir = resolve_cwd(cwd)
+    plan_path = working_dir / "ai-todolist.yaml"
+
+    try:
+        loader = PlanLoader(plan_path)
+        plan = loader.load()
+        navigator = PlanNavigator(plan)
+
+        task = navigator.get_previous_task()
+        if task is None:
+            if plan.status.execution.started:
+                console.print("[yellow]첫 작업입니다[/yellow]")
+            else:
+                console.print("[yellow]작업이 시작되지 않았습니다[/yellow]")
+            raise typer.Exit(0)
+
+        output_format = OutputFormat.RICH if rich else OutputFormat.PLAIN
+        print_task(task, format=output_format)
+
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+
+
 @task_app.command(name="continue")
 def continue_work(
     cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),

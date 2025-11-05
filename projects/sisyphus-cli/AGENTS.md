@@ -31,28 +31,20 @@
 graph TB
     CLI[cli.py<br/>Typer] --> CMD{Command Router}
 
-    CMD -->|sisyphus work| WORK[work.py<br/>Legacy v2.1]
-    CMD -->|sisyphus task| TASK[task.py<br/>Task execution]
+    CMD -->|sisyphus work| WORK[work.py<br/>Work command]
+    CMD -->|sisyphus task| TASK[task.py<br/>Task navigation]
     CMD -->|sisyphus plan| PLAN[plan.py<br/>Plan management]
 
-    TASK --> PN[PlanNavigator<br/>Find current task]
-    TASK --> UI{UIProtocol}
+    TASK --> TM[TaskManager<br/>DFS navigation]
+    TASK --> STATUS[StatusManager<br/>Current plan]
 
-    WORK --> AGENT{Agent Protocol}
-    TASK --> AGENT
-
-    UI --> TUI[Textual TUI<br/>Interactive]
-    UI --> CLIU[Rich CLI<br/>Automation]
-
-    AGENT --> CLAUDE[ClaudeAgent<br/>SDK + Resume]
-    AGENT --> OC[OpenCodeAgent<br/>REST + SSE]
-
-    PLAN --> LOADER[PlanLoader<br/>YAML parser]
+    PLAN --> LOADER[plans/loader.py<br/>load_plan]
     PLAN --> LINTER[PlanLinter<br/>Validation]
     PLAN --> GRAPH[GraphRenderer<br/>Mermaid/ASCII/PNG]
 
-    LOADER --> MODELS[WorkPlan Models<br/>Pydantic]
-    PN --> MODELS
+    TM --> MODELS[WorkPlan Models<br/>Pydantic]
+    LOADER --> MODELS
+    STATUS --> MODELS
 ```
 
 **Pattern:** Protocol-based (PEP 544) → Agent, UIProtocol decoupled
@@ -60,20 +52,18 @@ graph TB
 **Flow:** CLI → Command Router → Task/Work/Plan handlers → Agents/UI
 
 **Core Components:**
-- **PlanNavigator**: Finds current/next task from YAML plans, handles dependencies
-- **PlanLoader**: Parses v3.0 YAML → Pydantic models (WorkPlan, Todo, Reference)
+- **TaskManager**: DFS-based task navigation (current/next/previous), completion checks
+- **StatusManager**: Tracks current plan per git worktree (.sisyphus/status.json)
+- **load_plan()**: Parses v3.0 YAML → Pydantic models (WorkPlan, Todo, Reference)
 - **PlanLinter**: Validates circular deps, missing references, malformed YAML
-- **Agent Protocol**: `initialize()`, `start_session()`, `send()`, `stream()`, `close()`
-- **UIProtocol**: `show_message()`, `show_status()`, `get_input()` (TUI only)
-- **ClaudeAgent**: SDK-based, session resume, interactive input support
-- **OpenCodeAgent**: REST API, SSE streaming, health check (5 retries × 2s)
+- **GraphRenderer**: Visualizes plan dependencies (Mermaid/ASCII/PNG)
 
-**Data Flow:**
-1. CLI parses args → `task continue` or `work`
-2. PlanNavigator loads YAML → finds current task by status
-3. UI created (TUI/CLI) → renders agent messages
-4. Agent executes task → streams responses via AsyncIterator
-5. Task completion updates YAML status → moves to next task
+**Task Navigation Flow:**
+1. CLI parses args → `task continue`, `task current`, `task next`
+2. StatusManager resolves current plan from status.json
+3. TaskManager loads YAML → finds current/next task using DFS algorithm
+4. Task commands display/modify task status
+5. Verification commands (`verify bash/llm/manual`) check completion criteria
 
 **Deviations from Standard:**
 - **v3.0 YAML plans**: Not Markdown, structured YAML with dependency graph support
@@ -112,14 +102,13 @@ sisyphus-cli/
 │   │   ├── claude.py      # ClaudeAgent
 │   │   └── opencode.py    # OpenCodeAgent
 │   ├── core/              # Business logic
-│   │   ├── plans/         # YAML models (WorkPlan, Todo, Reference)
+│   │   ├── plans/         # YAML models & loader (WorkPlan, Todo, loader.py)
 │   │   ├── converters/    # v2.1 Markdown → v3.0 YAML converter
 │   │   ├── exporters/     # YAML → Markdown exporter
 │   │   ├── graph/         # Dependency graph renderer
-│   │   ├── status/        # Status tracking (.sisyphus/status.json)
-│   │   ├── plan_loader.py # YAML parser
-│   │   ├── plan_linter.py # Validation (cycles, refs)
-│   │   └── plan_navigator.py # Current/next task finder
+│   │   ├── status/        # Status tracking (manager.py)
+│   │   ├── task_manager.py # DFS task navigation
+│   │   └── plan_linter.py # Validation (cycles, refs)
 │   ├── ui/                # UI layer
 │   │   ├── tui/           # Textual TUI (app.py + components/)
 │   │   ├── cli/           # Rich CLI (console.py)
@@ -175,7 +164,7 @@ graph LR
 - Graph visualization (Mermaid/ASCII/PNG via graphviz)
 - anyio abstraction → CLI supports both asyncio + trio, tests run 2× automatically
 - Protocol-based design → easy agent addition (5 methods)
-- Legacy v2.1 support → `work` command still available
+- DFS-based task navigation → respects hierarchical task structure
 
 ## DEVELOPMENT COMMANDS
 
@@ -211,11 +200,16 @@ uv run ruff format       # Format
 # v3.0 YAML workflow
 uv run sisyphus plan init
 uv run sisyphus plan lint .sisyphus/tasks/
-uv run sisyphus task continue --execute claude:sonnet
+uv run sisyphus task continue
 
-# Legacy v2.1 workflow
-uv run sisyphus work
-uv run sisyphus work --no-tui  # CLI mode
+# Task navigation
+uv run sisyphus task current
+uv run sisyphus task next
+uv run sisyphus task show <task-id>
+
+# Verification
+uv run sisyphus task verify bash
+uv run sisyphus task verify status
 
 # Plan visualization
 uv run sisyphus plan graph .sisyphus/tasks/ --format ascii
@@ -279,7 +273,7 @@ def my_fixture(): ...
 
 **Critical Non-Obvious Information:**
 
-1. **v3.0 YAML is mandatory**: CLI expects `.sisyphus/tasks/*.yaml` structure. Legacy v2.1 Markdown (ai-todolist.md) only works with `work` command, not `task continue`.
+1. **v3.0 YAML is mandatory**: CLI expects `.sisyphus/tasks/*.yaml` structure with WorkPlan format.
 
 2. **Plan dependencies auto-resolve**: `depends_on: ["plan-foundation"]` → Sisyphus executes `plan-foundation` first, waits for all tasks complete, then moves to dependent plan.
 

@@ -15,6 +15,24 @@ work_plans:
   - id: test-plan
     name: "Test Plan"
     depends_on: []
+    user_request:
+      original: "Test request"
+      created_at: "2025-11-01T00:00:00Z"
+    objectives:
+      core: "Test objective"
+    background:
+      current_situation: "Test situation"
+      reason_for_change: "Test reason"
+      changes_to_make: "Test changes"
+    required_background:
+      description: "Test background"
+    workflow:
+      dependency_diagram: "Test diagram"
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     todos:
       - id: "1"
         title: "First Task"
@@ -42,6 +60,24 @@ work_plans:
   - id: test-plan
     name: "Test Plan"
     depends_on: []
+    user_request:
+      original: "Test request"
+      created_at: "2025-11-01T00:00:00Z"
+    objectives:
+      core: "Test objective"
+    background:
+      current_situation: "Test situation"
+      reason_for_change: "Test reason"
+      changes_to_make: "Test changes"
+    required_background:
+      description: "Test background"
+    workflow:
+      dependency_diagram: "Test diagram"
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     todos:
       - id: "1"
         title: "Completed Task"
@@ -66,6 +102,24 @@ work_plans:
   - id: test-plan
     name: "Test Plan"
     depends_on: []
+    user_request:
+      original: "Test request"
+      created_at: "2025-11-01T00:00:00Z"
+    objectives:
+      core: "Test objective"
+    background:
+      current_situation: "Test situation"
+      reason_for_change: "Test reason"
+      changes_to_make: "Test changes"
+    required_background:
+      description: "Test background"
+    workflow:
+      dependency_diagram: "Test diagram"
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     todos:
       - id: "1"
         title: "Task"
@@ -104,6 +158,24 @@ work_plans:
   - id: test-plan
     name: "Test Plan"
     depends_on: []
+    user_request:
+      original: "Test request"
+      created_at: "2025-11-01T00:00:00Z"
+    objectives:
+      core: "Test objective"
+    background:
+      current_situation: "Test situation"
+      reason_for_change: "Test reason"
+      changes_to_make: "Test changes"
+    required_background:
+      description: "Test background"
+    workflow:
+      dependency_diagram: "Test diagram"
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     todos:
       - id: "1"
         title: "Parent Task"
@@ -135,6 +207,24 @@ work_plans:
   - id: test-plan
     name: "Test Plan"
     depends_on: []
+    user_request:
+      original: "Test request"
+      created_at: "2025-11-01T00:00:00Z"
+    objectives:
+      core: "Test objective"
+    background:
+      current_situation: "Test situation"
+      reason_for_change: "Test reason"
+      changes_to_make: "Test changes"
+    required_background:
+      description: "Test background"
+    workflow:
+      dependency_diagram: "Test diagram"
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     todos:
       - id: "1"
         title: "Task"
@@ -166,6 +256,24 @@ work_plans:
   - id: test-plan
     name: "Test Plan"
     depends_on: []
+    user_request:
+      original: "Test request"
+      created_at: "2025-11-01T00:00:00Z"
+    objectives:
+      core: "Test objective"
+    background:
+      current_situation: "Test situation"
+      reason_for_change: "Test reason"
+      changes_to_make: "Test changes"
+    required_background:
+      description: "Test background"
+    workflow:
+      dependency_diagram: "Test diagram"
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     todos:
       - id: "1"
         title: "Task"

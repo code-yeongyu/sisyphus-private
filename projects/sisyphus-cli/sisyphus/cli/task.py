@@ -1,115 +1,623 @@
-"""DEPRECATED: v2.1 task commands.
+"""Task navigation and verification commands for v3.0 YAML plans.
 
-All task commands have been removed in v3.0.
-Use v3.0 plan commands instead:
-- sisyphus plan init
-- sisyphus plan lint
-- sisyphus plan graph
+Provides commands to navigate through tasks, check status, and manage verification.
+All commands work with .sisyphus/tasks/*.yaml plans (v3.0 format).
 """
 
 from __future__ import annotations
 
+import asyncio
+from collections.abc import Coroutine
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+import anyio
+import sniffio
 import typer
 from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
-task_app = typer.Typer(name="task", help="DEPRECATED: v2.1 commands removed")
+from sisyphus.cli.common import resolve_cwd
+from sisyphus.core.plans.loader import (
+    load_plan,
+    resolve_current_plan_from_status,
+    save_plan,
+)
+from sisyphus.core.plans.models import PlanDocument, Todo, TodoStatus, WorkPlan
+from sisyphus.core.status.manager import StatusManager
+from sisyphus.core.task_manager import TaskManager
+
+task_app = typer.Typer(name="task", help="Task navigation and verification commands")
 console = Console()
 
-verify_app = typer.Typer(name="verify", help="DEPRECATED: v2.1 commands removed")
+verify_app = typer.Typer(name="verify", help="Verification management commands")
 task_app.add_typer(verify_app)
 
 
-def _show_deprecated_message() -> None:
-    console.print("[red]ERROR: This command is deprecated (v2.1 only) and has been removed.[/red]")
-    console.print("[yellow]Use v3.0 commands instead:[/yellow]")
-    console.print("  sisyphus plan init    - Create new YAML plan")
-    console.print("  sisyphus plan lint    - Validate plan")
-    console.print("  sisyphus plan graph   - Visualize dependencies")
-    raise typer.Exit(1)
+def _run_async(coro: Coroutine[Any, Any, None]) -> None:
+    """Synchronous wrapper for async functions."""
+    try:
+        # pyright: ignore[reportArgumentType]
+        anyio.run(coro)  # type: ignore[arg-type]
+    except Exception:
+        try:
+            sniffio.current_async_library()
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(coro)
+        except sniffio.AsyncLibraryNotFoundError:
+            # pyright: ignore[reportArgumentType]
+            anyio.run(coro)  # type: ignore[arg-type]
+
+
+async def _load_current_plan(
+    working_dir: Path,
+) -> tuple[PlanDocument, WorkPlan, TaskManager]:
+    """Load current plan from status.json."""
+    plan_doc = await resolve_current_plan_from_status(working_dir)
+    if plan_doc is None:
+        console.print("[red]현재 활성화된 작업 계획이 없습니다.[/red]")
+        console.print("[yellow]다음 명령으로 계획을 활성화하세요:[/yellow]")
+        console.print("  sisyphus plan init")
+        raise typer.Exit(1)
+
+    if not plan_doc.work_plans:
+        console.print("[red]작업 계획에 work_plans가 없습니다.[/red]")
+        raise typer.Exit(1)
+
+    work_plan = plan_doc.work_plans[0]
+    return plan_doc, work_plan, TaskManager(plan_doc, work_plan.id)
+
+
+def _format_task_display(
+    task: Todo,
+    show_children: bool = True,
+    show_verification: bool = True,
+) -> str:
+    """Format task information for display."""
+    lines = []
+    lines.append(f"[bold cyan]작업 ID:[/bold cyan] {task.id}")
+    lines.append(f"[bold cyan]제목:[/bold cyan] {task.title}")
+    lines.append(f"[bold cyan]상태:[/bold cyan] {task.status.value}")
+
+    if task.description:
+        lines.append(f"[bold cyan]설명:[/bold cyan] {task.description}")
+
+    if task.references:
+        lines.append("[bold cyan]참조:[/bold cyan]")
+        for ref in task.references:
+            lines.append(f"  - {ref.title}: {ref.path}")
+
+    if show_children and task.children:
+        lines.append(f"[bold cyan]하위 작업:[/bold cyan] {len(task.children)}개")
+        for child in task.children:
+            lines.append(f"  - [{child.status.value}] {child.id}: {child.title}")
+
+    if show_verification and task.verification_spec:
+        verified_count = sum(1 for v in task.verification_spec if v.verified)
+        total_count = len(task.verification_spec)
+        lines.append(f"[bold cyan]검증:[/bold cyan] {verified_count}/{total_count} 완료")
+
+    return "\n".join(lines)
 
 
 @task_app.command(name="show")
 def show_task(
     task_id: str = typer.Argument(..., help="Task ID"),
-    rich: bool = typer.Option(False, "--rich"),
-    cwd: str | None = typer.Option(None, "--cwd"),
+    rich: bool = typer.Option(
+        False,
+        "--rich",
+        help="Rich formatting (legacy option, always enabled)",
+    ),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
-    _show_deprecated_message()
+    """Display specific task by ID."""
+
+    async def _show() -> None:
+        working_dir = resolve_cwd(cwd)
+        plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
+
+        task = task_manager.find_todo_by_id(task_id)
+        if task is None:
+            console.print(f"[red]작업 ID를 찾을 수 없습니다: {task_id}[/red]")
+            raise typer.Exit(1)
+
+        display = _format_task_display(task)
+        console.print(Panel(display, title=f"작업 {task_id}", border_style="cyan"))
+
+    _run_async(_show())
 
 
 @task_app.command(name="current")
 def show_current(
-    rich: bool = typer.Option(False, "--rich"),
-    cwd: str | None = typer.Option(None, "--cwd"),
+    rich: bool = typer.Option(
+        False,
+        "--rich",
+        help="Rich formatting (legacy option, always enabled)",
+    ),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
-    _show_deprecated_message()
+    """Display currently in-progress task."""
+
+    async def _current() -> None:
+        working_dir = resolve_cwd(cwd)
+        plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
+
+        current_task = task_manager.get_current_task()
+        if current_task is None:
+            console.print("[yellow]작업이 시작되지 않았습니다.[/yellow]")
+            console.print("다음 명령으로 작업을 시작하세요: [cyan]sisyphus task continue[/cyan]")
+            return
+
+        display = _format_task_display(current_task)
+        console.print(Panel(display, title="현재 작업", border_style="green"))
+
+    _run_async(_current())
 
 
 @task_app.command(name="next")
 def show_next(
-    rich: bool = typer.Option(False, "--rich"),
-    cwd: str | None = typer.Option(None, "--cwd"),
+    rich: bool = typer.Option(
+        False,
+        "--rich",
+        help="Rich formatting (legacy option, always enabled)",
+    ),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
-    _show_deprecated_message()
+    """Display next pending task."""
+
+    async def _next() -> None:
+        working_dir = resolve_cwd(cwd)
+        plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
+
+        next_task = task_manager.get_next_task()
+        if next_task is None:
+            console.print("[green]모든 작업이 완료되었습니다! 🎉[/green]")
+            return
+
+        display = _format_task_display(next_task)
+        console.print(Panel(display, title="다음 작업", border_style="yellow"))
+
+    _run_async(_next())
 
 
 @task_app.command(name="previous")
 def show_previous(
-    rich: bool = typer.Option(False, "--rich"),
-    cwd: str | None = typer.Option(None, "--cwd"),
+    rich: bool = typer.Option(
+        False,
+        "--rich",
+        help="Rich formatting (legacy option, always enabled)",
+    ),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
-    _show_deprecated_message()
+    """Display previous task in DFS order."""
+
+    async def _previous() -> None:
+        working_dir = resolve_cwd(cwd)
+        plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
+
+        current_task = task_manager.get_current_task()
+        if current_task is None:
+            console.print("[yellow]작업이 시작되지 않았습니다.[/yellow]")
+            return
+
+        previous_task = task_manager.get_previous_task()
+        if previous_task is None:
+            console.print("[yellow]첫 작업입니다.[/yellow]")
+            return
+
+        display = _format_task_display(previous_task)
+        console.print(Panel(display, title="이전 작업", border_style="blue"))
+
+    _run_async(_previous())
 
 
 @task_app.command(name="continue")
 def continue_work(
-    cwd: str | None = typer.Option(None, "--cwd"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
-    _show_deprecated_message()
+    """Continue work: complete current task and move to next, or start first task."""
+
+    async def _continue() -> None:
+        working_dir = resolve_cwd(cwd)
+        status_path = working_dir / ".sisyphus" / "status.json"
+
+        status_manager = StatusManager(status_path)
+        status = await status_manager.get()
+
+        if status.current_plan is None:
+            console.print("[red]현재 활성화된 작업 계획이 없습니다.[/red]")
+            raise typer.Exit(1)
+
+        plan_path = working_dir / status.current_plan.plan_path
+        plan_doc = await load_plan(plan_path)
+
+        if not plan_doc.work_plans:
+            console.print("[red]작업 계획에 work_plans가 없습니다.[/red]")
+            raise typer.Exit(1)
+
+        work_plan = plan_doc.work_plans[0]
+        task_manager = TaskManager(plan_doc, work_plan.id)
+
+        if not work_plan.execution.started:
+            first_task = task_manager.get_next_task()
+            if first_task is None:
+                console.print("[yellow]실행할 작업이 없습니다.[/yellow]")
+                return
+
+            work_plan.execution.started = True
+            work_plan.execution.started_at = datetime.now(UTC).isoformat()
+            work_plan.work_mode.current_task_id = first_task.id
+            first_task.status = TodoStatus.in_progress
+
+            await save_plan(plan_path, plan_doc)
+
+            console.print("[green]작업을 시작합니다.[/green]")
+            display = _format_task_display(first_task)
+            console.print(Panel(display, title="시작된 작업", border_style="green"))
+            return
+
+        current_task = task_manager.get_current_task()
+        if current_task is None:
+            console.print("[yellow]진행 중인 작업이 없습니다.[/yellow]")
+            return
+
+        report = task_manager.check_task_completion(current_task.id)
+        if not report.can_complete:
+            console.print("[red]다음 작업으로 넘어갈 수 없습니다.[/red]")
+            console.print(f"[yellow]현재 작업: {current_task.title}[/yellow]")
+
+            if not report.all_children_completed:
+                completed = report.children_summary["completed"]
+                total = sum(report.children_summary.values())
+                console.print(f"  - 하위 작업: {completed}/{total} 완료")
+
+            if not report.all_verifications_completed:
+                ver_completed = report.verification_summary["completed"]
+                ver_total = report.verification_summary["total"]
+                console.print(f"  - 검증: {ver_completed}/{ver_total} 완료")
+
+            console.print("\n[cyan]완료 조건을 만족한 후 다시 시도하세요.[/cyan]")
+            raise typer.Exit(1)
+
+        current_task.status = TodoStatus.completed
+
+        next_task = task_manager.get_next_task(current_task.id)
+
+        if next_task is None:
+            work_plan.execution.completed = True
+            work_plan.execution.completed_at = datetime.now(UTC).isoformat()
+            work_plan.work_mode.current_task_id = None
+
+            await save_plan(plan_path, plan_doc)
+
+            console.print("[green]모든 작업이 완료되었습니다! 🎉[/green]")
+            return
+
+        next_task.status = TodoStatus.in_progress
+        work_plan.work_mode.current_task_id = next_task.id
+
+        await save_plan(plan_path, plan_doc)
+
+        console.print(f"[green]작업 '{current_task.title}'을(를) 완료했습니다.[/green]")
+        console.print("[yellow]다음 작업으로 이동합니다.[/yellow]")
+        display = _format_task_display(next_task)
+        console.print(Panel(display, title="다음 작업", border_style="green"))
+
+    _run_async(_continue())
 
 
 @verify_app.command(name="bash")
 def verify_bash(
-    cwd: str | None = typer.Option(None, "--cwd"),
-    evidence: str | None = typer.Option(None, "--evidence"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    evidence: str | None = typer.Option(
+        None,
+        "--evidence",
+        help="Evidence description (legacy option)",
+    ),
 ) -> None:
-    _show_deprecated_message()
+    """Execute next bash verification test."""
+
+    async def _verify_bash() -> None:
+        working_dir = resolve_cwd(cwd)
+        status_path = working_dir / ".sisyphus" / "status.json"
+
+        status_manager = StatusManager(status_path)
+        status = await status_manager.get()
+
+        if status.current_plan is None:
+            console.print("[red]현재 활성화된 작업 계획이 없습니다.[/red]")
+            raise typer.Exit(1)
+
+        plan_path = working_dir / status.current_plan.plan_path
+        plan_doc = await load_plan(plan_path)
+
+        if not plan_doc.work_plans:
+            console.print("[red]작업 계획에 work_plans가 없습니다.[/red]")
+            raise typer.Exit(1)
+
+        work_plan = plan_doc.work_plans[0]
+        task_manager = TaskManager(plan_doc, work_plan.id)
+
+        result = task_manager.next_unverified()
+        if result is None:
+            console.print("[green]모든 검증이 완료되었습니다! ✓[/green]")
+            return
+
+        verify_item, current_idx, total_count = result
+
+        console.print(f"[cyan]검증 {current_idx}/{total_count}[/cyan]")
+        console.print(f"[bold]{verify_item.title}[/bold]")
+        console.print(f"{verify_item.description}")
+
+        if not verify_item.bash:
+            console.print("[yellow]bash 검증 항목이 없습니다.[/yellow]")
+            return
+
+        all_passed = True
+        for bash_item in verify_item.bash:
+            console.print(f"\n[cyan]실행:[/cyan] {bash_item.execute}")
+
+            result = await anyio.run_process(
+                ["bash", "-c", bash_item.execute],
+                check=False,
+                cwd=str(working_dir),
+            )
+
+            if result.returncode == bash_item.expected_exit_code:
+                console.print(f"[green]✓ 성공[/green] (exit code: {result.returncode})")
+            else:
+                expected_code = bash_item.expected_exit_code
+                got_code = result.returncode
+                console.print(f"[red]✗ 실패[/red] (expected: {expected_code}, got: {got_code})")
+                all_passed = False
+
+            if result.stdout:
+                stdout_decoded = result.stdout.decode("utf-8", errors="replace")
+                console.print(f"[dim]출력:[/dim]\n{stdout_decoded}")
+
+            if result.stderr:
+                stderr_decoded = result.stderr.decode("utf-8", errors="replace")
+                console.print(f"[dim]오류:[/dim]\n{stderr_decoded}")
+
+        if all_passed:
+            verify_item.verified = True
+            verify_item.verified_at = datetime.now(UTC).isoformat()
+            await save_plan(plan_path, plan_doc)
+            console.print("\n[green]검증 완료! ✓[/green]")
+        else:
+            console.print("\n[red]검증 실패. 문제를 해결한 후 다시 시도하세요.[/red]")
+            raise typer.Exit(1)
+
+    _run_async(_verify_bash())
 
 
 @verify_app.command(name="llm")
 def verify_llm(
-    cwd: str | None = typer.Option(None, "--cwd"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
-    _show_deprecated_message()
+    """Display next LLM verification item for manual review."""
+
+    async def _verify_llm() -> None:
+        working_dir = resolve_cwd(cwd)
+        plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
+
+        result = task_manager.next_unverified()
+        if result is None:
+            console.print("[green]모든 검증이 완료되었습니다! ✓[/green]")
+            return
+
+        verify_item, current_idx, total_count = result
+
+        console.print(f"[cyan]검증 {current_idx}/{total_count}[/cyan]")
+        console.print(f"[bold]{verify_item.title}[/bold]")
+        console.print(f"{verify_item.description}")
+
+        if not verify_item.llm_judge:
+            console.print("[yellow]LLM 검증 항목이 없습니다.[/yellow]")
+            return
+
+        for llm_item in verify_item.llm_judge:
+            console.print(f"\n[cyan]검증자:[/cyan] {llm_item.by}")
+            console.print(f"[cyan]지시사항:[/cyan] {llm_item.instruction}")
+
+            if llm_item.context_commands:
+                console.print("[cyan]컨텍스트 명령:[/cyan]")
+                for cmd in llm_item.context_commands:
+                    console.print(f"  - {cmd}")
+
+        verify_cmd = f"sisyphus task verify llm-mark {verify_item.id} --evidence '<증거 설명>'"
+        console.print(f"\n[yellow]검증을 완료하려면:[/yellow] {verify_cmd}")
+
+    _run_async(_verify_llm())
 
 
 @verify_app.command(name="llm-mark")
 def verify_llm_mark(
-    verify_id: str = typer.Argument(...),
-    evidence: str = typer.Option(..., "--evidence"),
-    cwd: str | None = typer.Option(None, "--cwd"),
+    verify_id: str = typer.Argument(..., help="Verification item ID"),
+    evidence: str = typer.Option(..., "--evidence", help="Evidence description"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
-    _show_deprecated_message()
+    """Mark LLM verification as completed with evidence."""
+
+    async def _mark() -> None:
+        working_dir = resolve_cwd(cwd)
+        status_path = working_dir / ".sisyphus" / "status.json"
+
+        status_manager = StatusManager(status_path)
+        status = await status_manager.get()
+
+        if status.current_plan is None:
+            console.print("[red]현재 활성화된 작업 계획이 없습니다.[/red]")
+            raise typer.Exit(1)
+
+        plan_path = working_dir / status.current_plan.plan_path
+        plan_doc = await load_plan(plan_path)
+
+        found = False
+        for work_plan in plan_doc.work_plans:
+
+            def search_todos(todos: list[Any]) -> None:
+                nonlocal found
+                for todo in todos:
+                    for verify_item in todo.verification_spec:
+                        if verify_item.id == verify_id:
+                            verify_item.verified = True
+                            verify_item.verified_at = datetime.now(UTC).isoformat()
+                            verify_item.orchestrator_manually_verified = True
+                            verify_item.manual_verification_evidence = evidence
+                            found = True
+                            return
+                    if todo.children:
+                        search_todos(todo.children)
+
+            search_todos(work_plan.todos)
+            if found:
+                break
+
+        if not found:
+            console.print(f"[red]검증 ID를 찾을 수 없습니다: {verify_id}[/red]")
+            raise typer.Exit(1)
+
+        await save_plan(plan_path, plan_doc)
+        console.print("[green]LLM 검증이 완료 표시되었습니다.[/green]")
+        console.print(f"[cyan]증거:[/cyan] {evidence}")
+
+    _run_async(_mark())
 
 
 @verify_app.command(name="manual")
 def verify_manual(
-    cwd: str | None = typer.Option(None, "--cwd"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
-    _show_deprecated_message()
+    """Display next manual verification item."""
+
+    async def _verify_manual() -> None:
+        working_dir = resolve_cwd(cwd)
+        plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
+
+        result = task_manager.next_unverified()
+        if result is None:
+            console.print("[green]모든 검증이 완료되었습니다! ✓[/green]")
+            return
+
+        verify_item, current_idx, total_count = result
+
+        console.print(f"[cyan]검증 {current_idx}/{total_count}[/cyan]")
+        console.print(f"[bold]{verify_item.title}[/bold]")
+        console.print(f"{verify_item.description}")
+
+        verify_cmd = f"sisyphus task verify manual-mark {verify_item.id} --evidence '<증거 설명>'"
+        console.print(f"\n[yellow]수동 검증을 완료하려면:[/yellow] {verify_cmd}")
+
+    _run_async(_verify_manual())
 
 
 @verify_app.command(name="manual-mark")
 def verify_manual_mark(
-    verify_id: str = typer.Argument(...),
-    evidence: str = typer.Option(..., "--evidence"),
-    cwd: str | None = typer.Option(None, "--cwd"),
+    verify_id: str = typer.Argument(..., help="Verification item ID"),
+    evidence: str = typer.Option(..., "--evidence", help="Evidence description"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
-    _show_deprecated_message()
+    """Mark manual verification as completed with evidence."""
+
+    async def _mark() -> None:
+        working_dir = resolve_cwd(cwd)
+        status_path = working_dir / ".sisyphus" / "status.json"
+
+        status_manager = StatusManager(status_path)
+        status = await status_manager.get()
+
+        if status.current_plan is None:
+            console.print("[red]현재 활성화된 작업 계획이 없습니다.[/red]")
+            raise typer.Exit(1)
+
+        plan_path = working_dir / status.current_plan.plan_path
+        plan_doc = await load_plan(plan_path)
+
+        found = False
+        for work_plan in plan_doc.work_plans:
+
+            def search_todos(todos: list[Any]) -> None:
+                nonlocal found
+                for todo in todos:
+                    for verify_item in todo.verification_spec:
+                        if verify_item.id == verify_id:
+                            verify_item.verified = True
+                            verify_item.verified_at = datetime.now(UTC).isoformat()
+                            verify_item.orchestrator_manually_verified = True
+                            verify_item.manual_verification_evidence = evidence
+                            found = True
+                            return
+                    if todo.children:
+                        search_todos(todo.children)
+
+            search_todos(work_plan.todos)
+            if found:
+                break
+
+        if not found:
+            console.print(f"[red]검증 ID를 찾을 수 없습니다: {verify_id}[/red]")
+            raise typer.Exit(1)
+
+        await save_plan(plan_path, plan_doc)
+        console.print("[green]수동 검증이 완료 표시되었습니다.[/green]")
+        console.print(f"[cyan]증거:[/cyan] {evidence}")
+
+    _run_async(_mark())
 
 
 @verify_app.command(name="status")
 def verify_status(
-    cwd: str | None = typer.Option(None, "--cwd"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
-    _show_deprecated_message()
+    """Display verification status for all tasks."""
+
+    async def _status() -> None:
+        working_dir = resolve_cwd(cwd)
+        plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
+
+        all_verifications: list[tuple[str, str, bool]] = []
+
+        def collect_verifications(todos: list[Any], prefix: str = "") -> None:
+            for todo in todos:
+                for verify_item in todo.verification_spec:
+                    all_verifications.append((f"{prefix}{todo.title}", verify_item.title, verify_item.verified))
+                if todo.children:
+                    collect_verifications(todo.children, prefix=f"{prefix}{todo.title} > ")
+
+        collect_verifications(work_plan.todos)
+
+        if not all_verifications:
+            console.print("[yellow]검증 항목이 없습니다.[/yellow]")
+            return
+
+        verified_count = sum(1 for _, _, verified in all_verifications if verified)
+        total_count = len(all_verifications)
+
+        console.print(f"[cyan]검증 상태: {verified_count}/{total_count} 완료[/cyan]\n")
+
+        table = Table(title="검증 목록")
+        table.add_column("작업", style="cyan")
+        table.add_column("검증 항목", style="yellow")
+        table.add_column("상태", style="green")
+
+        for task_title, verify_title, verified in all_verifications:
+            status_emoji = "✓" if verified else "○"
+            status_color = "green" if verified else "yellow"
+            table.add_row(
+                task_title,
+                verify_title,
+                f"[{status_color}]{status_emoji}[/{status_color}]",
+            )
+
+        console.print(table)
+
+        remaining = total_count - verified_count
+        if remaining > 0:
+            console.print(f"\n[yellow]남은 검증: {remaining}개[/yellow]")
+        else:
+            console.print("\n[green]모든 검증이 완료되었습니다! ✓[/green]")
+
+    _run_async(_status())

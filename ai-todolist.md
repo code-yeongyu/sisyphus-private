@@ -52,13 +52,13 @@ Sisyphus CLI를 v2.1 레거시 코드에서 완전히 분리하되, **v3.0 YAML 
 is_execution_started = TRUE
 
 # 전체 목표 달성 여부
-is_all_goals_accomplished = TRUE
+is_all_goals_accomplished = FALSE
 
 # 병렬 실행
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-모든 작업 완료!
+Task 12: v2.1의 누락된 7개 필드를 v3.0 WorkPlan에 추가 중
 
 # 필요 배경 지식
 
@@ -1067,8 +1067,168 @@ docs: update A
   - [x] 타입 체크 0 errors
   - [x] Lint 0 errors
 
-- [x] 4. **요구사항 준수 확인**
-  - [x] v3.0 YAML에 모든 상태 포함
+- [ ] 4. **요구사항 준수 확인** - **재검증 필요!**
+  - [ ] v3.0 YAML에 모든 상태 포함 - **7개 필드 누락됨!**
   - [x] status.json 스펙 변경 없음
   - [x] work/plan/task/verify 모든 기능 동작
   - [x] "미지원" 같은 내용 없음
+
+# 🚨 CRITICAL: 누락된 작업 발견!
+
+## Architect 검증 결과
+- **완료율: 12.5% (8개 중 1개 필드만 구현)**
+- 현재 구현: status 필드만 (execution, work_mode, progress, current_work)
+- 누락: user_request, objectives, background, required_background, workflow, success_vision, final_verification
+
+---
+
+# 추가 작업 (CRITICAL)
+
+- [ ] 12. v2.1의 누락된 7개 필드를 v3.0 WorkPlan에 추가
+
+   **참조 소스**:
+   - v2.1 원본: `git show f64aa66^:projects/sisyphus-cli/sisyphus/utils/plan_types.py`
+   - 현재 models.py: `projects/sisyphus-cli/sisyphus/core/plans/models.py`
+
+   - [ ] 12.1 누락된 클래스들을 models.py에 추가
+
+      **구현 세부사항**:
+      v2.1 plan_types.py에서 다음 클래스들을 복사하여 models.py에 추가:
+
+      ```python
+      # 1. UserRequest (v2.1: lines 145-149)
+      class UserRequest(BaseModel):
+          original: str
+          created_at: str
+          additional: list[str] = []
+
+      # 2. DetailedObjective + Objectives (v2.1: lines 151-159)
+      class DetailedObjective(BaseModel):
+          goal: str
+          measurable: str
+
+      class Objectives(BaseModel):
+          core: str
+          detailed: list[DetailedObjective] = []
+
+      # 3. Background (v2.1: lines 161-165)
+      class Background(BaseModel):
+          current_situation: str
+          reason_for_change: str
+          changes_to_make: str
+
+      # 4. RequiredBackground (v2.1: lines 167-171)
+      class RequiredBackground(BaseModel):
+          description: str
+          file_structure: str | None = None
+          references: list[ReferenceItem] = []
+
+      # 5. Workflow (v2.1: lines 199-202)
+      class Workflow(BaseModel):
+          dependency_diagram: str
+          critical_path: list[str] = []
+
+      # 6. UserScenario, BusinessMetric, TechnicalCriterion, SuccessVision (v2.1: lines 204-225)
+      class UserScenario(BaseModel):
+          scenario: str
+          experience: str
+
+      class BusinessMetric(BaseModel):
+          metric: str
+          target: str
+
+      class TechnicalCriterion(BaseModel):
+          category: str
+          criteria: str
+          command: str | None = None
+          expected: str
+
+      class SuccessVision(BaseModel):
+          user_perspective: list[UserScenario] = []
+          business_perspective: list[BusinessMetric] = []
+          technical_criteria: list[TechnicalCriterion] = []
+
+      # 7. FinalVerificationItem (v2.1: lines 227-244)
+      class FinalVerificationItem(BaseModel):
+          id: str
+          title: str
+          category: str
+          description: str
+          verified: bool = False
+          verified_at: str | None = None
+          verification_evidence: str | None = None
+          orchestrator_manually_verified: bool
+          manual_verification_evidence: str
+          bash: list[BashVerification] = []
+          llm_judge: list[LLMJudgeVerification] = []
+
+          @model_validator(mode="after")
+          def validate_at_least_one(self) -> Self:
+              if not self.bash and not self.llm_judge:
+                  raise ValueError("bash 또는 llm_judge 중 하나 이상 필수")
+              return self
+      ```
+
+   - [ ] 12.2 WorkPlan에 7개 필드 추가 (모두 필수)
+
+      **구현 세부사항**:
+      WorkPlan 클래스에 다음 필드들을 추가:
+
+      ```python
+      class WorkPlan(BaseModel):
+          id: str
+          name: str
+          depends_on: list[str] = []
+
+          # 추가할 7개 필드 (모두 REQUIRED - Optional 금지!)
+          user_request: UserRequest
+          objectives: Objectives
+          background: Background
+          required_background: RequiredBackground
+          workflow: Workflow
+          success_vision: SuccessVision
+          final_verification: list[FinalVerificationItem]
+
+          # 기존 필드
+          todos: list[Todo]
+          references: list[ReferenceItem] = []
+          execution: ExecutionStatus = Field(...)
+          work_mode: WorkMode = Field(...)
+          progress: Progress = Field(...)
+          current_work: str = ""
+      ```
+
+      **주의**:
+      - 모든 새 필드는 **필수**로 선언 (기본값 없음)
+      - v2.1과 동일한 구조 유지
+      - 의존 클래스들이 models.py에 먼저 정의되어야 함
+
+   - [ ] 12.3 테스트 YAML 업데이트
+
+      **구현 세부사항**:
+      `.sisyphus/tasks/hello-world.yaml`에 7개 필드 추가:
+      - user_request 섹션
+      - objectives 섹션
+      - background 섹션
+      - required_background 섹션
+      - workflow 섹션
+      - success_vision 섹션
+      - final_verification 섹션
+
+   - [ ] 12.4 테스트 및 린트
+      - [ ] `uv run pytest projects/sisyphus-cli/tests/ -xvs` → 통과
+      - [ ] `uv run ruff check sisyphus/core/plans/models.py` → 0 errors
+      - [ ] `uv run basedpyright sisyphus/core/plans/models.py` → 0 errors
+
+   - [ ] 12.5 커밋
+      - `git add sisyphus/core/plans/models.py .sisyphus/tasks/hello-world.yaml`
+      - `git commit -m "feat: add missing 7 fields from v2.1 to v3.0 WorkPlan"`
+
+   - [ ] **작업 완료 검증 체크리스트**
+      - [ ] UserRequest, Objectives, Background, RequiredBackground 클래스 추가?
+      - [ ] Workflow, SuccessVision, FinalVerificationItem 클래스 추가?
+      - [ ] WorkPlan에 7개 필드 추가 (모두 필수)?
+      - [ ] hello-world.yaml에 7개 필드 포함?
+      - [ ] 타입 체크 통과?
+      - [ ] 테스트 통과?
+      - [ ] 커밋 완료?

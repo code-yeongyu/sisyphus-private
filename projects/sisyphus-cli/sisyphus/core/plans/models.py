@@ -89,6 +89,82 @@ class VerificationItem(BaseModel):
         return self
 
 
+class UserRequest(BaseModel):
+    original: str
+    created_at: str
+    additional: list[str] = []
+
+
+class DetailedObjective(BaseModel):
+    goal: str
+    measurable: str
+
+
+class Objectives(BaseModel):
+    core: str
+    detailed: list[DetailedObjective] = []
+
+
+class Background(BaseModel):
+    current_situation: str
+    reason_for_change: str
+    changes_to_make: str
+
+
+class RequiredBackground(BaseModel):
+    description: str
+    file_structure: str | None = None
+    references: list[ReferenceItem] = []
+
+
+class Workflow(BaseModel):
+    dependency_diagram: str
+    critical_path: list[str] = []
+
+
+class UserScenario(BaseModel):
+    scenario: str
+    experience: str
+
+
+class BusinessMetric(BaseModel):
+    metric: str
+    target: str
+
+
+class TechnicalCriterion(BaseModel):
+    category: str
+    criteria: str
+    command: str | None = None
+    expected: str
+
+
+class SuccessVision(BaseModel):
+    user_perspective: list[UserScenario] = []
+    business_perspective: list[BusinessMetric] = []
+    technical_criteria: list[TechnicalCriterion] = []
+
+
+class FinalVerificationItem(BaseModel):
+    id: str
+    title: str
+    category: str
+    description: str
+    verified: bool = False
+    verified_at: str | None = None
+    verification_evidence: str | None = None
+    orchestrator_manually_verified: bool
+    manual_verification_evidence: str
+    bash: list[BashVerification] = []
+    llm_judge: list[LLMJudgeVerification] = []
+
+    @model_validator(mode="after")
+    def validate_at_least_one(self) -> Self:
+        if not self.bash and not self.llm_judge:
+            raise ValueError("bash 또는 llm_judge 중 하나 이상 필수")
+        return self
+
+
 class Todo(BaseModel):
     id: str
     title: str
@@ -103,9 +179,21 @@ class WorkPlan(BaseModel):
     id: str
     name: str
     depends_on: list[str] = []
+
+    # === Required Overview Fields (v2.1 restoration) ===
+    user_request: UserRequest | None = None
+    objectives: Objectives | None = None
+    background: Background | None = None
+    required_background: RequiredBackground | None = None
+    workflow: Workflow | None = None
+    success_vision: SuccessVision | None = None
+    final_verification: list[FinalVerificationItem] = []
+
+    # === Core Fields ===
     todos: list[Todo]
     references: list[ReferenceItem] = []
 
+    # === Status Fields ===
     execution: ExecutionStatus = Field(
         default_factory=lambda: ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None)
     )

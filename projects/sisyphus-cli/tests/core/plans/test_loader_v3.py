@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 
-from sisyphus.core.plans.exceptions import UnsupportedPlanVersionError
 from sisyphus.core.plans.loader import load_plan
 from sisyphus.core.plans.models import PlanDocument
 
@@ -36,8 +35,8 @@ work_plans:
     assert result.work_plans[0].id == "plan-test"
 
 
-async def test_load_plan__if_v2_1_file__raises_unsupported_error(tmp_path: Path) -> None:
-    """v2.1 YAML 파일은 UnsupportedPlanVersionError 발생"""
+async def test_load_plan__if_v2_1_file__raises_value_error(tmp_path: Path) -> None:
+    """v2.1 YAML 파일은 ValueError 발생"""
     # given
     plan_file = tmp_path / "test_v2.yaml"
     plan_file.write_text("""version: "2.1"
@@ -49,15 +48,12 @@ work_plan:
 """)
 
     # when & then
-    with pytest.raises(UnsupportedPlanVersionError) as exc_info:
+    with pytest.raises(ValueError, match="Unsupported version.*2\\.1.*Only v3\\.0 supported"):
         await load_plan(plan_file)
 
-    assert "2.1" in str(exc_info.value)
-    assert "convert-legacy" in str(exc_info.value)
 
-
-async def test_load_plan__if_v2_0_file__raises_unsupported_error(tmp_path: Path) -> None:
-    """v2.0 YAML 파일도 UnsupportedPlanVersionError 발생"""
+async def test_load_plan__if_v2_0_file__raises_value_error(tmp_path: Path) -> None:
+    """v2.0 YAML 파일도 ValueError 발생"""
     # given
     plan_file = tmp_path / "test_v2_0.yaml"
     plan_file.write_text("""version: "2.0"
@@ -69,10 +65,8 @@ work_plan:
 """)
 
     # when & then
-    with pytest.raises(UnsupportedPlanVersionError) as exc_info:
+    with pytest.raises(ValueError, match="Unsupported version.*2\\.0.*Only v3\\.0 supported"):
         await load_plan(plan_file)
-
-    assert "2.0" in str(exc_info.value)
 
 
 async def test_load_plan__if_missing_version__raises_value_error(tmp_path: Path) -> None:
@@ -100,7 +94,7 @@ work_plans: []
 """)
 
     # when & then
-    with pytest.raises(ValueError, match="Unknown plan version.*99\\.9"):
+    with pytest.raises(ValueError, match="Unsupported version.*99\\.9.*Only v3\\.0 supported"):
         await load_plan(plan_file)
 
 

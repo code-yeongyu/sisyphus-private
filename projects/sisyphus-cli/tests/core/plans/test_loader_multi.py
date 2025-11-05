@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 
-from sisyphus.core.plans.exceptions import UnsupportedPlanVersionError
 from sisyphus.core.plans.loader import load_multiple_plans, resolve_current_plan_from_status
 from sisyphus.core.plans.models import PlanDocument
 
@@ -299,5 +298,5 @@ work_plan:
 }""")
 
     # when & then
-    with pytest.raises(UnsupportedPlanVersionError):
+    with pytest.raises(ValueError, match="Unsupported version.*2\\.1.*Only v3\\.0 supported"):
         await resolve_current_plan_from_status(root)

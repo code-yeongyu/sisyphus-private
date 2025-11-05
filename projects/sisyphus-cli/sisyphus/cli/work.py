@@ -169,7 +169,7 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
         else:
             # CLI 모드: anyio.to_thread.run_sync로 typer.prompt 래핑 (이벤트 루프 블로킹 방지)
             selection = str(
-                await anyio.to_thread.run_sync(  # type: ignore
+                await anyio.to_thread.run_sync(  # pyright: ignore[reportAttributeAccessIssue]
                     lambda: typer.prompt(f"Select plan (1-{len(yaml_files)})", default=1, type=int)
                 )
             )
@@ -263,7 +263,7 @@ async def _main_tui(
     if not isinstance(ui, TUI):
         raise TypeError("ui must be TUI instance for TUI mode")
 
-    async def monitor_shutdown(tg: anyio.abc.TaskGroup) -> None:  # type: ignore
+    async def monitor_shutdown(tg: anyio.abc.TaskGroup) -> None:  # pyright: ignore[reportAttributeAccessIssue]
         """Monitor shutdown event (TUI → ExecutionLoop termination)."""
         await ui.shutdown_event.wait()
         tg.cancel_scope.cancel()

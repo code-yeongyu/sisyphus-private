@@ -58,7 +58,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- [x] 4. cli/plan.py 수정
+- [ ] 9. 테스트 파일 수정
 
 # 필요 배경 지식
 

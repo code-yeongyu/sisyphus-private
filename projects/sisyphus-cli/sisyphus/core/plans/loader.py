@@ -1,3 +1,4 @@
+from io import StringIO
 from pathlib import Path
 
 import anyio
@@ -84,6 +85,26 @@ async def load_multiple_plans(root: Path) -> dict[str, PlanDocument]:
         raise ValueError(f"Failed to load some plans:\n{error_msg}")
 
     return plans
+
+
+async def save_plan(path: Path, plan_doc: PlanDocument) -> None:
+    """
+    Save a PlanDocument to YAML file.
+
+    Args:
+        path: Path to YAML file
+        plan_doc: PlanDocument to save
+
+    Raises:
+        OSError: If file cannot be written
+    """
+    yaml = YAML()
+    stream = StringIO()
+    content = plan_doc.model_dump(mode="json", exclude_none=True)
+    yaml.dump(content, stream)
+
+    async with await anyio.open_file(path, "w") as f:
+        await f.write(stream.getvalue())
 
 
 async def resolve_current_plan_from_status(root: Path) -> PlanDocument | None:

@@ -17,7 +17,6 @@ from sisyphus.core.plans.loader import load_plan
 from sisyphus.core.plans.models import TodoStatus
 from sisyphus.core.session import SessionStore
 from sisyphus.core.status.manager import StatusManager
-from sisyphus.core.tasks import TaskValidator
 from sisyphus.ui.base import create_ui
 from sisyphus.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
 from sisyphus.utils.cli_helpers import ThemeOption, create_agent, resolve_binary, resolve_theme, validate_url
@@ -212,7 +211,7 @@ async def _main_cli(
     plan_path = await _detect_plan_path(ui)
     if plan_path:
         await _validate_plan(plan_path, ui)
-    task_validator = TaskValidator(plan_path) if plan_path else None
+    task_validator = None
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,
@@ -287,7 +286,7 @@ async def _main_tui(
             plan_path = await _detect_plan_path(ui)
             if plan_path:
                 await _validate_plan(plan_path, ui)
-            task_validator = TaskValidator(plan_path) if plan_path else None
+            task_validator = None
 
             if isinstance(ui, TUI):
                 ui.set_task_validator(task_validator)

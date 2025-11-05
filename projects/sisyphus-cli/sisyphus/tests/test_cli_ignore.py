@@ -29,7 +29,7 @@ def test_ignore__default__adds_to_gitignore(tmp_path: Path, monkeypatch: pytest.
     gitignore_path = tmp_path / ".gitignore"
     assert gitignore_path.exists()
     gitignore_content = gitignore_path.read_text()
-    assert "ai-todolist.md" in gitignore_content
+    assert ".sisyphus/" in gitignore_content
     assert "sessions/" in gitignore_content
     assert "# Sisyphus generated files" in gitignore_content
 
@@ -51,7 +51,7 @@ def test_ignore__exclude_only__adds_only_to_exclude(tmp_path: Path, monkeypatch:
     exclude_path = git_dir / "info" / "exclude"
     assert exclude_path.exists()
     exclude_content = exclude_path.read_text()
-    assert "ai-todolist.md" in exclude_content
+    assert ".sisyphus/" in exclude_content
     assert "sessions/" in exclude_content
 
     gitignore_path = tmp_path / ".gitignore"
@@ -75,12 +75,12 @@ def test_ignore__both__adds_to_both_files(tmp_path: Path, monkeypatch: pytest.Mo
     gitignore_path = tmp_path / ".gitignore"
     assert gitignore_path.exists()
     gitignore_content = gitignore_path.read_text()
-    assert "ai-todolist.md" in gitignore_content
+    assert ".sisyphus/" in gitignore_content
 
     exclude_path = git_dir / "info" / "exclude"
     assert exclude_path.exists()
     exclude_content = exclude_path.read_text()
-    assert "ai-todolist.md" in exclude_content
+    assert ".sisyphus/" in exclude_content
 
 
 def test_ignore__duplicate_prevention__skips_existing_patterns(
@@ -92,7 +92,7 @@ def test_ignore__duplicate_prevention__skips_existing_patterns(
     (git_dir / "info").mkdir()
 
     gitignore_path = tmp_path / ".gitignore"
-    gitignore_path.write_text("ai-todolist.md\n")
+    gitignore_path.write_text(".sisyphus/\n")
 
     runner = CliRunner()
     monkeypatch.chdir(tmp_path)
@@ -103,7 +103,7 @@ def test_ignore__duplicate_prevention__skips_existing_patterns(
     # then
     assert result.exit_code == 0
     gitignore_content = gitignore_path.read_text()
-    assert gitignore_content.count("ai-todolist.md") == 1
+    assert gitignore_content.count(".sisyphus/") == 1
     assert "sessions/" in gitignore_content
 
 
@@ -180,7 +180,7 @@ def test_ignore__existing_gitignore_with_content__preserves_existing_content(
     assert result.exit_code == 0
     gitignore_content = gitignore_path.read_text()
     assert "*.pyc" in gitignore_content
-    assert "ai-todolist.md" in gitignore_content
+    assert ".sisyphus/" in gitignore_content
 
 
 def test_ignore__all_patterns_already_exist__shows_no_changes_message(
@@ -193,13 +193,7 @@ def test_ignore__all_patterns_already_exist__shows_no_changes_message(
 
     gitignore_path = tmp_path / ".gitignore"
     gitignore_path.write_text(
-        "# Sisyphus generated files\n"
-        "ai-todolist.md\n"
-        "notepad.md\n"
-        "sessions/\n"
-        "logs/\n"
-        "agentloop.json\n"
-        "claude_session_*.log\n"
+        "# Sisyphus generated files\n.sisyphus/\nnotepad.md\nsessions/\nlogs/\nagentloop.json\nclaude_session_*.log\n"
     )
 
     runner = CliRunner()

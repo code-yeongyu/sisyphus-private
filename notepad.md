@@ -408,3 +408,67 @@ None - v2.1 cleanup complete.
 - Systematic import cleanup critical when removing core modules
 - v2.1 → v3.0 migration now 100% complete (892 lines of legacy code removed)
 
+
+
+## 2025-11-06 03:06:30 - Task 9: Test File Updates (Partial)
+
+### WORK CONTEXT & HISTORY
+Fixed test files for v3.0 migration. Added save_plan() function to loader.py for test_integration_yaml_plan.py. Removed TaskValidator imports from work.py (deleted with tasks.py in Task 8).
+
+### DECISION RATIONALE
+save_plan() needed for integration tests - uses StringIO to serialize PlanDocument to YAML.
+TaskValidator was v2.1-only, removed with tasks.py. Set to None for now.
+
+### ATTEMPTED APPROACHES
+Initially tried yaml.dump_to_string() but method doesn't exist. Switched to StringIO pattern.
+
+### TECHNICAL DISCOVERIES
+- ruamel.yaml requires StringIO for in-memory YAML serialization
+- test_integration_yaml_plan.py already written for v3.0 - just needed save_plan()
+- work.py had 2 TaskValidator usages (line 214, 289) - both set to None
+- 3 test import errors remain in tests/cli/ files
+
+### ADVICE FOR NEXT EXECUTOR
+Task 9 continuation: Fix remaining 3 test collection errors in tests/cli/
+- test_cli_root.py
+- test_cwd_option.py  
+- test_plan_export.py
+
+All likely have same issue - importing deleted modules or using TaskValidator.
+
+### IMPLEMENTATION DETAILS
+Files modified:
+1. sisyphus/core/plans/loader.py
+   - Added save_plan(path, plan_doc) function
+   - Uses StringIO + yaml.dump() for serialization
+   - Line 1: Added `from io import StringIO` import
+
+2. sisyphus/cli/work.py
+   - Line 20: Removed `from sisyphus.core.tasks import TaskValidator`
+   - Line 214: Changed `TaskValidator(plan_path)` → `None`
+   - Line 289: Changed `TaskValidator(plan_path)` → `None`
+
+### PROBLEMS FOR NEXT TASKS
+- 3 test files still have import errors (test_cli_root.py, test_cwd_option.py, test_plan_export.py)
+- Need to check if other CLI files also import deleted modules
+- TaskValidator functionality may need replacement or can remain None
+
+### VERIFICATION RESULTS
+```
+pytest sisyphus/tests/test_integration_yaml_plan.py: 4 passed (asyncio + trio)
+ruff check sisyphus/cli/work.py: All checks passed
+ruff check sisyphus/core/plans/loader.py: All checks passed
+basedpyright: 0 errors (except system library t-string issue)
+pytest tests/ --collect-only: 401 collected, 3 errors (down from many more)
+```
+
+### UNRESOLVED QUESTIONS
+- Should TaskValidator be re-implemented for v3.0 or can remain None?
+- Are there other files using TaskValidator that haven't failed yet?
+
+### LEARNINGS
+- save_plan() pattern: StringIO → yaml.dump() → getvalue() → async file write
+- Integration tests can be v3.0-ready before implementation complete
+- Task 8 executor missed work.py import cleanup
+- Test collection errors cascade from single missing import
+

@@ -123,7 +123,7 @@ def test_clean_history__with_commits__shows_warning_and_guide(tmp_path: Path, mo
         {
             "hash": "abc123def456",
             "message": "Add feature",
-            "files": ["ai-todolist.md", "sessions/test.json"],
+            "files": [".sisyphus/tasks/test.yaml", "sessions/test.json"],
         },
         {
             "hash": "def456ghi789",
@@ -164,7 +164,7 @@ def test_clean_history__user_confirms__shows_rebase_guide(tmp_path: Path, monkey
         {
             "hash": "abc123def456",
             "message": "Add feature",
-            "files": ["ai-todolist.md"],
+            "files": [".sisyphus/tasks/test.yaml"],
         }
     ]
 
@@ -202,7 +202,7 @@ def test_clean_history__dry_run_mode__skips_confirmation(tmp_path: Path, monkeyp
         {
             "hash": "abc123def456",
             "message": "Add feature",
-            "files": ["ai-todolist.md"],
+            "files": [".sisyphus/tasks/test.yaml"],
         }
     ]
 
@@ -238,7 +238,7 @@ def test_clean_history__user_declines__exits_gracefully(tmp_path: Path, monkeypa
         {
             "hash": "abc123def456",
             "message": "Add feature",
-            "files": ["ai-todolist.md"],
+            "files": [".sisyphus/tasks/test.yaml"],
         }
     ]
 
@@ -314,7 +314,7 @@ def test_clean_history__passes_file_patterns_to_find_commits(tmp_path: Path, mon
     assert result.exit_code == 0
     call_args = mock_find.call_args
     file_patterns = call_args[0][1]
-    assert "ai-todolist.md" in file_patterns
+    assert ".sisyphus/" in file_patterns
     assert "notepad.md" in file_patterns
     assert "sessions/" in file_patterns
     assert "logs/" in file_patterns

@@ -188,3 +188,47 @@ None - template successfully updated.
 - Deprecated v2.1 functions will be cleaned up in Task 8
 - Template matches WorkPlan structure from models.py
 
+
+## 2025-11-06 02:38:52 - Task 5: cli/work.py Markdown Check Removal
+
+### WORK CONTEXT & HISTORY
+Removed markdown check block from cli/work.py. Deleted lines 122-138 that checked for ai-todolist.md file and raised error. This allows work command to run without legacy markdown validation.
+
+### DECISION RATIONALE
+Markdown (ai-todolist.md) is v2.1 legacy format. v3.0 uses YAML exclusively. Removing this check simplifies work command and eliminates v2.1 dependencies.
+
+### ATTEMPTED APPROACHES
+None - straightforward deletion.
+
+### TECHNICAL DISCOVERIES
+- Markdown check was at lines 122-138
+- Block checked for ai-todolist.md existence and showed error with migration instructions
+- Removed entire if block and markdown_path variable
+
+### ADVICE FOR NEXT EXECUTOR
+Task 6 (prompts.py): Check if ai-todolist.md references exist, replace with generic terms
+Task 7-8: Will remove more v2.1 code
+
+### IMPLEMENTATION DETAILS
+Files modified:
+1. sisyphus/cli/work.py
+   - Line 122: Deleted markdown_path variable
+   - Lines 123-138: Deleted if block with ai-todolist.md check and error message
+   - Renumbered comment from "# 2. YAML" to "# 1. YAML"
+
+### PROBLEMS FOR NEXT TASKS
+None - clean removal.
+
+### VERIFICATION RESULTS
+```
+ruff check sisyphus/cli/work.py: All checks passed
+Markdown check block completely removed
+```
+
+### UNRESOLVED QUESTIONS
+None - task complete.
+
+### LEARNINGS
+- work command now v3.0-only, no markdown support
+- Simplified error handling by removing legacy checks
+

@@ -119,25 +119,7 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
     worktree_root = await StatusManager.detect_worktree()
 
     # 1. Markdown 에러 (워크트리 기준으로 체크)
-    markdown_path = worktree_root / "ai-todolist.md"
-    if markdown_path.exists():
-        await ui.show_status(
-            "[bold red]ERROR: ai-todolist.md not supported in v3.0 work command.[/bold red]\n\n"
-            "Migration options:\n"
-            "1. Manual: Create YAML plan with 'vi .sisyphus/tasks/my-plan.yaml'\n"
-            "2. Use legacy v2.1 workflow (if available in your version)\n\n"
-            "v3.0 YAML template example:\n"
-            '  version: "3.0"\n'
-            "  metadata:\n"
-            '    created_at: "2025-11-04T00:00:00Z"\n'
-            "  work_plans:\n"
-            '    - id: "plan-001"\n'
-            '      name: "My Work"\n'
-            "      todos: [...]"
-        )
-        raise ValueError("Markdown not supported")
-
-    # 2. YAML 파일 재귀 탐색 (워크트리 기준 경로)
+    # 1. YAML 파일 재귀 탐색 (워크트리 기준 경로)
     tasks_dir = worktree_root / ".sisyphus" / "tasks"
 
     if not tasks_dir.exists():

@@ -324,3 +324,87 @@ None - clean removal complete.
 - ValueError sufficient for version validation errors
 - Docstring Raises sections must match actual exceptions raised
 
+
+
+## 2025-11-06 02:53:52 - Task 8: Remove v2.1 Legacy Files
+
+### WORK CONTEXT & HISTORY
+Removed 4 v2.1 legacy files (892 lines total) and updated all dependent imports to use v3.0 equivalents. This completes the v2.1 to v3.0 migration by eliminating all legacy code.
+
+Files deleted:
+- sisyphus/utils/plan_types.py (261 lines) - v2.1 Pydantic models
+- sisyphus/core/plan_navigator.py (320 lines) - v2.1 task navigator
+- sisyphus/core/plan_loader.py (28 lines) - v2.1 YAML loader
+- sisyphus/core/tasks.py (283 lines) - v2.1 markdown validation
+
+### DECISION RATIONALE
+Created stub files for task.py and formatting.py instead of complete deletion to maintain CLI structure and provide clear deprecation messages to users. This preserves backward compatibility while guiding users to v3.0.
+
+Added missing RetrievalType enum to models.py because plan_linter.py required it for reference validation.
+
+### ATTEMPTED APPROACHES
+Initially considered complete deletion of task.py/formatting.py but chose stub pattern for better UX and clearer error messages.
+
+### TECHNICAL DISCOVERIES
+- 17 files imported v2.1 modules - required systematic cleanup
+- TaskValidator already supported v3.0, so work.py/loop.py/app.py needed no changes
+- plan_linter.py used RetrievalType enum that was missing from v3.0 models.py
+- Deprecated commands (overview, get) in plan.py were v2.1-only - removed completely
+
+### ADVICE FOR NEXT EXECUTOR
+Task 9: Fix test files that reference deleted v2.1 modules
+- Delete test files for removed modules (test_plan_loader.py, test_plan_navigator.py, test_tasks.py, test_plan_types.py)
+- Update integration tests that use v2.1 patterns
+- Fix test_cli_ignore.py and test_cli_clean_history.py path references
+
+### IMPLEMENTATION DETAILS
+Files modified:
+1. sisyphus/core/plans/models.py
+   - Added RetrievalType enum (keywords, prompt) from v2.1 for plan_linter compatibility
+
+2. sisyphus/core/plan_linter.py
+   - Changed imports: plan_types → sisyphus.core.plans.models
+   - Import TodoStatus, RetrievalType from models
+
+3. sisyphus/cli/plan.py
+   - Removed v2.1 imports (plan_types, plan_loader, plan_navigator)
+   - Deleted deprecated commands: overview(), get()
+
+4. sisyphus/cli/task.py
+   - Converted to deprecation stub (509 → 116 lines)
+   - All commands show "Task commands deprecated, use sisyphus work commands"
+
+5. sisyphus/utils/formatting.py
+   - Converted to minimal stub (299 → 15 lines)
+   - Kept OutputFormat enum only for compatibility
+
+Files deleted:
+- sisyphus/utils/plan_types.py
+- sisyphus/core/plan_navigator.py
+- sisyphus/core/plan_loader.py
+- sisyphus/core/tasks.py
+
+### PROBLEMS FOR NEXT TASKS
+- Task 9: 4 test files need deletion (test_plan_loader.py, test_plan_navigator.py, test_tasks.py, test_plan_types.py)
+- Task 9: Integration tests may reference v2.1 patterns - need updates
+- Task 9: test_cli_ignore.py, test_cli_clean_history.py use hardcoded "ai-todolist.yaml" paths
+
+### VERIFICATION RESULTS
+```
+ruff check sisyphus/ --select F401,F821: All checks passed (no unused imports)
+basedpyright sisyphus/core/plans/models.py: 0 errors, 0 warnings
+basedpyright sisyphus/core/plan_linter.py: 0 errors, 0 warnings
+basedpyright sisyphus/cli/plan.py: 0 errors, 1 warning (anyio BrokenWorkerInterpreter - pre-existing)
+All 4 v2.1 files successfully deleted
+```
+
+### UNRESOLVED QUESTIONS
+None - v2.1 cleanup complete.
+
+### LEARNINGS
+- Stub pattern provides better UX than hard deletion for deprecated CLI commands
+- Missing enums discovered through type checking - basedpyright caught RetrievalType absence
+- TaskValidator's v3.0 support meant less work than expected for some files
+- Systematic import cleanup critical when removing core modules
+- v2.1 → v3.0 migration now 100% complete (892 lines of legacy code removed)
+

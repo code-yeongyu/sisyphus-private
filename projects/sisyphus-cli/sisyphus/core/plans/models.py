@@ -13,6 +13,11 @@ class TodoStatus(str, Enum):
     blocked = "blocked"
 
 
+class RetrievalType(str, Enum):
+    keywords = "keywords"
+    prompt = "prompt"
+
+
 class ExecutionStatus(BaseModel):
     started: bool
     completed: bool

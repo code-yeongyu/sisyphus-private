@@ -16,18 +16,8 @@ from sisyphus.core.exporters.markdown import MarkdownExporter
 from sisyphus.core.graph.dependencies import build_plan_graph, detect_cycles, discover_plan_files
 from sisyphus.core.graph.renderer import AsciiRenderer, MermaidRenderer
 from sisyphus.core.plan_linter import PlanLinter
-from sisyphus.core.plan_loader import PlanLoader
-from sisyphus.core.plan_navigator import PlanNavigator
 from sisyphus.core.plans.loader import load_plan
 from sisyphus.core.plans.models import PlanDocument
-from sisyphus.utils.formatting import (
-    OutputFormat,
-    print_children,
-    print_overview,
-    print_references,
-    print_task,
-    print_verification,
-)
 
 plan_app = typer.Typer(name="plan", help="Plan management commands")
 console = Console()
@@ -78,28 +68,6 @@ def lint_plan(
         raise typer.Exit(1)
     except Exception as e:
         console.print(f"[red]Unexpected error:[/red] {e}")
-        raise typer.Exit(1)
-
-
-@plan_app.command(name="overview")
-def show_overview(
-    rich: bool = typer.Option(False, "--rich", help="Use Rich table format"),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
-) -> None:
-    """Show work plan overview (DEPRECATED: v2.1 only, will be removed)."""
-    console.print("[yellow]Warning: 'plan overview' is deprecated (v2.1 only) and will be removed.[/yellow]")
-    console.print("[yellow]Use v3.0 commands instead: sisyphus task current, sisyphus plan graph[/yellow]\n")
-
-    working_dir = resolve_cwd(cwd)
-    plan_path = working_dir / "ai-todolist.yaml"
-
-    try:
-        loader = PlanLoader(plan_path)
-        plan = loader.load()
-
-        print_overview(plan, format=OutputFormat.RICH if rich else OutputFormat.PLAIN)
-    except FileNotFoundError as e:
-        console.print(f"[red]{e}[/red]")
         raise typer.Exit(1)
 
 
@@ -255,82 +223,6 @@ def show_graph(
         raise typer.Exit(1)
     except YAMLError as e:
         console.print(f"[red]YAML parsing error:[/red]\n{e}")
-        raise typer.Exit(1)
-
-
-@plan_app.command(name="get")
-def get_plan_info(
-    what: str = typer.Argument(..., help="What to get: task, reference"),
-    current: bool = typer.Option(False, "--current", help="Get current task"),
-    next_task: bool = typer.Option(False, "--next", help="Get next pending task"),
-    task_id: str | None = typer.Option(None, "--id", help="Specific task ID"),
-    show_references: bool = typer.Option(False, "--show-references", help="Show only references"),
-    show_children: bool = typer.Option(False, "--show-children", help="Show only children"),
-    show_verification: bool = typer.Option(False, "--show-verification", help="Show only verification spec"),
-    show_all: bool = typer.Option(False, "--show-all", help="Show complete task info (default)"),
-    rich: bool = typer.Option(False, "--rich", help="Use Rich table format (default: plain text)"),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
-) -> None:
-    """Get information from work plan (DEPRECATED: v2.1 only, will be removed)."""
-    console.print("[yellow]Warning: 'plan get' is deprecated (v2.1 only) and will be removed.[/yellow]")
-    console.print("[yellow]Use v3.0 commands instead: sisyphus task current, sisyphus task show[/yellow]\n")
-
-    working_dir = resolve_cwd(cwd)
-    plan_path = working_dir / "ai-todolist.yaml"
-    output_format = OutputFormat.RICH if rich else OutputFormat.PLAIN
-
-    try:
-        loader = PlanLoader(plan_path)
-        plan = loader.load()
-        navigator = PlanNavigator(plan)
-
-        match what:
-            case "task":
-                task = None
-                if current:
-                    task = navigator.get_current_task()
-                    if task is None:
-                        console.print("[yellow]작업이 시작되지 않았습니다[/yellow]")
-                        raise typer.Exit(0)
-                elif next_task:
-                    task = navigator.get_next_task()
-                    if task is None:
-                        console.print("[green]모든 작업이 완료되었습니다![/green]")
-                        raise typer.Exit(0)
-                elif task_id:
-                    task = navigator.find_todo_by_id(task_id)
-                    if task is None:
-                        console.print(f"[red]작업 ID를 찾을 수 없습니다: {task_id}[/red]")
-                        raise typer.Exit(1)
-                else:
-                    console.print("[red]--current, --next, --id 중 하나를 선택하세요[/red]")
-                    raise typer.Exit(1)
-
-                if show_references:
-                    refs = navigator.get_task_references(task.id)
-                    print_references(refs, format=output_format)
-                elif show_children:
-                    children = navigator.get_task_children(task.id)
-                    print_children(children, format=output_format)
-                elif show_verification:
-                    verifications = navigator.get_task_verification(task.id)
-                    print_verification(verifications, format=output_format)
-                else:
-                    print_task(task, format=output_format)
-
-            case "reference":
-                console.print("[yellow]Reference lookup not yet implemented[/yellow]")
-                raise typer.Exit(1)
-
-            case _:
-                console.print(f"[red]Unknown option: {what}[/red]")
-                raise typer.Exit(1)
-
-    except FileNotFoundError as e:
-        console.print(f"[red]{e}[/red]")
-        raise typer.Exit(1)
-    except ValidationError as e:
-        console.print(f"[red]YAML 검증 실패:[/red]\n{e}")
         raise typer.Exit(1)
 
 

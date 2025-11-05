@@ -10,12 +10,8 @@ from pathlib import Path
 from typing import Any
 
 from sisyphus.core.graph.dependencies import build_plan_graph, detect_cycles
-from sisyphus.core.plans.models import PlanDocument
+from sisyphus.core.plans.models import PlanDocument, RetrievalType, TodoStatus
 from sisyphus.core.plans.references import ReferenceResolver
-from sisyphus.utils.plan_types import (
-    RetrievalType,
-    TodoStatus,
-)
 
 
 @dataclass

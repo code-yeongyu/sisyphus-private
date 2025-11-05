@@ -65,3 +65,77 @@ None - implementation complete and verified.
 - v2.1 verification structure more comprehensive than v3.0 (dual validation methods)
 - State fields enable YAML to be truly self-contained document
 
+
+## 2025-11-06 02:27:38 - Task 2: TaskManager v3.0 Creation
+
+### WORK CONTEXT & HISTORY
+Created new TaskManager class for v3.0 to replace v2.1 PlanNavigator. TaskManager navigates todo tree, tracks current task via work_mode.current_task_id, and provides DFS traversal methods. Implemented all required methods: _find_work_plan, get_current_task, find_todo_by_id, get_next_task, get_previous_task, check_task_completion, get_task_children, get_all_descendants.
+
+Rationale: v3.0 uses PlanDocument.work_plans[] structure instead of flat WorkPlan, requiring new navigator adapted to this structure.
+
+### DECISION RATIONALE
+Used DFS (depth-first search) for todo tree traversal to maintain consistent ordering. Parent tasks must be completed before children can be marked complete (check_task_completion validates this).
+
+Implemented get_previous_task with complex logic: finds previous sibling's last descendant, or returns parent if no previous sibling. This enables proper backward navigation in nested todo structures.
+
+### ATTEMPTED APPROACHES
+None - followed v2.1 PlanNavigator patterns directly, adapting to v3.0 model structure.
+
+### TECHNICAL DISCOVERIES
+- DFS traversal order critical for get_next_task to work correctly
+- work_mode.current_task_id is the single source of truth for active task
+- Parent task completion requires all children completed first
+- get_previous_task is most complex: must handle siblings, descendants, and parent relationships
+- TaskManager is stateless - all state stored in WorkPlan fields
+
+### ADVICE FOR NEXT EXECUTOR
+Task 3 (cli/task.py rewrite) will use TaskManager extensively:
+- Call get_current_task() to show current task
+- Call get_next_task(current_id) to move forward
+- Update work_mode.current_task_id when changing tasks
+- Use check_task_completion() before marking tasks complete
+- Save WorkPlan back to YAML file after state changes
+
+Critical: TaskManager does NOT persist changes. CLI must save YAML after updates.
+
+### IMPLEMENTATION DETAILS
+Files created:
+1. sisyphus/core/task_manager.py
+   - TaskManager class with __init__(plan_doc, plan_id)
+   - _find_work_plan(): Find WorkPlan by ID or raise ValueError
+   - get_current_task(): Return todo for work_mode.current_task_id
+   - find_todo_by_id(todo_id): Recursive DFS search through todo tree
+   - get_next_task(current_id): Next pending todo in DFS order
+   - get_previous_task(current_id): Previous todo (handles siblings/parents)
+   - check_task_completion(task_id): Validate all children completed
+   - get_task_children(task_id): Get direct children of task
+   - get_all_descendants(task_id): Get all descendants (recursive)
+   - _find_todo_recursive(), _get_all_todos_dfs(), _collect_todos_dfs(): Helper methods
+
+2. tests/core/test_task_manager.py
+   - 14 test scenarios covering all methods
+   - Tests for WorkPlan finding, todo searching, navigation, completion checks
+   - Both asyncio and trio backends tested (28 total tests)
+
+### PROBLEMS FOR NEXT TASKS
+- Task 3: cli/task.py must update work_mode.current_task_id and save to YAML
+- Task 3: Must handle verification items (bash + llm_judge) from new VerificationItem structure
+- Task 3: Must implement YAML file persistence after state changes
+
+### VERIFICATION RESULTS
+```
+pytest tests/core/test_task_manager.py: 28 passed in 0.16s (14 asyncio + 14 trio)
+ruff check sisyphus/core/task_manager.py: All checks passed
+basedpyright sisyphus/core/task_manager.py: 0 errors, 0 warnings
+```
+
+### UNRESOLVED QUESTIONS
+None - all required methods implemented and tested.
+
+### LEARNINGS
+- TaskManager is navigation-only, does not persist changes
+- DFS ordering ensures consistent todo sequence
+- check_task_completion prevents premature parent completion
+- get_previous_task complexity shows importance of proper tree traversal
+- Stateless design: TaskManager reads from WorkPlan but doesn't modify it
+

@@ -8,7 +8,15 @@ from sisyphus.core.graph.dependencies import (
     discover_plan_files,
     topo_sort,
 )
-from sisyphus.core.plans.models import WorkPlan
+from sisyphus.core.plans.models import (
+    Background,
+    Objectives,
+    RequiredBackground,
+    SuccessVision,
+    UserRequest,
+    Workflow,
+    WorkPlan,
+)
 
 pytestmark = [pytest.mark.anyio]
 
@@ -113,30 +121,65 @@ async def test_discover_plan_files__if_nested_subdirectories__returns_all_yaml_f
 # ============================================================
 
 
-async def test_build_plan_graph__if_plans_with_various_dependencies__builds_correct_adjacency_list() -> None:
+async def test_build_plan_graph__if_plans_with_various_dependencies__builds_correct_adjacency_list(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plans = {
         "plan-a": WorkPlan(
             id="plan-a",
             name="Plan A",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
             depends_on=["plan-b", "plan-c"],
             todos=[],
         ),
         "plan-b": WorkPlan(
             id="plan-b",
             name="Plan B",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
             depends_on=["plan-d"],
             todos=[],
         ),
         "plan-c": WorkPlan(
             id="plan-c",
             name="Plan C",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
             depends_on=[],
             todos=[],
         ),
         "plan-d": WorkPlan(
             id="plan-d",
             name="Plan D",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
             depends_on=[],
             todos=[],
         ),
@@ -152,11 +195,42 @@ async def test_build_plan_graph__if_plans_with_various_dependencies__builds_corr
     assert graph["plan-d"] == []
 
 
-async def test_build_plan_graph__if_empty_dependencies__builds_graph_with_empty_lists() -> None:
+async def test_build_plan_graph__if_empty_dependencies__builds_graph_with_empty_lists(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plans = {
-        "plan-a": WorkPlan(id="plan-a", name="Plan A", depends_on=[], todos=[]),
-        "plan-b": WorkPlan(id="plan-b", name="Plan B", depends_on=[], todos=[]),
+        "plan-a": WorkPlan(
+            id="plan-a",
+            name="Plan A",
+            depends_on=[],
+            todos=[],
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
+        ),
+        "plan-b": WorkPlan(
+            id="plan-b",
+            name="Plan B",
+            depends_on=[],
+            todos=[],
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
+        ),
     }
 
     # when
@@ -167,12 +241,26 @@ async def test_build_plan_graph__if_empty_dependencies__builds_graph_with_empty_
     assert graph["plan-b"] == []
 
 
-async def test_build_plan_graph__if_multiple_dependencies__preserves_order() -> None:
+async def test_build_plan_graph__if_multiple_dependencies__preserves_order(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plans = {
         "plan-main": WorkPlan(
             id="plan-main",
             name="Main",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
             depends_on=["plan-x", "plan-y", "plan-z"],
             todos=[],
         ),
@@ -190,7 +278,14 @@ async def test_build_plan_graph__if_multiple_dependencies__preserves_order() -> 
 # ============================================================
 
 
-async def test_detect_cycles__if_no_cycle__returns_empty_list() -> None:
+async def test_detect_cycles__if_no_cycle__returns_empty_list(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     graph = {
         "plan-a": ["plan-b"],
@@ -205,7 +300,14 @@ async def test_detect_cycles__if_no_cycle__returns_empty_list() -> None:
     assert cycles == []
 
 
-async def test_detect_cycles__if_simple_cycle__detects_cycle() -> None:
+async def test_detect_cycles__if_simple_cycle__detects_cycle(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given: A → B → A
     graph = {
         "plan-a": ["plan-b"],
@@ -223,7 +325,14 @@ async def test_detect_cycles__if_simple_cycle__detects_cycle() -> None:
     assert "plan-b" in cycle
 
 
-async def test_detect_cycles__if_complex_cycle__detects_cycle() -> None:
+async def test_detect_cycles__if_complex_cycle__detects_cycle(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given: A → B → C → A
     graph = {
         "plan-a": ["plan-b"],
@@ -242,7 +351,14 @@ async def test_detect_cycles__if_complex_cycle__detects_cycle() -> None:
     assert "plan-c" in cycle
 
 
-async def test_detect_cycles__if_multiple_disconnected_cycles__detects_all_cycles() -> None:
+async def test_detect_cycles__if_multiple_disconnected_cycles__detects_all_cycles(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given:
     # Cycle 1: A → B → A
     # Cycle 2: C → D → C
@@ -265,7 +381,14 @@ async def test_detect_cycles__if_multiple_disconnected_cycles__detects_all_cycle
     assert any({"plan-c", "plan-d"}.issubset(nodes) for nodes in cycle_nodes)
 
 
-async def test_detect_cycles__if_self_reference__detects_cycle() -> None:
+async def test_detect_cycles__if_self_reference__detects_cycle(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given: A → A
     graph = {
         "plan-a": ["plan-a"],
@@ -280,7 +403,14 @@ async def test_detect_cycles__if_self_reference__detects_cycle() -> None:
     assert "plan-a" in cycle
 
 
-async def test_detect_cycles__if_diamond_dependency_no_cycle__returns_empty_list() -> None:
+async def test_detect_cycles__if_diamond_dependency_no_cycle__returns_empty_list(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given:
     #     A
     #    / \
@@ -301,7 +431,14 @@ async def test_detect_cycles__if_diamond_dependency_no_cycle__returns_empty_list
     assert cycles == []
 
 
-async def test_detect_cycles__if_long_chain_with_cycle__detects_cycle() -> None:
+async def test_detect_cycles__if_long_chain_with_cycle__detects_cycle(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given: A → B → C → D → B (cycle at B-C-D-B)
     graph = {
         "plan-a": ["plan-b"],
@@ -326,7 +463,14 @@ async def test_detect_cycles__if_long_chain_with_cycle__detects_cycle() -> None:
 # ============================================================
 
 
-async def test_topo_sort__if_linear_dependency_chain__returns_correct_order() -> None:
+async def test_topo_sort__if_linear_dependency_chain__returns_correct_order(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given: A → B → C
     graph = {
         "plan-a": ["plan-b"],
@@ -344,7 +488,14 @@ async def test_topo_sort__if_linear_dependency_chain__returns_correct_order() ->
     assert result.index("plan-b") < result.index("plan-a")
 
 
-async def test_topo_sort__if_diamond_dependency__returns_valid_topological_order() -> None:
+async def test_topo_sort__if_diamond_dependency__returns_valid_topological_order(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given:
     #     A
     #    / \
@@ -371,7 +522,14 @@ async def test_topo_sort__if_diamond_dependency__returns_valid_topological_order
     assert result.index("plan-c") < result.index("plan-a")
 
 
-async def test_topo_sort__if_no_dependencies__returns_all_nodes() -> None:
+async def test_topo_sort__if_no_dependencies__returns_all_nodes(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     graph = {
         "plan-a": [],
@@ -387,7 +545,14 @@ async def test_topo_sort__if_no_dependencies__returns_all_nodes() -> None:
     assert set(result) == {"plan-a", "plan-b", "plan-c"}
 
 
-async def test_topo_sort__if_graph_with_cycles__raises_value_error() -> None:
+async def test_topo_sort__if_graph_with_cycles__raises_value_error(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given: A → B → A (cycle)
     graph = {
         "plan-a": ["plan-b"],
@@ -399,7 +564,14 @@ async def test_topo_sort__if_graph_with_cycles__raises_value_error() -> None:
         topo_sort(graph)
 
 
-async def test_topo_sort__if_complex_dag__returns_valid_order() -> None:
+async def test_topo_sort__if_complex_dag__returns_valid_order(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given:
     #     A
     #    / \
@@ -433,7 +605,14 @@ async def test_topo_sort__if_complex_dag__returns_valid_order() -> None:
     assert result.index("plan-c") < result.index("plan-a")
 
 
-async def test_topo_sort__if_single_node__returns_single_element_list() -> None:
+async def test_topo_sort__if_single_node__returns_single_element_list(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     graph = {
         "plan-a": [],
@@ -446,7 +625,14 @@ async def test_topo_sort__if_single_node__returns_single_element_list() -> None:
     assert result == ["plan-a"]
 
 
-async def test_topo_sort__if_parallel_branches__maintains_dependencies() -> None:
+async def test_topo_sort__if_parallel_branches__maintains_dependencies(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given:
     #   A   B
     #   |   |

@@ -6,18 +6,32 @@ import ruamel.yaml
 
 from sisyphus.core.plans.loader import load_plan
 from sisyphus.core.plans.models import (
+    Background,
     Metadata,
+    Objectives,
     PlanDocument,
     ReferenceItem,
+    RequiredBackground,
+    SuccessVision,
     Todo,
     TodoStatus,
+    UserRequest,
+    Workflow,
     WorkPlan,
 )
 
 pytestmark = [pytest.mark.anyio]
 
 
-async def test_large_yaml_hundreds_of_todos__if_200_todos__loads_successfully(tmp_path: Path) -> None:
+async def test_large_yaml_hundreds_of_todos__if_200_todos__loads_successfully(
+    tmp_path: Path,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     todos = [
         Todo(
@@ -36,6 +50,13 @@ async def test_large_yaml_hundreds_of_todos__if_200_todos__loads_successfully(tm
             WorkPlan(
                 id="large-plan",
                 name="Large Plan with 200 Todos",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 depends_on=[],
                 todos=todos,
             )
@@ -59,7 +80,15 @@ async def test_large_yaml_hundreds_of_todos__if_200_todos__loads_successfully(tm
     assert loaded_doc.work_plans[0].todos[199].id == "200"
 
 
-async def test_large_yaml_nested_todos__if_deep_nesting__loads_successfully(tmp_path: Path) -> None:
+async def test_large_yaml_nested_todos__if_deep_nesting__loads_successfully(
+    tmp_path: Path,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     parent_todos = []
     for i in range(1, 51):
@@ -87,6 +116,13 @@ async def test_large_yaml_nested_todos__if_deep_nesting__loads_successfully(tmp_
             WorkPlan(
                 id="nested-plan",
                 name="Nested Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 depends_on=[],
                 todos=parent_todos,
             )
@@ -107,12 +143,27 @@ async def test_large_yaml_nested_todos__if_deep_nesting__loads_successfully(tmp_
     assert all(len(todo.children or []) == 5 for todo in loaded_doc.work_plans[0].todos)
 
 
-async def test_large_yaml_many_plans__if_50_plans__loads_successfully(tmp_path: Path) -> None:
+async def test_large_yaml_many_plans__if_50_plans__loads_successfully(
+    tmp_path: Path,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plans = [
         WorkPlan(
             id=f"plan-{i}",
             name=f"Plan {i}",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
             depends_on=[f"plan-{i - 1}"] if i > 1 else [],
             todos=[
                 Todo(
@@ -147,7 +198,15 @@ async def test_large_yaml_many_plans__if_50_plans__loads_successfully(tmp_path: 
     assert loaded_doc.work_plans[49].depends_on == ["plan-49"]
 
 
-async def test_large_yaml_many_references__if_100_references__loads_successfully(tmp_path: Path) -> None:
+async def test_large_yaml_many_references__if_100_references__loads_successfully(
+    tmp_path: Path,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
 
     references = [
@@ -174,6 +233,13 @@ async def test_large_yaml_many_references__if_100_references__loads_successfully
             WorkPlan(
                 id="ref-heavy-plan",
                 name="Reference Heavy Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 depends_on=[],
                 todos=todos,
                 references=references,
@@ -197,6 +263,12 @@ async def test_large_yaml_many_references__if_100_references__loads_successfully
 
 async def test_large_yaml_performance__if_large_file__loads_within_reasonable_time(
     tmp_path: Path,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given
 
@@ -217,6 +289,13 @@ async def test_large_yaml_performance__if_large_file__loads_within_reasonable_ti
             WorkPlan(
                 id="perf-test",
                 name="Performance Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 depends_on=[],
                 todos=todos,
             )

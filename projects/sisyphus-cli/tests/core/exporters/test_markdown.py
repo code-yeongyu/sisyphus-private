@@ -4,18 +4,31 @@ import pytest
 
 from sisyphus.core.exporters.markdown import MarkdownExporter
 from sisyphus.core.plans.models import (
+    Background,
     Metadata,
+    Objectives,
     PlanDocument,
     ReferenceItem,
+    RequiredBackground,
+    SuccessVision,
     Todo,
     TodoStatus,
+    UserRequest,
+    Workflow,
     WorkPlan,
 )
 
 pytestmark = [pytest.mark.anyio]
 
 
-async def test_export__with_single_todo__creates_checkbox() -> None:
+async def test_export__with_single_todo__creates_checkbox(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # Given
     plan = PlanDocument(
         version="3.0",
@@ -24,6 +37,13 @@ async def test_export__with_single_todo__creates_checkbox() -> None:
             WorkPlan(
                 id="plan-1",
                 name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[Todo(id="1", title="Task 1", status=TodoStatus.pending)],
             )
         ],
@@ -39,7 +59,14 @@ async def test_export__with_single_todo__creates_checkbox() -> None:
     assert "- [ ] 1. Task 1" in result
 
 
-async def test_export__with_completed_todo__creates_checked_checkbox() -> None:
+async def test_export__with_completed_todo__creates_checked_checkbox(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # Given
     plan = PlanDocument(
         version="3.0",
@@ -48,6 +75,13 @@ async def test_export__with_completed_todo__creates_checked_checkbox() -> None:
             WorkPlan(
                 id="plan-1",
                 name="Test",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[Todo(id="1", title="Done", status=TodoStatus.completed)],
             )
         ],
@@ -60,7 +94,14 @@ async def test_export__with_completed_todo__creates_checked_checkbox() -> None:
     assert "- [x] 1. Done" in result
 
 
-async def test_export__with_children__indents_properly() -> None:
+async def test_export__with_children__indents_properly(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # Given
     plan = PlanDocument(
         version="3.0",
@@ -69,6 +110,13 @@ async def test_export__with_children__indents_properly() -> None:
             WorkPlan(
                 id="plan-1",
                 name="Test",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(
                         id="1",
@@ -89,7 +137,14 @@ async def test_export__with_children__indents_properly() -> None:
     assert "   - [x] 1.1. Child" in result
 
 
-async def test_export__with_uri_references__creates_references_section() -> None:
+async def test_export__with_uri_references__creates_references_section(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # Given
     plan = PlanDocument(
         version="3.0",
@@ -98,6 +153,13 @@ async def test_export__with_uri_references__creates_references_section() -> None
             WorkPlan(
                 id="plan-1",
                 name="Test",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[Todo(id="1", title="Task", status=TodoStatus.pending)],
                 references=[ReferenceItem(ref_id="ref1", uri="https://example.com")],
             )
@@ -112,7 +174,14 @@ async def test_export__with_uri_references__creates_references_section() -> None
     assert "- [ref1]: https://example.com" in result
 
 
-async def test_export__with_inline_references__creates_references_section() -> None:
+async def test_export__with_inline_references__creates_references_section(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # Given
     plan = PlanDocument(
         version="3.0",
@@ -121,6 +190,13 @@ async def test_export__with_inline_references__creates_references_section() -> N
             WorkPlan(
                 id="plan-1",
                 name="Test",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[Todo(id="1", title="Task", status=TodoStatus.pending)],
                 references=[ReferenceItem(ref_id="ref1", inline="Inline text here")],
             )
@@ -135,7 +211,14 @@ async def test_export__with_inline_references__creates_references_section() -> N
     assert "- [ref1]: Inline text here" in result
 
 
-async def test_export__with_no_references__omits_references_section() -> None:
+async def test_export__with_no_references__omits_references_section(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # Given
     plan = PlanDocument(
         version="3.0",
@@ -144,6 +227,13 @@ async def test_export__with_no_references__omits_references_section() -> None:
             WorkPlan(
                 id="plan-1",
                 name="Test",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[Todo(id="1", title="Task", status=TodoStatus.pending)],
             )
         ],
@@ -156,7 +246,14 @@ async def test_export__with_no_references__omits_references_section() -> None:
     assert "## References" not in result
 
 
-async def test_export__with_multiple_work_plans__combines_todos() -> None:
+async def test_export__with_multiple_work_plans__combines_todos(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # Given
     plan = PlanDocument(
         version="3.0",
@@ -165,11 +262,25 @@ async def test_export__with_multiple_work_plans__combines_todos() -> None:
             WorkPlan(
                 id="plan-1",
                 name="First Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[Todo(id="1", title="Task 1", status=TodoStatus.pending)],
             ),
             WorkPlan(
                 id="plan-2",
                 name="Second Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[Todo(id="2", title="Task 2", status=TodoStatus.completed)],
             ),
         ],
@@ -185,7 +296,14 @@ async def test_export__with_multiple_work_plans__combines_todos() -> None:
     assert "- [x] 2. Task 2" in result
 
 
-async def test_export__with_nested_children__indents_multiple_levels() -> None:
+async def test_export__with_nested_children__indents_multiple_levels(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # Given
     plan = PlanDocument(
         version="3.0",
@@ -194,6 +312,13 @@ async def test_export__with_nested_children__indents_multiple_levels() -> None:
             WorkPlan(
                 id="plan-1",
                 name="Test",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(
                         id="1",
@@ -228,7 +353,14 @@ async def test_export__with_nested_children__indents_multiple_levels() -> None:
     assert "      - [x] 1.1.1. Grandchild" in result
 
 
-async def test_export__with_multiple_references__lists_all() -> None:
+async def test_export__with_multiple_references__lists_all(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # Given
     plan = PlanDocument(
         version="3.0",
@@ -237,6 +369,13 @@ async def test_export__with_multiple_references__lists_all() -> None:
             WorkPlan(
                 id="plan-1",
                 name="Test",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[Todo(id="1", title="Task", status=TodoStatus.pending)],
                 references=[
                     ReferenceItem(ref_id="ref1", uri="https://example.com"),
@@ -256,7 +395,14 @@ async def test_export__with_multiple_references__lists_all() -> None:
     assert "- [ref3]: file:///path/to/file" in result
 
 
-async def test_export__with_empty_todos__creates_structure() -> None:
+async def test_export__with_empty_todos__creates_structure(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # Given
     plan = PlanDocument(
         version="3.0",
@@ -265,6 +411,13 @@ async def test_export__with_empty_todos__creates_structure() -> None:
             WorkPlan(
                 id="plan-1",
                 name="Empty Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[],
             )
         ],

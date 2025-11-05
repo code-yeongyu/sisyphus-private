@@ -2,17 +2,47 @@ from __future__ import annotations
 
 import pytest
 
-from sisyphus.core.plans.models import Metadata, PlanDocument, Todo, TodoStatus, WorkPlan
+from sisyphus.core.plans.models import (
+    Background,
+    Metadata,
+    Objectives,
+    PlanDocument,
+    RequiredBackground,
+    SuccessVision,
+    Todo,
+    TodoStatus,
+    UserRequest,
+    Workflow,
+    WorkPlan,
+)
 from sisyphus.core.task_manager import TaskManager
 
 pytestmark = [pytest.mark.anyio]
 
 
-async def test_task_manager__if_work_plan_exists__finds_it() -> None:
+async def test_task_manager__if_work_plan_exists__finds_it(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
-        work_plans=[WorkPlan(id="test-plan", name="Test Plan", todos=[])],
+        work_plans=[WorkPlan(
+            id="test-plan",
+            name="Test Plan",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
+            todos=[],
+        )],
     )
 
     manager = TaskManager(plan_doc, "test-plan")
@@ -20,14 +50,28 @@ async def test_task_manager__if_work_plan_exists__finds_it() -> None:
     assert manager.work_plan.id == "test-plan"
 
 
-async def test_task_manager__if_work_plan_missing__raises_error() -> None:
+async def test_task_manager__if_work_plan_missing__raises_error(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     plan_doc = PlanDocument(version="3.0", metadata=Metadata(created_at="2025-11-06T00:00:00Z"), work_plans=[])
 
     with pytest.raises(ValueError, match="WorkPlan not found"):
         TaskManager(plan_doc, "missing-plan")
 
 
-async def test_find_todo_by_id__if_root_todo__returns_it() -> None:
+async def test_find_todo_by_id__if_root_todo__returns_it(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
@@ -35,6 +79,13 @@ async def test_find_todo_by_id__if_root_todo__returns_it() -> None:
             WorkPlan(
                 id="test-plan",
                 name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[Todo(id="1", title="Task 1", status=TodoStatus.pending, references=[])],
             )
         ],
@@ -47,7 +98,14 @@ async def test_find_todo_by_id__if_root_todo__returns_it() -> None:
     assert todo.id == "1"
 
 
-async def test_find_todo_by_id__if_child_todo__returns_it() -> None:
+async def test_find_todo_by_id__if_child_todo__returns_it(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
@@ -55,6 +113,13 @@ async def test_find_todo_by_id__if_child_todo__returns_it() -> None:
             WorkPlan(
                 id="test-plan",
                 name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(
                         id="1",
@@ -75,7 +140,14 @@ async def test_find_todo_by_id__if_child_todo__returns_it() -> None:
     assert todo.id == "1.1"
 
 
-async def test_get_current_task__if_current_task_id_set__returns_task() -> None:
+async def test_get_current_task__if_current_task_id_set__returns_task(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
@@ -83,6 +155,13 @@ async def test_get_current_task__if_current_task_id_set__returns_task() -> None:
             WorkPlan(
                 id="test-plan",
                 name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[Todo(id="1", title="Task 1", status=TodoStatus.in_progress, references=[])],
             )
         ],
@@ -96,7 +175,14 @@ async def test_get_current_task__if_current_task_id_set__returns_task() -> None:
     assert current.id == "1"
 
 
-async def test_get_current_task__if_current_task_id_none__returns_none() -> None:
+async def test_get_current_task__if_current_task_id_none__returns_none(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
@@ -104,6 +190,13 @@ async def test_get_current_task__if_current_task_id_none__returns_none() -> None
             WorkPlan(
                 id="test-plan",
                 name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[Todo(id="1", title="Task 1", status=TodoStatus.pending, references=[])],
             )
         ],
@@ -115,7 +208,14 @@ async def test_get_current_task__if_current_task_id_none__returns_none() -> None
     assert current is None
 
 
-async def test_get_next_task__if_no_current__returns_first_pending() -> None:
+async def test_get_next_task__if_no_current__returns_first_pending(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
@@ -123,6 +223,13 @@ async def test_get_next_task__if_no_current__returns_first_pending() -> None:
             WorkPlan(
                 id="test-plan",
                 name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(id="1", title="Task 1", status=TodoStatus.completed, references=[]),
                     Todo(id="2", title="Task 2", status=TodoStatus.pending, references=[]),
@@ -138,7 +245,14 @@ async def test_get_next_task__if_no_current__returns_first_pending() -> None:
     assert next_task.id == "2"
 
 
-async def test_get_next_task__if_in_progress_has_children__returns_first_child_pending() -> None:
+async def test_get_next_task__if_in_progress_has_children__returns_first_child_pending(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
@@ -146,6 +260,13 @@ async def test_get_next_task__if_in_progress_has_children__returns_first_child_p
             WorkPlan(
                 id="test-plan",
                 name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(
                         id="1",
@@ -169,7 +290,14 @@ async def test_get_next_task__if_in_progress_has_children__returns_first_child_p
     assert next_task.id == "1.1"
 
 
-async def test_get_previous_task__if_first_task__returns_none() -> None:
+async def test_get_previous_task__if_first_task__returns_none(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
@@ -177,6 +305,13 @@ async def test_get_previous_task__if_first_task__returns_none() -> None:
             WorkPlan(
                 id="test-plan",
                 name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(id="1", title="Task 1", status=TodoStatus.in_progress, references=[]),
                     Todo(id="2", title="Task 2", status=TodoStatus.pending, references=[]),
@@ -191,7 +326,14 @@ async def test_get_previous_task__if_first_task__returns_none() -> None:
     assert previous is None
 
 
-async def test_get_previous_task__if_has_previous_sibling__returns_last_descendant() -> None:
+async def test_get_previous_task__if_has_previous_sibling__returns_last_descendant(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
@@ -199,6 +341,13 @@ async def test_get_previous_task__if_has_previous_sibling__returns_last_descenda
             WorkPlan(
                 id="test-plan",
                 name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(
                         id="1",
@@ -223,7 +372,14 @@ async def test_get_previous_task__if_has_previous_sibling__returns_last_descenda
     assert previous.id == "1.2"
 
 
-async def test_get_task_children__if_has_children__returns_children() -> None:
+async def test_get_task_children__if_has_children__returns_children(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
@@ -231,6 +387,13 @@ async def test_get_task_children__if_has_children__returns_children() -> None:
             WorkPlan(
                 id="test-plan",
                 name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(
                         id="1",
@@ -255,7 +418,14 @@ async def test_get_task_children__if_has_children__returns_children() -> None:
     assert children[1].id == "1.2"
 
 
-async def test_get_all_descendants__if_nested_children__returns_all() -> None:
+async def test_get_all_descendants__if_nested_children__returns_all(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
@@ -263,6 +433,13 @@ async def test_get_all_descendants__if_nested_children__returns_all() -> None:
             WorkPlan(
                 id="test-plan",
                 name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(
                         id="1",
@@ -296,7 +473,14 @@ async def test_get_all_descendants__if_nested_children__returns_all() -> None:
     assert descendants[2].id == "1.2"
 
 
-async def test_check_task_completion__if_all_children_completed__can_complete() -> None:
+async def test_check_task_completion__if_all_children_completed__can_complete(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
@@ -304,6 +488,13 @@ async def test_check_task_completion__if_all_children_completed__can_complete() 
             WorkPlan(
                 id="test-plan",
                 name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(
                         id="1",
@@ -328,7 +519,14 @@ async def test_check_task_completion__if_all_children_completed__can_complete() 
     assert report.can_complete is True
 
 
-async def test_check_task_completion__if_children_pending__cannot_complete() -> None:
+async def test_check_task_completion__if_children_pending__cannot_complete(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
@@ -336,6 +534,13 @@ async def test_check_task_completion__if_children_pending__cannot_complete() -> 
             WorkPlan(
                 id="test-plan",
                 name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(
                         id="1",

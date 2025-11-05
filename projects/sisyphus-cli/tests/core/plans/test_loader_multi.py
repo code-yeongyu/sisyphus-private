@@ -45,6 +45,29 @@ metadata:
 work_plans:
   - id: plan-test
     name: "Test Plan"
+    user_request:
+      original: "Test user request"
+      created_at: "2025-11-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test objective"
+      detailed: []
+    background:
+      current_situation: "Test situation"
+      reason_for_change: "Test reason"
+      changes_to_make: "Test changes"
+    required_background:
+      description: "Test background"
+      file_structure: null
+      references: []
+    workflow:
+      dependency_diagram: "Test diagram"
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     depends_on: []
     todos:
       - id: "1"
@@ -75,6 +98,29 @@ metadata:
 work_plans:
   - id: plan-foundation
     name: "Foundation Plan"
+    user_request:
+      original: "Test user request"
+      created_at: "2025-11-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test objective"
+      detailed: []
+    background:
+      current_situation: "Test situation"
+      reason_for_change: "Test reason"
+      changes_to_make: "Test changes"
+    required_background:
+      description: "Test background"
+      file_structure: null
+      references: []
+    workflow:
+      dependency_diagram: "Test diagram"
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     depends_on: []
     todos:
       - id: "1"
@@ -89,6 +135,29 @@ metadata:
 work_plans:
   - id: plan-main
     name: "Main Plan"
+    user_request:
+      original: "Test user request"
+      created_at: "2025-11-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test objective"
+      detailed: []
+    background:
+      current_situation: "Test situation"
+      reason_for_change: "Test reason"
+      changes_to_make: "Test changes"
+    required_background:
+      description: "Test background"
+      file_structure: null
+      references: []
+    workflow:
+      dependency_diagram: "Test diagram"
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     depends_on:
       - plan-foundation
     todos:
@@ -104,6 +173,29 @@ metadata:
 work_plans:
   - id: plan-cleanup
     name: "Cleanup Plan"
+    user_request:
+      original: "Test user request"
+      created_at: "2025-11-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test objective"
+      detailed: []
+    background:
+      current_situation: "Test situation"
+      reason_for_change: "Test reason"
+      changes_to_make: "Test changes"
+    required_background:
+      description: "Test background"
+      file_structure: null
+      references: []
+    workflow:
+      dependency_diagram: "Test diagram"
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     depends_on:
       - plan-main
     todos:
@@ -158,6 +250,29 @@ metadata:
 work_plans:
   - id: plan-active
     name: "Active Plan"
+    user_request:
+      original: "Test user request"
+      created_at: "2025-11-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test objective"
+      detailed: []
+    background:
+      current_situation: "Test situation"
+      reason_for_change: "Test reason"
+      changes_to_make: "Test changes"
+    required_background:
+      description: "Test background"
+      file_structure: null
+      references: []
+    workflow:
+      dependency_diagram: "Test diagram"
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     depends_on: []
     todos:
       - id: "1"
@@ -172,6 +287,29 @@ metadata:
 work_plans:
   - id: plan-archived
     name: "Archived Plan"
+    user_request:
+      original: "Test user request"
+      created_at: "2025-11-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test objective"
+      detailed: []
+    background:
+      current_situation: "Test situation"
+      reason_for_change: "Test reason"
+      changes_to_make: "Test changes"
+    required_background:
+      description: "Test background"
+      file_structure: null
+      references: []
+    workflow:
+      dependency_diagram: "Test diagram"
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     depends_on: []
     todos:
       - id: "1"
@@ -226,6 +364,29 @@ metadata:
 work_plans:
   - id: plan-current
     name: "Current Plan"
+    user_request:
+      original: "Test user request"
+      created_at: "2025-11-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test objective"
+      detailed: []
+    background:
+      current_situation: "Test situation"
+      reason_for_change: "Test reason"
+      changes_to_make: "Test changes"
+    required_background:
+      description: "Test background"
+      file_structure: null
+      references: []
+    workflow:
+      dependency_diagram: "Test diagram"
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     depends_on: []
     todos:
       - id: "1"

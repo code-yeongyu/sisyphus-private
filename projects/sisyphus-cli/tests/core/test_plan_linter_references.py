@@ -1,12 +1,32 @@
 import pytest
 
 from sisyphus.core.plan_linter import PlanLinter
-from sisyphus.core.plans.models import Metadata, PlanDocument, ReferenceItem, Todo, TodoStatus, WorkPlan
+from sisyphus.core.plans.models import (
+    Background,
+    Metadata,
+    Objectives,
+    PlanDocument,
+    ReferenceItem,
+    RequiredBackground,
+    SuccessVision,
+    Todo,
+    TodoStatus,
+    UserRequest,
+    Workflow,
+    WorkPlan,
+)
 
 pytestmark = [pytest.mark.anyio]
 
 
-def test_validate_references__if_valid_references__returns_empty() -> None:
+def test_validate_references__if_valid_references__returns_empty(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plan_doc = PlanDocument(
         version="3.0",
@@ -15,6 +35,13 @@ def test_validate_references__if_valid_references__returns_empty() -> None:
             WorkPlan(
                 id="plan-a",
                 name="Plan A",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(
                         id="1",
@@ -36,7 +63,14 @@ def test_validate_references__if_valid_references__returns_empty() -> None:
     assert len(errors) == 0
 
 
-def test_validate_references__if_duplicate_ref_id__reports_error() -> None:
+def test_validate_references__if_duplicate_ref_id__reports_error(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plan_doc = PlanDocument(
         version="3.0",
@@ -45,6 +79,13 @@ def test_validate_references__if_duplicate_ref_id__reports_error() -> None:
             WorkPlan(
                 id="plan-a",
                 name="Plan A",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[],
                 references=[
                     ReferenceItem(ref_id="ref-1", uri="https://example.com"),
@@ -64,7 +105,14 @@ def test_validate_references__if_duplicate_ref_id__reports_error() -> None:
     assert "ref-1" in errors[0]
 
 
-def test_validate_references__if_missing_ref_id__reports_error() -> None:
+def test_validate_references__if_missing_ref_id__reports_error(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plan_doc = PlanDocument(
         version="3.0",
@@ -73,6 +121,13 @@ def test_validate_references__if_missing_ref_id__reports_error() -> None:
             WorkPlan(
                 id="plan-a",
                 name="Plan A",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(
                         id="1",
@@ -96,7 +151,14 @@ def test_validate_references__if_missing_ref_id__reports_error() -> None:
     assert "not defined in references section" in errors[0]
 
 
-def test_validate_references__if_inline_too_long__reports_warning() -> None:
+def test_validate_references__if_inline_too_long__reports_warning(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     long_inline = "x" * 600
     plan_doc = PlanDocument(
@@ -106,6 +168,13 @@ def test_validate_references__if_inline_too_long__reports_warning() -> None:
             WorkPlan(
                 id="plan-a",
                 name="Plan A",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[],
                 references=[ReferenceItem(ref_id="ref-1", inline=long_inline)],
             )
@@ -124,7 +193,14 @@ def test_validate_references__if_inline_too_long__reports_warning() -> None:
     assert "Plan A" in errors[0]
 
 
-def test_validate_references__if_inline_exactly_500__no_warning() -> None:
+def test_validate_references__if_inline_exactly_500__no_warning(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     inline_500 = "x" * 500
     plan_doc = PlanDocument(
@@ -134,6 +210,13 @@ def test_validate_references__if_inline_exactly_500__no_warning() -> None:
             WorkPlan(
                 id="plan-a",
                 name="Plan A",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[],
                 references=[ReferenceItem(ref_id="ref-1", inline=inline_500)],
             )
@@ -148,7 +231,14 @@ def test_validate_references__if_inline_exactly_500__no_warning() -> None:
     assert len(errors) == 0
 
 
-def test_validate_references__if_references_section_missing_ref_id__reports_error() -> None:
+def test_validate_references__if_references_section_missing_ref_id__reports_error(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plan_doc = PlanDocument(
         version="3.0",
@@ -157,6 +247,13 @@ def test_validate_references__if_references_section_missing_ref_id__reports_erro
             WorkPlan(
                 id="plan-a",
                 name="Plan A",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[],
                 references=[ReferenceItem(ref_id=None, uri="https://example.com")],
             )
@@ -173,7 +270,14 @@ def test_validate_references__if_references_section_missing_ref_id__reports_erro
     assert "references section must have ref_id" in errors[0]
 
 
-def test_validate_references__if_inline_only_in_todo__no_error() -> None:
+def test_validate_references__if_inline_only_in_todo__no_error(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plan_doc = PlanDocument(
         version="3.0",
@@ -182,6 +286,13 @@ def test_validate_references__if_inline_only_in_todo__no_error() -> None:
             WorkPlan(
                 id="plan-a",
                 name="Plan A",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(
                         id="1",
@@ -203,7 +314,14 @@ def test_validate_references__if_inline_only_in_todo__no_error() -> None:
     assert len(errors) == 0
 
 
-def test_validate_references__if_nested_todo_refs__validates_recursively() -> None:
+def test_validate_references__if_nested_todo_refs__validates_recursively(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plan_doc = PlanDocument(
         version="3.0",
@@ -212,6 +330,13 @@ def test_validate_references__if_nested_todo_refs__validates_recursively() -> No
             WorkPlan(
                 id="plan-a",
                 name="Plan A",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[
                     Todo(
                         id="1",
@@ -241,7 +366,14 @@ def test_validate_references__if_nested_todo_refs__validates_recursively() -> No
     assert "missing-ref" in errors[0]
 
 
-def test_validate_references__if_multiple_work_plans__validates_all() -> None:
+def test_validate_references__if_multiple_work_plans__validates_all(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plan_doc = PlanDocument(
         version="3.0",
@@ -250,6 +382,13 @@ def test_validate_references__if_multiple_work_plans__validates_all() -> None:
             WorkPlan(
                 id="plan-a",
                 name="Plan A",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[],
                 references=[
                     ReferenceItem(ref_id="ref-1", uri="https://example.com"),
@@ -259,6 +398,13 @@ def test_validate_references__if_multiple_work_plans__validates_all() -> None:
             WorkPlan(
                 id="plan-b",
                 name="Plan B",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 todos=[],
                 references=[ReferenceItem(ref_id="ref-2", inline="x" * 600)],
             ),

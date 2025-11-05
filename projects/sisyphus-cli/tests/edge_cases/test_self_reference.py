@@ -3,12 +3,29 @@ from pathlib import Path
 import pytest
 
 from sisyphus.core.plan_linter import PlanLinter
-from sisyphus.core.plans.models import Metadata, PlanDocument, WorkPlan
+from sisyphus.core.plans.models import (
+    Background,
+    Metadata,
+    Objectives,
+    PlanDocument,
+    RequiredBackground,
+    SuccessVision,
+    UserRequest,
+    Workflow,
+    WorkPlan,
+)
 
 pytestmark = [pytest.mark.anyio]
 
 
-async def test_self_reference_in_depends_on__if_plan_depends_on_itself__detects_cycle() -> None:
+async def test_self_reference_in_depends_on__if_plan_depends_on_itself__detects_cycle(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plan_doc = PlanDocument(
         version="3.0",
@@ -17,6 +34,13 @@ async def test_self_reference_in_depends_on__if_plan_depends_on_itself__detects_
             WorkPlan(
                 id="plan-self",
                 name="Self Referencing Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 depends_on=["plan-self"],
                 todos=[],
             ),
@@ -34,7 +58,14 @@ async def test_self_reference_in_depends_on__if_plan_depends_on_itself__detects_
     assert "plan-self" in errors[0]
 
 
-async def test_self_reference_with_other_dependencies__if_includes_self__detects_cycle() -> None:
+async def test_self_reference_with_other_dependencies__if_includes_self__detects_cycle(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plan_doc = PlanDocument(
         version="3.0",
@@ -43,12 +74,26 @@ async def test_self_reference_with_other_dependencies__if_includes_self__detects
             WorkPlan(
                 id="plan-a",
                 name="Plan A",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 depends_on=["plan-b", "plan-a"],
                 todos=[],
             ),
             WorkPlan(
                 id="plan-b",
                 name="Plan B",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 depends_on=[],
                 todos=[],
             ),
@@ -66,7 +111,14 @@ async def test_self_reference_with_other_dependencies__if_includes_self__detects
     assert any("plan-a" in e for e in errors)
 
 
-async def test_multiple_self_references__if_multiple_plans_self_reference__detects_all() -> None:
+async def test_multiple_self_references__if_multiple_plans_self_reference__detects_all(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plan_doc = PlanDocument(
         version="3.0",
@@ -75,12 +127,26 @@ async def test_multiple_self_references__if_multiple_plans_self_reference__detec
             WorkPlan(
                 id="plan-x",
                 name="Plan X",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 depends_on=["plan-x"],
                 todos=[],
             ),
             WorkPlan(
                 id="plan-y",
                 name="Plan Y",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 depends_on=["plan-y"],
                 todos=[],
             ),

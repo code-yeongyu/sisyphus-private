@@ -4,19 +4,60 @@ import pytest
 
 from sisyphus.core.graph.dependencies import build_plan_graph, detect_cycles
 from sisyphus.core.plan_linter import PlanLinter
-from sisyphus.core.plans.models import Metadata, PlanDocument, WorkPlan
+from sisyphus.core.plans.models import (
+    Background,
+    Metadata,
+    Objectives,
+    PlanDocument,
+    RequiredBackground,
+    SuccessVision,
+    UserRequest,
+    Workflow,
+    WorkPlan,
+)
 
 pytestmark = [pytest.mark.anyio]
 
 
-async def test_circular_dependency_two_nodes__if_a_depends_b_depends_a__detects_cycle() -> None:
+async def test_circular_dependency_two_nodes__if_a_depends_b_depends_a__detects_cycle(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-02T00:00:00Z"),
         work_plans=[
-            WorkPlan(id="plan-a", name="Plan A", depends_on=["plan-b"], todos=[]),
-            WorkPlan(id="plan-b", name="Plan B", depends_on=["plan-a"], todos=[]),
+            WorkPlan(
+                id="plan-a",
+                name="Plan A",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                depends_on=["plan-b"],
+                todos=[],
+            ),
+            WorkPlan(
+                id="plan-b",
+                name="Plan B",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                depends_on=["plan-a"],
+                todos=[],
+            ),
         ],
     )
     linter = PlanLinter({})
@@ -31,15 +72,58 @@ async def test_circular_dependency_two_nodes__if_a_depends_b_depends_a__detects_
     assert any("plan-a" in e and "plan-b" in e for e in errors)
 
 
-async def test_circular_dependency_three_nodes__if_a_b_c_cycle__detects_all_nodes() -> None:
+async def test_circular_dependency_three_nodes__if_a_b_c_cycle__detects_all_nodes(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-02T00:00:00Z"),
         work_plans=[
-            WorkPlan(id="plan-a", name="Plan A", depends_on=["plan-b"], todos=[]),
-            WorkPlan(id="plan-b", name="Plan B", depends_on=["plan-c"], todos=[]),
-            WorkPlan(id="plan-c", name="Plan C", depends_on=["plan-a"], todos=[]),
+            WorkPlan(
+                id="plan-a",
+                name="Plan A",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                depends_on=["plan-b"],
+                todos=[],
+            ),
+            WorkPlan(
+                id="plan-b",
+                name="Plan B",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                depends_on=["plan-c"],
+                todos=[],
+            ),
+            WorkPlan(
+                id="plan-c",
+                name="Plan C",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                depends_on=["plan-a"],
+                todos=[],
+            ),
         ],
     )
     linter = PlanLinter({})
@@ -56,15 +140,58 @@ async def test_circular_dependency_three_nodes__if_a_b_c_cycle__detects_all_node
     assert "plan-c" in cycle_error
 
 
-async def test_circular_dependency_with_independent_plans__if_cycle_exists_separately__detects_only_cycle() -> None:
+async def test_circular_dependency_with_independent_plans__if_cycle_exists_separately__detects_only_cycle(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-02T00:00:00Z"),
         work_plans=[
-            WorkPlan(id="plan-x", name="Plan X", depends_on=["plan-y"], todos=[]),
-            WorkPlan(id="plan-y", name="Plan Y", depends_on=["plan-x"], todos=[]),
-            WorkPlan(id="plan-z", name="Plan Z", depends_on=[], todos=[]),
+            WorkPlan(
+                id="plan-x",
+                name="Plan X",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                depends_on=["plan-y"],
+                todos=[],
+            ),
+            WorkPlan(
+                id="plan-y",
+                name="Plan Y",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                depends_on=["plan-x"],
+                todos=[],
+            ),
+            WorkPlan(
+                id="plan-z",
+                name="Plan Z",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                depends_on=[],
+                todos=[],
+            ),
         ],
     )
     linter = PlanLinter({})
@@ -80,13 +207,68 @@ async def test_circular_dependency_with_independent_plans__if_cycle_exists_separ
     assert any("plan-x" in e and "plan-y" in e for e in cycle_errors)
 
 
-async def test_circular_dependency_complex__if_long_chain_with_cycle__detects_cycle() -> None:
+async def test_circular_dependency_complex__if_long_chain_with_cycle__detects_cycle(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plans = {
-        "plan-a": WorkPlan(id="plan-a", name="Plan A", depends_on=["plan-b"], todos=[]),
-        "plan-b": WorkPlan(id="plan-b", name="Plan B", depends_on=["plan-c"], todos=[]),
-        "plan-c": WorkPlan(id="plan-c", name="Plan C", depends_on=["plan-d"], todos=[]),
-        "plan-d": WorkPlan(id="plan-d", name="Plan D", depends_on=["plan-b"], todos=[]),
+        "plan-a": WorkPlan(
+            id="plan-a",
+            name="Plan A",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
+            depends_on=["plan-b"],
+            todos=[],
+        ),
+        "plan-b": WorkPlan(
+            id="plan-b",
+            name="Plan B",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
+            depends_on=["plan-c"],
+            todos=[],
+        ),
+        "plan-c": WorkPlan(
+            id="plan-c",
+            name="Plan C",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
+            depends_on=["plan-d"],
+            todos=[],
+        ),
+        "plan-d": WorkPlan(
+            id="plan-d",
+            name="Plan D",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
+            depends_on=["plan-b"],
+            todos=[],
+        ),
     }
     graph = build_plan_graph(plans)
 
@@ -101,14 +283,81 @@ async def test_circular_dependency_complex__if_long_chain_with_cycle__detects_cy
     assert "plan-d" in cycle
 
 
-async def test_circular_dependency_multiple_cycles__if_two_separate_cycles__detects_both() -> None:
+async def test_circular_dependency_multiple_cycles__if_two_separate_cycles__detects_both(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     plans = {
-        "plan-a": WorkPlan(id="plan-a", name="Plan A", depends_on=["plan-b"], todos=[]),
-        "plan-b": WorkPlan(id="plan-b", name="Plan B", depends_on=["plan-a"], todos=[]),
-        "plan-x": WorkPlan(id="plan-x", name="Plan X", depends_on=["plan-y"], todos=[]),
-        "plan-y": WorkPlan(id="plan-y", name="Plan Y", depends_on=["plan-z"], todos=[]),
-        "plan-z": WorkPlan(id="plan-z", name="Plan Z", depends_on=["plan-x"], todos=[]),
+        "plan-a": WorkPlan(
+            id="plan-a",
+            name="Plan A",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
+            depends_on=["plan-b"],
+            todos=[],
+        ),
+        "plan-b": WorkPlan(
+            id="plan-b",
+            name="Plan B",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
+            depends_on=["plan-a"],
+            todos=[],
+        ),
+        "plan-x": WorkPlan(
+            id="plan-x",
+            name="Plan X",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
+            depends_on=["plan-y"],
+            todos=[],
+        ),
+        "plan-y": WorkPlan(
+            id="plan-y",
+            name="Plan Y",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
+            depends_on=["plan-z"],
+            todos=[],
+        ),
+        "plan-z": WorkPlan(
+            id="plan-z",
+            name="Plan Z",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
+            depends_on=["plan-x"],
+            todos=[],
+        ),
     }
     graph = build_plan_graph(plans)
 

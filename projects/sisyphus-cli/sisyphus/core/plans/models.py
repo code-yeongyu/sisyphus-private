@@ -181,13 +181,13 @@ class WorkPlan(BaseModel):
     depends_on: list[str] = []
 
     # === Required Overview Fields (v2.1 restoration) ===
-    user_request: UserRequest | None = None
-    objectives: Objectives | None = None
-    background: Background | None = None
-    required_background: RequiredBackground | None = None
-    workflow: Workflow | None = None
-    success_vision: SuccessVision | None = None
-    final_verification: list[FinalVerificationItem] = []
+    user_request: UserRequest
+    objectives: Objectives
+    background: Background
+    required_background: RequiredBackground
+    workflow: Workflow
+    success_vision: SuccessVision
+    final_verification: list[FinalVerificationItem]
 
     # === Core Fields ===
     todos: list[Todo]

@@ -2,19 +2,32 @@ import pytest
 from pydantic import ValidationError
 
 from sisyphus.core.plans.models import (
+    Background,
     Metadata,
+    Objectives,
     PlanDocument,
     ReferenceItem,
+    RequiredBackground,
+    SuccessVision,
     Todo,
     TodoStatus,
+    UserRequest,
     VerificationItem,
+    Workflow,
     WorkPlan,
 )
 
 pytestmark = [pytest.mark.anyio]
 
 
-async def test_reference_item__if_uri_and_inline_both_provided__raises_error() -> None:
+async def test_reference_item__if_uri_and_inline_both_provided__raises_error(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     data = {"uri": "https://example.com", "inline": "text content"}
 
@@ -24,7 +37,14 @@ async def test_reference_item__if_uri_and_inline_both_provided__raises_error() -
     assert "uri와 inline은 동시에 사용할 수 없습니다" in str(exc.value)
 
 
-async def test_reference_item__if_all_fields_none__raises_error() -> None:
+async def test_reference_item__if_all_fields_none__raises_error(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
 
     # when & then
@@ -33,7 +53,14 @@ async def test_reference_item__if_all_fields_none__raises_error() -> None:
     assert "ref_id, uri 또는 inline 중 하나는 필수입니다" in str(exc.value)
 
 
-async def test_reference_item__if_ref_id_only__creates_successfully() -> None:
+async def test_reference_item__if_ref_id_only__creates_successfully(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     data = {"ref_id": "ref_123"}
 
@@ -46,7 +73,14 @@ async def test_reference_item__if_ref_id_only__creates_successfully() -> None:
     assert ref.inline is None
 
 
-async def test_reference_item__if_uri_only__creates_successfully() -> None:
+async def test_reference_item__if_uri_only__creates_successfully(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     data = {"uri": "https://example.com"}
 
@@ -59,7 +93,14 @@ async def test_reference_item__if_uri_only__creates_successfully() -> None:
     assert ref.inline is None
 
 
-async def test_reference_item__if_inline_only__creates_successfully() -> None:
+async def test_reference_item__if_inline_only__creates_successfully(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     data = {"inline": "inline content"}
 
@@ -72,11 +113,25 @@ async def test_reference_item__if_inline_only__creates_successfully() -> None:
     assert ref.uri is None
 
 
-async def test_work_plan__if_depends_on_provided__stores_dependency_list() -> None:
+async def test_work_plan__if_depends_on_provided__stores_dependency_list(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     data = {
         "id": "plan-1",
         "name": "Test Plan",
+        "user_request": minimal_user_request.model_dump(),
+        "objectives": minimal_objectives.model_dump(),
+        "background": minimal_background.model_dump(),
+        "required_background": minimal_required_background.model_dump(),
+        "workflow": minimal_workflow.model_dump(),
+        "success_vision": minimal_success_vision.model_dump(),
+        "final_verification": [],
         "depends_on": ["plan-foundation", "plan-setup"],
         "todos": [],
     }
@@ -88,9 +143,27 @@ async def test_work_plan__if_depends_on_provided__stores_dependency_list() -> No
     assert plan.depends_on == ["plan-foundation", "plan-setup"]
 
 
-async def test_work_plan__if_depends_on_not_provided__defaults_to_empty_list() -> None:
+async def test_work_plan__if_depends_on_not_provided__defaults_to_empty_list(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
-    data = {"id": "plan-1", "name": "Test Plan", "todos": []}
+    data = {
+        "id": "plan-1",
+        "name": "Test Plan",
+        "user_request": minimal_user_request.model_dump(),
+        "objectives": minimal_objectives.model_dump(),
+        "background": minimal_background.model_dump(),
+        "required_background": minimal_required_background.model_dump(),
+        "workflow": minimal_workflow.model_dump(),
+        "success_vision": minimal_success_vision.model_dump(),
+        "final_verification": [],
+        "todos": [],
+    }
 
     # when
     plan = WorkPlan(**data)
@@ -99,7 +172,14 @@ async def test_work_plan__if_depends_on_not_provided__defaults_to_empty_list() -
     assert plan.depends_on == []
 
 
-async def test_todo__if_description_provided__stores_description() -> None:
+async def test_todo__if_description_provided__stores_description(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     data = {
         "id": "1",
@@ -115,7 +195,14 @@ async def test_todo__if_description_provided__stores_description() -> None:
     assert todo.description == "Detailed task description"
 
 
-async def test_todo__if_description_not_provided__defaults_to_none() -> None:
+async def test_todo__if_description_not_provided__defaults_to_none(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     data = {"id": "1", "title": "Test Task", "status": TodoStatus.pending}
 
@@ -126,7 +213,14 @@ async def test_todo__if_description_not_provided__defaults_to_none() -> None:
     assert todo.description is None
 
 
-async def test_todo__if_children_provided__stores_nested_todos() -> None:
+async def test_todo__if_children_provided__stores_nested_todos(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     child1 = Todo(id="1.1", title="Subtask 1", status=TodoStatus.pending)
     child2 = Todo(id="1.2", title="Subtask 2", status=TodoStatus.completed)
@@ -147,7 +241,14 @@ async def test_todo__if_children_provided__stores_nested_todos() -> None:
     assert parent.children[1].status == TodoStatus.completed
 
 
-async def test_todo__if_children_not_provided__defaults_to_none() -> None:
+async def test_todo__if_children_not_provided__defaults_to_none(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     data = {"id": "1", "title": "Task", "status": TodoStatus.pending}
 
@@ -158,7 +259,14 @@ async def test_todo__if_children_not_provided__defaults_to_none() -> None:
     assert todo.children is None
 
 
-async def test_plan_document__if_valid_structure__creates_successfully() -> None:
+async def test_plan_document__if_valid_structure__creates_successfully(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     data = {
         "version": "3.0",
@@ -176,6 +284,29 @@ async def test_plan_document__if_valid_structure__creates_successfully() -> None
                         "status": "pending",
                     }
                 ],
+                "user_request": {
+                    "original": "Test user request",
+                    "created_at": "2025-11-06T00:00:00Z",
+                    "additional": [],
+                },
+                "objectives": {"core": "Test objective", "detailed": []},
+                "background": {
+                    "current_situation": "Test situation",
+                    "reason_for_change": "Test reason",
+                    "changes_to_make": "Test changes",
+                },
+                "required_background": {
+                    "description": "Test background",
+                    "file_structure": None,
+                    "references": [],
+                },
+                "workflow": {"dependency_diagram": "Test diagram", "critical_path": []},
+                "success_vision": {
+                    "user_perspective": [],
+                    "business_perspective": [],
+                    "technical_criteria": [],
+                },
+                "final_verification": [],
             }
         ],
     }
@@ -190,7 +321,14 @@ async def test_plan_document__if_valid_structure__creates_successfully() -> None
     assert doc.work_plans[0].depends_on == ["plan-foundation"]
 
 
-async def test_todo_status__if_enum_values__match_expected() -> None:
+async def test_todo_status__if_enum_values__match_expected(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given & when & then
     assert TodoStatus.pending.value == "pending"
     assert TodoStatus.in_progress.value == "in_progress"
@@ -198,7 +336,14 @@ async def test_todo_status__if_enum_values__match_expected() -> None:
     assert TodoStatus.blocked.value == "blocked"
 
 
-async def test_verification_item__if_all_fields_provided__creates_successfully() -> None:
+async def test_verification_item__if_all_fields_provided__creates_successfully(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     data = {
         "id": "ver_001",
@@ -220,7 +365,14 @@ async def test_verification_item__if_all_fields_provided__creates_successfully()
     assert ver.bash[0].execute == "pytest"
 
 
-async def test_reference_item__if_ref_id_and_uri__creates_successfully() -> None:
+async def test_reference_item__if_ref_id_and_uri__creates_successfully(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     data = {"ref_id": "ref_001", "uri": "https://example.com"}
 
@@ -233,7 +385,14 @@ async def test_reference_item__if_ref_id_and_uri__creates_successfully() -> None
     assert ref.inline is None
 
 
-async def test_reference_item__if_ref_id_and_inline__creates_successfully() -> None:
+async def test_reference_item__if_ref_id_and_inline__creates_successfully(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     data = {"ref_id": "ref_002", "inline": "Some inline text"}
 
@@ -246,7 +405,14 @@ async def test_reference_item__if_ref_id_and_inline__creates_successfully() -> N
     assert ref.uri is None
 
 
-async def test_todo__if_one_level_children__creates_successfully() -> None:
+async def test_todo__if_one_level_children__creates_successfully(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     child_data = {
         "id": "1.1",
@@ -271,7 +437,14 @@ async def test_todo__if_one_level_children__creates_successfully() -> None:
     assert parent.children[0].children is None
 
 
-async def test_metadata__if_only_created_at__updated_at_defaults_to_none() -> None:
+async def test_metadata__if_only_created_at__updated_at_defaults_to_none(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     # given
     data = {"created_at": "2025-11-01T20:00:00Z"}
 

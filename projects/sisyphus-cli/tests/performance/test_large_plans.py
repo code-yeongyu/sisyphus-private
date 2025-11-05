@@ -18,17 +18,31 @@ from sisyphus.core.graph.dependencies import build_plan_graph, topo_sort
 from sisyphus.core.plan_linter import PlanLinter
 from sisyphus.core.plans.loader import load_plan
 from sisyphus.core.plans.models import (
+    Background,
     Metadata,
+    Objectives,
     PlanDocument,
+    RequiredBackground,
+    SuccessVision,
     Todo,
     TodoStatus,
+    UserRequest,
+    Workflow,
     WorkPlan,
 )
 
 pytestmark = [pytest.mark.anyio]
 
 
-async def test_load_100_todos__if_100_todos__loads_within_100ms(tmp_path: Path) -> None:
+async def test_load_100_todos__if_100_todos__loads_within_100ms(
+    tmp_path: Path,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     """Performance: Loading 100 todos should complete within 100ms."""
     # given: Create plan with 100 todos
     todos = [
@@ -48,6 +62,13 @@ async def test_load_100_todos__if_100_todos__loads_within_100ms(tmp_path: Path) 
             WorkPlan(
                 id="perf-plan",
                 name="Performance Test Plan with 100 Todos",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 depends_on=[],
                 todos=todos,
             )
@@ -73,6 +94,12 @@ async def test_load_100_todos__if_100_todos__loads_within_100ms(tmp_path: Path) 
 
 async def test_graph_50_plans__if_50_plans_with_dependencies__builds_graph_within_500ms(
     tmp_path: Path,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     """Performance: Building dependency graph for 50 plans should complete within 500ms."""
     # given: Create 50 plans with linear dependencies
@@ -80,6 +107,13 @@ async def test_graph_50_plans__if_50_plans_with_dependencies__builds_graph_withi
         WorkPlan(
             id=f"plan-{i}",
             name=f"Plan {i}",
+            user_request=minimal_user_request,
+            objectives=minimal_objectives,
+            background=minimal_background,
+            required_background=minimal_required_background,
+            workflow=minimal_workflow,
+            success_vision=minimal_success_vision,
+            final_verification=[],
             depends_on=[f"plan-{i - 1}"] if i > 1 else [],
             todos=[
                 Todo(
@@ -119,7 +153,15 @@ async def test_graph_50_plans__if_50_plans_with_dependencies__builds_graph_withi
     assert elapsed_ms < 500, f"Building graph for 50 plans took {elapsed_ms:.2f}ms, expected < 500ms"
 
 
-async def test_lint_large_plan__if_large_plan__lints_within_200ms(tmp_path: Path) -> None:
+async def test_lint_large_plan__if_large_plan__lints_within_200ms(
+    tmp_path: Path,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
     """Performance: Linting large plan (100 todos, complex structure) should complete within 200ms."""
     # given: Create large plan with nested todos and references
     parent_todos = []
@@ -149,6 +191,13 @@ async def test_lint_large_plan__if_large_plan__lints_within_200ms(tmp_path: Path
             WorkPlan(
                 id="lint-perf-plan",
                 name="Lint Performance Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 depends_on=[],
                 todos=parent_todos,
             )
@@ -178,6 +227,12 @@ async def test_lint_large_plan__if_large_plan__lints_within_200ms(tmp_path: Path
 
 async def test_combined_workflow__if_realistic_scenario__completes_within_budget(
     tmp_path: Path,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     """Performance: Full workflow (load + graph + lint) should be reasonably fast."""
     # given: Create realistic multi-plan scenario (10 plans, 10 todos each)
@@ -195,6 +250,13 @@ async def test_combined_workflow__if_realistic_scenario__completes_within_budget
             WorkPlan(
                 id=f"plan-{i}",
                 name=f"Plan {i}",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
                 depends_on=[f"plan-{i - 1}"] if i > 1 else [],
                 todos=todos,
             )

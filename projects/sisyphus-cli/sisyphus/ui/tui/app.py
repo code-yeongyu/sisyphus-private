@@ -8,7 +8,6 @@ from textual.app import App, ComposeResult
 from textual.events import Key
 from textual.message import Message
 
-from sisyphus.core.tasks import TaskValidator
 from sisyphus.ui.themes import THEMES
 from sisyphus.ui.tui.components.chat_log import ChatLog
 from sisyphus.ui.tui.components.input_bar import InputBar
@@ -140,7 +139,7 @@ class TUI(App[None]):
         self.ready_event = anyio.Event()
         self._input_ready_event = anyio.Event()
         self._initialized = False
-        self.task_validator: TaskValidator | None = None
+        self.task_validator: None = None
         self._last_total_checkboxes: int = 0
         self._last_completed_checkboxes: int = 0
         self.agent_interrupted = False
@@ -150,7 +149,7 @@ class TUI(App[None]):
         """Compose layout."""
         yield from compose_main_layout()
 
-    def set_task_validator(self, task_validator: TaskValidator | None) -> None:
+    def set_task_validator(self, task_validator: None) -> None:
         """Set task validator for checkbox monitoring.
 
         Args:

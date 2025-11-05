@@ -16,7 +16,6 @@ from sisyphus.utils.session_limit import sleep_until_next_hour, sleep_until_rese
 if TYPE_CHECKING:
     from sisyphus.agents.base import Agent
     from sisyphus.core.session import SessionStore
-    from sisyphus.core.tasks import TaskValidator
     from sisyphus.ui.base import UIProtocol
     from sisyphus.utils.logging import LoggerFactory
 
@@ -31,7 +30,7 @@ class ExecutionLoop:
         session_store: SessionStore,
         logger_factory: LoggerFactory,
         verify_agent: Agent | None = None,
-        task_validator: TaskValidator | None = None,
+        task_validator: None = None,
     ) -> None:
         """Initialize ExecutionLoop.
 

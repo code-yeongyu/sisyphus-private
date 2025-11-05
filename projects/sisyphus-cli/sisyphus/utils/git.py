@@ -68,10 +68,10 @@ def _matches_pattern(file: str, patterns: list[str]) -> bool:
         True if file matches any pattern
 
     Examples:
-        _matches_pattern("ai-todolist.md", ["ai-todolist.md"]) → True
+        _matches_pattern("plan.yaml", ["plan.yaml"]) → True
         _matches_pattern("sessions/test.json", ["sessions/"]) → True
         _matches_pattern("claude_session_abc.log", ["claude_session_*.log"]) → True
-        _matches_pattern("other.txt", ["ai-todolist.md"]) → False
+        _matches_pattern("other.txt", ["plan.yaml"]) → False
     """
     for pattern in patterns:
         if pattern.endswith("/"):

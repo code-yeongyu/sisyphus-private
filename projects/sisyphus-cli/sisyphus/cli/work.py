@@ -34,7 +34,6 @@ error_console = Console(stderr=True)
 
 SISYPHUS_IGNORE_PATTERNS = [
     "# Sisyphus generated files",
-    "ai-todolist.md",
     "notepad.md",
     "sessions/",
     "logs/",
@@ -100,9 +99,8 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
     """Detect YAML plan file with improved UX.
 
     Priority:
-    1. Error if ai-todolist.md exists (Markdown not supported)
-    2. Auto-select if .sisyphus/tasks/**/*.yaml == 1 file (재귀 탐색)
-    3. Error if multiple YAML files (need manual selection)
+    1. Auto-select if .sisyphus/tasks/**/*.yaml == 1 file (재귀 탐색)
+    2. Error if multiple YAML files (need manual selection)
 
     Args:
         ui: UI Protocol implementation
@@ -111,7 +109,7 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
         Path to YAML file or None
 
     Raises:
-        ValueError: If Markdown exists or multiple plans found
+        ValueError: If multiple plans found
     """
 
     # 0. 워크트리 루트 먼저 감지 (모든 경로 체크의 기준점)
@@ -512,7 +510,6 @@ def clean_history(
         raise typer.Exit(1)
 
     file_patterns = [
-        "ai-todolist.md",
         "notepad.md",
         "sessions/",
         "logs/",

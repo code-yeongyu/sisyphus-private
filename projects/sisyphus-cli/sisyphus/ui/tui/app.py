@@ -153,7 +153,7 @@ class TUI(App[None]):
         """Set task validator for checkbox monitoring.
 
         Args:
-            task_validator: TaskValidator instance to monitor ai-todolist.md
+            task_validator: TaskValidator instance (deprecated, kept for compatibility)
         """
         self.task_validator = task_validator
 
@@ -166,7 +166,7 @@ class TUI(App[None]):
         self._execution_loop = execution_loop
 
     async def _monitor_todolist(self) -> None:
-        """Background task to monitor ai-todolist.md changes.
+        """Background task to monitor plan file changes.
 
         Polls the todolist file every 2 seconds and updates StatusPanel
         only when checkbox counts change.

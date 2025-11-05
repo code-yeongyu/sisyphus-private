@@ -77,7 +77,7 @@ class ExecutionLoop:
         This method runs a unified execution flow that works for both interactive
         and non-interactive agents:
         - Execute Phase: Agent performs tasks (interactive features handled by agent)
-        - Task Validator: Checks completion (if ai-todolist.md exists)
+        - Task Validator: Checks completion (if task file exists)
         - Verify Phase: Quality verification (if verify_agent provided)
         - Feedback Loop: Continues until FULLY_DONE = TRUE
 
@@ -662,7 +662,7 @@ class ExecutionLoop:
                     retry_message = (
                         "You did not provide a clear FULLY_DONE judgment in your last response. "
                         "Please review the execute phase output and provide a clear judgment:\n\n"
-                        "- Say 'FULLY_DONE = TRUE' if all goals in ai-todolist.md are accomplished\n"
+                        "- Say 'FULLY_DONE = TRUE' if all goals in the work plan are accomplished\n"
                         "- Say 'FULLY_DONE = FALSE' if any goals remain incomplete\n\n"
                         "Please respond with your judgment now."
                     )

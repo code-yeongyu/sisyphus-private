@@ -1,0 +1,47 @@
+version: "3.0"
+
+metadata:
+  created_at: "2025-11-04T17:30:00Z"
+  updated_at: "2025-11-04T17:30:00Z"
+
+work_plans:
+  - id: "hello-world"
+    name: "Hello World Test"
+    depends_on: []
+
+    execution:
+      started: false
+      completed: false
+      started_at: null
+      completed_at: null
+
+    work_mode:
+      parallel_requested: false
+      current_task_id: null
+
+    progress:
+      total_tasks: 0
+      completed: 0
+      in_progress: 0
+      pending: 0
+
+    current_work: ""
+
+    todos:
+      - id: "1"
+        title: "Print hello world"
+        description: "Simple echo command test"
+        status: pending
+        references: []
+
+      - id: "2"
+        title: "List current directory"
+        description: "Test ls command"
+        status: pending
+        references: []
+
+      - id: "3"
+        title: "Show current date"
+        description: "Test date command"
+        status: pending
+        references: []

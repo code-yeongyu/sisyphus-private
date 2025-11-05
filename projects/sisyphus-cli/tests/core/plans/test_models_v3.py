@@ -201,19 +201,23 @@ async def test_todo_status__if_enum_values__match_expected() -> None:
 async def test_verification_item__if_all_fields_provided__creates_successfully() -> None:
     # given
     data = {
-        "type": "bash",
+        "id": "ver_001",
+        "title": "Test verification",
         "description": "Run tests",
-        "command": "pytest",
-        "expected_output": "All tests passed",
+        "orchestrator_manually_verified": False,
+        "manual_verification_evidence": "",
+        "bash": [{"execute": "pytest", "expected_exit_code": 0}],
     }
 
     # when
     ver = VerificationItem(**data)
 
     # then
-    assert ver.type == "bash"
-    assert ver.command == "pytest"
-    assert ver.expected_output == "All tests passed"
+    assert ver.id == "ver_001"
+    assert ver.title == "Test verification"
+    assert ver.description == "Run tests"
+    assert len(ver.bash) == 1
+    assert ver.bash[0].execute == "pytest"
 
 
 async def test_reference_item__if_ref_id_and_uri__creates_successfully() -> None:

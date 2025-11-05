@@ -232,3 +232,46 @@ None - task complete.
 - work command now v3.0-only, no markdown support
 - Simplified error handling by removing legacy checks
 
+
+## 2025-11-06 02:40:15 - Task 6: Prompts Text Update
+
+### WORK CONTEXT & HISTORY
+Updated prompts.py to remove ai-todolist.md references. Changed 2 occurrences of "ai-todolist.md" to generic terms ("work plan"). This removes legacy markdown references from verification prompts.
+
+### DECISION RATIONALE
+Prompt text should not reference specific file formats. Using generic terms ("work plan", "the work plan") makes prompts format-agnostic and applicable to v3.0 YAML.
+
+### ATTEMPTED APPROACHES
+None - straightforward text replacement.
+
+### TECHNICAL DISCOVERIES
+- 2 occurrences found at lines 156, 170
+- Both in VERIFICATION_PROMPT_AGGRESSIVE string
+- Simple find-replace sufficient
+
+### ADVICE FOR NEXT EXECUTOR
+Task 7 (loader.py): Remove v2.1/v2.0 version fallback logic
+Task 8: Remove v2.1 files completely
+
+### IMPLEMENTATION DETAILS
+Files modified:
+1. sisyphus/core/prompts.py
+   - Line 156: "ai-todolist.md" → "work plan"
+   - Line 170: "ai-todolist.md" → "the work plan"
+
+### PROBLEMS FOR NEXT TASKS
+None - clean text replacement.
+
+### VERIFICATION RESULTS
+```
+ruff check sisyphus/core/prompts.py: All checks passed
+No ai-todolist.md references remain in prompts
+```
+
+### UNRESOLVED QUESTIONS
+None - task complete.
+
+### LEARNINGS
+- Prompts now format-agnostic
+- Generic terms better than specific file names
+

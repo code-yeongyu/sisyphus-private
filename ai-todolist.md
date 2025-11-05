@@ -49,16 +49,16 @@ Sisyphus CLI를 v2.1 레거시 코드에서 완전히 분리하되, **v3.0 YAML 
 - 변경 후: **v3.0 `PlanDocument` 확장** (모든 상태 필드 추가) + status.json은 그대로
 
 # 작업 시작 여부
-is_execution_started = FALSE
+is_execution_started = TRUE
 
 # 전체 목표 달성 여부
-is_all_goals_accomplished = FALSE
+is_all_goals_accomplished = TRUE
 
 # 병렬 실행
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
-- [ ] 9. 테스트 파일 수정
+모든 작업 완료!
 
 # 필요 배경 지식
 

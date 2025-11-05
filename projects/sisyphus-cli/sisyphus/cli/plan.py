@@ -41,7 +41,7 @@ class GraphFormat(str, Enum):
 @plan_app.command(name="lint")
 def lint_plan(
     file_path: Path = typer.Option(
-        Path("./ai-todolist.yaml"),
+        Path("./.sisyphus/tasks/plan.yaml"),
         "--file",
         "-f",
         help="YAML file path to lint",
@@ -86,7 +86,10 @@ def show_overview(
     rich: bool = typer.Option(False, "--rich", help="Use Rich table format"),
     cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
-    """Show work plan overview."""
+    """Show work plan overview (DEPRECATED: v2.1 only, will be removed)."""
+    console.print("[yellow]Warning: 'plan overview' is deprecated (v2.1 only) and will be removed.[/yellow]")
+    console.print("[yellow]Use v3.0 commands instead: sisyphus task current, sisyphus plan graph[/yellow]\n")
+
     working_dir = resolve_cwd(cwd)
     plan_path = working_dir / "ai-todolist.yaml"
 
@@ -103,7 +106,7 @@ def show_overview(
 @plan_app.command(name="init")
 def init_plan(
     path: Path = typer.Option(
-        Path("./ai-todolist.yaml"),
+        Path("./.sisyphus/tasks/plan.yaml"),
         "--path",
         "-p",
         help="Path where plan YAML will be created",
@@ -121,60 +124,37 @@ def init_plan(
     now = datetime.now(UTC).isoformat()
 
     template = {
+        "version": "3.0",
         "metadata": {
             "created_at": now,
-            "updated_at": now,
-            "format_version": "2.1",
+            "updated_at": None,
         },
-        "user_request": {
-            "original": "TODO: Describe your project goal here",
-            "created_at": now,
-            "additional": [],
-        },
-        "objectives": {
-            "core": "TODO: Core objective",
-            "detailed": [],
-        },
-        "background": {
-            "current_situation": "TODO: Current state",
-            "reason_for_change": "TODO: Why change is needed",
-            "changes_to_make": "TODO: What needs to change",
-        },
-        "required_background": {
-            "description": "TODO: Required context",
-            "file_structure": None,
-            "references": [],
-        },
-        "status": {
-            "execution": {
-                "started": False,
-                "completed": False,
-                "started_at": None,
-                "completed_at": None,
-            },
-            "work_mode": {
-                "parallel_requested": False,
-                "current_task_id": None,
-            },
-            "progress": {
-                "total_tasks": 0,
-                "completed": 0,
-                "in_progress": 0,
-                "pending": 0,
-            },
-            "current_work": "",
-        },
-        "workflow": {
-            "dependency_diagram": "",
-            "critical_path": [],
-        },
-        "todos": [],
-        "success_vision": {
-            "user_perspective": [],
-            "business_perspective": [],
-            "technical_criteria": [],
-        },
-        "final_verification": [],
+        "work_plans": [
+            {
+                "id": "new-plan",
+                "name": "New Plan",
+                "depends_on": [],
+                "todos": [],
+                "references": [],
+                "execution": {
+                    "started": False,
+                    "completed": False,
+                    "started_at": None,
+                    "completed_at": None,
+                },
+                "work_mode": {
+                    "parallel_requested": False,
+                    "current_task_id": None,
+                },
+                "progress": {
+                    "total_tasks": 0,
+                    "completed": 0,
+                    "in_progress": 0,
+                    "pending": 0,
+                },
+                "current_work": "",
+            }
+        ],
     }
 
     yaml = YAML()
@@ -226,30 +206,12 @@ def show_graph(
                     console.print(f"[yellow]Warning: Skipping {plan_file.name} (invalid v3.0 format)[/yellow]")
                     continue
         else:
-            plan_path = working_dir / "ai-todolist.yaml"
-
-            if not plan_path.exists():
-                console.print(
-                    f"[red]Error: No plan files found.[/red]\n"
-                    f"Expected either:\n"
-                    f"  - {tasks_dir}/*.yaml (v3.0 format)\n"
-                    f"  - {plan_path} (v2.1 format)"
-                )
-                raise typer.Exit(1)
-
-            with plan_path.open("r", encoding="utf-8") as f:
-                yaml_data = yaml.load(f)
-
-            try:
-                plan_doc = PlanDocument(**yaml_data)
-                for work_plan in plan_doc.work_plans:
-                    plan_to_file[work_plan.id] = plan_path
-                all_plans.extend(plan_doc.work_plans)
-            except ValidationError:
-                console.print(
-                    "[yellow]Warning: File is not v3.0 format. Graph command requires v3.0 with depends_on.[/yellow]"
-                )
-                raise typer.Exit(1)
+            console.print(
+                f"[red]Error: No plan files found.[/red]\n"
+                f"Expected: {tasks_dir}/*.yaml (v3.0 format)\n"
+                f"Run: sisyphus plan init .sisyphus/tasks/plan.yaml"
+            )
+            raise typer.Exit(1)
 
         if not all_plans:
             console.print("[red]Error: No valid plans found[/red]")
@@ -309,7 +271,10 @@ def get_plan_info(
     rich: bool = typer.Option(False, "--rich", help="Use Rich table format (default: plain text)"),
     cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
-    """Get information from work plan."""
+    """Get information from work plan (DEPRECATED: v2.1 only, will be removed)."""
+    console.print("[yellow]Warning: 'plan get' is deprecated (v2.1 only) and will be removed.[/yellow]")
+    console.print("[yellow]Use v3.0 commands instead: sisyphus task current, sisyphus task show[/yellow]\n")
+
     working_dir = resolve_cwd(cwd)
     plan_path = working_dir / "ai-todolist.yaml"
     output_format = OutputFormat.RICH if rich else OutputFormat.PLAIN

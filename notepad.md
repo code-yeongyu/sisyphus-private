@@ -139,3 +139,52 @@ None - all required methods implemented and tested.
 - get_previous_task complexity shows importance of proper tree traversal
 - Stateless design: TaskManager reads from WorkPlan but doesn't modify it
 
+
+## 2025-11-06 02:35:19 - Task 4: cli/plan.py Update for v3.0
+
+### WORK CONTEXT & HISTORY
+Updated cli/plan.py template from v2.1 to v3.0 format. Changed plan init command to generate v3.0 YAML with state fields. Template now includes execution, work_mode, progress, current_work fields for new plans.
+
+Note: 2 occurrences of "ai-todolist.yaml" remain in deprecated functions (show_overview, get_task) - these are v2.1-only functions marked for removal in Task 8.
+
+### DECISION RATIONALE
+Updated template to match v3.0 WorkPlan structure from Task 1. State fields included with proper default values to ensure new plans are immediately usable with TaskManager.
+
+Left deprecated functions unchanged as they will be removed entirely in Task 8 (v2.1 file removal).
+
+### ATTEMPTED APPROACHES
+None - straightforward template update.
+
+### TECHNICAL DISCOVERIES
+- plan init template location: line 123-178
+- Template structure matches hello-world.yaml from Task 1
+- Deprecated functions (show_overview, get_task) still reference ai-todolist.yaml but marked for removal
+
+### ADVICE FOR NEXT EXECUTOR
+Task 5 (cli/work.py): Similar pattern - remove markdown checks
+Task 8: Will remove deprecated functions completely, eliminating remaining hardcoding
+
+### IMPLEMENTATION DETAILS
+Files modified:
+1. sisyphus/cli/plan.py
+   - Line ~125: Changed "version": "3.0" (was format_version: "2.1")
+   - Added execution, work_mode, progress, current_work to template
+   - Deprecated functions left unchanged (will be removed in Task 8)
+
+### PROBLEMS FOR NEXT TASKS
+- Task 8: Must remove deprecated functions (show_overview, get_task) that still use ai-todolist.yaml
+
+### VERIFICATION RESULTS
+```
+ruff check sisyphus/cli/plan.py: All checks passed
+Template includes all state fields from Task 1
+```
+
+### UNRESOLVED QUESTIONS
+None - template successfully updated.
+
+### LEARNINGS
+- plan init now generates v3.0-compliant YAML with state fields
+- Deprecated v2.1 functions will be cleaned up in Task 8
+- Template matches WorkPlan structure from models.py
+

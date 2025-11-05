@@ -275,3 +275,52 @@ None - task complete.
 - Prompts now format-agnostic
 - Generic terms better than specific file names
 
+
+## 2025-11-06 02:43:20 - Task 7: Remove v2.1 Version Fallback from loader.py
+
+### WORK CONTEXT & HISTORY
+Removed v2.1/v2.0 version fallback logic from loader.py. Simplified version check to only support v3.0. Removed UnsupportedPlanVersionError import and updated all docstrings to reflect ValueError usage.
+
+### DECISION RATIONALE
+v3.0-only support means no need for special v2.1/v2.0 error handling. Single ValueError for all unsupported versions simplifies code and removes unused exception class dependency.
+
+### ATTEMPTED APPROACHES
+None - straightforward simplification.
+
+### TECHNICAL DISCOVERIES
+- load_plan() lines 36-39: Simplified to if/else with ValueError
+- UnsupportedPlanVersionError import removed (line 6)
+- Updated 3 docstrings (load_plan, load_multiple_plans, resolve_current_plan_from_status) to document ValueError instead of UnsupportedPlanVersionError
+
+### ADVICE FOR NEXT EXECUTOR
+Task 8: Remove v2.1 files (plan_types.py, plan_navigator.py, etc.)
+Task 9: Update/delete test files that reference v2.1
+
+### IMPLEMENTATION DETAILS
+Files modified:
+1. sisyphus/core/plans/loader.py
+   - Line 6: Removed `from sisyphus.core.plans.exceptions import UnsupportedPlanVersionError`
+   - Lines 36-39: Changed from if/elif/else to if/else, raising ValueError for non-3.0 versions
+   - Lines 20-22: Updated load_plan() docstring Raises section
+   - Lines 57-58: Updated load_multiple_plans() docstring Raises section
+   - Lines 99-101: Updated resolve_current_plan_from_status() docstring Raises section
+
+### PROBLEMS FOR NEXT TASKS
+- Task 8: exceptions.py file likely has UnsupportedPlanVersionError definition - remove it
+- Task 9: Tests may expect UnsupportedPlanVersionError - update to expect ValueError
+
+### VERIFICATION RESULTS
+```
+ruff check sisyphus/core/plans/loader.py: All checks passed
+basedpyright sisyphus/core/plans/loader.py: 0 errors, 0 warnings
+No loader-specific tests exist, but changes verified through static analysis
+```
+
+### UNRESOLVED QUESTIONS
+None - clean removal complete.
+
+### LEARNINGS
+- Simplifying version checks reduces coupling to custom exception classes
+- ValueError sufficient for version validation errors
+- Docstring Raises sections must match actual exceptions raised
+

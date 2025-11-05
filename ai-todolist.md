@@ -58,6 +58,7 @@ is_all_goals_accomplished = FALSE
 parallel_requested = FALSE
 
 # 현재 진행 중인 작업
+- [x] 4. cli/plan.py 수정
 
 # 필요 배경 지식
 
@@ -343,7 +344,7 @@ docs: update A
 
 # TODOs
 
-- [ ] 1. v3.0 모델 확장 (상태 필드 추가)
+- [x] 1. v3.0 모델 확장 (상태 필드 추가)
 
    **참조 소스**:
    - 확장 대상: `projects/sisyphus-cli/sisyphus/core/plans/models.py` (line 47-53: WorkPlan 클래스)
@@ -488,7 +489,7 @@ docs: update A
       - [ ] 타입 체크 통과?
       - [ ] 커밋 완료?
 
-- [ ] 2. TaskManager v3.0 생성
+- [x] 2. TaskManager v3.0 생성
 
    **참조 소스**:
    - 패턴 참조: `sisyphus/core/plan_navigator.py` (v2.1 Navigator - 로직 참고)
@@ -612,7 +613,7 @@ docs: update A
       - [ ] 테스트 통과?
       - [ ] 커밋 완료?
 
-- [ ] 4. cli/plan.py 수정
+- [x] 4. cli/plan.py 수정
 
    **참조 소스**:
    - 수정 대상: `projects/sisyphus-cli/sisyphus/cli/plan.py` (line 127: format_version)
@@ -674,7 +675,7 @@ docs: update A
       - [ ] 테스트 통과?
       - [ ] 커밋 완료?
 
-- [ ] 5. cli/work.py 수정
+- [x] 5. cli/work.py 수정
 
    **참조 소스**:
    - 수정 대상: `projects/sisyphus-cli/sisyphus/cli/work.py` (line 122-138)
@@ -697,7 +698,7 @@ docs: update A
       - [ ] 린트 통과?
       - [ ] 커밋 완료?
 
-- [ ] 6. 프롬프트 텍스트 수정
+- [x] 6. 프롬프트 텍스트 수정
 
    **참조 소스**:
    - 수정 대상: `projects/sisyphus-cli/sisyphus/core/prompts.py`

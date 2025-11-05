@@ -3,7 +3,6 @@ from pathlib import Path
 import anyio
 from ruamel.yaml import YAML
 
-from sisyphus.core.plans.exceptions import UnsupportedPlanVersionError
 from sisyphus.core.plans.models import PlanDocument
 from sisyphus.core.status.manager import StatusManager
 
@@ -19,9 +18,8 @@ async def load_plan(path: Path) -> PlanDocument:
         PlanDocument for v3.0 files
 
     Raises:
-        UnsupportedPlanVersionError: If version is not 3.0
+        ValueError: If version is not 3.0, YAML is invalid, or version missing
         FileNotFoundError: If file doesn't exist
-        ValueError: If YAML is invalid or version missing
     """
     async with await anyio.open_file(path, "r") as f:
         content = await f.read()
@@ -35,12 +33,8 @@ async def load_plan(path: Path) -> PlanDocument:
 
     if version == "3.0":
         return PlanDocument(**data)
-    elif version in ("2.1", "2.0"):
-        raise UnsupportedPlanVersionError(
-            f"Plan version {version} is not supported. Please use 'sisyphus plan convert-legacy' to migrate to v3.0"
-        )
     else:
-        raise ValueError(f"Unknown plan version: {version}")
+        raise ValueError(f"Unsupported version: {version}. Only v3.0 supported.")
 
 
 def _discover_plan_files(root: Path) -> list[Path]:
@@ -61,8 +55,7 @@ async def load_multiple_plans(root: Path) -> dict[str, PlanDocument]:
         Dict of plan_id -> PlanDocument
 
     Raises:
-        UnsupportedPlanVersionError: If any plan is not v3.0
-        ValueError: If any plan has invalid YAML or missing version
+        ValueError: If any plan is not v3.0, has invalid YAML, or missing version
     """
     plan_files = _discover_plan_files(root)
 
@@ -105,7 +98,7 @@ async def resolve_current_plan_from_status(root: Path) -> PlanDocument | None:
 
     Raises:
         FileNotFoundError: If current plan file doesn't exist
-        UnsupportedPlanVersionError: If plan is not v3.0
+        ValueError: If plan is not v3.0
     """
     status_path = root / ".sisyphus" / "status.json"
     manager = StatusManager(status_path)

@@ -350,7 +350,7 @@ docs: update A
    - 확장 대상: `projects/sisyphus-cli/sisyphus/core/plans/models.py` (line 47-53: WorkPlan 클래스)
    - 패턴 참조: `projects/sisyphus-cli/sisyphus/utils/plan_types.py` (line 173-196: Status 관련 클래스들)
 
-   - [ ] 1.1 `core/plans/models.py`에 상태 클래스 + Verification 클래스 추가
+   - [x] 1.1 `core/plans/models.py`에 상태 클래스 + Verification 클래스 추가
 
       **구현 세부사항**:
       - **상태 클래스** (line 8-29 근처, Enum 다음):
@@ -416,7 +416,7 @@ docs: update A
                 return self
         ```
 
-   - [ ] 1.2 `WorkPlan` 클래스에 상태 필드 추가 (기본값 제공)
+   - [x] 1.2 `WorkPlan` 클래스에 상태 필드 추가 (기본값 제공)
 
       **구현 세부사항**:
       - 현재 (line 47-53):
@@ -464,7 +464,7 @@ docs: update A
         ```
       - **중요**: `Field(default_factory=...)` 사용으로 기존 hello-world.yaml (상태 필드 없음) 로드 시 자동으로 기본값 생성
 
-   - [ ] 1.3 테스트 YAML 파일 업데이트
+   - [x] 1.3 테스트 YAML 파일 업데이트
 
       **검증 명령어**:
       ```bash
@@ -473,21 +473,21 @@ docs: update A
       # work_plans[0]에 execution, work_mode, progress 추가
       ```
 
-   - [ ] 1.4 테스트 및 린트
-      - [ ] `uv run pytest projects/sisyphus-cli/tests/core/plans/ -xvs` → 통과
-      - [ ] `uv run ruff check sisyphus/core/plans/models.py` → 0 errors
-      - [ ] `uv run basedpyright sisyphus/core/plans/models.py` → 0 errors
+   - [x] 1.4 테스트 및 린트
+      - [x] `uv run pytest projects/sisyphus-cli/tests/core/plans/ -xvs` → 통과
+      - [x] `uv run ruff check sisyphus/core/plans/models.py` → 0 errors
+      - [x] `uv run basedpyright sisyphus/core/plans/models.py` → 0 errors
 
-   - [ ] 1.5 커밋
+   - [x] 1.5 커밋
       - `git add sisyphus/core/plans/models.py .sisyphus/tasks/hello-world.yaml`
       - `git commit -m "feat: extend v3.0 WorkPlan with execution state fields"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `ExecutionStatus`, `WorkMode`, `Progress` 클래스 추가?
-      - [ ] `WorkPlan`에 4개 상태 필드 추가?
-      - [ ] 테스트 YAML 파일에 상태 필드 포함?
-      - [ ] 타입 체크 통과?
-      - [ ] 커밋 완료?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `ExecutionStatus`, `WorkMode`, `Progress` 클래스 추가?
+      - [x] `WorkPlan`에 4개 상태 필드 추가?
+      - [x] 테스트 YAML 파일에 상태 필드 포함?
+      - [x] 타입 체크 통과?
+      - [x] 커밋 완료?
 
 - [x] 2. TaskManager v3.0 생성
 
@@ -496,7 +496,7 @@ docs: update A
    - 모델 참조: `sisyphus/core/plans/models.py` (v3.0 확장된 `WorkPlan`)
    - 생성 위치: `projects/sisyphus-cli/sisyphus/core/task_manager.py`
 
-   - [ ] 2.1 `TaskManager` 클래스 생성
+   - [x] 2.1 `TaskManager` 클래스 생성
 
       **구현 세부사항**:
       - 입력: `PlanDocument`, `plan_id: str`
@@ -530,39 +530,39 @@ docs: update A
               return self.find_todo_by_id(current_id)
       ```
 
-   - [ ] 2.2 테스트 작성
+   - [x] 2.2 테스트 작성
 
       **테스트 파일**: `projects/sisyphus-cli/tests/core/test_task_manager.py`
       **테스트 항목**:
-      - [ ] WorkPlan 찾기 (존재/부재)
-      - [ ] Todo DFS 탐색
-      - [ ] 다음 pending todo 찾기
-      - [ ] Children 재귀 탐색
-      - [ ] Verification 체크
+      - [x] WorkPlan 찾기 (존재/부재)
+      - [x] Todo DFS 탐색
+      - [x] 다음 pending todo 찾기
+      - [x] Children 재귀 탐색
+      - [x] Verification 체크
 
-   - [ ] 2.3 테스트 실행
-      - [ ] `uv run pytest projects/sisyphus-cli/tests/core/test_task_manager.py -xvs` → 통과
-      - [ ] `uv run ruff check sisyphus/core/task_manager.py` → 0 errors
-      - [ ] `uv run basedpyright sisyphus/core/task_manager.py` → 0 errors
+   - [x] 2.3 테스트 실행
+      - [x] `uv run pytest projects/sisyphus-cli/tests/core/test_task_manager.py -xvs` → 통과
+      - [x] `uv run ruff check sisyphus/core/task_manager.py` → 0 errors
+      - [x] `uv run basedpyright sisyphus/core/task_manager.py` → 0 errors
 
-   - [ ] 2.4 커밋
+   - [x] 2.4 커밋
       - `git add sisyphus/core/task_manager.py tests/core/test_task_manager.py`
       - `git commit -m "feat: add TaskManager for v3.0 PlanDocument"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `TaskManager` 클래스 생성?
-      - [ ] 필수 메서드 구현 (get_current, get_next, find_todo)?
-      - [ ] 테스트 작성 및 통과?
-      - [ ] 타입 체크 통과?
-      - [ ] 커밋 완료?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `TaskManager` 클래스 생성?
+      - [x] 필수 메서드 구현 (get_current, get_next, find_todo)?
+      - [x] 테스트 작성 및 통과?
+      - [x] 타입 체크 통과?
+      - [x] 커밋 완료?
 
-- [ ] 3. cli/task.py 재작성 (v3.0 전용)
+- [x] 3. cli/task.py 재작성 (v3.0 전용)
 
    **참조 소스**:
    - 수정 대상: `projects/sisyphus-cli/sisyphus/cli/task.py` (전체 509줄)
    - 사용 모델: `TaskManager` (Task 2), `load_plan()`, `StatusManager`
 
-   - [ ] 3.1 `task current` 명령 재작성
+   - [x] 3.1 `task current` 명령 재작성
 
       **구현 세부사항**:
       - 현재: `ai-todolist.yaml` 하드코딩, `PlanNavigator`
@@ -572,24 +572,24 @@ docs: update A
         3. `TaskManager(plan_doc, plan_doc.work_plans[0].id)`
         4. `manager.get_current_task()` → Todo 출력
 
-   - [ ] 3.2 `task next` 명령 재작성
+   - [x] 3.2 `task next` 명령 재작성
 
       **구현 세부사항**:
       - 로직: `TaskManager.get_next_task()` 사용
       - 상태 업데이트: YAML 파일의 `work_mode.current_task_id` 저장
 
-   - [ ] 3.3 `task continue` 명령 재작성
+   - [x] 3.3 `task continue` 명령 재작성
 
       **구현 세부사항**:
       - 로직: 현재 작업 → completed, 다음 작업 → in_progress
       - YAML 저장: `ruamel.yaml`로 상태 필드 업데이트
 
-   - [ ] 3.4 기타 명령 재작성
-      - [ ] `task show <id>`
-      - [ ] `task previous`
-      - [ ] verify 서브명령들 (bash, llm, manual, manual-mark, status)
+   - [x] 3.4 기타 명령 재작성
+      - [x] `task show <id>`
+      - [x] `task previous`
+      - [x] verify 서브명령들 (bash, llm, manual, manual-mark, status)
 
-   - [ ] 3.5 모든 `ai-todolist.yaml` 하드코딩 제거
+   - [x] 3.5 모든 `ai-todolist.yaml` 하드코딩 제거
 
       **검증 명령어**:
       ```bash
@@ -597,28 +597,28 @@ docs: update A
       # 결과: 0개 (모두 제거됨)
       ```
 
-   - [ ] 3.6 테스트 작성 및 실행
-      - [ ] `uv run pytest projects/sisyphus-cli/tests/cli/test_task.py -xvs` → 통과
-      - [ ] `uv run ruff check sisyphus/cli/task.py` → 0 errors
+   - [x] 3.6 테스트 작성 및 실행
+      - [x] `uv run pytest projects/sisyphus-cli/tests/cli/test_task.py -xvs` → 통과
+      - [x] `uv run ruff check sisyphus/cli/task.py` → 0 errors
 
-   - [ ] 3.7 커밋
+   - [x] 3.7 커밋
       - `git add sisyphus/cli/task.py tests/cli/test_task.py`
       - `git commit -m "refactor: rewrite task commands for v3.0"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `ai-todolist.yaml` 하드코딩 제거 (0회)?
-      - [ ] `PlanNavigator` import 제거?
-      - [ ] `TaskManager` 사용?
-      - [ ] verify 명령어 모두 동작?
-      - [ ] 테스트 통과?
-      - [ ] 커밋 완료?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `ai-todolist.yaml` 하드코딩 제거 (0회)?
+      - [x] `PlanNavigator` import 제거?
+      - [x] `TaskManager` 사용?
+      - [x] verify 명령어 모두 동작?
+      - [x] 테스트 통과?
+      - [x] 커밋 완료?
 
 - [x] 4. cli/plan.py 수정
 
    **참조 소스**:
    - 수정 대상: `projects/sisyphus-cli/sisyphus/cli/plan.py` (line 127: format_version)
 
-   - [ ] 4.1 `plan init` 템플릿 수정
+   - [x] 4.1 `plan init` 템플릿 수정
 
       **구현 세부사항**:
       - 현재 (line 123-178): `format_version: "2.1"` 템플릿
@@ -655,55 +655,55 @@ docs: update A
         }
         ```
 
-   - [ ] 4.2 `ai-todolist.yaml` 하드코딩 제거
+   - [x] 4.2 `ai-todolist.yaml` 하드코딩 제거
 
       **구현 세부사항**:
       - line 44, 91, 106, 230, 314 등 제거
       - status.json 기반 동적 로드로 변경
 
-   - [ ] 4.3 테스트 및 린트
-      - [ ] `uv run pytest projects/sisyphus-cli/tests/cli/test_plan.py -xvs` → 통과
-      - [ ] `uv run ruff check sisyphus/cli/plan.py` → 0 errors
+   - [x] 4.3 테스트 및 린트
+      - [x] `uv run pytest projects/sisyphus-cli/tests/cli/test_plan.py -xvs` → 통과
+      - [x] `uv run ruff check sisyphus/cli/plan.py` → 0 errors
 
-   - [ ] 4.4 커밋
+   - [x] 4.4 커밋
       - `git add sisyphus/cli/plan.py`
       - `git commit -m "refactor: update plan commands for v3.0"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `init` 템플릿이 v3.0 형식 + 상태 필드 포함?
-      - [ ] `ai-todolist.yaml` 하드코딩 제거?
-      - [ ] 테스트 통과?
-      - [ ] 커밋 완료?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `init` 템플릿이 v3.0 형식 + 상태 필드 포함?
+      - [x] `ai-todolist.yaml` 하드코딩 제거?
+      - [x] 테스트 통과?
+      - [x] 커밋 완료?
 
 - [x] 5. cli/work.py 수정
 
    **참조 소스**:
    - 수정 대상: `projects/sisyphus-cli/sisyphus/cli/work.py` (line 122-138)
 
-   - [ ] 5.1 마크다운 체크 제거
+   - [x] 5.1 마크다운 체크 제거
 
       **구현 세부사항**:
       - 현재 (line 122-138): `ai-todolist.md` 존재 시 에러
       - 변경: 해당 블록 완전 삭제
 
-   - [ ] 5.2 테스트 및 린트
-      - [ ] `uv run ruff check sisyphus/cli/work.py` → 0 errors
+   - [x] 5.2 테스트 및 린트
+      - [x] `uv run ruff check sisyphus/cli/work.py` → 0 errors
 
-   - [ ] 5.3 커밋
+   - [x] 5.3 커밋
       - `git add sisyphus/cli/work.py`
       - `git commit -m "refactor: remove markdown check from work command"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `ai-todolist.md` 체크 로직 제거?
-      - [ ] 린트 통과?
-      - [ ] 커밋 완료?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `ai-todolist.md` 체크 로직 제거?
+      - [x] 린트 통과?
+      - [x] 커밋 완료?
 
 - [x] 6. 프롬프트 텍스트 수정
 
    **참조 소스**:
    - 수정 대상: `projects/sisyphus-cli/sisyphus/core/prompts.py`
 
-   - [ ] 6.1 마크다운 참조 제거
+   - [x] 6.1 마크다운 참조 제거
 
       **구현 세부사항**:
       - 1단계: 존재 여부 먼저 확인
@@ -715,24 +715,24 @@ docs: update A
         - 검색: `ai-todolist.md`
         - 변경: `"the work plan"`, `"the YAML plan"` 등으로 대체
 
-   - [ ] 6.2 테스트 및 린트
-      - [ ] `uv run ruff check sisyphus/core/prompts.py` → 0 errors
+   - [x] 6.2 테스트 및 린트
+      - [x] `uv run ruff check sisyphus/core/prompts.py` → 0 errors
 
-   - [ ] 6.3 커밋
+   - [x] 6.3 커밋
       - `git add sisyphus/core/prompts.py`
       - `git commit -m "refactor: update prompts to remove markdown references"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `ai-todolist.md` 텍스트 모두 제거?
-      - [ ] 린트 통과?
-      - [ ] 커밋 완료?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] `ai-todolist.md` 텍스트 모두 제거?
+      - [x] 린트 통과?
+      - [x] 커밋 완료?
 
-- [ ] 7. v2.1 폴백 제거
+- [x] 7. v2.1 폴백 제거
 
    **참조 소스**:
    - 수정 대상: `projects/sisyphus-cli/sisyphus/core/plans/loader.py` (line 38-43)
 
-   - [ ] 7.1 `plans/loader.py` 수정
+   - [x] 7.1 `plans/loader.py` 수정
 
       **구현 세부사항**:
       - 현재 (line 36-43):
@@ -752,27 +752,27 @@ docs: update A
             raise ValueError(f"Unsupported version: {version}. Only v3.0 supported.")
         ```
 
-   - [ ] 7.2 테스트 수정
+   - [x] 7.2 테스트 수정
       - `tests/core/plans/test_loader_v3.py` 에러 메시지 업데이트
 
-   - [ ] 7.3 테스트 실행
-      - [ ] `uv run pytest projects/sisyphus-cli/tests/core/plans/ -xvs` → 통과
+   - [x] 7.3 테스트 실행
+      - [x] `uv run pytest projects/sisyphus-cli/tests/core/plans/ -xvs` → 통과
 
-   - [ ] 7.4 커밋
+   - [x] 7.4 커밋
       - `git add sisyphus/core/plans/loader.py tests/`
       - `git commit -m "refactor: remove v2.1 fallback from loader"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] v2.1 특별 처리 제거?
-      - [ ] 테스트 통과?
-      - [ ] 커밋 완료?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] v2.1 특별 처리 제거?
+      - [x] 테스트 통과?
+      - [x] 커밋 완료?
 
-- [ ] 8. v2.1 파일 제거
+- [x] 8. v2.1 파일 제거
 
    **참조 소스**:
    - 제거 대상: `plan_types.py`, `plan_navigator.py`, `plan_loader.py`, `tasks.py`
 
-   - [ ] 8.1 파일 삭제
+   - [x] 8.1 파일 삭제
 
       **구현 세부사항**:
       ```bash
@@ -782,7 +782,7 @@ docs: update A
       git rm sisyphus/core/tasks.py
       ```
 
-   - [ ] 8.2 Import 정리
+   - [x] 8.2 Import 정리
 
       **검증 명령어**:
       ```bash
@@ -809,26 +809,26 @@ docs: update A
         - `PlanNavigator` → `TaskManager`
         - `PlanLoader` → `load_plan()` 함수
 
-   - [ ] 8.3 전체 테스트 실행
-      - [ ] `uv run pytest projects/sisyphus-cli/ -x` → 통과
+   - [x] 8.3 전체 테스트 실행
+      - [x] `uv run pytest projects/sisyphus-cli/ -x` → 통과
 
-   - [ ] 8.4 커밋
+   - [x] 8.4 커밋
       - `git add -A`
       - `git commit -m "refactor: remove v2.1 legacy files"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] v2.1 파일 4개 삭제?
-      - [ ] Import 에러 해결?
-      - [ ] 전체 테스트 통과?
-      - [ ] 커밋 완료?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] v2.1 파일 4개 삭제?
+      - [x] Import 에러 해결?
+      - [x] 전체 테스트 통과?
+      - [x] 커밋 완료?
 
-- [ ] 9. 테스트 파일 수정 (핵심 결정 3 - 3단계 전략)
+- [x] 9. 테스트 파일 수정 (핵심 결정 3 - 3단계 전략)
 
    **참조 소스**:
    - 수정 대상: `projects/sisyphus-cli/tests/`
    - 전략: 삭제 (3개) + 재작성 (1개) + 수정 (2개)
 
-   - [ ] 9.1 v2.1 전용 테스트 삭제
+   - [x] 9.1 v2.1 전용 테스트 삭제
 
       **구현 세부사항**:
       ```bash
@@ -838,7 +838,7 @@ docs: update A
       ```
       - 이유: 핵심 결정 3 - v2.1 전용 테스트는 삭제
 
-   - [ ] 9.2 Integration 테스트 재작성
+   - [x] 9.2 Integration 테스트 재작성
 
       **구현 세부사항**:
       - 파일: `tests/test_integration_yaml_plan.py`
@@ -914,7 +914,7 @@ docs: update A
       - 로더: `PlanLoader(path).load()` → `await load_plan(path)`
       - Fixture: v2.1 구조 → v3.0 구조 (version 필드, work_plans 리스트)
 
-   - [ ] 9.3 경로 하드코딩만 수정
+   - [x] 9.3 경로 하드코딩만 수정
 
       **구현 세부사항**:
       - **`tests/test_cli_ignore.py`**:
@@ -925,7 +925,7 @@ docs: update A
         - 변경: 파일 패턴 업데이트 (ai-todolist.md 제거)
         - 로직: 그대로 유지
 
-   - [ ] 9.4 하드코딩 검증
+   - [x] 9.4 하드코딩 검증
 
       **검증 명령어**:
       ```bash
@@ -933,68 +933,68 @@ docs: update A
       # 결과: 0개 (모두 제거됨)
       ```
 
-   - [ ] 9.5 전체 테스트 실행
-      - [ ] `uv run pytest projects/sisyphus-cli/tests/ -x` → 통과
+   - [x] 9.5 전체 테스트 실행
+      - [x] `uv run pytest projects/sisyphus-cli/tests/ -x` → 통과
 
-   - [ ] 9.6 커밋
+   - [x] 9.6 커밋
       - `git add tests/`
       - `git commit -m "test: migrate tests to v3.0 (delete v2.1, rewrite integration, fix paths)"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] v2.1 전용 테스트 3개 삭제?
-      - [ ] Integration 테스트 v3.0 fixture로 재작성?
-      - [ ] 경로 하드코딩 제거?
-      - [ ] 전체 테스트 통과?
-      - [ ] 커밋 완료?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] v2.1 전용 테스트 3개 삭제?
+      - [x] Integration 테스트 v3.0 fixture로 재작성?
+      - [x] 경로 하드코딩 제거?
+      - [x] 전체 테스트 통과?
+      - [x] 커밋 완료?
 
-- [ ] 10. 문서 정리
+- [x] 10. 문서 정리
 
    **참조 소스**:
    - 수정 대상: `docs/`, `README.md`, `AGENTS.md`
 
-   - [ ] 10.1 레거시 문서 정리
+   - [x] 10.1 레거시 문서 정리
 
       **구현 세부사항**:
       - 삭제: `docs/schemas/MIGRATION_v2.0_to_v2.1.md`
       - 삭제: `docs/schemas/ai-todolist-spec-v2.1-final.yaml`
 
-   - [ ] 10.2 README 업데이트
+   - [x] 10.2 README 업데이트
       - v2.1 참조 제거
       - v3.0 전용임을 명시
 
-   - [ ] 10.3 AGENTS.md 업데이트
+   - [x] 10.3 AGENTS.md 업데이트
       - 아키텍처 다이어그램 업데이트
       - `TaskManager` 추가
 
-   - [ ] 10.4 커밋
+   - [x] 10.4 커밋
       - `git add docs/ README.md AGENTS.md`
       - `git commit -m "docs: update documentation for v3.0-only"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] v2.1 문서 제거?
-      - [ ] README/AGENTS.md 업데이트?
-      - [ ] 커밋 완료?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] v2.1 문서 제거?
+      - [x] README/AGENTS.md 업데이트?
+      - [x] 커밋 완료?
 
-- [ ] 11. 최종 검증
+- [x] 11. 최종 검증
 
    **참조 소스**:
    - 전체 코드베이스
 
-   - [ ] 11.1 Grep 검증
+   - [x] 11.1 Grep 검증
 
       **검증 명령어**:
-      - [ ] `grep -r "ai-todolist\\.md" projects/sisyphus-cli/sisyphus/ --exclude-dir=tests` → 0 results
-      - [ ] `grep -r "plan_types" projects/sisyphus-cli/sisyphus/` → 0 results
-      - [ ] `grep -r "PlanNavigator" projects/sisyphus-cli/sisyphus/ | grep -v "#"` → 0 results
+      - [x] `grep -r "ai-todolist\\.md" projects/sisyphus-cli/sisyphus/ --exclude-dir=tests` → 0 results
+      - [x] `grep -r "plan_types" projects/sisyphus-cli/sisyphus/` → 0 results
+      - [x] `grep -r "PlanNavigator" projects/sisyphus-cli/sisyphus/ | grep -v "#"` → 0 results
 
-   - [ ] 11.2 전체 테스트
-      - [ ] `uv run pytest projects/sisyphus-cli/ -xvs` → 통과
+   - [x] 11.2 전체 테스트
+      - [x] `uv run pytest projects/sisyphus-cli/ -xvs` → 통과
 
-   - [ ] 11.3 타입 체크 및 린트
-      - [ ] `uv run basedpyright projects/sisyphus-cli/sisyphus/` → 0 errors
-      - [ ] `uv run ruff check projects/sisyphus-cli/sisyphus/` → 0 errors
+   - [x] 11.3 타입 체크 및 린트
+      - [x] `uv run basedpyright projects/sisyphus-cli/sisyphus/` → 0 errors
+      - [x] `uv run ruff check projects/sisyphus-cli/sisyphus/` → 0 errors
 
-   - [ ] 11.4 수동 기능 테스트
+   - [x] 11.4 수동 기능 테스트
 
       **검증 시나리오**:
       ```bash
@@ -1018,16 +1018,16 @@ docs: update A
       uv run sisyphus task next
       ```
 
-   - [ ] 11.5 최종 커밋
+   - [x] 11.5 최종 커밋
       - `git add -A`
       - `git commit -m "refactor: complete v3.0 migration - remove all v2.1 legacy"`
 
-   - [ ] **작업 완료 검증 체크리스트**
-      - [ ] Grep 검증 통과?
-      - [ ] 전체 테스트 통과?
-      - [ ] 타입 체크 및 린트 0 errors?
-      - [ ] 수동 기능 테스트 정상?
-      - [ ] 최종 커밋 완료?
+   - [x] **작업 완료 검증 체크리스트**
+      - [x] Grep 검증 통과?
+      - [x] 전체 테스트 통과?
+      - [x] 타입 체크 및 린트 0 errors?
+      - [x] 수동 기능 테스트 정상?
+      - [x] 최종 커밋 완료?
 
 # 성공 비전
 
@@ -1052,23 +1052,23 @@ docs: update A
 
 # 최종 작업 검증 체크리스트
 
-- [ ] 1. **기능 동작 확인**
-  - [ ] v3.0 플랜 생성: 상태 필드 포함
-  - [ ] task current/next 동작
-  - [ ] verify 명령어 동작
+- [x] 1. **기능 동작 확인**
+  - [x] v3.0 플랜 생성: 상태 필드 포함
+  - [x] task current/next 동작
+  - [x] verify 명령어 동작
 
-- [ ] 2. **레거시 코드 제거 확인**
-  - [ ] v2.1 파일 4개 제거
-  - [ ] `ai-todolist.md` 참조 0개
-  - [ ] `PlanNavigator` 사용 0개
+- [x] 2. **레거시 코드 제거 확인**
+  - [x] v2.1 파일 4개 제거
+  - [x] `ai-todolist.md` 참조 0개
+  - [x] `PlanNavigator` 사용 0개
 
-- [ ] 3. **기존 기능 회귀 테스트**
-  - [ ] 전체 테스트 통과
-  - [ ] 타입 체크 0 errors
-  - [ ] Lint 0 errors
+- [x] 3. **기존 기능 회귀 테스트**
+  - [x] 전체 테스트 통과
+  - [x] 타입 체크 0 errors
+  - [x] Lint 0 errors
 
-- [ ] 4. **요구사항 준수 확인**
-  - [ ] v3.0 YAML에 모든 상태 포함
-  - [ ] status.json 스펙 변경 없음
-  - [ ] work/plan/task/verify 모든 기능 동작
-  - [ ] "미지원" 같은 내용 없음
+- [x] 4. **요구사항 준수 확인**
+  - [x] v3.0 YAML에 모든 상태 포함
+  - [x] status.json 스펙 변경 없음
+  - [x] work/plan/task/verify 모든 기능 동작
+  - [x] "미지원" 같은 내용 없음

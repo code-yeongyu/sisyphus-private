@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
 
 from sisyphus.cli import app
+from sisyphus.cli.common import resolve_cwd
 
 pytestmark = [
     pytest.mark.anyio,
@@ -396,7 +398,6 @@ def test_task_continue__with_cwd_option__resolves_path(tmp_path: Path) -> None:
 
 def test_resolve_cwd__with_none__returns_current_directory() -> None:
     # given
-    from sisyphus.cli.common import resolve_cwd
 
     # when
     result = resolve_cwd(None)
@@ -407,10 +408,6 @@ def test_resolve_cwd__with_none__returns_current_directory() -> None:
 
 def test_resolve_cwd__with_relative_path__converts_to_absolute(tmp_path: Path) -> None:
     # given
-    import os
-
-    from sisyphus.cli.common import resolve_cwd
-
     original_cwd = Path.cwd()
     try:
         os.chdir(tmp_path)
@@ -429,7 +426,6 @@ def test_resolve_cwd__with_relative_path__converts_to_absolute(tmp_path: Path) -
 
 def test_resolve_cwd__with_absolute_path__returns_as_is(tmp_path: Path) -> None:
     # given
-    from sisyphus.cli.common import resolve_cwd
 
     # when
     result = resolve_cwd(str(tmp_path))

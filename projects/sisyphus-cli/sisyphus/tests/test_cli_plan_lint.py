@@ -14,42 +14,55 @@ runner = CliRunner()
 async def test_plan_lint__when_valid_yaml__exits_0(tmp_path: Path) -> None:
     # given
     yaml_file = tmp_path / "test.yaml"
-    yaml_content = """metadata:
+    yaml_content = """version: "3.0"
+metadata:
   created_at: "2025-01-01"
   updated_at: "2025-01-01"
-user_request:
-  original: "Test"
-  created_at: "2025-01-01"
-objectives:
-  core: "Test objective"
-background:
-  current_situation: "A"
-  reason_for_change: "B"
-  changes_to_make: "C"
-required_background:
-  description: "Test"
-status:
-  execution:
-    started: false
-    completed: false
-  work_mode:
-    parallel_requested: false
-  progress:
-    total_tasks: 1
-    completed: 0
-    in_progress: 0
-    pending: 1
-  current_work: "None"
-workflow:
-  dependency_diagram: "Test"
-todos:
-  - id: "1"
-    title: "Test task"
-    status: "pending"
-    created_at: "2025-01-01"
-    updated_at: "2025-01-01"
-success_vision: {}
-final_verification: []
+work_plans:
+  - id: "test-plan"
+    name: "Test Plan"
+    depends_on: []
+    user_request:
+      original: "Test"
+      created_at: "2025-01-01"
+      additional: []
+    objectives:
+      core: "Test objective"
+      detailed: []
+    background:
+      current_situation: "A"
+      reason_for_change: "B"
+      changes_to_make: "C"
+    required_background:
+      description: "Test"
+      file_structure: null
+      references: []
+    workflow:
+      dependency_diagram: "Test"
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
+    todos:
+      - id: "1"
+        title: "Test task"
+        status: "pending"
+    execution:
+      started: false
+      completed: false
+      started_at: null
+      completed_at: null
+    work_mode:
+      parallel_requested: false
+      current_task_id: null
+    progress:
+      total_tasks: 1
+      completed: 0
+      in_progress: 0
+      pending: 1
+    current_work: ""
 """
     yaml_file.write_text(yaml_content)
 
@@ -64,8 +77,8 @@ final_verification: []
 async def test_plan_lint__when_missing_fields__exits_1_and_shows_errors(tmp_path: Path) -> None:
     # given
     yaml_file = tmp_path / "invalid.yaml"
-    yaml_content = """metadata:
-  created_at: "2025-01-01"
+    yaml_content = """version: "3.0"
+work_plans: []
 """
     yaml_file.write_text(yaml_content)
 
@@ -81,37 +94,52 @@ async def test_plan_lint__when_missing_fields__exits_1_and_shows_errors(tmp_path
 async def test_plan_lint__when_type_mismatch__exits_1_and_shows_type_error(tmp_path: Path) -> None:
     # given
     yaml_file = tmp_path / "type_error.yaml"
-    yaml_content = """metadata:
+    yaml_content = """version: "3.0"
+metadata:
   created_at: "2025-01-01"
   updated_at: "2025-01-01"
-user_request:
-  original: "Test"
-  created_at: "2025-01-01"
-objectives:
-  core: "Test"
-background:
-  current_situation: "A"
-  reason_for_change: "B"
-  changes_to_make: "C"
-required_background:
-  description: "Test"
-status:
-  execution:
-    started: "true"
-    completed: false
-  work_mode:
-    parallel_requested: false
-  progress:
-    total_tasks: 0
-    completed: 0
-    in_progress: 0
-    pending: 0
-  current_work: "None"
-workflow:
-  dependency_diagram: "Test"
-todos: []
-success_vision: {}
-final_verification: []
+work_plans:
+  - id: "test-plan"
+    name: "Test Plan"
+    depends_on: []
+    user_request:
+      original: "Test"
+      created_at: "2025-01-01"
+      additional: []
+    objectives:
+      core: "Test"
+      detailed: []
+    background:
+      current_situation: "A"
+      reason_for_change: "B"
+      changes_to_make: "C"
+    required_background:
+      description: "Test"
+      file_structure: null
+      references: []
+    workflow:
+      dependency_diagram: "Test"
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
+    todos: []
+    execution:
+      started: "true"
+      completed: false
+      started_at: null
+      completed_at: null
+    work_mode:
+      parallel_requested: false
+      current_task_id: null
+    progress:
+      total_tasks: 0
+      completed: 0
+      in_progress: 0
+      pending: 0
+    current_work: ""
 """
     yaml_file.write_text(yaml_content)
 
@@ -121,7 +149,7 @@ final_verification: []
     # then
     assert result.exit_code == 1
     assert "Validation failed" in result.stdout
-    assert "status.execution.started" in result.stdout
+    assert "work_plans[0].execution.started" in result.stdout
     assert "Type mismatch" in result.stdout
 
 
@@ -137,42 +165,55 @@ async def test_plan_lint__when_file_not_found__exits_1() -> None:
 async def test_plan_lint__when_invalid_enum__exits_1_and_shows_enum_error(tmp_path: Path) -> None:
     # given
     yaml_file = tmp_path / "enum_error.yaml"
-    yaml_content = """metadata:
+    yaml_content = """version: "3.0"
+metadata:
   created_at: "2025-01-01"
   updated_at: "2025-01-01"
-user_request:
-  original: "Test"
-  created_at: "2025-01-01"
-objectives:
-  core: "Test"
-background:
-  current_situation: "A"
-  reason_for_change: "B"
-  changes_to_make: "C"
-required_background:
-  description: "Test"
-status:
-  execution:
-    started: false
-    completed: false
-  work_mode:
-    parallel_requested: false
-  progress:
-    total_tasks: 0
-    completed: 0
-    in_progress: 0
-    pending: 0
-  current_work: "None"
-workflow:
-  dependency_diagram: "Test"
-todos:
-  - id: "1"
-    title: "Task"
-    status: "invalid_status"
-    created_at: "2025-01-01"
-    updated_at: "2025-01-01"
-success_vision: {}
-final_verification: []
+work_plans:
+  - id: "test-plan"
+    name: "Test Plan"
+    depends_on: []
+    user_request:
+      original: "Test"
+      created_at: "2025-01-01"
+      additional: []
+    objectives:
+      core: "Test"
+      detailed: []
+    background:
+      current_situation: "A"
+      reason_for_change: "B"
+      changes_to_make: "C"
+    required_background:
+      description: "Test"
+      file_structure: null
+      references: []
+    workflow:
+      dependency_diagram: "Test"
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
+    todos:
+      - id: "1"
+        title: "Task"
+        status: "invalid_status"
+    execution:
+      started: false
+      completed: false
+      started_at: null
+      completed_at: null
+    work_mode:
+      parallel_requested: false
+      current_task_id: null
+    progress:
+      total_tasks: 0
+      completed: 0
+      in_progress: 0
+      pending: 0
+    current_work: ""
 """
     yaml_file.write_text(yaml_content)
 
@@ -182,7 +223,7 @@ final_verification: []
     # then
     assert result.exit_code == 1
     assert "Validation failed" in result.stdout
-    assert "todos[0].status" in result.stdout
+    assert "work_plans[0].todos[0].status" in result.stdout
     assert "Invalid enum" in result.stdout
 
 

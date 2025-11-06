@@ -41,7 +41,7 @@ class PlanLinter:
         self.errors: list[LintError] = []
 
     def lint(self, yaml_data: dict[str, Any]) -> list[LintError]:
-        """Lint YAML data and return all errors.
+        """Lint YAML data and return all errors (v3.0 PlanDocument).
 
         Args:
             yaml_data: Parsed YAML dictionary
@@ -50,55 +50,22 @@ class PlanLinter:
             List of lint errors (empty if valid)
         """
         self.errors = []
-        self._validate_root_fields(yaml_data)
+        self._validate_root_fields(yaml_data)  # v3.0 PlanDocument validation
         self._validate_metadata(yaml_data)
-        self._validate_user_request(yaml_data)
-        self._validate_objectives(yaml_data)
-        self._validate_background(yaml_data)
-        self._validate_required_background(yaml_data)
-        self._validate_status(yaml_data)
-        self._validate_workflow(yaml_data)
-        self._validate_todos(yaml_data)
-        self._validate_success_vision(yaml_data)
-        self._validate_final_verification(yaml_data)
+        # work_plans validation is handled in _validate_root_fields
         self._validate_reference_integrity(yaml_data)
         return self.errors
 
     def _validate_root_fields(self, data: dict[str, Any]) -> None:
-        """Validate WorkPlan root required fields.
+        """Validate PlanDocument root fields (v3.0).
 
-        Note: WorkPlan root allows extra fields (model_config extra='allow' in plan_types.py:293)
-        for Pydantic compatibility, but nested objects (Metadata, Status, etc.) are strict.
-        PlanLinter is independent of Pydantic → validates strictly at all levels for LLM usage.
+        v3.0 structure: PlanDocument contains version, metadata, and work_plans list.
+        Each work_plan in the list is validated separately.
         """
-        allowed_root = {
-            "metadata",
-            "user_request",
-            "objectives",
-            "background",
-            "required_background",
-            "status",
-            "workflow",
-            "todos",
-            "success_vision",
-            "final_verification",
-        }
-        # DECISION: Linter validates strictly even at root level
-        # (WorkPlan's extra='allow' is for Pydantic tolerance, not YAML lint tolerance)
+        allowed_root = {"version", "metadata", "work_plans"}
         self._check_extra_fields(data, "", allowed_root)
 
-        required_fields = [
-            "metadata",
-            "user_request",
-            "objectives",
-            "background",
-            "required_background",
-            "status",
-            "workflow",
-            "todos",
-            "success_vision",
-            "final_verification",
-        ]
+        required_fields = ["version", "metadata", "work_plans"]
         for field in required_fields:
             if field not in data:
                 self.errors.append(
@@ -109,6 +76,423 @@ class PlanLinter:
                         suggestion=f"Add '{field}' section to YAML",
                     )
                 )
+
+        if "version" in data:
+            self._check_type(data["version"], "version", "string")
+            if isinstance(data["version"], str) and data["version"] != "3.0":
+                self.errors.append(
+                    LintError(
+                        location="version",
+                        message="Unsupported version",
+                        expected="3.0",
+                        actual=data["version"],
+                        suggestion="Change version to '3.0'",
+                    )
+                )
+
+        if "work_plans" in data:
+            self._check_type(data["work_plans"], "work_plans", "list")
+            if isinstance(data["work_plans"], list):
+                for i, plan in enumerate(data["work_plans"]):
+                    self._validate_work_plan(plan, f"work_plans[{i}]")
+
+    def _validate_work_plan(self, plan: dict[str, Any], path: str) -> None:
+        """Validate individual WorkPlan fields (v3.0).
+
+        Validates a single work plan from the work_plans list.
+        Reuses existing validation methods for nested structures.
+        """
+        if not isinstance(plan, dict):
+            self._check_type(plan, path, "dict")
+            return
+
+        allowed_fields = {
+            "id",
+            "name",
+            "depends_on",
+            "user_request",
+            "objectives",
+            "background",
+            "required_background",
+            "workflow",
+            "success_vision",
+            "final_verification",
+            "todos",
+            "references",
+            "execution",
+            "work_mode",
+            "progress",
+            "current_work",
+        }
+        self._check_extra_fields(plan, path, allowed_fields)
+
+        required_fields = [
+            "id",
+            "name",
+            "user_request",
+            "objectives",
+            "background",
+            "required_background",
+            "workflow",
+            "success_vision",
+            "final_verification",
+            "todos",
+        ]
+        for field in required_fields:
+            if field not in plan:
+                self.errors.append(
+                    LintError(
+                        location=f"{path}.{field}",
+                        message="Missing required field",
+                        expected="field must exist",
+                        suggestion=f"Add '{field}' to {path}",
+                    )
+                )
+
+        if "id" in plan:
+            self._check_type(plan["id"], f"{path}.id", "string")
+        if "name" in plan:
+            self._check_type(plan["name"], f"{path}.name", "string")
+        if "depends_on" in plan:
+            self._check_type(plan["depends_on"], f"{path}.depends_on", "list")
+
+        if "user_request" in plan:
+            self._validate_user_request_in_plan(plan["user_request"], f"{path}.user_request")
+        if "objectives" in plan:
+            self._validate_objectives_in_plan(plan["objectives"], f"{path}.objectives")
+        if "background" in plan:
+            self._validate_background_in_plan(plan["background"], f"{path}.background")
+        if "required_background" in plan:
+            self._validate_required_background_in_plan(plan["required_background"], f"{path}.required_background")
+        if "workflow" in plan:
+            self._validate_workflow_in_plan(plan["workflow"], f"{path}.workflow")
+        if "success_vision" in plan:
+            self._validate_success_vision_in_plan(plan["success_vision"], f"{path}.success_vision")
+        if "final_verification" in plan:
+            self._validate_final_verification_in_plan(plan["final_verification"], f"{path}.final_verification")
+        if "todos" in plan:
+            self._validate_todos_in_plan(plan["todos"], f"{path}.todos")
+
+        if "execution" in plan:
+            self._validate_execution_in_plan(plan["execution"], f"{path}.execution")
+        if "work_mode" in plan:
+            self._validate_work_mode_in_plan(plan["work_mode"], f"{path}.work_mode")
+        if "progress" in plan:
+            self._validate_progress_in_plan(plan["progress"], f"{path}.progress")
+        if "current_work" in plan:
+            self._check_type(plan["current_work"], f"{path}.current_work", "string")
+
+    def _validate_user_request_in_plan(self, user_req: Any, path: str) -> None:
+        """Validate user_request within a work plan."""
+        if not isinstance(user_req, dict):
+            self._check_type(user_req, path, "dict")
+            return
+
+        allowed_fields = {"original", "created_at", "additional"}
+        self._check_extra_fields(user_req, path, allowed_fields)
+        self._validate_nested_required(user_req, path, ["original", "created_at"])
+
+        if "original" in user_req:
+            self._check_type(user_req["original"], f"{path}.original", "string")
+        if "created_at" in user_req:
+            self._check_type(user_req["created_at"], f"{path}.created_at", "string")
+        if "additional" in user_req:
+            self._check_type(user_req["additional"], f"{path}.additional", "list")
+
+    def _validate_objectives_in_plan(self, objectives: Any, path: str) -> None:
+        """Validate objectives within a work plan."""
+        if not isinstance(objectives, dict):
+            self._check_type(objectives, path, "dict")
+            return
+
+        allowed_fields = {"core", "detailed"}
+        self._check_extra_fields(objectives, path, allowed_fields)
+        self._validate_nested_required(objectives, path, ["core"])
+
+        if "core" in objectives:
+            self._check_type(objectives["core"], f"{path}.core", "string")
+        if "detailed" in objectives:
+            self._check_type(objectives["detailed"], f"{path}.detailed", "list")
+            if isinstance(objectives["detailed"], list):
+                for i, detail in enumerate(objectives["detailed"]):
+                    detail_path = f"{path}.detailed[{i}]"
+                    if not isinstance(detail, dict):
+                        self._check_type(detail, detail_path, "dict")
+                        continue
+                    allowed_detail_fields = {"goal", "measurable"}
+                    self._check_extra_fields(detail, detail_path, allowed_detail_fields)
+                    self._validate_nested_required(detail, detail_path, ["goal", "measurable"])
+                    if "goal" in detail:
+                        self._check_type(detail["goal"], f"{detail_path}.goal", "string")
+                    if "measurable" in detail:
+                        self._check_type(detail["measurable"], f"{detail_path}.measurable", "string")
+
+    def _validate_background_in_plan(self, background: Any, path: str) -> None:
+        """Validate background within a work plan."""
+        if not isinstance(background, dict):
+            self._check_type(background, path, "dict")
+            return
+
+        allowed_fields = {"current_situation", "reason_for_change", "changes_to_make"}
+        self._check_extra_fields(background, path, allowed_fields)
+        self._validate_nested_required(background, path, ["current_situation", "reason_for_change", "changes_to_make"])
+
+        if "current_situation" in background:
+            self._check_type(background["current_situation"], f"{path}.current_situation", "string")
+        if "reason_for_change" in background:
+            self._check_type(background["reason_for_change"], f"{path}.reason_for_change", "string")
+        if "changes_to_make" in background:
+            self._check_type(background["changes_to_make"], f"{path}.changes_to_make", "string")
+
+    def _validate_required_background_in_plan(self, req_bg: Any, path: str) -> None:
+        """Validate required_background within a work plan."""
+        if not isinstance(req_bg, dict):
+            self._check_type(req_bg, path, "dict")
+            return
+
+        allowed_fields = {"description", "file_structure", "references"}
+        self._check_extra_fields(req_bg, path, allowed_fields)
+        self._validate_nested_required(req_bg, path, ["description"])
+
+        if "description" in req_bg:
+            self._check_type(req_bg["description"], f"{path}.description", "string")
+        if "file_structure" in req_bg and req_bg["file_structure"] is not None:
+            self._check_type(req_bg["file_structure"], f"{path}.file_structure", "string")
+        if "references" in req_bg:
+            self._check_type(req_bg["references"], f"{path}.references", "list")
+            if isinstance(req_bg["references"], list):
+                for i, ref in enumerate(req_bg["references"]):
+                    self._validate_reference_spec(ref, f"{path}.references[{i}]")
+
+    def _validate_workflow_in_plan(self, workflow: Any, path: str) -> None:
+        """Validate workflow within a work plan."""
+        if not isinstance(workflow, dict):
+            self._check_type(workflow, path, "dict")
+            return
+
+        allowed_fields = {"dependency_diagram", "critical_path"}
+        self._check_extra_fields(workflow, path, allowed_fields)
+        self._validate_nested_required(workflow, path, ["dependency_diagram"])
+
+        if "dependency_diagram" in workflow:
+            self._check_type(workflow["dependency_diagram"], f"{path}.dependency_diagram", "string")
+        if "critical_path" in workflow:
+            self._check_type(workflow["critical_path"], f"{path}.critical_path", "list")
+
+    def _validate_success_vision_in_plan(self, success_vision: Any, path: str) -> None:
+        """Validate success_vision within a work plan."""
+        if not isinstance(success_vision, dict):
+            self._check_type(success_vision, path, "dict")
+            return
+
+        allowed_fields = {"user_perspective", "business_perspective", "technical_criteria"}
+        self._check_extra_fields(success_vision, path, allowed_fields)
+
+        if "user_perspective" in success_vision:
+            self._check_type(success_vision["user_perspective"], f"{path}.user_perspective", "list")
+            if isinstance(success_vision["user_perspective"], list):
+                for i, scenario in enumerate(success_vision["user_perspective"]):
+                    scenario_path = f"{path}.user_perspective[{i}]"
+                    if not isinstance(scenario, dict):
+                        self._check_type(scenario, scenario_path, "dict")
+                        continue
+                    allowed_scenario_fields = {"scenario", "experience"}
+                    self._check_extra_fields(scenario, scenario_path, allowed_scenario_fields)
+                    self._validate_nested_required(scenario, scenario_path, ["scenario", "experience"])
+                    if "scenario" in scenario:
+                        self._check_type(scenario["scenario"], f"{scenario_path}.scenario", "string")
+                    if "experience" in scenario:
+                        self._check_type(scenario["experience"], f"{scenario_path}.experience", "string")
+
+        if "business_perspective" in success_vision:
+            self._check_type(success_vision["business_perspective"], f"{path}.business_perspective", "list")
+            if isinstance(success_vision["business_perspective"], list):
+                for i, metric in enumerate(success_vision["business_perspective"]):
+                    metric_path = f"{path}.business_perspective[{i}]"
+                    if not isinstance(metric, dict):
+                        self._check_type(metric, metric_path, "dict")
+                        continue
+                    allowed_metric_fields = {"metric", "target"}
+                    self._check_extra_fields(metric, metric_path, allowed_metric_fields)
+                    self._validate_nested_required(metric, metric_path, ["metric", "target"])
+                    if "metric" in metric:
+                        self._check_type(metric["metric"], f"{metric_path}.metric", "string")
+                    if "target" in metric:
+                        self._check_type(metric["target"], f"{metric_path}.target", "string")
+
+        if "technical_criteria" in success_vision:
+            self._check_type(success_vision["technical_criteria"], f"{path}.technical_criteria", "list")
+            if isinstance(success_vision["technical_criteria"], list):
+                for i, criterion in enumerate(success_vision["technical_criteria"]):
+                    criterion_path = f"{path}.technical_criteria[{i}]"
+                    if not isinstance(criterion, dict):
+                        self._check_type(criterion, criterion_path, "dict")
+                        continue
+                    allowed_criterion_fields = {"category", "criteria", "command", "expected"}
+                    self._check_extra_fields(criterion, criterion_path, allowed_criterion_fields)
+                    self._validate_nested_required(criterion, criterion_path, ["category", "criteria", "expected"])
+                    if "category" in criterion:
+                        self._check_type(criterion["category"], f"{criterion_path}.category", "string")
+                    if "criteria" in criterion:
+                        self._check_type(criterion["criteria"], f"{criterion_path}.criteria", "string")
+                    if "command" in criterion and criterion["command"] is not None:
+                        self._check_type(criterion["command"], f"{criterion_path}.command", "string")
+                    if "expected" in criterion:
+                        self._check_type(criterion["expected"], f"{criterion_path}.expected", "string")
+
+    def _validate_final_verification_in_plan(self, final_verification: Any, path: str) -> None:
+        """Validate final_verification within a work plan."""
+        if not isinstance(final_verification, list):
+            self._check_type(final_verification, path, "list")
+            return
+
+        for i, item in enumerate(final_verification):
+            item_path = f"{path}[{i}]"
+            if not isinstance(item, dict):
+                self._check_type(item, item_path, "dict")
+                continue
+
+            allowed_item_fields = {
+                "id",
+                "title",
+                "category",
+                "description",
+                "verified",
+                "verified_at",
+                "verification_evidence",
+                "orchestrator_manually_verified",
+                "manual_verification_evidence",
+                "bash",
+                "llm_judge",
+            }
+            self._check_extra_fields(item, item_path, allowed_item_fields)
+            self._validate_nested_required(
+                item,
+                item_path,
+                [
+                    "id",
+                    "title",
+                    "category",
+                    "description",
+                    "orchestrator_manually_verified",
+                    "manual_verification_evidence",
+                ],
+            )
+
+            if "id" in item:
+                self._check_type(item["id"], f"{item_path}.id", "string")
+            if "title" in item:
+                self._check_type(item["title"], f"{item_path}.title", "string")
+            if "category" in item:
+                self._check_type(item["category"], f"{item_path}.category", "string")
+            if "description" in item:
+                self._check_type(item["description"], f"{item_path}.description", "string")
+            if "verified" in item:
+                self._check_type(item["verified"], f"{item_path}.verified", "boolean")
+            if "verified_at" in item and item["verified_at"] is not None:
+                self._check_type(item["verified_at"], f"{item_path}.verified_at", "string")
+            if "verification_evidence" in item and item["verification_evidence"] is not None:
+                self._check_type(item["verification_evidence"], f"{item_path}.verification_evidence", "string")
+            if "orchestrator_manually_verified" in item:
+                self._check_type(
+                    item["orchestrator_manually_verified"], f"{item_path}.orchestrator_manually_verified", "boolean"
+                )
+            if "manual_verification_evidence" in item:
+                self._check_type(
+                    item["manual_verification_evidence"], f"{item_path}.manual_verification_evidence", "string"
+                )
+
+            has_bash = "bash" in item and item["bash"]
+            has_llm = "llm_judge" in item and item["llm_judge"]
+            if not has_bash and not has_llm:
+                self.errors.append(
+                    LintError(
+                        location=item_path,
+                        message="bash or llm_judge is required",
+                        expected="at least one of bash or llm_judge",
+                        actual="neither present",
+                        suggestion="Add 'bash' or 'llm_judge' field",
+                    )
+                )
+
+            if has_bash:
+                self._validate_bash_list(item["bash"], f"{item_path}.bash")
+            if has_llm:
+                self._validate_llm_judge_list(item["llm_judge"], f"{item_path}.llm_judge")
+
+    def _validate_todos_in_plan(self, todos: Any, path: str) -> None:
+        """Validate todos within a work plan."""
+        if not isinstance(todos, list):
+            self._check_type(todos, path, "list")
+            return
+
+        if len(todos) == 0:
+            self.errors.append(
+                LintError(
+                    location=path,
+                    message="Empty todos list",
+                    expected="at least one todo",
+                    actual="empty list",
+                    suggestion="Add at least one todo item to the todos list",
+                )
+            )
+            return
+
+        for i, todo in enumerate(todos):
+            self._validate_todo(todo, f"{path}[{i}]")
+
+    def _validate_execution_in_plan(self, exec_data: Any, path: str) -> None:
+        """Validate execution field within a work plan (v3.0)."""
+        if not isinstance(exec_data, dict):
+            self._check_type(exec_data, path, "dict")
+            return
+
+        allowed_exec_fields = {"started", "completed", "started_at", "completed_at"}
+        self._check_extra_fields(exec_data, path, allowed_exec_fields)
+        self._validate_nested_required(exec_data, path, ["started", "completed"])
+
+        if "started" in exec_data:
+            self._check_type(exec_data["started"], f"{path}.started", "boolean")
+        if "completed" in exec_data:
+            self._check_type(exec_data["completed"], f"{path}.completed", "boolean")
+        if "started_at" in exec_data and exec_data["started_at"] is not None:
+            self._check_type(exec_data["started_at"], f"{path}.started_at", "string")
+        if "completed_at" in exec_data and exec_data["completed_at"] is not None:
+            self._check_type(exec_data["completed_at"], f"{path}.completed_at", "string")
+
+    def _validate_work_mode_in_plan(self, work_mode: Any, path: str) -> None:
+        """Validate work_mode field within a work plan (v3.0)."""
+        if not isinstance(work_mode, dict):
+            self._check_type(work_mode, path, "dict")
+            return
+
+        allowed_wm_fields = {"parallel_requested", "current_task_id"}
+        self._check_extra_fields(work_mode, path, allowed_wm_fields)
+        self._validate_nested_required(work_mode, path, ["parallel_requested"])
+
+        if "parallel_requested" in work_mode:
+            self._check_type(work_mode["parallel_requested"], f"{path}.parallel_requested", "boolean")
+        if "current_task_id" in work_mode and work_mode["current_task_id"] is not None:
+            self._check_type(work_mode["current_task_id"], f"{path}.current_task_id", "string")
+
+    def _validate_progress_in_plan(self, progress: Any, path: str) -> None:
+        """Validate progress field within a work plan (v3.0)."""
+        if not isinstance(progress, dict):
+            self._check_type(progress, path, "dict")
+            return
+
+        allowed_prog_fields = {"total_tasks", "completed", "in_progress", "pending"}
+        self._check_extra_fields(progress, path, allowed_prog_fields)
+        self._validate_nested_required(progress, path, ["total_tasks", "completed", "in_progress", "pending"])
+
+        if "total_tasks" in progress:
+            self._check_type(progress["total_tasks"], f"{path}.total_tasks", "int")
+        if "completed" in progress:
+            self._check_type(progress["completed"], f"{path}.completed", "int")
+        if "in_progress" in progress:
+            self._check_type(progress["in_progress"], f"{path}.in_progress", "int")
+        if "pending" in progress:
+            self._check_type(progress["pending"], f"{path}.pending", "int")
 
     def _validate_nested_required(self, data: dict[str, Any], path: str, required_fields: list[str]) -> None:
         """Validate required fields in nested object."""
@@ -252,26 +636,24 @@ class PlanLinter:
         return True
 
     def _validate_metadata(self, data: dict[str, Any]) -> None:
-        """Validate metadata section."""
+        """Validate metadata section (PlanDocument.metadata)."""
         if "metadata" not in data:
-            return  # Already caught by root validation
+            return
         metadata = data["metadata"]
 
         if not isinstance(metadata, dict):
             self._check_type(metadata, "metadata", "dict")
             return
 
-        allowed_fields = {"created_at", "updated_at", "format_version"}
+        allowed_fields = {"created_at", "updated_at"}
         self._check_extra_fields(metadata, "metadata", allowed_fields)
 
-        self._validate_nested_required(metadata, "metadata", ["created_at", "updated_at"])
+        self._validate_nested_required(metadata, "metadata", ["created_at"])
 
         if "created_at" in metadata:
             self._check_type(metadata["created_at"], "metadata.created_at", "string")
-        if "updated_at" in metadata:
+        if "updated_at" in metadata and metadata["updated_at"] is not None:
             self._check_type(metadata["updated_at"], "metadata.updated_at", "string")
-        if "format_version" in metadata:
-            self._check_type(metadata["format_version"], "metadata.format_version", "string")
 
     def _validate_user_request(self, data: dict[str, Any]) -> None:
         """Validate user_request section."""
@@ -587,7 +969,7 @@ class PlanLinter:
             self._validate_todo(todo, f"todos[{i}]")
 
     def _validate_todo(self, todo: Any, path: str) -> None:
-        """Validate single todo item (recursive)."""
+        """Validate single todo item (v3.0)."""
         if not isinstance(todo, dict):
             self._check_type(todo, path, "dict")
             return
@@ -595,73 +977,40 @@ class PlanLinter:
         allowed_fields = {
             "id",
             "title",
+            "description",
             "status",
-            "parallel_group",
-            "created_at",
-            "updated_at",
-            "status_changed_at",
-            "references",
-            "details",
-            "verification_spec",
             "children",
-            "parallel_note",
+            "references",
+            "verification_spec",
         }
         self._check_extra_fields(todo, path, allowed_fields)
 
-        self._validate_nested_required(todo, path, ["id", "title", "status", "created_at", "updated_at"])
+        self._validate_nested_required(todo, path, ["id", "title", "status"])
 
-        # Validate id (accepts both string and int, pattern validation)
         if "id" in todo:
-            todo_id = str(todo["id"])
-            pattern = r"^\d+(\.\d+)*$"
-            self._check_pattern(
-                todo_id,
-                f"{path}.id",
-                pattern,
-                "numeric ID with optional dots (e.g., '1', '1.1', '1.1.1')",
-            )
+            self._check_type(todo["id"], f"{path}.id", "string")
 
-        # Validate title
         if "title" in todo:
             self._check_type(todo["title"], f"{path}.title", "string")
 
-        # Validate status (TodoStatus enum)
+        if "description" in todo and todo["description"] is not None:
+            self._check_type(todo["description"], f"{path}.description", "string")
+
         if "status" in todo:
             self._check_enum(todo["status"], f"{path}.status", TodoStatus)
 
-        # Validate parallel_group
-        if "parallel_group" in todo and todo["parallel_group"] is not None:
-            self._check_type(todo["parallel_group"], f"{path}.parallel_group", "int")
-
-        # Validate timestamps
-        if "created_at" in todo:
-            self._check_type(todo["created_at"], f"{path}.created_at", "string")
-        if "updated_at" in todo:
-            self._check_type(todo["updated_at"], f"{path}.updated_at", "string")
-        if "status_changed_at" in todo and todo["status_changed_at"] is not None:
-            self._check_type(todo["status_changed_at"], f"{path}.status_changed_at", "string")
-
-        # Validate references (v2.1: all references are ReferenceItem with type field)
         if "references" in todo:
             self._check_type(todo["references"], f"{path}.references", "list")
             if isinstance(todo["references"], list):
                 for i, ref in enumerate(todo["references"]):
-                    ref_path = f"{path}.references[{i}]"
-                    # All references are ReferenceItem (discriminated union with type field)
-                    self._validate_reference_spec(ref, ref_path)
+                    self._validate_reference_spec(ref, f"{path}.references[{i}]")
 
-        # Validate details
-        if "details" in todo:
-            self._check_type(todo["details"], f"{path}.details", "dict")
-
-        # Validate verification_spec
         if "verification_spec" in todo:
             self._check_type(todo["verification_spec"], f"{path}.verification_spec", "list")
             if isinstance(todo["verification_spec"], list):
                 for i, spec in enumerate(todo["verification_spec"]):
                     self._validate_verification_item(spec, f"{path}.verification_spec[{i}]")
 
-        # Validate children (recursive)
         if "children" in todo:
             self._check_type(todo["children"], f"{path}.children", "list")
             if isinstance(todo["children"], list):
@@ -959,11 +1308,11 @@ class PlanLinter:
             if has_llm:
                 self._validate_llm_judge_list(item["llm_judge"], f"{item_path}.llm_judge")
 
-    def _collect_reference_ids(self, data: dict[str, Any]) -> set[str]:
-        """Collect all reference IDs from required_background.references."""
+    def _collect_reference_ids_from_plan(self, plan: dict[str, Any]) -> set[str]:
+        """Collect all reference IDs from a work plan's required_background.references (v3.0)."""
         ref_ids = set()
-        if "required_background" in data:
-            bg = data["required_background"]
+        if "required_background" in plan:
+            bg = plan["required_background"]
             if isinstance(bg, dict) and "references" in bg:
                 if isinstance(bg["references"], list):
                     for ref in bg["references"]:
@@ -972,30 +1321,33 @@ class PlanLinter:
         return ref_ids
 
     def _validate_reference_integrity(self, data: dict[str, Any]) -> None:
-        """Validate all ReferencePointer.ref_id exist in required_background - v2.1."""
-        # 1. Collect all defined reference IDs
-        valid_ref_ids = self._collect_reference_ids(data)
+        """Validate all ReferencePointer.ref_id exist in work plans (v3.0)."""
+        if "work_plans" not in data or not isinstance(data["work_plans"], list):
+            return
 
-        # 2. Check all todos for ReferencePointer
-        if "todos" in data and isinstance(data["todos"], list):
-            self._check_todos_ref_integrity(data["todos"], "todos", valid_ref_ids)
+        for i, work_plan in enumerate(data["work_plans"]):
+            if not isinstance(work_plan, dict):
+                continue
+
+            valid_ref_ids = self._collect_reference_ids_from_plan(work_plan)
+
+            if "todos" in work_plan and isinstance(work_plan["todos"], list):
+                self._check_todos_ref_integrity(work_plan["todos"], f"work_plans[{i}].todos", valid_ref_ids)
 
     def _check_todos_ref_integrity(self, todos: list[Any], path: str, valid_ref_ids: set[str]) -> None:
-        """Recursively check todos for invalid ref_id - v2.1."""
+        """Recursively check todos for invalid ref_id (v3.0)."""
         for i, todo in enumerate(todos):
             if not isinstance(todo, dict):
                 continue
 
             todo_path = f"{path}[{i}]"
 
-            # Check references
             if "references" in todo and isinstance(todo["references"], list):
                 for j, ref in enumerate(todo["references"]):
                     if not isinstance(ref, dict):
                         continue
 
                     ref_path = f"{todo_path}.references[{j}]"
-                    # v2.1: ReferencePointer has type="pointer" and ref_id
                     if ref.get("type") == "pointer" and "ref_id" in ref:
                         ref_id = ref["ref_id"]
                         if isinstance(ref_id, str) and ref_id not in valid_ref_ids:
@@ -1015,7 +1367,6 @@ class PlanLinter:
                                 )
                             )
 
-            # Recursive children check
             if "children" in todo and isinstance(todo["children"], list):
                 self._check_todos_ref_integrity(todo["children"], f"{todo_path}.children", valid_ref_ids)
 

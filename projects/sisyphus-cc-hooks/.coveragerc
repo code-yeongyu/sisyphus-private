@@ -1,0 +1,8 @@
+[run]
+source = sisyphus_cc_hooks
+parallel = True
+concurrency = multiprocessing
+
+[report]
+show_missing = True
+precision = 2

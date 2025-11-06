@@ -1,0 +1,27 @@
+[project]
+name = "sisyphus-cc-hooks"
+version = "0.1.0"
+description = "Claude Code hooks for Sisyphus task verification"
+requires-python = ">=3.12"
+dependencies = [
+    "anyio>=4.11.0",
+    "pydantic>=2.12.3",
+    "ruamel-yaml>=0.18.16",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest-cov>=7.0.0",
+]
+
+[tool.coverage.run]
+source = ["sisyphus_cc_hooks"]
+concurrency = ["thread", "multiprocessing"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false

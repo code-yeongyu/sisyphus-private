@@ -10,34 +10,41 @@ pytestmark = [pytest.mark.anyio]
 async def test_lint_valid_yaml__when_all_fields_present__returns_no_errors() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
+        "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test objective"},
-        "background": {
-            "current_situation": "A",
-            "reason_for_change": "B",
-            "changes_to_make": "C",
-        },
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False, "current_task_id": None},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [
+        "work_plans": [
             {
-                "id": "1",
-                "title": "Test task",
-                "status": "pending",
-                "created_at": "2025-01-01",
-                "updated_at": "2025-01-01",
+                "id": "plan-1",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01"},
+                "objectives": {"core": "Test objective"},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test"},
+                "workflow": {"dependency_diagram": "Test"},
+                "todos": [
+                    {
+                        "id": "1",
+                        "title": "Test task",
+                        "status": "pending",
+                        "references": [],
+                        "verification_spec": [],
+                    }
+                ],
+                "success_vision": {},
+                "final_verification": [],
+                "execution": {"started": False, "completed": False},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "None",
             }
         ],
-        "success_vision": {},
-        "final_verification": [],
     }
 
     # when

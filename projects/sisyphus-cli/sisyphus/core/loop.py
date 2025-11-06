@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import logging
 import sys
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, Protocol
 
 import anyio
 
@@ -20,6 +21,24 @@ if TYPE_CHECKING:
     from sisyphus.utils.logging import LoggerFactory
 
 
+class TaskValidatorProtocol(Protocol):
+    """Protocol for task validator objects."""
+
+    todolist_path: Path
+
+    def read_content(self) -> str:
+        """Read todolist content."""
+        ...
+
+    def check_all_goals_accomplished(self, content: str | None = None) -> bool:
+        """Check if all goals are accomplished."""
+        ...
+
+    def check_all_checkboxes_completed(self, content: str | None = None) -> bool:
+        """Check if all checkboxes are completed."""
+        ...
+
+
 class ExecutionLoop:
     """Main execution loop (Execute → Verify)."""
 
@@ -30,7 +49,7 @@ class ExecutionLoop:
         session_store: SessionStore,
         logger_factory: LoggerFactory,
         verify_agent: Agent | None = None,
-        task_validator: None = None,
+        task_validator: TaskValidatorProtocol | None = None,
     ) -> None:
         """Initialize ExecutionLoop.
 

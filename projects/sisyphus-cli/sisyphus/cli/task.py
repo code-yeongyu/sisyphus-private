@@ -38,17 +38,19 @@ task_app.add_typer(verify_app)
 
 def _run_async(coro: Coroutine[Any, Any, None]) -> None:
     """Synchronous wrapper for async functions."""
+
+    async def _wrapper() -> None:
+        await coro
+
     try:
-        # pyright: ignore[reportArgumentType]
-        anyio.run(coro)  # type: ignore[arg-type]
+        anyio.run(_wrapper)
     except Exception:
         try:
             sniffio.current_async_library()
             loop = asyncio.get_event_loop()
             loop.run_until_complete(coro)
         except sniffio.AsyncLibraryNotFoundError:
-            # pyright: ignore[reportArgumentType]
-            anyio.run(coro)  # type: ignore[arg-type]
+            anyio.run(_wrapper)
 
 
 async def _load_current_plan(

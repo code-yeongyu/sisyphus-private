@@ -4,16 +4,17 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
 import pytest
 
-from sisyphus.core.loop import ExecutionLoop
+from sisyphus.core.loop import ExecutionLoop, TaskValidatorProtocol
 from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:
-    pass
+    from sisyphus.core.session import SessionStore
+    from sisyphus.utils.logging import LoggerFactory
 
 pytestmark = [pytest.mark.anyio]
 
@@ -148,8 +149,8 @@ async def test_execution_loop_execute_only() -> None:
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=session_store,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
+        session_store=cast("SessionStore", cast(object, session_store)),
+        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
     )
 
     # when
@@ -189,9 +190,9 @@ async def test_execution_loop_execute_and_verify() -> None:
         execute_agent=execute_agent,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=session_store,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
-        task_validator=task_validator,  # type: ignore[arg-type]
+        session_store=cast("SessionStore", cast(object, session_store)),
+        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
+        task_validator=cast(TaskValidatorProtocol, cast(object, task_validator)),
     )
 
     # when
@@ -227,9 +228,9 @@ async def test_execution_loop_verify_always_new_session() -> None:
         execute_agent=execute_agent,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=session_store,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
-        task_validator=task_validator,  # type: ignore[arg-type]
+        session_store=cast("SessionStore", cast(object, session_store)),
+        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
+        task_validator=cast(TaskValidatorProtocol, cast(object, task_validator)),
     )
 
     # when
@@ -252,8 +253,8 @@ async def test_execution_loop_session_resume() -> None:
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=session_store,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
+        session_store=cast("SessionStore", cast(object, session_store)),
+        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
     )
 
     # when
@@ -276,9 +277,9 @@ async def test_execution_loop_with_task_validator_complete() -> None:
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=session_store,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
-        task_validator=task_validator,  # type: ignore[arg-type]
+        session_store=cast("SessionStore", cast(object, session_store)),
+        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
+        task_validator=cast(TaskValidatorProtocol, cast(object, task_validator)),
     )
 
     # when
@@ -303,8 +304,8 @@ async def test_execution_loop_with_task_validator_incomplete() -> None:
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=session_store,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
+        session_store=cast("SessionStore", cast(object, session_store)),
+        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
         task_validator=validator,  # type: ignore[arg-type]
     )
 
@@ -341,8 +342,8 @@ async def test_execution_loop_prompt_with_extra() -> None:
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=session_store,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
+        session_store=cast("SessionStore", cast(object, session_store)),
+        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
     )
 
     # when
@@ -366,8 +367,8 @@ async def test_execution_loop_ui_status_updates() -> None:
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=session_store,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
+        session_store=cast("SessionStore", cast(object, session_store)),
+        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
     )
 
     # when
@@ -390,8 +391,8 @@ async def test_execution_loop_session_saved() -> None:
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=session_store,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
+        session_store=cast("SessionStore", cast(object, session_store)),
+        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
     )
 
     # when
@@ -420,8 +421,8 @@ async def test_verify_phase__if_middle_message_has_true_but_last_has_false__retu
         execute_agent=execute_agent,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=session_store,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
+        session_store=cast("SessionStore", cast(object, session_store)),
+        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
     )
 
     # when
@@ -463,8 +464,8 @@ async def test_verify_phase__if_no_judgment__retries_until_found() -> None:
         execute_agent=execute_agent,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=session_store,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
+        session_store=cast("SessionStore", cast(object, session_store)),
+        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
     )
 
     # when
@@ -494,8 +495,8 @@ async def test_verify_phase__if_max_retries_exceeded__defaults_to_false() -> Non
         execute_agent=execute_agent,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=session_store,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
+        session_store=cast("SessionStore", cast(object, session_store)),
+        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
     )
 
     # when

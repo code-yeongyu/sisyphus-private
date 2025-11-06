@@ -35,14 +35,19 @@ status:
   work_mode:
     parallel_requested: false
   progress:
-    total_tasks: 0
+    total_tasks: 1
     completed: 0
     in_progress: 0
-    pending: 0
+    pending: 1
   current_work: "None"
 workflow:
   dependency_diagram: "Test"
-todos: []
+todos:
+  - id: "1"
+    title: "Test task"
+    status: "pending"
+    created_at: "2025-01-01"
+    updated_at: "2025-01-01"
 success_vision: {}
 final_verification: []
 """

@@ -34,6 +34,7 @@ error_console = Console(stderr=True)
 
 SISYPHUS_IGNORE_PATTERNS = [
     "# Sisyphus generated files",
+    ".sisyphus/",
     "notepad.md",
     "sessions/",
     "logs/",
@@ -511,6 +512,7 @@ def clean_history(
 
     file_patterns = [
         "notepad.md",
+        ".sisyphus/",
         "sessions/",
         "logs/",
         "agentloop.json",

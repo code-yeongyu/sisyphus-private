@@ -87,7 +87,12 @@ def _format_task_display(
     if task.references:
         lines.append("[bold cyan]참조:[/bold cyan]")
         for ref in task.references:
-            lines.append(f"  - {ref.title}: {ref.path}")
+            if ref.ref_id:
+                lines.append(f"  - ref_id: {ref.ref_id}")
+            elif ref.uri:
+                lines.append(f"  - uri: {ref.uri}")
+            elif ref.inline:
+                lines.append(f"  - inline: {ref.inline}")
 
     if show_children and task.children:
         lines.append(f"[bold cyan]하위 작업:[/bold cyan] {len(task.children)}개")

@@ -1,8 +1,8 @@
 """Tests for ExecutionLoop concurrent input monitoring feature.
 
-Tests Task 3.1 and 3.2 from ai-todolist.md:
-- 3.1: Message transmission during Agent response
-- 3.2: ESC key interrupt/resume multiple times
+Tests concurrent input monitoring tasks:
+- Message transmission during Agent response
+- ESC key interrupt/resume multiple times
 """
 
 from __future__ import annotations
@@ -103,7 +103,6 @@ async def test_execute_phase__if_user_sends_message_during_agent_response__messa
             pass
 
 
-
 async def test_execute_phase__if_multiple_user_messages_sent__all_forwarded_in_order() -> None:
     """Test 3.1.2: Multiple messages sent consecutively → All forwarded in order."""
 
@@ -165,4 +164,3 @@ async def test_execute_phase__if_multiple_user_messages_sent__all_forwarded_in_o
 
         async def save_session(self, agent_type: str, session_id: str) -> None:
             pass
-

@@ -111,7 +111,7 @@ class MockTaskValidator:
     def __init__(self, all_complete: bool = False) -> None:
         self._all_complete = all_complete
         self.read_count = 0
-        self.todolist_path = Path("ai-todolist.md")
+        self.todolist_path = Path(".sisyphus/tasks/test-plan.yaml")
 
     def read_content(self) -> str:
         self.read_count += 1

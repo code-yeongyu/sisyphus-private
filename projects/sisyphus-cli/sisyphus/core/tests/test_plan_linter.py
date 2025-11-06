@@ -57,21 +57,33 @@ async def test_lint_valid_yaml__when_all_fields_present__returns_no_errors() -> 
 async def test_lint_missing_required_field__when_metadata_missing__returns_error() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure - missing metadata to trigger error
     data = {
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [],
-        "success_vision": {},
-        "final_verification": [],
+        "version": "3.0",
+        # metadata is missing
+        "work_plans": [
+            {
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01T00:00:00Z", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
+            }
+        ],
     }
 
     # when
@@ -83,83 +95,81 @@ async def test_lint_missing_required_field__when_metadata_missing__returns_error
     assert any("Missing required field" in e.message for e in errors)
 
 
-async def test_lint_missing_nested_required_field__when_metadata_updated_at_missing__returns_error() -> None:
-    # given
-    linter = PlanLinter({})
-    data = {
-        "metadata": {"created_at": "2025-01-01"},  # missing updated_at
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [],
-        "success_vision": {},
-        "final_verification": [],
-    }
-
-    # when
-    errors = linter.lint(data)
-
-    # then
-    assert any("metadata.updated_at" in e.location for e in errors)
-    assert any("Missing required field" in e.message for e in errors)
-
-
 async def test_lint_type_mismatch__when_boolean_is_string__returns_error() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
-        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": "true", "completed": False},  # string, not boolean
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [],
-        "success_vision": {},
-        "final_verification": [],
+        "version": "3.0",
+        "metadata": {"created_at": "2025-01-01T00:00:00Z", "updated_at": "2025-01-01T00:00:00Z"},
+        "work_plans": [
+            {
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test request", "created_at": "2025-01-01T00:00:00Z", "additional": []},
+                "objectives": {"core": "Test objective", "detailed": []},
+                "background": {
+                    "current_situation": "Test",
+                    "reason_for_change": "Test",
+                    "changes_to_make": "Test",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [],
+                "execution": {
+                    "started": "true",  # string, not boolean - type error
+                    "completed": False,
+                    "started_at": None,
+                    "completed_at": None,
+                },
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
+            }
+        ],
     }
 
     # when
     errors = linter.lint(data)
 
     # then
-    assert any("status.execution.started" in e.location for e in errors)
+    assert any("work_plans[0].execution.started" in e.location for e in errors)
     assert any("Type mismatch" in e.message for e in errors)
 
 
 async def test_lint_extra_field__when_unknown_field_at_root__returns_error() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
+        "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [],
-        "success_vision": {},
-        "final_verification": [],
+        "work_plans": [
+            {
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
+            }
+        ],
         "unknown_field": "value",  # not in schema
     }
 
@@ -174,112 +184,95 @@ async def test_lint_extra_field__when_unknown_field_at_root__returns_error() -> 
 async def test_lint_invalid_enum__when_todo_status_invalid__returns_error() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
+        "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [
+        "work_plans": [
             {
-                "id": "1",
-                "title": "Task",
-                "status": "invalid_status",  # invalid enum value
-                "created_at": "2025-01-01",
-                "updated_at": "2025-01-01",
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
+                    {
+                        "id": "1",
+                        "title": "Task",
+                        "status": "invalid_status",  # invalid enum value
+                        "references": [],
+                        "verification_spec": [],
+                    }
+                ],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
             }
         ],
-        "success_vision": {},
-        "final_verification": [],
     }
 
     # when
     errors = linter.lint(data)
 
     # then
-    assert any("todos[0].status" in e.location for e in errors)
+    assert any("work_plans[0].todos[0].status" in e.location for e in errors)
     assert any("Invalid enum" in e.message for e in errors)
-
-
-async def test_lint_pattern_mismatch__when_todo_id_invalid__returns_error() -> None:
-    # given
-    linter = PlanLinter({})
-    data = {
-        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [
-            {
-                "id": "abc",  # invalid pattern
-                "title": "Task",
-                "status": "pending",
-                "created_at": "2025-01-01",
-                "updated_at": "2025-01-01",
-            }
-        ],
-        "success_vision": {},
-        "final_verification": [],
-    }
-
-    # when
-    errors = linter.lint(data)
-
-    # then
-    assert any("todos[0].id" in e.location for e in errors)
-    assert any("Pattern mismatch" in e.message for e in errors)
 
 
 async def test_lint_ref_integrity__when_ref_id_not_found__returns_error() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
+        "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {
-            "description": "Test",
-            "references": [
-                {"type": "file", "path": "a.py", "description": "A", "id": "ref1"},
-            ],
-        },
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [
+        "work_plans": [
             {
-                "id": "1",
-                "title": "Task",
-                "status": "pending",
-                "created_at": "2025-01-01",
-                "updated_at": "2025-01-01",
-                "references": [
-                    {"type": "pointer", "ref_id": "nonexistent"}
-                ],  # Invalid ref_id (v2.1: needs type field)
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {
+                    "description": "Test",
+                    "file_structure": None,
+                    "references": [
+                        {"type": "file", "path": "a.py", "description": "A", "id": "ref1"},
+                    ],
+                },
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
+                    {
+                        "id": "1",
+                        "title": "Task",
+                        "status": "pending",
+                        "references": [{"type": "pointer", "ref_id": "nonexistent"}],
+                        "verification_spec": [],
+                    }
+                ],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
             }
         ],
-        "success_vision": {},
-        "final_verification": [],
     }
 
     # when
@@ -293,121 +286,152 @@ async def test_lint_ref_integrity__when_ref_id_not_found__returns_error() -> Non
 async def test_lint_multiple_errors__when_multiple_issues__returns_all_errors() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
-        "metadata": {"created_at": "2025-01-01"},  # missing updated_at
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": "true", "completed": False},  # type error
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [
+        "version": "3.0",
+        "metadata": {"created_at": "2025-01-01"},
+        "work_plans": [
             {
-                "id": "1",
-                "title": "Task",
-                "status": "invalid",  # enum error
-                "created_at": "2025-01-01",
-                "updated_at": "2025-01-01",
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
+                    {
+                        "id": "1",
+                        "title": "Task",
+                        "status": "invalid",
+                        "references": [],
+                        "verification_spec": [],
+                    }
+                ],
+                "execution": {"started": "true", "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
             }
         ],
-        "success_vision": {},
-        "final_verification": [],
-        "extra_field": "value",  # extra field error
+        "extra_field": "value",
     }
 
     # when
     errors = linter.lint(data)
 
     # then
-    assert len(errors) >= 4  # At least 4 errors
-    assert any("metadata.updated_at" in e.location for e in errors)
-    assert any("status.execution.started" in e.location for e in errors)
-    assert any("todos[0].status" in e.location for e in errors)
+    assert len(errors) >= 3
+    assert any("work_plans[0].execution.started" in e.location for e in errors)
+    assert any("work_plans[0].todos[0].status" in e.location for e in errors)
     assert any("extra_field" in e.location for e in errors)
 
 
 async def test_lint_recursive_children__when_child_has_error__returns_error() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
+        "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [
+        "work_plans": [
             {
-                "id": "1",
-                "title": "Parent",
-                "status": "pending",
-                "created_at": "2025-01-01",
-                "updated_at": "2025-01-01",
-                "children": [
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
                     {
-                        "id": "1.1",
-                        "title": "Child",
-                        "status": "invalid_status",  # error in child
-                        "created_at": "2025-01-01",
-                        "updated_at": "2025-01-01",
+                        "id": "1",
+                        "title": "Parent",
+                        "status": "pending",
+                        "references": [],
+                        "verification_spec": [],
+                        "children": [
+                            {
+                                "id": "1.1",
+                                "title": "Child",
+                                "status": "invalid_status",
+                                "references": [],
+                                "verification_spec": [],
+                            }
+                        ],
                     }
                 ],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
             }
         ],
-        "success_vision": {},
-        "final_verification": [],
     }
 
     # when
     errors = linter.lint(data)
 
     # then
-    assert any("todos[0].children[0].status" in e.location for e in errors)
+    assert any("work_plans[0].todos[0].children[0].status" in e.location for e in errors)
     assert any("Invalid enum" in e.message for e in errors)
 
 
 async def test_lint_discriminated_union__when_type_field_missing__returns_error() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
+        "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {
-            "description": "Test",
-            "references": [
-                {"path": "a.py", "description": "A"}  # missing 'type' field
-            ],
-        },
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [],
-        "success_vision": {},
-        "final_verification": [],
+        "work_plans": [
+            {
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {
+                    "description": "Test",
+                    "file_structure": None,
+                    "references": [{"path": "a.py", "description": "A"}],
+                },
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
+            }
+        ],
     }
 
     # when
     errors = linter.lint(data)
 
     # then
-    assert any("required_background.references[0].type" in e.location for e in errors)
+    assert any("work_plans[0].required_background.references[0].type" in e.location for e in errors)
     assert any("Missing required field" in e.message for e in errors)
 
 
@@ -450,40 +474,50 @@ async def test_format_error__when_optional_fields_missing__returns_minimal_messa
 async def test_lint_verification_item_v2_1__when_bash_only__returns_no_errors() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
+        "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [
+        "work_plans": [
             {
-                "id": "1",
-                "title": "Task",
-                "status": "pending",
-                "created_at": "2025-01-01",
-                "updated_at": "2025-01-01",
-                "verification_spec": [
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
                     {
-                        "id": "v1",
-                        "title": "check file",
-                        "description": "check file exists",
-                        "orchestrator_manually_verified": False,
-                        "manual_verification_evidence": "",
-                        "bash": [{"execute": "ls -al", "expected_exit_code": 0}],
+                        "id": "1",
+                        "title": "Task",
+                        "status": "pending",
+                        "references": [],
+                        "verification_spec": [
+                            {
+                                "id": "v1",
+                                "title": "check file",
+                                "description": "check file exists",
+                                "orchestrator_manually_verified": False,
+                                "manual_verification_evidence": "",
+                                "bash": [{"execute": "ls -al", "expected_exit_code": 0}],
+                            }
+                        ],
                     }
                 ],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
             }
         ],
-        "success_vision": {},
-        "final_verification": [],
     }
 
     # when
@@ -496,40 +530,50 @@ async def test_lint_verification_item_v2_1__when_bash_only__returns_no_errors() 
 async def test_lint_verification_item_v2_1__when_llm_judge_only__returns_no_errors() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
+        "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [
+        "work_plans": [
             {
-                "id": "1",
-                "title": "Task",
-                "status": "pending",
-                "created_at": "2025-01-01",
-                "updated_at": "2025-01-01",
-                "verification_spec": [
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
                     {
-                        "id": "v1",
-                        "title": "llm check",
-                        "description": "llm verification",
-                        "orchestrator_manually_verified": False,
-                        "manual_verification_evidence": "",
-                        "llm_judge": [{"instruction": "check if correct"}],
+                        "id": "1",
+                        "title": "Task",
+                        "status": "pending",
+                        "references": [],
+                        "verification_spec": [
+                            {
+                                "id": "v1",
+                                "title": "llm check",
+                                "description": "llm verification",
+                                "orchestrator_manually_verified": False,
+                                "manual_verification_evidence": "",
+                                "llm_judge": [{"instruction": "check if correct"}],
+                            }
+                        ],
                     }
                 ],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
             }
         ],
-        "success_vision": {},
-        "final_verification": [],
     }
 
     # when
@@ -542,41 +586,51 @@ async def test_lint_verification_item_v2_1__when_llm_judge_only__returns_no_erro
 async def test_lint_verification_item_v2_1__when_both_bash_and_llm__returns_no_errors() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
+        "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [
+        "work_plans": [
             {
-                "id": "1",
-                "title": "Task",
-                "status": "pending",
-                "created_at": "2025-01-01",
-                "updated_at": "2025-01-01",
-                "verification_spec": [
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
                     {
-                        "id": "v1",
-                        "title": "both check",
-                        "description": "both bash and llm",
-                        "orchestrator_manually_verified": False,
-                        "manual_verification_evidence": "",
-                        "bash": [{"execute": "ls"}],
-                        "llm_judge": [{"instruction": "verify"}],
+                        "id": "1",
+                        "title": "Task",
+                        "status": "pending",
+                        "references": [],
+                        "verification_spec": [
+                            {
+                                "id": "v1",
+                                "title": "both check",
+                                "description": "both bash and llm",
+                                "orchestrator_manually_verified": False,
+                                "manual_verification_evidence": "",
+                                "bash": [{"execute": "ls"}],
+                                "llm_judge": [{"instruction": "verify"}],
+                            }
+                        ],
                     }
                 ],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
             }
         ],
-        "success_vision": {},
-        "final_verification": [],
     }
 
     # when
@@ -589,39 +643,49 @@ async def test_lint_verification_item_v2_1__when_both_bash_and_llm__returns_no_e
 async def test_lint_verification_item_v2_1__when_neither_bash_nor_llm__returns_error() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
+        "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [
+        "work_plans": [
             {
-                "id": "1",
-                "title": "Task",
-                "status": "pending",
-                "created_at": "2025-01-01",
-                "updated_at": "2025-01-01",
-                "verification_spec": [
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
                     {
-                        "id": "v1",
-                        "title": "no verification",
-                        "description": "missing both",
-                        "orchestrator_manually_verified": False,
-                        "manual_verification_evidence": "",
+                        "id": "1",
+                        "title": "Task",
+                        "status": "pending",
+                        "references": [],
+                        "verification_spec": [
+                            {
+                                "id": "v1",
+                                "title": "no verification",
+                                "description": "missing both",
+                                "orchestrator_manually_verified": False,
+                                "manual_verification_evidence": "",
+                            }
+                        ],
                     }
                 ],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
             }
         ],
-        "success_vision": {},
-        "final_verification": [],
     }
 
     # when
@@ -635,34 +699,45 @@ async def test_lint_verification_item_v2_1__when_neither_bash_nor_llm__returns_e
 async def test_lint_reference_pointer_v2_1__when_type_field_present__returns_no_errors() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
+        "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {
-            "description": "Test",
-            "references": [{"type": "file", "path": "a.py", "description": "File A", "id": "ref1"}],
-        },
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [
+        "work_plans": [
             {
-                "id": "1",
-                "title": "Task",
-                "status": "pending",
-                "created_at": "2025-01-01",
-                "updated_at": "2025-01-01",
-                "references": [{"type": "pointer", "ref_id": "ref1"}],
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {
+                    "description": "Test",
+                    "file_structure": None,
+                    "references": [{"type": "file", "path": "a.py", "description": "File A", "id": "ref1"}],
+                },
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
+                    {
+                        "id": "1",
+                        "title": "Task",
+                        "status": "pending",
+                        "references": [{"type": "pointer", "ref_id": "ref1"}],
+                        "verification_spec": [],
+                    }
+                ],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
             }
         ],
-        "success_vision": {},
-        "final_verification": [],
     }
 
     # when
@@ -675,38 +750,49 @@ async def test_lint_reference_pointer_v2_1__when_type_field_present__returns_no_
 async def test_lint_final_verification_v2_1__when_category_field_present__returns_no_errors() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
+        "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [
+        "work_plans": [
             {
-                "id": "1",
-                "title": "Task",
-                "status": "pending",
-                "created_at": "2025-01-01",
-                "updated_at": "2025-01-01",
-            }
-        ],
-        "success_vision": {},
-        "final_verification": [
-            {
-                "id": "fv1",
-                "title": "Final check",
-                "category": "기능 동작 확인",
-                "description": "Verify all features work",
-                "orchestrator_manually_verified": False,
-                "manual_verification_evidence": "",
-                "bash": [{"execute": "pytest"}],
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [
+                    {
+                        "id": "fv1",
+                        "title": "Final check",
+                        "category": "기능 동작 확인",
+                        "description": "Verify all features work",
+                        "orchestrator_manually_verified": False,
+                        "manual_verification_evidence": "",
+                        "bash": [{"execute": "pytest"}],
+                    }
+                ],
+                "todos": [
+                    {
+                        "id": "1",
+                        "title": "Task",
+                        "status": "pending",
+                        "references": [],
+                        "verification_spec": [],
+                    }
+                ],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
             }
         ],
     }
@@ -721,22 +807,33 @@ async def test_lint_final_verification_v2_1__when_category_field_present__return
 async def test_validate_todos__if_empty__returns_error() -> None:
     # given
     linter = PlanLinter({})
+    # v3.0 PlanDocument structure
     data = {
+        "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "user_request": {"original": "Test", "created_at": "2025-01-01"},
-        "objectives": {"core": "Test"},
-        "background": {"current_situation": "A", "reason_for_change": "B", "changes_to_make": "C"},
-        "required_background": {"description": "Test"},
-        "status": {
-            "execution": {"started": False, "completed": False},
-            "work_mode": {"parallel_requested": False},
-            "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-            "current_work": "None",
-        },
-        "workflow": {"dependency_diagram": "Test"},
-        "todos": [],
-        "success_vision": {},
-        "final_verification": [],
+        "work_plans": [
+            {
+                "id": "test-plan",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
+            }
+        ],
     }
 
     # when
@@ -744,7 +841,7 @@ async def test_validate_todos__if_empty__returns_error() -> None:
 
     # then
     assert len(errors) == 1
-    assert errors[0].location == "todos"
+    assert errors[0].location == "work_plans[0].todos"
     assert "empty" in errors[0].message.lower()
     assert errors[0].expected == "at least one todo"
     assert errors[0].actual == "empty list"

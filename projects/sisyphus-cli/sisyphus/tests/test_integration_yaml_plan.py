@@ -8,7 +8,19 @@ import pytest
 from ruamel.yaml import YAML
 
 from sisyphus.core.plans.loader import load_plan, save_plan
-from sisyphus.core.plans.models import Metadata, PlanDocument, Todo, TodoStatus, WorkPlan
+from sisyphus.core.plans.models import (
+    Background,
+    Metadata,
+    Objectives,
+    PlanDocument,
+    RequiredBackground,
+    SuccessVision,
+    Todo,
+    TodoStatus,
+    UserRequest,
+    Workflow,
+    WorkPlan,
+)
 from sisyphus.core.task_manager import TaskManager
 
 pytestmark = [pytest.mark.anyio]
@@ -25,6 +37,13 @@ async def test_end_to_end_workflow__full_cycle__completes_successfully(tmp_path:
                 id="test-workflow",
                 name="Test Workflow",
                 depends_on=[],
+                user_request=UserRequest(original="Test", created_at="2025-01-01T00:00:00Z", additional=[]),
+                objectives=Objectives(core="Test", detailed=[]),
+                background=Background(current_situation="Test", reason_for_change="Test", changes_to_make="Test"),
+                required_background=RequiredBackground(description="Test", file_structure=None, references=[]),
+                workflow=Workflow(dependency_diagram="Test", critical_path=[]),
+                success_vision=SuccessVision(user_perspective=[], business_perspective=[], technical_criteria=[]),
+                final_verification=[],
                 todos=[
                     Todo(id="1", title="First task", status=TodoStatus.pending, references=[]),
                     Todo(id="2", title="Second task", status=TodoStatus.pending, references=[]),
@@ -93,6 +112,13 @@ async def test_nested_todos_navigation__complex_tree__navigates_correctly(tmp_pa
                 id="nested-test",
                 name="Nested Test",
                 depends_on=[],
+                user_request=UserRequest(original="Test", created_at="2025-01-01T00:00:00Z", additional=[]),
+                objectives=Objectives(core="Test", detailed=[]),
+                background=Background(current_situation="Test", reason_for_change="Test", changes_to_make="Test"),
+                required_background=RequiredBackground(description="Test", file_structure=None, references=[]),
+                workflow=Workflow(dependency_diagram="Test", critical_path=[]),
+                success_vision=SuccessVision(user_perspective=[], business_perspective=[], technical_criteria=[]),
+                final_verification=[],
                 todos=[
                     Todo(
                         id="1",

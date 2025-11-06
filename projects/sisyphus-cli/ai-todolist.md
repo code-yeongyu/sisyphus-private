@@ -404,7 +404,7 @@ test: v3.0 확장 모델 테스트 추가
 
 # TODOs
 
-- [ ] 1. v3.0 WorkPlan 모델 확장 - v2.1의 8개 필드 전체 추가 (필수)
+- [x] 1. v3.0 WorkPlan 모델 확장 - v2.1의 8개 필드 전체 추가 (필수)
 
    **참조 소스 (REQUIRED)**:
    - 패턴 파일: `sisyphus/utils/plan_types.py` (v2.1 모델 - 전체 248줄)
@@ -748,7 +748,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
       - [ ] git commit 완료되었는가? (`git log -1 --oneline` 확인)
 
 
-- [ ] 2. v2.1 파일 제거 및 PlanNavigator v3.0 재작성
+- [x] 2. v2.1 파일 제거 및 PlanNavigator v3.0 재작성
 
    **참조 소스 (REQUIRED)**:
    - 제거 대상 1: `sisyphus/utils/plan_types.py` (v2.1 모델 전체 - 248줄)
@@ -929,7 +929,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
       - [ ] git commit 완료되었는가?
 
 
-- [ ] 3. ai-todolist.yaml 하드코딩 제거 및 동적 플랜 감지 추가
+- [x] 3. ai-todolist.yaml 하드코딩 제거 및 동적 플랜 감지 추가
 
    **참조 소스 (REQUIRED)**:
    - 수정 대상: `sisyphus/cli/task.py` (검색: `"ai-todolist.yaml"` - 11회 출현)
@@ -1182,7 +1182,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
       - [ ] git commit 완료되었는가?
 
 
-- [ ] 4. 테스트 전체 업데이트 및 회귀 테스트
+- [x] 4. 테스트 전체 업데이트 및 회귀 테스트
 
    **참조 소스 (REQUIRED)**:
    - 테스트 디렉토리: `tests/` (전체)
@@ -1302,7 +1302,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
       - [ ] git commit 완료되었는가?
 
 
-- [ ] 5. 문서 업데이트 - AGENTS.md 및 README
+- [x] 5. 문서 업데이트 - AGENTS.md 및 README
 
    **참조 소스 (REQUIRED)**:
    - 문서 파일: `projects/sisyphus-cli/AGENTS.md` (프로젝트 지식 베이스)

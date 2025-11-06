@@ -6,14 +6,12 @@ All commands work with .sisyphus/tasks/*.yaml plans (v3.0 format).
 
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Coroutine
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import anyio
-import sniffio
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -37,20 +35,12 @@ task_app.add_typer(verify_app)
 
 
 def _run_async(coro: Coroutine[Any, Any, None]) -> None:
-    """Synchronous wrapper for async functions."""
+    """Synchronous wrapper for async functions.
 
-    async def _wrapper() -> None:
-        await coro
-
-    try:
-        anyio.run(_wrapper)
-    except Exception:
-        try:
-            sniffio.current_async_library()
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(coro)
-        except sniffio.AsyncLibraryNotFoundError:
-            anyio.run(_wrapper)
+    Note: anyio.run() expects a coroutine function, not a coroutine object.
+    We wrap the coroutine in a lambda to make it work.
+    """
+    anyio.run(lambda: coro)
 
 
 async def _load_current_plan(

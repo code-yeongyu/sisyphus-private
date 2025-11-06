@@ -102,6 +102,35 @@ def init_plan(
                 "id": "new-plan",
                 "name": "New Plan",
                 "depends_on": [],
+                "user_request": {
+                    "original": "TODO: Describe your work request here",
+                    "created_at": now,
+                    "additional": [],
+                },
+                "objectives": {
+                    "core": "TODO: Write core objective here",
+                    "detailed": [],
+                },
+                "background": {
+                    "current_situation": "TODO: Describe current state",
+                    "reason_for_change": "TODO: Why this work is needed",
+                    "changes_to_make": "TODO: What will change",
+                },
+                "required_background": {
+                    "description": "TODO: Required context and knowledge",
+                    "file_structure": None,
+                    "references": [],
+                },
+                "workflow": {
+                    "dependency_diagram": "TODO: Add task dependency diagram",
+                    "critical_path": [],
+                },
+                "success_vision": {
+                    "user_perspective": [],
+                    "business_perspective": [],
+                    "technical_criteria": [],
+                },
+                "final_verification": [],
                 "todos": [],
                 "references": [],
                 "execution": {

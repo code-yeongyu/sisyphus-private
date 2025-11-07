@@ -7,11 +7,15 @@ dependencies = [
     "anyio>=4.11.0",
     "pydantic>=2.12.3",
     "ruamel-yaml>=0.18.16",
+    "typer>=0.15.0",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.scripts]
+sisyphus-cc-hooks = "sisyphus_cc_hooks.cli:app"
 
 [dependency-groups]
 dev = [

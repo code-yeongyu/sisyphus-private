@@ -118,7 +118,7 @@ POST_TOOL_USE_CONFIG: list[HookMatcher] = [
         hooks=[
             HookCommand(
                 type="command",
-                command="uv run ~/.claude/hooks/post-tool-use/orchestrator_reminder.py",
+                command="uv run ~/.claude/hooks/post-tool-use/executor_verification.py",
                 asyncable=True,
             ),
             HookCommand(

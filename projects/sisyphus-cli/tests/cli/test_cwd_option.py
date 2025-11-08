@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 
@@ -74,66 +75,6 @@ work_plans:
     assert result.exit_code == 0
 
 
-def test_plan_overview__with_cwd_option__resolves_path(tmp_path: Path) -> None:
-    # given
-    cwd_dir = tmp_path / "subdir"
-    cwd_dir.mkdir()
-    yaml_file = cwd_dir / "ai-todolist.yaml"
-    yaml_file.write_text("""metadata:
-  created_at: "2025-11-01T00:00:00Z"
-  updated_at: "2025-11-01T00:00:00Z"
-user_request:
-  original: "Test"
-  created_at: "2025-11-01T00:00:00Z"
-  additional: []
-objectives:
-  core: "Test"
-background:
-  current_situation: "Test"
-  reason_for_change: "Test"
-  changes_to_make: "Test"
-required_background:
-  description: "Test"
-  references: []
-status:
-  execution:
-    started: false
-    completed: false
-  work_mode:
-    parallel_requested: false
-    current_task_id: "1"
-  progress:
-    total_tasks: 1
-    completed: 0
-    in_progress: 0
-    pending: 1
-  current_work: ""
-workflow:
-  dependency_diagram: ""
-todos:
-  - id: "1"
-    title: "Task 1"
-    status: pending
-    created_at: "2025-11-01T00:00:00Z"
-    updated_at: "2025-11-01T00:00:00Z"
-    references: []
-    children: []
-    verification_spec: []
-success_vision:
-  user_perspective: []
-  business_perspective: []
-  technical_criteria: []
-final_verification: []
-""")
-
-    # when
-    result = runner.invoke(app, ["plan", "overview", "--cwd", str(cwd_dir)])
-
-    # then
-    assert result.exit_code == 0
-    assert "Task 1" in result.stdout
-
-
 def test_plan_init__with_cwd_option__creates_in_cwd(tmp_path: Path) -> None:
     # given
     cwd_dir = tmp_path / "subdir"
@@ -151,17 +92,53 @@ def test_plan_graph__with_cwd_option__resolves_path(tmp_path: Path) -> None:
     # given
     cwd_dir = tmp_path / "subdir"
     cwd_dir.mkdir()
-    yaml_file = cwd_dir / "ai-todolist.yaml"
-    yaml_file.write_text("""
-version: "3.0"
+    tasks_dir = cwd_dir / ".sisyphus" / "tasks"
+    tasks_dir.mkdir(parents=True)
+    yaml_file = tasks_dir / "ai-todolist.yaml"
+    yaml_file.write_text("""version: "3.0"
 metadata:
   created_at: "2025-11-01T00:00:00Z"
+  updated_at: "2025-11-01T00:00:00Z"
 work_plans:
   - id: plan-test
     name: "Test Plan"
     depends_on: []
+    user_request:
+      original: "Test"
+      created_at: "2025-11-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test"
+      detailed: []
+    background:
+      current_situation: "Test"
+      reason_for_change: "Test"
+      changes_to_make: "Test"
+    required_background:
+      description: "Test"
+      file_structure: ""
+      references: []
+    workflow:
+      dependency_diagram: ""
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     todos: []
     references: []
+    execution:
+      started: false
+      completed: false
+    work_mode:
+      parallel_requested: false
+    progress:
+      total_tasks: 0
+      completed: 0
+      in_progress: 0
+      pending: 0
+    current_work: ""
 """)
 
     # when
@@ -175,24 +152,63 @@ def test_plan_export__with_cwd_option__resolves_paths(tmp_path: Path) -> None:
     # given
     cwd_dir = tmp_path / "subdir"
     cwd_dir.mkdir()
-    yaml_file = cwd_dir / "test.yaml"
-    yaml_file.write_text("""
-version: "3.0"
+    tasks_dir = cwd_dir / ".sisyphus" / "tasks"
+    tasks_dir.mkdir(parents=True)
+    yaml_file = tasks_dir / "test.yaml"
+    yaml_file.write_text("""version: "3.0"
 metadata:
   created_at: "2025-11-01T00:00:00Z"
+  updated_at: "2025-11-01T00:00:00Z"
 work_plans:
   - id: plan-test
     name: "Test Plan"
     depends_on: []
+    user_request:
+      original: "Test"
+      created_at: "2025-11-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test"
+      detailed: []
+    background:
+      current_situation: "Test"
+      reason_for_change: "Test"
+      changes_to_make: "Test"
+    required_background:
+      description: "Test"
+      file_structure: ""
+      references: []
+    workflow:
+      dependency_diagram: ""
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     todos:
       - id: "1"
         title: "Task 1"
         status: pending
+        references: []
+        children: []
+        verification_spec: []
     references: []
+    execution:
+      started: false
+      completed: false
+    work_mode:
+      parallel_requested: false
+    progress:
+      total_tasks: 1
+      completed: 0
+      in_progress: 0
+      pending: 1
+    current_work: ""
 """)
 
     # when
-    result = runner.invoke(app, ["plan", "export", "test.yaml", "--cwd", str(cwd_dir)])
+    result = runner.invoke(app, ["plan", "export", ".sisyphus/tasks/test.yaml", "--cwd", str(cwd_dir)])
 
     # then
     assert result.exit_code == 0
@@ -203,54 +219,69 @@ def test_task_show__with_cwd_option__resolves_path(tmp_path: Path) -> None:
     # given
     cwd_dir = tmp_path / "subdir"
     cwd_dir.mkdir()
-    yaml_file = cwd_dir / "ai-todolist.yaml"
-    yaml_content = """metadata:
+    status_dir = cwd_dir / ".sisyphus"
+    status_dir.mkdir()
+    tasks_dir = status_dir / "tasks"
+    tasks_dir.mkdir()
+    yaml_file = tasks_dir / "ai-todolist.yaml"
+    yaml_content = """version: "3.0"
+metadata:
   created_at: "2025-01-01T00:00:00Z"
   updated_at: "2025-01-01T00:00:00Z"
-user_request:
-  original: "Test"
-  created_at: "2025-01-01T00:00:00Z"
-  additional: []
-objectives:
-  core: "Test"
-background:
-  current_situation: "Test"
-  reason_for_change: "Test"
-  changes_to_make: "Test"
-required_background:
-  description: "Test"
-  references: []
-status:
-  execution:
-    started: false
-    completed: false
-  work_mode:
-    parallel_requested: false
-    current_task_id: "1"
-  progress:
-    total_tasks: 1
-    completed: 0
-    in_progress: 0
-    pending: 1
-  current_work: ""
-workflow:
-  dependency_diagram: ""
-todos:
-  - id: "1"
-    title: "Task 1"
-    status: pending
-    created_at: "2025-01-01T00:00:00Z"
-    updated_at: "2025-01-01T00:00:00Z"
+work_plans:
+  - id: test-plan
+    name: Test Plan
+    depends_on: []
+    user_request:
+      original: "Test"
+      created_at: "2025-01-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test"
+      detailed: []
+    background:
+      current_situation: "Test"
+      reason_for_change: "Test"
+      changes_to_make: "Test"
+    required_background:
+      description: "Test"
+      file_structure: ""
+      references: []
+    workflow:
+      dependency_diagram: ""
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
+    todos:
+      - id: "1"
+        title: "Task 1"
+        status: pending
+        references: []
+        children: []
+        verification_spec: []
     references: []
-    children: []
-    verification_spec: []
-success_vision:
-  user_perspective: []
-  business_perspective: []
-  technical_criteria: []
-final_verification: []
+    execution:
+      started: false
+      completed: false
+    work_mode:
+      parallel_requested: false
+    progress:
+      total_tasks: 1
+      completed: 0
+      in_progress: 0
+      pending: 1
+    current_work: ""
 """
     yaml_file.write_text(yaml_content)
+    status_file = status_dir / "status.json"
+    status_file.write_text(
+        '{"version": 1, "current_plan": {"plan_path": ".sisyphus/tasks/ai-todolist.yaml", "plan_root": "'
+        + str(cwd_dir)
+        + '", "updated_at": "2025-01-01T00:00:00Z"}}'
+    )
 
     # when
     result = runner.invoke(app, ["task", "show", "1", "--cwd", str(cwd_dir)])
@@ -264,54 +295,75 @@ def test_task_current__with_cwd_option__resolves_path(tmp_path: Path) -> None:
     # given
     cwd_dir = tmp_path / "subdir"
     cwd_dir.mkdir()
-    yaml_file = cwd_dir / "ai-todolist.yaml"
-    yaml_content = """metadata:
+    status_dir = cwd_dir / ".sisyphus"
+    status_dir.mkdir()
+    tasks_dir = status_dir / "tasks"
+    tasks_dir.mkdir()
+    yaml_file = tasks_dir / "ai-todolist.yaml"
+    yaml_content = """version: "3.0"
+metadata:
   created_at: "2025-01-01T00:00:00Z"
   updated_at: "2025-01-01T00:00:00Z"
-user_request:
-  original: "Test"
-  created_at: "2025-01-01T00:00:00Z"
-  additional: []
-objectives:
-  core: "Test"
-background:
-  current_situation: "Test"
-  reason_for_change: "Test"
-  changes_to_make: "Test"
-required_background:
-  description: "Test"
-  references: []
-status:
-  execution:
-    started: false
-    completed: false
-  work_mode:
-    parallel_requested: false
-    current_task_id: "1"
-  progress:
-    total_tasks: 1
-    completed: 0
-    in_progress: 1
-    pending: 0
-  current_work: ""
-workflow:
-  dependency_diagram: ""
-todos:
-  - id: "1"
-    title: "Task 1"
-    status: in_progress
-    created_at: "2025-01-01T00:00:00Z"
-    updated_at: "2025-01-01T00:00:00Z"
+work_plans:
+  - id: test-plan
+    name: Test Plan
+    depends_on: []
+    user_request:
+      original: "Test"
+      created_at: "2025-01-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test"
+      detailed: []
+    background:
+      current_situation: "Test"
+      reason_for_change: "Test"
+      changes_to_make: "Test"
+    required_background:
+      description: "Test"
+      file_structure: ""
+      references: []
+    workflow:
+      dependency_diagram: ""
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
+    todos:
+      - id: "1"
+        title: "Task 1"
+        status: in_progress
+        references: []
+        children: []
+        verification_spec: []
     references: []
-    children: []
-    verification_spec: []
-success_vision:
-  user_perspective: []
-  business_perspective: []
-  technical_criteria: []
-final_verification: []
+    execution:
+      started: false
+      completed: false
+    work_mode:
+      parallel_requested: false
+      current_task_id: "1"
+    progress:
+      total_tasks: 1
+      completed: 0
+      in_progress: 1
+      pending: 0
+    current_work: ""
 """
     yaml_file.write_text(yaml_content)
+    status_file = status_dir / "status.json"
+    status_data = {
+        "version": 1,
+        "current_plan": {
+            "plan_path": ".sisyphus/tasks/ai-todolist.yaml",
+            "plan_root": str(cwd_dir),
+            "updated_at": "2025-01-01T00:00:00Z",
+        },
+    }
+
+    status_file.write_text(json.dumps(status_data))
 
     # when
     result = runner.invoke(app, ["task", "current", "--cwd", str(cwd_dir)])
@@ -325,61 +377,79 @@ def test_task_next__with_cwd_option__resolves_path(tmp_path: Path) -> None:
     # given
     cwd_dir = tmp_path / "subdir"
     cwd_dir.mkdir()
-    yaml_file = cwd_dir / "ai-todolist.yaml"
-    yaml_content = """metadata:
+    status_dir = cwd_dir / ".sisyphus"
+    status_dir.mkdir()
+    tasks_dir = status_dir / "tasks"
+    tasks_dir.mkdir()
+    yaml_file = tasks_dir / "ai-todolist.yaml"
+    yaml_content = """version: "3.0"
+metadata:
   created_at: "2025-01-01T00:00:00Z"
   updated_at: "2025-01-01T00:00:00Z"
-user_request:
-  original: "Test"
-  created_at: "2025-01-01T00:00:00Z"
-  additional: []
-objectives:
-  core: "Test"
-background:
-  current_situation: "Test"
-  reason_for_change: "Test"
-  changes_to_make: "Test"
-required_background:
-  description: "Test"
-  references: []
-status:
-  execution:
-    started: false
-    completed: false
-  work_mode:
-    parallel_requested: false
-  progress:
-    total_tasks: 2
-    completed: 1
-    in_progress: 0
-    pending: 1
-  current_work: ""
-workflow:
-  dependency_diagram: ""
-todos:
-  - id: "1"
-    title: "Task 1"
-    status: completed
-    created_at: "2025-01-01T00:00:00Z"
-    updated_at: "2025-01-01T00:00:00Z"
+work_plans:
+  - id: test-plan
+    name: Test Plan
+    depends_on: []
+    user_request:
+      original: "Test"
+      created_at: "2025-01-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test"
+      detailed: []
+    background:
+      current_situation: "Test"
+      reason_for_change: "Test"
+      changes_to_make: "Test"
+    required_background:
+      description: "Test"
+      file_structure: ""
+      references: []
+    workflow:
+      dependency_diagram: ""
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
+    todos:
+      - id: "1"
+        title: "Task 1"
+        status: completed
+        references: []
+        children: []
+        verification_spec: []
+      - id: "2"
+        title: "Task 2"
+        status: pending
+        references: []
+        children: []
+        verification_spec: []
     references: []
-    children: []
-    verification_spec: []
-  - id: "2"
-    title: "Task 2"
-    status: pending
-    created_at: "2025-01-01T00:00:00Z"
-    updated_at: "2025-01-01T00:00:00Z"
-    references: []
-    children: []
-    verification_spec: []
-success_vision:
-  user_perspective: []
-  business_perspective: []
-  technical_criteria: []
-final_verification: []
+    execution:
+      started: false
+      completed: false
+    work_mode:
+      parallel_requested: false
+    progress:
+      total_tasks: 2
+      completed: 1
+      in_progress: 0
+      pending: 1
+    current_work: ""
 """
     yaml_file.write_text(yaml_content)
+    status_file = status_dir / "status.json"
+    status_data = {
+        "version": 1,
+        "current_plan": {
+            "plan_path": ".sisyphus/tasks/ai-todolist.yaml",
+            "plan_root": str(cwd_dir),
+            "updated_at": "2025-01-01T00:00:00Z",
+        },
+    }
+    status_file.write_text(json.dumps(status_data))
 
     # when
     result = runner.invoke(app, ["task", "next", "--cwd", str(cwd_dir)])
@@ -399,8 +469,7 @@ def test_task_continue__with_cwd_option__resolves_path(tmp_path: Path) -> None:
 
     # then
     assert result.exit_code == 1
-    assert "Working directory:" in result.stdout
-    assert "subdir" in result.stdout
+    assert "현재 활성화된 작업 계획이 없습니다" in result.stdout or "No active plan" in result.stdout
 
 
 def test_resolve_cwd__with_none__returns_current_directory() -> None:

@@ -87,7 +87,7 @@ def lint_plan(
 @plan_app.command(name="init")
 def init_plan(
     path: Path = typer.Option(
-        Path("./.sisyphus/tasks/plan.yaml"),
+        Path("./.sisyphus/tasks/ai-todolist.yaml"),
         "--path",
         "-p",
         help="Path where plan YAML will be created",

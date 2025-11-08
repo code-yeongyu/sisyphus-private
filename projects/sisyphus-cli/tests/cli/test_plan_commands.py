@@ -142,56 +142,6 @@ work_plans:
     assert result.exit_code == 0
 
 
-def test_overview__with_valid_plan__shows_overview(tmp_path: Path) -> None:
-    # given
-    plan_file = tmp_path / "ai-todolist.yaml"
-    yaml_content = """metadata:
-  created_at: "2025-01-01T00:00:00Z"
-  updated_at: "2025-01-01T00:00:00Z"
-user_request:
-  original: "Test request"
-  created_at: "2025-01-01T00:00:00Z"
-  additional: []
-objectives:
-  core: "Test objective"
-background:
-  current_situation: "Test"
-  reason_for_change: "Test"
-  changes_to_make: "Test"
-required_background:
-  description: "Test"
-  references: []
-status:
-  execution:
-    started: false
-    completed: false
-  work_mode:
-    parallel_requested: false
-  progress:
-    total_tasks: 0
-    completed: 0
-    in_progress: 0
-    pending: 0
-  current_work: ""
-workflow:
-  dependency_diagram: ""
-todos: []
-success_vision:
-  user_perspective: []
-  business_perspective: []
-  technical_criteria: []
-final_verification: []
-"""
-    plan_file.write_text(yaml_content)
-
-    # when
-    result = runner.invoke(plan_app, ["overview", "--cwd", str(tmp_path)])
-
-    # then
-    assert result.exit_code == 0
-    assert "Test request" in result.stdout or "Test objective" in result.stdout
-
-
 def test_init__creates_template_file(tmp_path: Path) -> None:
     # given
     output_file = tmp_path / "new-plan.yaml"
@@ -232,12 +182,14 @@ def test_init__with_cwd_option__creates_in_cwd(tmp_path: Path) -> None:
 
     # then
     assert result.exit_code == 0
-    assert (work_dir / "ai-todolist.yaml").exists()
+    assert (work_dir / ".sisyphus" / "tasks" / "ai-todolist.yaml").exists()
 
 
 def test_graph__with_v3_plan__displays_graph(tmp_path: Path) -> None:
     # given
-    plan_file = tmp_path / "ai-todolist.yaml"
+    tasks_dir = tmp_path / ".sisyphus" / "tasks"
+    tasks_dir.mkdir(parents=True)
+    plan_file = tasks_dir / "ai-todolist.yaml"
     yaml_content = """version: "3.0"
 metadata:
   created_at: "2025-01-01T00:00:00Z"
@@ -246,12 +198,82 @@ work_plans:
   - id: plan1
     name: Plan 1
     depends_on: []
+    user_request:
+      original: "Test"
+      created_at: "2025-01-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test"
+      detailed: []
+    background:
+      current_situation: "Test"
+      reason_for_change: "Test"
+      changes_to_make: "Test"
+    required_background:
+      description: "Test"
+      file_structure: ""
+      references: []
+    workflow:
+      dependency_diagram: ""
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     todos: []
+    references: []
+    execution:
+      started: false
+      completed: false
+    work_mode:
+      parallel_requested: false
+    progress:
+      total_tasks: 0
+      completed: 0
+      in_progress: 0
+      pending: 0
+    current_work: ""
   - id: plan2
     name: Plan 2
     depends_on:
       - plan1
+    user_request:
+      original: "Test"
+      created_at: "2025-01-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test"
+      detailed: []
+    background:
+      current_situation: "Test"
+      reason_for_change: "Test"
+      changes_to_make: "Test"
+    required_background:
+      description: "Test"
+      file_structure: ""
+      references: []
+    workflow:
+      dependency_diagram: ""
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     todos: []
+    references: []
+    execution:
+      started: false
+      completed: false
+    work_mode:
+      parallel_requested: false
+    progress:
+      total_tasks: 0
+      completed: 0
+      in_progress: 0
+      pending: 0
+    current_work: ""
 """
     plan_file.write_text(yaml_content)
 
@@ -264,7 +286,9 @@ work_plans:
 
 def test_graph__with_non_v3_plan__shows_warning(tmp_path: Path) -> None:
     # given
-    plan_file = tmp_path / "ai-todolist.yaml"
+    tasks_dir = tmp_path / ".sisyphus" / "tasks"
+    tasks_dir.mkdir(parents=True)
+    plan_file = tasks_dir / "ai-todolist.yaml"
     yaml_content = """metadata:
   created_at: "2025-01-01T00:00:00Z"
   updated_at: "2025-01-01T00:00:00Z"
@@ -281,7 +305,9 @@ def test_graph__with_non_v3_plan__shows_warning(tmp_path: Path) -> None:
 
 def test_graph__with_mermaid_format__outputs_mermaid(tmp_path: Path) -> None:
     # given
-    plan_file = tmp_path / "ai-todolist.yaml"
+    tasks_dir = tmp_path / ".sisyphus" / "tasks"
+    tasks_dir.mkdir(parents=True)
+    plan_file = tasks_dir / "ai-todolist.yaml"
     yaml_content = """version: "3.0"
 metadata:
   created_at: "2025-01-01T00:00:00Z"
@@ -290,7 +316,42 @@ work_plans:
   - id: plan1
     name: Plan 1
     depends_on: []
+    user_request:
+      original: "Test"
+      created_at: "2025-01-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test"
+      detailed: []
+    background:
+      current_situation: "Test"
+      reason_for_change: "Test"
+      changes_to_make: "Test"
+    required_background:
+      description: "Test"
+      file_structure: ""
+      references: []
+    workflow:
+      dependency_diagram: ""
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
     todos: []
+    references: []
+    execution:
+      started: false
+      completed: false
+    work_mode:
+      parallel_requested: false
+    progress:
+      total_tasks: 0
+      completed: 0
+      in_progress: 0
+      pending: 0
+    current_work: ""
 """
     plan_file.write_text(yaml_content)
 

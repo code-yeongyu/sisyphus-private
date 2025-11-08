@@ -1,6 +1,6 @@
 ---
 name: plan-writer-yaml
-description: Create YAML v3.0 format work plans saved as ./ai-todolist.yaml with strict schema validation. Analyze user requirements, gather project context, and generate structured plans with verification specs. ALWAYS includes mandatory plan-reviewer verification. Use when users request YAML-based work planning or Sisyphus-compatible task breakdown.
+description: Create YAML v3.0 format work plans saved as .sisyphus/tasks/{name}.yaml with strict schema validation. Analyze user requirements, gather project context, and generate structured plans with verification specs. ALWAYS includes mandatory plan-reviewer verification. Use when users request YAML-based work planning or Sisyphus-compatible task breakdown.
 ---
 
 # Plan Writer (YAML v3.0)
@@ -191,7 +191,7 @@ Use TodoWrite to create todos for the following:
 3. Create YAML work plan draft (v3.0 format)
 4. Request plan-reviewer verification (MANDATORY)
 5. Incorporate reviewer feedback and iterate until "OKAY"
-6. Save final approved plan to ./ai-todolist.yaml
+6. Save final approved plan to .sisyphus/tasks/{name}.yaml
 
 Mark each step as 'pending' initially, then update to 'in_progress' and 'completed' as you work through them.
 ```
@@ -738,7 +738,7 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
    Task(
        subagent_type="plan-reviewer",
        description="Review YAML work plan",
-       prompt="./ai-todolist.yaml"
+       prompt=".sisyphus/tasks/{name}.yaml"
    )
    ```
 
@@ -748,7 +748,7 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
    - **Infinite Loop until "OKAY"**:
      - Read reviewer feedback carefully
      - Make ALL requested changes
-     - Re-submit with ONLY file path: `"./ai-todolist.yaml"`
+     - Re-submit with ONLY file path: `".sisyphus/tasks/{name}.yaml"`
      - NEVER add context about revisions
      - Repeat until reviewer responds "OKAY"
 
@@ -762,7 +762,7 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
 When modifying existing plan:
 
 1. **Read Existing Plan**
-   Read `./ai-todolist.yaml`
+   Read `.sisyphus/tasks/{name}.yaml`
 
 2. **Identify Modification Scope**
    - Analyze user requests
@@ -789,12 +789,12 @@ When modifying existing plan:
    - Use `|` for multi-line strings
 
 2. **Save Plan**
-   - Write to `./ai-todolist.yaml`
+   - Write to `.sisyphus/tasks/{name}.yaml`
    - Ensure UTF-8 encoding
 
 3. **Run Linter (CRITICAL)**
    ```bash
-   sisyphus plan lint --file ./ai-todolist.yaml
+   sisyphus plan lint --file .sisyphus/tasks/{name}.yaml
    ```
    - If errors: Fix and re-validate
    - If success: Proceed to success report
@@ -803,7 +803,7 @@ When modifying existing plan:
    ```
    ✅ YAML plan creation complete!
 
-   * Plan file: ./ai-todolist.yaml
+   * Plan file: .sisyphus/tasks/{name}.yaml
    * Format: Sisyphus YAML v3.0 (v2.1 internal)
    * Total tasks: N
    * Verification specs: N bash, N llm_judge
@@ -883,7 +883,7 @@ When modifying existing plan:
 ## Success Indicators
 
 Plan creation is complete when:
-- Plan saved to `./ai-todolist.yaml`
+- Plan saved to `.sisyphus/tasks/{name}.yaml`
 - YAML schema valid (passes linter)
 - All verification specs follow guidelines (conservative bash)
 - Approved by plan-reviewer ("OKAY")

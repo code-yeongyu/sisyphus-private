@@ -978,6 +978,7 @@ dependencies = [
     { name = "anyio" },
     { name = "pydantic" },
     { name = "ruamel-yaml" },
+    { name = "typer" },
 ]
 
 [package.dev-dependencies]
@@ -990,6 +991,7 @@ requires-dist = [
     { name = "anyio", specifier = ">=4.11.0" },
     { name = "pydantic", specifier = ">=2.12.3" },
     { name = "ruamel-yaml", specifier = ">=0.18.16" },
+    { name = "typer", specifier = ">=0.15.0" },
 ]
 
 [package.metadata.requires-dev]

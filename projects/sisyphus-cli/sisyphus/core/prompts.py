@@ -11,7 +11,7 @@ def build_execute_prompt(plan_path: str, current_todo_summary: str) -> str:
     Returns:
         Formatted execute prompt string
     """
-    return f"""/execute-yaml {plan_path}
+    return f"""/sisyphus-execute {plan_path}
 
 Execute tasks from the YAML work plan at {plan_path} by spawning executor agents.
 I am ordering you to start working.
@@ -29,7 +29,7 @@ I am ordering you to start working.
 {DEFAULT_EXECUTE_PROMPT}"""
 
 
-DEFAULT_EXECUTE_PROMPT = """/execute-yaml
+DEFAULT_EXECUTE_PROMPT = """/sisyphus-execute
 
 Execute tasks from the YAML work plan by spawning **sisyphus-executor** agents.
 I am ordering you to start working.
@@ -143,6 +143,11 @@ When an sisyphus-executor agent fails:
 Remember: Your job is to be a strict, thorough reviewer. The quality of the final product
 depends on your diligence in verifying every single task. **Always use the sisyphus-executor agent
 for YAML v3.0 work plans.**
+
+---
+
+FORBIDDEN: NEVER CALL 'sisyphus work' COMMAND, THIS IS FOR USER, NOW YOU.
+For now, run 'sisyphus task continue' to continue the task, until you are fully done.
 """
 
 DEFAULT_VERIFY_PROMPT = (

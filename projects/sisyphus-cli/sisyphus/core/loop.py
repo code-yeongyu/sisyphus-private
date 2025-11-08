@@ -9,7 +9,8 @@ from typing import TYPE_CHECKING, Protocol
 
 import anyio
 
-from sisyphus.core.plans.loader import load_plan
+from sisyphus.core.plans.loader import load_plan, save_plan
+from sisyphus.core.plans.models import Todo, TodoStatus
 from sisyphus.core.prompts import DEFAULT_EXECUTE_PROMPT, DEFAULT_VERIFY_PROMPT, build_execute_prompt
 from sisyphus.utils.errors import PromptTooLongError, RetryRequiredError, SessionLimitError, SessionResumeError
 from sisyphus.utils.session_limit import sleep_until_next_hour, sleep_until_reset
@@ -30,11 +31,11 @@ class TaskValidatorProtocol(Protocol):
         """Read todolist content."""
         ...
 
-    def check_all_goals_accomplished(self, content: str | None = None) -> bool:
+    async def check_all_goals_accomplished(self, content: str | None = None) -> bool:
         """Check if all goals are accomplished."""
         ...
 
-    def check_all_checkboxes_completed(self, content: str | None = None) -> bool:
+    async def check_all_checkboxes_completed(self, content: str | None = None) -> bool:
         """Check if all checkboxes are completed."""
         ...
 
@@ -163,6 +164,13 @@ class ExecutionLoop:
 
         execute_throttle_max_count = 10
 
+        if self.task_validator is not None:
+            content = self.task_validator.read_content()
+            goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
+            checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
+            if goals_accomplished and checkboxes_completed:
+                await self.ui.show_status("✅ All tasks already completed. Starting Verify phase...")
+
         while True:
             iteration += 1
 
@@ -176,42 +184,51 @@ class ExecutionLoop:
                     f"Forcing Verify phase to break potential infinite loop."
                 )
 
-            await self.ui.show_status(f"[Iteration {iteration}] Starting Execute phase...")
-
-            current_execute_extra = execute_extra
-            if verify_feedback_history:
-                feedback_section = (
-                    "\n\n## 🔍 Architect Feedback from Previous Iterations\n\n<architect-feedback-history>\n"
-                )
-
-                for i, feedback in enumerate(verify_feedback_history, 1):
-                    feedback_section += f'<feedback iteration="{i}">\n{feedback}\n</feedback>\n\n'
-
-                feedback_section += "</architect-feedback-history>\n\n"
-                feedback_section += (
-                    "**CRITICAL**: Address ALL issues mentioned in the feedback history above before proceeding.\n"
-                )
-
-                current_execute_extra = (execute_extra or "") + feedback_section
+            skip_execute = False
+            if iteration == 1 and self.task_validator is not None:
+                content = self.task_validator.read_content()
+                goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
+                checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
+                if goals_accomplished and checkboxes_completed:
+                    skip_execute = True
+                    await self.ui.show_status("✅ All tasks already completed. Skipping Execute phase...")
 
             should_retry_execute = False
-            try:
-                await self._execute_phase(execute_prompt, current_execute_extra)
-            except* RetryRequiredError as exception_group:
-                error = exception_group.exceptions[0]
-                await self.ui.show_status(
-                    f"[Iteration {iteration}] Retry required ({error.__class__.__name__}): {error}"
-                )
+            if not skip_execute:
+                await self.ui.show_status(f"[Iteration {iteration}] Starting Execute phase...")
 
-                # PromptTooLongError → delete session and start new one
-                if isinstance(error, PromptTooLongError):
-                    agent_type = type(self.execute_agent).__name__.lower().replace("agent", "")
-                    await self.session_store.delete_session(agent_type)
-                    await self.ui.show_status(
-                        f"Session '{agent_type}' cleared due to prompt length exceeded. Starting new session."
+                current_execute_extra = execute_extra
+                if verify_feedback_history:
+                    feedback_section = (
+                        "\n\n## 🔍 Architect Feedback from Previous Iterations\n\n<architect-feedback-history>\n"
                     )
 
-                should_retry_execute = True
+                    for i, feedback in enumerate(verify_feedback_history, 1):
+                        feedback_section += f'<feedback iteration="{i}">\n{feedback}\n</feedback>\n\n'
+
+                    feedback_section += "</architect-feedback-history>\n\n"
+                    feedback_section += (
+                        "**CRITICAL**: Address ALL issues mentioned in the feedback history above before proceeding.\n"
+                    )
+
+                    current_execute_extra = (execute_extra or "") + feedback_section
+
+                try:
+                    await self._execute_phase(execute_prompt, current_execute_extra)
+                except* RetryRequiredError as exception_group:
+                    error = exception_group.exceptions[0]
+                    await self.ui.show_status(
+                        f"[Iteration {iteration}] Retry required ({error.__class__.__name__}): {error}"
+                    )
+
+                    if isinstance(error, PromptTooLongError):
+                        agent_type = type(self.execute_agent).__name__.lower().replace("agent", "")
+                        await self.session_store.delete_session(agent_type)
+                        await self.ui.show_status(
+                            f"Session '{agent_type}' cleared due to prompt length exceeded. Starting new session."
+                        )
+
+                    should_retry_execute = True
 
             if should_retry_execute:
                 continue
@@ -219,8 +236,8 @@ class ExecutionLoop:
             should_verify = False
             if self.task_validator is not None:
                 content = self.task_validator.read_content()
-                goals_accomplished = self.task_validator.check_all_goals_accomplished(content)
-                checkboxes_completed = self.task_validator.check_all_checkboxes_completed(content)
+                goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
+                checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
                 should_verify = goals_accomplished and checkboxes_completed
 
             should_verify = should_verify or force_verify
@@ -276,17 +293,36 @@ class ExecutionLoop:
                             # RetryRequiredError handling (sleep_until_reset) already done in error class
                             # Loop will continue to retry verify phase
 
-                # Process verify results after retry loop completes
                 if fully_done:
-                    # Reset consecutive execute counter only when verify phase completes successfully
                     self._consecutive_execute_count = 0
                     await self.ui.show_status("✅ Architect confirmed FULLY_DONE. All work verified!")
                     break
 
-                # Verify returned FALSE - maintain counter to ensure immediate verify re-entry on next iteration
+                if self.task_validator and self.task_validator.todolist_path:
+                    plan_doc = await load_plan(self.task_validator.todolist_path)
+
+                    for work_plan in plan_doc.work_plans:
+                        if work_plan.work_mode.current_task_id:
+
+                            def find_and_reset_task(todos: list[Todo]) -> bool:
+                                for todo in todos:
+                                    if todo.id == work_plan.work_mode.current_task_id:
+                                        if todo.status == TodoStatus.completed:
+                                            todo.status = TodoStatus.in_progress
+                                            return True
+                                    if todo.children and find_and_reset_task(todo.children):
+                                        return True
+                                return False
+
+                            find_and_reset_task(work_plan.todos)
+
+                    await save_plan(self.task_validator.todolist_path, plan_doc)
+                    await self.ui.show_status(
+                        f"[Iteration {iteration}] Verify FALSE. Task reset to in_progress, will re-execute..."
+                    )
+
                 if feedback:
                     verify_feedback_history.append(feedback)
-                await self.ui.show_status(f"[Iteration {iteration}] Verify FALSE. Feedback received, will execute...")
             elif should_verify and not self.verify_agent:
                 await self.ui.show_status("✅ All tasks completed!")
                 break

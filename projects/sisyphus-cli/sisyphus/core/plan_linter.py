@@ -27,6 +27,7 @@ class LintError:
     expected: str | None = None  # e.g., "string", "one of [pending, in_progress, completed]"
     actual: str | None = None  # e.g., "null", "invalid"
     suggestion: str | None = None  # e.g., "Add field 'created_at'"
+    category: str = "schema"  # "schema" | "dependency" | "cycle" | "reference"
 
 
 class PlanLinter:
@@ -53,7 +54,6 @@ class PlanLinter:
         self._validate_root_fields(yaml_data)  # v3.0 PlanDocument validation
         self._validate_metadata(yaml_data)
         # work_plans validation is handled in _validate_root_fields
-        self._validate_reference_integrity(yaml_data)
         return self.errors
 
     def _validate_root_fields(self, data: dict[str, Any]) -> None:
@@ -260,9 +260,6 @@ class PlanLinter:
             self._check_type(req_bg["file_structure"], f"{path}.file_structure", "string")
         if "references" in req_bg:
             self._check_type(req_bg["references"], f"{path}.references", "list")
-            if isinstance(req_bg["references"], list):
-                for i, ref in enumerate(req_bg["references"]):
-                    self._validate_reference_spec(ref, f"{path}.references[{i}]")
 
     def _validate_workflow_in_plan(self, workflow: Any, path: str) -> None:
         """Validate workflow within a work plan."""
@@ -755,74 +752,6 @@ class PlanLinter:
             self._check_type(req_bg["file_structure"], "required_background.file_structure", "string")
         if "references" in req_bg:
             self._check_type(req_bg["references"], "required_background.references", "list")
-            if isinstance(req_bg["references"], list):
-                for i, ref in enumerate(req_bg["references"]):
-                    self._validate_reference_spec(ref, f"required_background.references[{i}]")
-
-    def _validate_reference_spec(self, ref: Any, path: str) -> None:
-        """Validate ReferenceItem (discriminated union) - v2.1."""
-        if not isinstance(ref, dict):
-            self._check_type(ref, path, "dict")
-            return
-
-        # Validate discriminated union type field (v2.1: pointer, file, url, markdown)
-        valid_types = ["pointer", "file", "url", "markdown"]
-        if not self._validate_discriminated_union_type(ref, path, valid_types):
-            return
-
-        ref_type = ref.get("type")
-        if ref_type == "pointer":
-            allowed_fields = {"type", "ref_id", "notes"}
-            self._check_extra_fields(ref, path, allowed_fields)
-            self._validate_nested_required(ref, path, ["ref_id"])
-            if "ref_id" in ref:
-                self._check_type(ref["ref_id"], f"{path}.ref_id", "string")
-            if "notes" in ref and ref["notes"] is not None:
-                self._check_type(ref["notes"], f"{path}.notes", "string")
-        elif ref_type == "file":
-            allowed_fields = {"type", "path", "description", "retrieval", "notes", "id"}
-            self._check_extra_fields(ref, path, allowed_fields)
-            self._validate_nested_required(ref, path, ["path", "description"])
-            if "path" in ref:
-                self._check_type(ref["path"], f"{path}.path", "string")
-            if "description" in ref:
-                self._check_type(ref["description"], f"{path}.description", "string")
-            if "notes" in ref and ref["notes"] is not None:
-                self._check_type(ref["notes"], f"{path}.notes", "string")
-        elif ref_type == "url":
-            allowed_fields = {"type", "url", "description", "retrieval", "notes", "id"}
-            self._check_extra_fields(ref, path, allowed_fields)
-            self._validate_nested_required(ref, path, ["url", "description"])
-            if "url" in ref:
-                self._check_type(ref["url"], f"{path}.url", "string")
-            if "description" in ref:
-                self._check_type(ref["description"], f"{path}.description", "string")
-            if "notes" in ref and ref["notes"] is not None:
-                self._check_type(ref["notes"], f"{path}.notes", "string")
-        elif ref_type == "markdown":
-            allowed_fields = {"type", "description", "content", "id"}
-            self._check_extra_fields(ref, path, allowed_fields)
-            self._validate_nested_required(ref, path, ["description", "content"])
-            if "description" in ref:
-                self._check_type(ref["description"], f"{path}.description", "string")
-            if "content" in ref:
-                self._check_type(ref["content"], f"{path}.content", "string")
-
-        # Validate type literal (no enum in v2.1, just check valid_types)
-        if ref_type and ref_type not in valid_types:
-            self.errors.append(
-                LintError(
-                    location=f"{path}.type",
-                    message="Invalid type value",
-                    expected=f"one of {valid_types}",
-                    actual=str(ref_type),
-                    suggestion=f"Change to one of: {', '.join(valid_types)}",
-                )
-            )
-
-        # Validate retrieval if present
-        if "retrieval" in ref and ref["retrieval"] is not None:
-            self._validate_retrieval_spec(ref["retrieval"], f"{path}.retrieval")
 
     def _validate_retrieval_spec(self, retrieval: Any, path: str) -> None:
         """Validate RetrievalSpec (discriminated union)."""
@@ -1001,9 +930,6 @@ class PlanLinter:
 
         if "references" in todo:
             self._check_type(todo["references"], f"{path}.references", "list")
-            if isinstance(todo["references"], list):
-                for i, ref in enumerate(todo["references"]):
-                    self._validate_reference_spec(ref, f"{path}.references[{i}]")
 
         if "verification_spec" in todo:
             self._check_type(todo["verification_spec"], f"{path}.verification_spec", "list")
@@ -1308,68 +1234,6 @@ class PlanLinter:
             if has_llm:
                 self._validate_llm_judge_list(item["llm_judge"], f"{item_path}.llm_judge")
 
-    def _collect_reference_ids_from_plan(self, plan: dict[str, Any]) -> set[str]:
-        """Collect all reference IDs from a work plan's required_background.references (v3.0)."""
-        ref_ids = set()
-        if "required_background" in plan:
-            bg = plan["required_background"]
-            if isinstance(bg, dict) and "references" in bg:
-                if isinstance(bg["references"], list):
-                    for ref in bg["references"]:
-                        if isinstance(ref, dict) and "id" in ref:
-                            ref_ids.add(ref["id"])
-        return ref_ids
-
-    def _validate_reference_integrity(self, data: dict[str, Any]) -> None:
-        """Validate all ReferencePointer.ref_id exist in work plans (v3.0)."""
-        if "work_plans" not in data or not isinstance(data["work_plans"], list):
-            return
-
-        for i, work_plan in enumerate(data["work_plans"]):
-            if not isinstance(work_plan, dict):
-                continue
-
-            valid_ref_ids = self._collect_reference_ids_from_plan(work_plan)
-
-            if "todos" in work_plan and isinstance(work_plan["todos"], list):
-                self._check_todos_ref_integrity(work_plan["todos"], f"work_plans[{i}].todos", valid_ref_ids)
-
-    def _check_todos_ref_integrity(self, todos: list[Any], path: str, valid_ref_ids: set[str]) -> None:
-        """Recursively check todos for invalid ref_id (v3.0)."""
-        for i, todo in enumerate(todos):
-            if not isinstance(todo, dict):
-                continue
-
-            todo_path = f"{path}[{i}]"
-
-            if "references" in todo and isinstance(todo["references"], list):
-                for j, ref in enumerate(todo["references"]):
-                    if not isinstance(ref, dict):
-                        continue
-
-                    ref_path = f"{todo_path}.references[{j}]"
-                    if ref.get("type") == "pointer" and "ref_id" in ref:
-                        ref_id = ref["ref_id"]
-                        if isinstance(ref_id, str) and ref_id not in valid_ref_ids:
-                            expected_msg = (
-                                f"one of {sorted(valid_ref_ids)}" if valid_ref_ids else "no references defined"
-                            )
-                            suggestion_msg = (
-                                f"Add reference with id='{ref_id}' to required_background.references or fix typo"
-                            )
-                            self.errors.append(
-                                LintError(
-                                    location=f"{ref_path}.ref_id",
-                                    message="Reference ID not found",
-                                    expected=expected_msg,
-                                    actual=ref_id,
-                                    suggestion=suggestion_msg,
-                                )
-                            )
-
-            if "children" in todo and isinstance(todo["children"], list):
-                self._check_todos_ref_integrity(todo["children"], f"{todo_path}.children", valid_ref_ids)
-
     def format_error(self, error: LintError) -> str:
         """Format error as string."""
         parts = [f"Error: {error.location} - {error.message}"]
@@ -1380,6 +1244,44 @@ class PlanLinter:
         if error.suggestion:
             parts.append(f"Suggestion: {error.suggestion}")
         return ". ".join(parts)
+
+    def validate_all(self, plan_document: PlanDocument, plan_path: Path) -> list[LintError]:
+        """Validate all aspects of a plan document (structure, dependencies, references).
+
+        Args:
+            plan_document: v3.0 PlanDocument instance
+            plan_path: Path to the plan file being validated
+
+        Returns:
+            List of lint errors categorized by type (empty if valid)
+        """
+        errors: list[LintError] = []
+
+        dep_errors = self.validate_depends_on(plan_document, plan_path)
+        errors.extend(
+            [
+                LintError(
+                    location="depends_on",
+                    message=err,
+                    category="dependency",
+                )
+                for err in dep_errors
+            ]
+        )
+
+        ref_errors = self.validate_references(plan_document)
+        errors.extend(
+            [
+                LintError(
+                    location="references",
+                    message=err,
+                    category="reference",
+                )
+                for err in ref_errors
+            ]
+        )
+
+        return errors
 
     def validate_depends_on(self, plan_document: PlanDocument, plan_path: Path) -> list[str]:
         """Validate depends_on field for all work plans.

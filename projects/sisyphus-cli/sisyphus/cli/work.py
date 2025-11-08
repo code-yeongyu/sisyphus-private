@@ -12,11 +12,12 @@ import typer
 from rich.console import Console
 
 from sisyphus.core.loop import ExecutionLoop
-from sisyphus.core.plan_linter import PlanLinter
+from sisyphus.core.plan_linter import LintError, PlanLinter
 from sisyphus.core.plans.loader import load_plan
 from sisyphus.core.plans.models import TodoStatus
 from sisyphus.core.session import SessionStore
 from sisyphus.core.status.manager import StatusManager
+from sisyphus.core.task_validator import YamlTaskValidator
 from sisyphus.ui.base import create_ui
 from sisyphus.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
 from sisyphus.utils.cli_helpers import ThemeOption, create_agent, resolve_binary, resolve_theme, validate_url
@@ -63,17 +64,22 @@ async def _validate_plan(plan_path: Path, ui: UIProtocol) -> None:
         await ui.show_status(f"[red]Failed to load plan: {e}[/red]")
         raise ValueError(f"Plan load failed: {plan_path}") from e
 
-    # PlanLinter 검증 (순환참조, 존재하지 않는 depends_on)
     linter = PlanLinter(schema_doc={})
-    depends_errors = linter.validate_depends_on(plan_doc, plan_path)
+    errors = linter.validate_all(plan_doc, plan_path)
 
-    if depends_errors:
-        await ui.show_status(
-            "[bold red]Plan validation failed (lint errors):[/bold red]\n\n"
-            + "\n".join(f"  - {err}" for err in depends_errors)
-            + "\n\nFix: Address all lint errors before running 'sisyphus work'."
-        )
-        raise ValueError(f"Lint validation failed: {len(depends_errors)} errors")
+    if errors:
+        by_category: dict[str, list[LintError]] = {}
+        for error in errors:
+            by_category.setdefault(error.category, []).append(error)
+
+        error_msg = "[bold red]Plan validation failed:[/bold red]\n\n"
+        for category, cat_errors in by_category.items():
+            error_msg += f"[yellow]{category.upper()} ERRORS:[/yellow]\n"
+            for err in cat_errors:
+                error_msg += f"  - {linter.format_error(err)}\n"
+
+        await ui.show_status(error_msg + "\nFix: Address all errors before running 'sisyphus work'.")
+        raise ValueError(f"Validation failed: {len(errors)} errors")
 
     # 의존성 완료 여부 체크 (단일 PlanDocument 내부만)
     plans_map = {plan.id: plan for plan in plan_doc.work_plans}
@@ -210,7 +216,8 @@ async def _main_cli(
     plan_path = await _detect_plan_path(ui)
     if plan_path:
         await _validate_plan(plan_path, ui)
-    task_validator = None
+
+    task_validator = YamlTaskValidator(plan_path) if plan_path else None
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,
@@ -285,7 +292,8 @@ async def _main_tui(
             plan_path = await _detect_plan_path(ui)
             if plan_path:
                 await _validate_plan(plan_path, ui)
-            task_validator = None
+
+            task_validator = YamlTaskValidator(plan_path) if plan_path else None
 
             if isinstance(ui, TUI):
                 ui.set_task_validator(task_validator)

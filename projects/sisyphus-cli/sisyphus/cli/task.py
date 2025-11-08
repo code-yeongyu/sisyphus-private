@@ -99,6 +99,35 @@ def _format_task_display(
     return "\n".join(lines)
 
 
+def _display_remaining_verifications(task_manager: TaskManager) -> None:
+    current_task = task_manager.get_current_task()
+    if current_task is None:
+        return
+
+    if not current_task.verification_spec:
+        console.print("\n[green]검증 항목이 없습니다.[/green]")
+        return
+
+    unverified_items = [v for v in current_task.verification_spec if not v.verified]
+    total_count = len(current_task.verification_spec)
+    remaining_count = len(unverified_items)
+    verified_count = total_count - remaining_count
+
+    console.print(f"\n[cyan]검증 진행 상황: {verified_count}/{total_count} 완료[/cyan]")
+
+    if remaining_count == 0:
+        console.print("[green]✓ 모든 검증이 완료되었습니다![/green]")
+        console.print("[yellow]다음 명령으로 작업을 계속하세요:[/yellow]")
+        console.print("  [bold cyan]sisyphus task continue[/bold cyan]")
+    else:
+        console.print(f"[yellow]남은 검증: {remaining_count}개[/yellow]\n")
+        console.print("[bold cyan]미완료 검증 항목:[/bold cyan]")
+        for idx, verify_item in enumerate(unverified_items, 1):
+            console.print(f"  [{idx}] {verify_item.title}")
+            if verify_item.description:
+                console.print(f"      {verify_item.description}")
+
+
 @task_app.command(name="show")
 def show_task(
     task_id: str = typer.Argument(..., help="Task ID"),
@@ -224,10 +253,31 @@ def continue_work(
         status = await status_manager.get()
 
         if status.current_plan is None:
-            console.print("[red]현재 활성화된 작업 계획이 없습니다.[/red]")
-            raise typer.Exit(1)
+            tasks_dir = working_dir / ".sisyphus" / "tasks"
+            yaml_files = list(tasks_dir.glob("*.yaml")) if tasks_dir.exists() else []
 
-        plan_path = working_dir / status.current_plan.plan_path
+            if len(yaml_files) == 1:
+                plan_path = yaml_files[0]
+                relative_path = plan_path.relative_to(working_dir)
+                await status_manager.set_current(
+                    plan_path=str(relative_path),
+                    plan_root=str(tasks_dir.relative_to(working_dir)),
+                )
+                console.print(f"[green]작업 계획 자동 선택:[/green] {relative_path}")
+            elif len(yaml_files) == 0:
+                console.print("[red]현재 활성화된 작업 계획이 없습니다.[/red]")
+                console.print("[yellow]다음 명령으로 계획을 활성화하세요:[/yellow]")
+                console.print("  sisyphus plan init")
+                raise typer.Exit(1)
+            else:
+                console.print("[red]현재 활성화된 작업 계획이 없습니다.[/red]")
+                console.print("[yellow]여러 작업 계획이 있습니다. 다음 명령으로 하나를 선택하세요:[/yellow]")
+                for yaml_file in yaml_files:
+                    console.print(f"  - {yaml_file.relative_to(working_dir)}")
+                console.print("\n  sisyphus plan init <plan-file>")
+                raise typer.Exit(1)
+        else:
+            plan_path = working_dir / status.current_plan.plan_path
         plan_doc = await load_plan(plan_path)
 
         if not plan_doc.work_plans:
@@ -275,7 +325,21 @@ def continue_work(
                 ver_total = report.verification_summary["total"]
                 console.print(f"  - 검증: {ver_completed}/{ver_total} 완료")
 
+                console.print("\n[bold cyan]미완료 검증 항목:[/bold cyan]")
+                for idx, verify_item in enumerate(current_task.verification_spec, 1):
+                    if not verify_item.verified:
+                        status_icon = "○"
+                        console.print(f"  {status_icon} [{idx}] {verify_item.title}")
+                        if verify_item.description:
+                            console.print(f"      {verify_item.description}")
+
             console.print("\n[cyan]완료 조건을 만족한 후 다시 시도하세요.[/cyan]")
+
+            if not report.all_verifications_completed:
+                console.print("\n[bold yellow]🤖 Orchestrator 안내:[/bold yellow]")
+                console.print("[yellow]당신이 직접 검증하고, 실패하거나 아쉬운 점이 있다면[/yellow]")
+                console.print("[yellow]sisyphus-executor를 다시 호출하여 시키세요.[/yellow]")
+
             raise typer.Exit(1)
 
         current_task.status = TodoStatus.completed
@@ -383,8 +447,10 @@ def verify_bash(
             verify_item.verified_at = datetime.now(UTC).isoformat()
             await save_plan(plan_path, plan_doc)
             console.print("\n[green]검증 완료! ✓[/green]")
+            _display_remaining_verifications(task_manager)
         else:
             console.print("\n[red]검증 실패. 문제를 해결한 후 다시 시도하세요.[/red]")
+            _display_remaining_verifications(task_manager)
             raise typer.Exit(1)
 
     _run_async(_verify_bash())
@@ -426,6 +492,8 @@ def verify_llm(
 
         verify_cmd = f"sisyphus task verify llm-mark {verify_item.id} --evidence '<증거 설명>'"
         console.print(f"\n[yellow]검증을 완료하려면:[/yellow] {verify_cmd}")
+
+        _display_remaining_verifications(task_manager)
 
     _run_async(_verify_llm())
 
@@ -481,6 +549,9 @@ def verify_llm_mark(
         console.print("[green]LLM 검증이 완료 표시되었습니다.[/green]")
         console.print(f"[cyan]증거:[/cyan] {evidence}")
 
+        task_manager = TaskManager(plan_doc, plan_doc.work_plans[0].id)
+        _display_remaining_verifications(task_manager)
+
     _run_async(_mark())
 
 
@@ -507,6 +578,8 @@ def verify_manual(
 
         verify_cmd = f"sisyphus task verify manual-mark {verify_item.id} --evidence '<증거 설명>'"
         console.print(f"\n[yellow]수동 검증을 완료하려면:[/yellow] {verify_cmd}")
+
+        _display_remaining_verifications(task_manager)
 
     _run_async(_verify_manual())
 
@@ -561,6 +634,9 @@ def verify_manual_mark(
         await save_plan(plan_path, plan_doc)
         console.print("[green]수동 검증이 완료 표시되었습니다.[/green]")
         console.print(f"[cyan]증거:[/cyan] {evidence}")
+
+        task_manager = TaskManager(plan_doc, plan_doc.work_plans[0].id)
+        _display_remaining_verifications(task_manager)
 
     _run_async(_mark())
 

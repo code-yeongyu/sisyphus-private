@@ -1,5 +1,7 @@
 """TUI application for Sisyphus."""
 
+from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -17,7 +19,7 @@ from sisyphus.ui.tui.layouts.main import compose_main_layout
 from sisyphus.utils.theme import ThemeName
 
 if TYPE_CHECKING:
-    from sisyphus.core.loop import ExecutionLoop
+    from sisyphus.core.loop import ExecutionLoop, TaskValidatorProtocol
     from sisyphus.utils.types import AgentMessage
 
 
@@ -37,7 +39,7 @@ class UpdateStatusMessage(Message):
 class ShowAgentMessage(Message):
     """Display agent message."""
 
-    def __init__(self, message: "AgentMessage", source: str) -> None:
+    def __init__(self, message: AgentMessage, source: str) -> None:
         """Initialize ShowAgentMessage.
 
         Args:
@@ -139,7 +141,7 @@ class TUI(App[None]):
         self.ready_event = anyio.Event()
         self._input_ready_event = anyio.Event()
         self._initialized = False
-        self.task_validator: None = None
+        self.task_validator: TaskValidatorProtocol | None = None
         self._last_total_checkboxes: int = 0
         self._last_completed_checkboxes: int = 0
         self.agent_interrupted = False
@@ -149,7 +151,7 @@ class TUI(App[None]):
         """Compose layout."""
         yield from compose_main_layout()
 
-    def set_task_validator(self, task_validator: None) -> None:
+    def set_task_validator(self, task_validator: TaskValidatorProtocol | None) -> None:
         """Set task validator for checkbox monitoring.
 
         Args:
@@ -157,7 +159,7 @@ class TUI(App[None]):
         """
         self.task_validator = task_validator
 
-    def set_execution_loop(self, execution_loop: "ExecutionLoop") -> None:
+    def set_execution_loop(self, execution_loop: ExecutionLoop) -> None:
         """Set execution loop for interrupt handling.
 
         Args:
@@ -329,7 +331,7 @@ class TUI(App[None]):
         """Initialize UI."""
         self._initialized = True
 
-    async def show_message(self, message: "AgentMessage", source: str) -> None:
+    async def show_message(self, message: AgentMessage, source: str) -> None:
         """Display message (Thread-Safe).
 
         Args:

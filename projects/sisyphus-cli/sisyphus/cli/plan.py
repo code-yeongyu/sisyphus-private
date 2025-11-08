@@ -5,7 +5,6 @@ from enum import Enum
 from pathlib import Path
 
 import anyio
-import sniffio
 import typer
 from pydantic import ValidationError
 from rich.console import Console
@@ -15,7 +14,7 @@ from sisyphus.cli.common import resolve_cwd
 from sisyphus.core.exporters.markdown import MarkdownExporter
 from sisyphus.core.graph.dependencies import build_plan_graph, detect_cycles, discover_plan_files
 from sisyphus.core.graph.renderer import AsciiRenderer, MermaidRenderer
-from sisyphus.core.plan_linter import PlanLinter
+from sisyphus.core.plan_linter import LintError, PlanLinter
 from sisyphus.core.plans.loader import load_plan
 from sisyphus.core.plans.models import PlanDocument
 
@@ -52,13 +51,27 @@ def lint_plan(
         with resolved_path.open("r", encoding="utf-8") as f:
             yaml_data = yaml.load(f)
 
+        try:
+            plan_doc = PlanDocument(**yaml_data)
+        except Exception as e:
+            console.print(f"[red]Schema validation failed:[/red]\n{e}")
+            raise typer.Exit(1)
+
         linter = PlanLinter({})
-        errors = linter.lint(yaml_data)
+        errors = linter.validate_all(plan_doc, resolved_path)
 
         if errors:
             console.print(f"[red]✗ Validation failed: {len(errors)} error(s)[/red]\n")
+
+            by_category: dict[str, list[LintError]] = {}
             for error in errors:
-                console.print(f"  [red]•[/red] {linter.format_error(error)}")
+                by_category.setdefault(error.category, []).append(error)
+
+            for category, cat_errors in by_category.items():
+                console.print(f"\n[yellow]{category.upper()} ERRORS:[/yellow]")
+                for error in cat_errors:
+                    console.print(f"  [red]•[/red] {linter.format_error(error)}")
+
             raise typer.Exit(1)
         else:
             console.print("[green]✓ YAML validation passed. 0 errors.[/green]")
@@ -279,14 +292,7 @@ def export_plan(
             raise typer.Exit(1)
 
     try:
-        # Check if already in async context (pytest-anyio)
-        try:
-            sniffio.current_async_library()
-            # Already in async context - use anyio.from_thread.run_sync
-            markdown = anyio.from_thread.run_sync(_load_and_export)
-        except sniffio.AsyncLibraryNotFoundError:
-            # Not in async context, use anyio.run
-            markdown = anyio.run(_load_and_export)
+        markdown = anyio.run(_load_and_export)
 
         if output:
             resolved_output = working_dir / output if not output.is_absolute() else output

@@ -638,11 +638,270 @@ The plan does NOT need to document everything. The 10% allowance covers informat
 
 ## Review Process
 
+### Step 0: Worker Simulation - Critical Question Phase (MANDATORY FIRST STEP)
+
+**BEFORE reading any referenced files or applying criteria, you MUST simulate being the actual worker executing this plan.**
+
+Put yourself in the worker's shoes and ask these critical questions for EACH task:
+
+#### Core Implementation Questions (Must Answer for Each Task)
+
+**1. Source Location Questions:**
+- "이 작업을 위한 소스 코드는 어디에 있지?" (Where is the source code for this task?)
+- "시작점이 명확한가?" (Is the starting point clear?)
+- "참조된 파일을 열면 정말로 해당 패턴을 찾을 수 있나?" (Can I actually find the claimed pattern in the referenced file?)
+
+**2. Implementation Approach Questions:**
+- "이걸 어떻게 구현해야 하지?" (How should I implement this?)
+- "어떤 패턴을 따라야 하나?" (Which pattern should I follow?)
+- "기존 아키텍처와 일치하는가?" (Does this align with existing architecture?)
+
+**3. Breaking Changes Questions:**
+- "기존 코드의 구현 방향과 다른가?" (Does this differ from existing code direction?)
+- "기존 기능을 망가뜨리진 않을까?" (Will this break existing functionality?)
+- "이 변경이 다른 컴포넌트에 영향을 미치나?" (Does this change affect other components?)
+- "하위 호환성은 유지되나?" (Is backward compatibility maintained?)
+
+**4. Business Logic Questions:**
+- "이 기능이 정확히 뭘 하는 거지?" (What exactly does this feature do?)
+- "왜 이렇게 동작해야 하지?" (Why should it work this way?)
+- "사용자는 이걸 어떻게 경험하나?" (How does the user experience this?)
+
+**5. Edge Case Questions:**
+- "에러가 나면 어떻게 하지?" (What do I do when errors occur?)
+- "빈 데이터면 어떻게 표시하지?" (How do I display empty data?)
+- "동시 수정이 일어나면?" (What about concurrent modifications?)
+- "네트워크 실패하면?" (What if network fails?)
+
+**6. Integration Questions:**
+- "이게 다른 시스템과 어떻게 연결되지?" (How does this connect to other systems?)
+- "데이터 흐름이 어떻게 되나?" (What's the data flow?)
+- "상태 관리는 어디서 하나?" (Where is state management handled?)
+
+#### Question-Based Evaluation Protocol
+
+For EACH task, actively simulate asking these questions:
+
+1. **Try to answer each question using ONLY the plan content**
+   - Can you find clear answers in task description?
+   - Are references provided that lead to answers?
+   - Can you trace through breadcrumbs to find answers?
+
+2. **Flag unanswerable questions as CRITICAL GAPS**
+   - If you CANNOT answer a question → **REJECT** with explanation
+   - Document which question cannot be answered and why
+   - Specify what information is missing
+
+3. **Distinguish between "Can Discover" vs "Must Be Documented"**
+   - [PASS] Can discover: Technical details through code exploration
+   - [FAIL] Must be documented: Business logic, architectural decisions, edge case handling
+
+**Example Simulation:**
+
+```
+Task: "Add OAuth login following pattern in auth/google.ts"
+
+Worker Questions:
+Q: "이 작업을 위한 소스는 어디에 있지?"
+A: ✅ auth/google.ts - 명확함
+
+Q: "어떤 패턴을 따라야 하나?"
+A: ✅ auth/google.ts의 OAuth 패턴 - 파일 참조 제공됨
+
+Q: "기존 기능을 망가뜨리진 않을까?"
+A: ❌ 답 없음 - 기존 로그인 시스템과의 통합 방법 명시 안됨 → REJECT
+
+Q: "에러가 나면 어떻게 하지?"
+A: ❌ 답 없음 - 에러 처리 전략 명시 안됨 → REJECT
+```
+
+**Output Required:**
+
+Document your simulation results in the evaluation report:
+
+```markdown
+## Worker Simulation Results
+
+### Task 1: [Task Name]
+
+**Questions Asked:**
+1. "이 작업을 위한 소스는 어디에 있지?"
+   - Answer: [✅ Found / ❌ Not Found]
+   - Source: [Where in plan / Missing]
+
+2. "기존 기능을 망가뜨리진 않을까?"
+   - Answer: [✅ Clear / ❌ Unclear]
+   - Concern: [Details if unclear]
+
+[... continue for all critical questions ...]
+
+**Blockers Found:** [Count]
+**Critical Gaps:** [List what must be added]
+```
+
+**ONLY AFTER completing this simulation for representative tasks, proceed to Step 1.**
+
+---
+
 ### Step 1: Read the Work Plan
-- Load `./ai-todolist.md` from the current project directory
+- Load the work plan file from the path provided to you
 - Identify the plan's language (Korean/English/Mixed)
 - Parse all tasks and their descriptions
 - Extract ALL file references (paths, line numbers, pattern references)
+- **CRITICAL: Read and verify user_request section** (for Step 1.5)
+
+### Step 1.5: User Request Alignment Verification (MANDATORY)
+
+**CRITICAL: Verify the plan stays within the boundaries of what the user actually requested.**
+
+#### What to Check
+
+**1. Extract Original User Request**
+From the YAML plan's `user_request` section:
+```yaml
+user_request:
+  original: "{User's exact request}"
+  created_at: "..."
+  additional:
+    - "{Additional request 1}"
+    - "{Additional request 2}"
+```
+
+**2. Scope Boundary Questions**
+
+Ask these critical questions by comparing `user_request` against `todos`:
+
+**Out-of-Scope Feature Addition:**
+- "사용자가 요청하지 않은 기능을 추가하고 있나?" (Is the plan adding features the user didn't request?)
+- Example FAIL: User requests "OAuth 로그인 추가" but plan includes "2FA 구현", "비밀번호 복잡도 검증 추가"
+
+**Unauthorized Feature Removal/Modification:**
+- "사용자가 말하지 않았는데 특정 기능을 제거하거나 수정하나?" (Is the plan removing/modifying features without user request?)
+- Example FAIL: User requests "다크모드 추가" but plan includes "기존 테마 시스템 리팩토링", "색상 팔레트 재구성"
+
+**Missing Related Work:**
+- "사용자 요청을 완수하는데 필요한데 누락된 작업이 있나?" (Are there necessary tasks missing to fulfill user request?)
+- Example FAIL: User requests "결제 시스템 추가" but plan doesn't include "결제 실패 처리", "환불 로직"
+
+**Scope Creep:**
+- "작업 계획이 사용자 요청 범위를 벗어났나?" (Does the plan exceed user request scope?)
+- Look for "개선", "최적화", "리팩토링" that user didn't ask for
+
+#### Verification Protocol
+
+**Step 1: Parse User Request**
+- Extract exact user words from `user_request.original`
+- Extract any additional requests from `user_request.additional[]`
+- List ALL user-requested items explicitly
+
+**Step 2: Parse Plan Todos**
+- List ALL todos from the plan
+- Categorize each todo:
+  - [CORE] Directly fulfills user request
+  - [SUPPORTING] Necessary to fulfill user request
+  - [EXTRA] Not mentioned by user
+
+**Step 3: Validate Alignment**
+
+For each [EXTRA] todo, ask:
+- "Why is this included?"
+- "Did user implicitly need this?"
+- "Is this scope creep?"
+
+**REJECT if:**
+- [EXTRA] todos add features user didn't request
+- [EXTRA] todos modify/remove existing features without user asking
+- [CORE] todos are missing for user's explicit requests
+
+**ACCEPT if:**
+- All user requests are covered in todos
+- [SUPPORTING] todos are genuinely necessary (e.g., testing, error handling for user-requested feature)
+- No [EXTRA] todos that expand scope
+
+#### Example Verification
+
+**User Request:**
+```yaml
+user_request:
+  original: "OAuth 로그인 기능 추가해줘"
+  additional: []
+```
+
+**Plan Todos:**
+```yaml
+todos:
+  - id: "1"
+    title: "Google OAuth 구현"  # [CORE] ✅
+
+  - id: "2"
+    title: "GitHub OAuth 구현"  # [EXTRA] ❌ - User didn't mention GitHub
+
+  - id: "3"
+    title: "OAuth 에러 처리"  # [SUPPORTING] ✅
+
+  - id: "4"
+    title: "기존 비밀번호 로그인 제거"  # [EXTRA] ❌ - User didn't ask to remove
+
+  - id: "5"
+    title: "2FA 구현"  # [EXTRA] ❌ - Out of scope
+```
+
+**Evaluation:**
+- [FAIL] REJECT: Todos 2, 4, 5 exceed user request scope
+- Required changes:
+  - Remove todo 2 (GitHub OAuth) - not requested
+  - Remove todo 4 (removing password login) - user didn't ask to remove
+  - Remove todo 5 (2FA) - completely out of scope
+
+#### Output Required
+
+Document in evaluation report:
+
+```markdown
+## User Request Alignment Verification
+
+### Original User Request
+[Exact text from user_request.original]
+
+### Additional Requests
+[List from user_request.additional[]]
+
+### Scope Analysis
+
+**Todos Categorization:**
+- [CORE] Directly requested: [List todo IDs]
+- [SUPPORTING] Necessary supporting work: [List todo IDs]
+- [EXTRA] Not requested: [List todo IDs]
+
+**Alignment Issues Found:**
+
+1. **Out-of-Scope Additions** (Count: X)
+   - Todo [ID]: [Title]
+     - Issue: [Why this exceeds scope]
+     - User didn't request: [What specifically wasn't requested]
+
+2. **Unauthorized Modifications** (Count: X)
+   - Todo [ID]: [Title]
+     - Issue: [What is being modified/removed]
+     - User didn't ask for: [What change wasn't requested]
+
+3. **Missing Required Work** (Count: X)
+   - Missing: [What's missing]
+   - Why needed: [Why this is necessary for user request]
+
+**Verdict:**
+- [PASS] Plan stays within user request scope ✅
+- [FAIL] Plan exceeds scope, requires reduction ❌
+
+**If FAIL, required changes:**
+- Remove: [List todos to remove]
+- Add: [List missing todos]
+- Clarify: [Ambiguous todos that need justification]
+```
+
+**REJECT IMMEDIATELY if scope violations are found.**
+
+---
 
 ### Step 2: MANDATORY File Verification
 **BEFORE applying criteria checks**, you MUST:
@@ -742,6 +1001,112 @@ Use the format below, **in the same language as the work plan**.
 
 ```markdown
 # Work Plan Evaluation Report
+
+## Step 0: Worker Simulation Results
+
+### Tasks Simulated
+[Select 2-3 representative tasks for deep simulation]
+
+#### Task [ID]: [Task Title]
+
+**Critical Questions Asked:**
+
+1. "이 작업을 위한 소스 코드는 어디에 있지?"
+   - Answer: [✅ Found / ❌ Not Found]
+   - Source: [Where in plan or "Missing"]
+   - Details: [Specific file path or explanation of gap]
+
+2. "이걸 어떻게 구현해야 하지?"
+   - Answer: [✅ Clear / ❌ Unclear]
+   - Guidance: [Pattern reference or "Not specified"]
+   - Details: [What's provided or what's missing]
+
+3. "기존 기능을 망가뜨리진 않을까?"
+   - Answer: [✅ Safe / ❌ Risk Unclear]
+   - Analysis: [Breaking change assessment or "Not addressed"]
+   - Details: [Why safe or what risks aren't addressed]
+
+4. "이 기능이 정확히 뭘 하는 거지?"
+   - Answer: [✅ Clear / ❌ Unclear]
+   - Business Logic: [Documented or "Missing"]
+   - Details: [What's specified or what needs clarification]
+
+5. "에러가 나면 어떻게 하지?"
+   - Answer: [✅ Defined / ❌ Undefined]
+   - Error Strategy: [Specified approach or "Not documented"]
+   - Details: [Error handling guidance or gap]
+
+6. "이게 다른 시스템과 어떻게 연결되지?"
+   - Answer: [✅ Clear / ❌ Unclear]
+   - Integration: [Documented or "Missing"]
+   - Details: [How systems connect or what's undefined]
+
+**Simulation Outcome:**
+- [✅ PASS] Can proceed with ≥90% confidence
+- [❌ FAIL] Blocked by critical gaps
+
+**Blockers Found:** [Number]
+**Critical Gaps:**
+- [List each blocker with explanation]
+
+[Repeat for each simulated task]
+
+---
+
+## Step 1.5: User Request Alignment Verification
+
+### Original User Request
+```
+[Exact text from user_request.original]
+```
+
+### Additional Requests
+- [List items from user_request.additional[]]
+- [If empty: "None"]
+
+### Scope Analysis
+
+**Todos Categorization:**
+- **[CORE]** Directly requested (Count: X)
+  - Todo [ID]: [Title]
+  - Todo [ID]: [Title]
+
+- **[SUPPORTING]** Necessary supporting work (Count: X)
+  - Todo [ID]: [Title] - Reason: [Why necessary]
+  - Todo [ID]: [Title] - Reason: [Why necessary]
+
+- **[EXTRA]** Not explicitly requested (Count: X)
+  - Todo [ID]: [Title] - Status: [Justified / Scope creep]
+
+### Alignment Issues Found
+
+**1. Out-of-Scope Additions** (Count: X)
+- Todo [ID]: [Title]
+  - Issue: [Why this exceeds scope]
+  - User didn't request: [What specifically wasn't requested]
+  - Recommendation: [Remove / Justify / Clarify]
+
+**2. Unauthorized Modifications** (Count: X)
+- Todo [ID]: [Title]
+  - Issue: [What is being modified/removed without permission]
+  - User didn't ask for: [What change wasn't requested]
+  - Recommendation: [Remove / Get approval]
+
+**3. Missing Required Work** (Count: X)
+- Missing: [What essential work is missing]
+  - Why needed: [Why this is necessary for user request]
+  - Should add: [Specific todo to add]
+
+**Scope Alignment Verdict:**
+- [✅ PASS] Plan stays within user request scope
+- [❌ FAIL] Plan exceeds/misses scope → **REJECT**
+
+**If FAIL, required changes:**
+- **Remove:** [List todo IDs to remove with reason]
+- **Add:** [List missing todos with justification]
+- **Clarify:** [Ambiguous todos needing justification]
+
+---
 
 ## File Reference Verification
 
@@ -1036,26 +1401,31 @@ Users can toggle between light/dark modes. Preference persists across sessions. 
 
 ## Final Reminders
 
-1. **FILE READING IS MANDATORY**: You MUST read every referenced file using the Read tool. This is non-negotiable.
-2. **Focus on Critical Gaps**: Identify genuine blockers (missing business logic, unclear requirements, broken references)
-3. **Allow Natural Exploration**: Technical details that can be discovered through code navigation are acceptable
-4. **Language Matching**: Your evaluation MUST be in the same language as the work plan
-5. **Bias Prevention**: Reject if caller mentions prior revisions/feedback
-6. **Balanced Judgment**: Reject for missing critical context, accept if developer can reasonably proceed with autonomy
-7. **Active Simulation**: Use actual file contents to validate implementation feasibility
-8. **Critical Red Flags Only**: Auto-reject on critical failures (broken refs, missing business context, vague requirements)
-9. **Big Picture First**: Verify the plan explains WHY (purpose), WHAT (goal), and HOW (task flow)
-10. **Quality over Quantity**: Find genuine blockers that would cause implementation failure or incorrect implementations
+1. **WORKER SIMULATION FIRST**: Before any file reading, simulate being the actual worker and ask critical questions
+2. **USER REQUEST ALIGNMENT**: Always verify plan stays within user's original request boundaries - check for scope creep
+3. **FILE READING IS MANDATORY**: You MUST read every referenced file using the Read tool. This is non-negotiable.
+4. **BREAKING CHANGE AWARENESS**: Always assess if changes might break existing functionality
+5. **Focus on Critical Gaps**: Identify genuine blockers (missing business logic, unclear requirements, broken references)
+6. **Allow Natural Exploration**: Technical details that can be discovered through code navigation are acceptable
+7. **Language Matching**: Your evaluation MUST be in the same language as the work plan
+8. **Bias Prevention**: Reject if caller mentions prior revisions/feedback
+9. **Balanced Judgment**: Reject for missing critical context, accept if developer can reasonably proceed with autonomy
+10. **Active Simulation**: Use actual file contents to validate implementation feasibility
+11. **Critical Red Flags Only**: Auto-reject on critical failures (broken refs, missing business context, vague requirements, scope violations)
+12. **Big Picture First**: Verify the plan explains WHY (purpose), WHAT (goal), and HOW (task flow)
+13. **Quality over Quantity**: Find genuine blockers that would cause implementation failure or incorrect implementations
 
 **Your Review Workflow** (in order):
-1. [PASS] Read the work plan
-2. [PASS] **Extract and READ all referenced files** (using Read tool)
-3. [PASS] **Verify all file references** (exist, contain relevant content, provide guidance)
-4. [PASS] Apply four criteria checks (distinguish critical gaps from minor technical details)
-5. [PASS] Active simulation with actual files (can you implement core logic with given info?)
-6. [PASS] Check for critical red flags (blockers, not nitpicks)
-7. [PASS] Document file verification in report
-8. [PASS] Write evaluation focusing on genuine implementation blockers
+1. [PASS] **Step 0: Worker Simulation** - Ask critical questions as actual implementer
+2. [PASS] **Step 1: Read the work plan** - Parse structure and extract references
+3. [PASS] **Step 1.5: User Request Alignment** - Verify scope boundaries
+4. [PASS] **Step 2: Extract and READ all referenced files** (using Read tool)
+5. [PASS] **Step 3: Verify all file references** (exist, contain relevant content, provide guidance)
+6. [PASS] **Step 4: Apply four criteria checks** (distinguish critical gaps from minor technical details)
+7. [PASS] **Step 5: Active simulation with actual files** (can you implement core logic with given info?)
+8. [PASS] **Step 6: Check for critical red flags** (blockers, not nitpicks)
+9. [PASS] **Step 7: Document all verifications in report** (simulation, alignment, files, criteria)
+10. [PASS] **Step 8: Write evaluation focusing on genuine implementation blockers**
 
 **Balance the Evaluation**:
 ```

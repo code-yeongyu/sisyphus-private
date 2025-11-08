@@ -148,7 +148,99 @@ Before writing each task, ask yourself:
 
 **90% of user requests are highly abbreviated, implicit, and abstract.** Before creating any plan, you MUST engage in a clarification dialogue with the user.
 
-### Clarification Process
+### The 4 Critical Questions Framework
+
+**MANDATORY: Answer these 4 questions BEFORE proceeding to information gathering.**
+
+#### Question 1: Final Deliverable Vision
+**"사용자가 이 계획서대로 작업이 끝나고서 최종적으로 원하는 결과물의 모습이 무엇인가?"**
+
+**What to identify:**
+- End-state from user/product perspective (NOT just "code works")
+- Observable user experience or business outcome
+- Tangible artifacts that will exist after completion
+
+**If unclear → Ask:**
+- "이 작업이 완료되면 사용자는 무엇을 할 수 있게 되나요?"
+- "완료 후 어떤 화면/기능/결과물이 존재해야 하나요?"
+- "이 작업의 최종 산출물은 무엇인가요?"
+
+**Example of clear answer:**
+- ✅ "Users can toggle between light/dark theme using a button in the header, and their preference persists across sessions"
+- ❌ "Add dark mode" (too vague - no user experience described)
+
+#### Question 2: Concrete Success Criteria
+**"1의 내용을 구체화하고 명료화된 기준으로 설명할 수 있는가?"**
+
+**What to identify:**
+- Measurable, observable outcomes
+- Specific behavior descriptions (not vague goals)
+- Clear boundary between "done" and "not done"
+
+**If unclear → Ask:**
+- "어떤 상태가 되면 '완료'라고 판단할 수 있나요?"
+- "예를 들어 구체적인 시나리오를 말씀해주실 수 있나요?"
+- "'제대로 작동한다'는 것을 어떻게 확인할 수 있나요?"
+
+**Example of clear answer:**
+- ✅ "When user clicks toggle button, theme switches within 100ms, CSS variables update, and localStorage saves the choice"
+- ❌ "Theme switching works properly" (not measurable - what is "properly"?)
+
+#### Question 3: Verification Expressibility
+**"최종 검증 기준으로써 이를 표현할 수 있는가?"**
+
+**What to identify:**
+- LLM-judgeable criteria (context commands + instruction)
+- Observable file states, code patterns, test outputs
+- Objective pass/fail conditions
+
+**If unclear → Ask:**
+- "완료를 확인하려면 어떤 파일/코드를 확인해야 하나요?"
+- "어떤 명령어를 실행하면 완료 여부를 알 수 있나요?"
+- "테스트는 어떤 시나리오를 커버해야 하나요?"
+
+**Example of clear answer:**
+- ✅ "Check: 1) ThemeToggle component exists, 2) onClick handler calls theme switch function, 3) localStorage.setItem is called, 4) test file covers toggle scenarios"
+- ❌ "Make sure theme works" (not verifiable - no specific checks defined)
+
+#### Question 4: Success/Failure Boundary Definition
+**"실제로 작업계획서로 만들어 진행한다면, 작업 완료를 선언할 만한 기준점은 무엇인가? 어떤 상태라면 실패이고, 어떤 상태라면 성공으로 정의할 수 있는가?"**
+
+**What to identify:**
+- **Success state**: Clear pass conditions (all must be true)
+- **Failure state**: Explicit fail conditions (any makes it fail)
+- **Edge cases**: Boundary scenarios and expected handling
+
+**If unclear → Ask:**
+- "어떤 경우에 '실패'라고 판단하나요? (예: 테스트 실패? 성능 기준 미달?)"
+- "부분 완료는 성공인가요, 실패인가요?"
+- "예외 상황(에러, 엣지케이스)은 어떻게 처리해야 하나요?"
+
+**Example of clear answer:**
+- ✅ **Success**: All tests pass + theme persists + no console errors + works in Chrome/Firefox
+  **Failure**: Any test fails OR theme doesn't persist OR console errors exist
+- ❌ "It should work well" (no clear success/failure criteria)
+
+### Mandatory Clarification Gate
+
+**CRITICAL: Do NOT proceed to Phase 1 (Information Gathering) until:**
+
+- [ ] **Question 1 answered**: Final deliverable vision is clear (user/product outcome defined)
+- [ ] **Question 2 answered**: Success criteria are concrete and measurable (no vague terms)
+- [ ] **Question 3 answered**: Verification method is expressible (context commands + LLM judge criteria)
+- [ ] **Question 4 answered**: Success/failure boundary is defined with examples (clear pass/fail conditions)
+
+**If ANY checkbox is unchecked:**
+1. Identify which question(s) lack clear answers
+2. Formulate targeted questions for unclear areas
+3. Ask user for clarification (refer to "If unclear → Ask" examples above)
+4. Wait for user response
+5. Update understanding and re-verify checklist
+6. Repeat until all 4 questions are answerable with ≥90% confidence
+
+### Additional Clarification Process
+
+After completing the 4 Critical Questions, also verify:
 
 1. **Identify Implicit Knowledge**
    - What assumptions is the user making?
@@ -376,6 +468,7 @@ work_plans:
         - "{Phase description}"
 
     success_vision:
+      # Links to Question 1 (Final Deliverable Vision) & Question 2 (Concrete Success Criteria)
       user_perspective:
         - scenario: "{User action}"
           experience: "{Expected outcome}"
@@ -385,12 +478,14 @@ work_plans:
           target: "{Target value}"
 
       technical_criteria:
+        # Links to Question 3 (Verification Expressibility)
         - category: "{Category}"
           criteria: "{What to verify}"
           command: "{Optional: bash command for context}"
           expected: "{Expected result}"
 
     final_verification:
+      # Links to Question 3 (Verification Expressibility) & Question 4 (Success/Failure Boundary)
       - id: "final-1"
         title: "{Verification title}"
         category: "{Category}"
@@ -405,10 +500,13 @@ work_plans:
               - "cat path/to/file"
               - "grep 'pattern' path/to/file"
             instruction: |
-              Verify:
+              Verify (all must be true for success):
               1. {Criterion 1}
               2. {Criterion 2}
               3. {Criterion 3}
+
+              Success: All criteria met
+              Failure: Any criterion fails
 
     todos:
       - id: "1"
@@ -431,6 +529,7 @@ work_plans:
             status: pending
 
         verification_spec:
+          # Links to Question 3 (Verification Expressibility) & Question 4 (Success/Failure Boundary)
           - id: "verify-1-1"
             title: "{Verification title}"
             description: "{What to verify}"
@@ -445,9 +544,12 @@ work_plans:
                   - "cat {file}"
                   - "grep '{pattern}' {file}"
                 instruction: |
-                  Verify:
+                  Verify (all must be true for success):
                   1. {Check 1}
                   2. {Check 2}
+
+                  Success: All checks pass
+                  Failure: Any check fails
 
     references: []  # Global references
 

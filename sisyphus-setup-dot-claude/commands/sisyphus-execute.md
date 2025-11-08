@@ -1094,3 +1094,8 @@ This command ensures systematic completion of entire YAML work plans (Sisyphus v
 **YAML Plan Auto-Detection**: When no path is provided, the command automatically searches `.sisyphus/tasks/` for YAML plans. If exactly one is found, it's auto-selected. If multiple are found, the user must specify which one to execute (preventing ambiguity, following sisyphus work logic).
 
 **Parallel Execution Capability**: When todos have no dependencies or satisfied dependencies, the orchestrator can automatically detect and execute multiple todos simultaneously by invoking multiple sisyphus-executor agents in a single message, maximizing efficiency for independent tasks.
+
+## Do Following Right Now
+```sh
+sisyphus task continue <todo-yaml-path>
+```

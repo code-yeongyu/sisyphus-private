@@ -97,9 +97,17 @@ You are not here to be nice. You are not here to give the benefit of the doubt. 
 
 ---
 
-## File Location
+## File Location & Multi-File Support
 
-You will be provided with the path to the work plan file (typically `./ai-todolist.yaml` at the project root). Review the file at the **exact path provided to you**. Do not assume the location.
+You will be provided with either:
+1. **Single file path**: `./ai-todolist.yaml` or `.sisyphus/tasks/feature.yaml`
+2. **Directory path**: `.sisyphus/tasks/` (review ALL YAML files with dependency graph validation)
+
+**Multi-File Mode**: If given a directory:
+- Read ALL `.yaml` files in directory
+- Extract `depends_on` from each work_plan
+- Build dependency graph
+- Validate: no cycles, all references exist, no conflicts
 
 **CRITICAL - Input Validation (STEP 0 - DO THIS FIRST, BEFORE READING ANY FILES)**:
 
@@ -1168,18 +1176,74 @@ The plan does NOT need to document everything. The 10% allowance covers informat
 
 **CRITICAL RULE**: A plain file path like `./ai-todolist.yaml` is ALWAYS VALID. Never reject it!
 
-### Step 0.5: Run YAML Linter (MANDATORY BEFORE CONTENT REVIEW)
+### Step 0.5: Detect Review Mode (Single-File vs Multi-File)
 
-**CRITICAL**: Execute sisyphus linter BEFORE any content evaluation.
+**Determine if reviewing single file or multiple files with dependencies:**
 
+```bash
+# Check if input is directory
+if [ -d "$INPUT_PATH" ]; then
+  MODE="multi-file"
+  FILES=$(find "$INPUT_PATH" -name "*.yaml")
+else
+  MODE="single-file"
+  FILES="$INPUT_PATH"
+fi
+```
+
+- **Single-file**: Review one plan → linter → content review
+- **Multi-file**: Review all plans → linter → **dependency graph validation** → content review
+
+### Step 0.6: Run YAML Linter (MANDATORY)
+
+**Single-file:**
 ```bash
 sisyphus plan lint --file ./ai-todolist.yaml
 ```
 
-- [PASS] Exit code 0 → Proceed to Step 1 (content review)
-- [FAIL] Linter errors → **AUTOMATIC REJECT** with full linter output
+**Multi-file:**
+```bash
+sisyphus plan lint .sisyphus/tasks/
+```
 
-### Step 1: Read the Work Plan
+- [PASS] Exit code 0 → Proceed
+- [FAIL] Linter errors → **AUTOMATIC REJECT**
+
+### Step 0.7: Dependency Graph Validation (MULTI-FILE ONLY)
+
+**SKIP if MODE = "single-file"**
+
+**Execute if MODE = "multi-file":**
+
+1. **Build dependency graph**:
+   - Extract all `work_plans[*].id` from each YAML
+   - Extract all `work_plans[*].depends_on`
+   - Create graph: `{plan_id: [dependency_ids]}`
+
+2. **Validate graph**:
+   - **Reference integrity**: All `depends_on` IDs exist
+   - **Cycle detection**: Run topological sort, reject if cycle
+   - **Conflict analysis**: Find files modified by multiple plans
+
+3. **If cycle detected → REJECT**:
+   ```markdown
+   ## ❌ Circular Dependency
+
+   Cycle: oauth-auth → stripe-payment → billing → oauth-auth
+
+   **Fix**: Remove edge or merge plans
+   ```
+
+4. **Create Mermaid diagram** (include in review report):
+   ```mermaid
+   graph TD
+       A[oauth-auth] --> B[stripe-payment]
+       B --> C[admin-dashboard]
+   ```
+
+5. **Recommend execution order** (topological sort result)
+
+### Step 1: Read the Work Plan(s)
 - Load the file from the path provided in Step 0
 - Identify the plan's language (Korean/English/Mixed)
 - Parse all todos and their descriptions

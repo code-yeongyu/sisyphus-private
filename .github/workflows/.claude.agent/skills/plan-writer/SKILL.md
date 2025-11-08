@@ -272,27 +272,61 @@ After completing the 4 Critical Questions, also verify:
 
 ## Work Process
 
-### Phase 0: Initialize Plan File Path
+### Phase 0: Detect Multi-Context & Initialize Plan Paths
 
-**CRITICAL: Determine plan file path BEFORE any work.**
+**CRITICAL: Determine if request requires SINGLE file or MULTIPLE files with dependencies.**
 
-1. **Ask user for plan file name** (if not provided):
+#### Step 1: Multi-Context Detection
+
+Analyze user request for multiple independent contexts (맥락):
+
+**Indicators of MULTIPLE contexts:**
+- Conjunction: "AND", "그리고", "또한", "ALSO"
+- Independent features: "Add auth AND payments" (2 domains)
+- Separate deliverables: Each can ship independently
+
+**Examples:**
+- SINGLE: "Add OAuth with Google/GitHub" → 1 file
+- MULTI: "Add OAuth AND Stripe payments" → 2 files with depends_on
+
+#### Step 2A: If SINGLE context
+
+1. Ask for plan name:
    ```
-   "What would you like to name this work plan?
-   (e.g., 'add-authentication', 'fix-login-bug', 'refactor-user-model')
-
-   The plan will be saved as: .sisyphus/tasks/{name}.yaml"
+   Plan name? (e.g., 'add-authentication')
+   → .sisyphus/tasks/{name}.yaml
    ```
 
-2. **Store plan path** for all subsequent operations:
-   ```
-   PLAN_PATH = f".sisyphus/tasks/{user_provided_name}.yaml"
+2. Store: `PLAN_PATH = ".sisyphus/tasks/{name}.yaml"`
+
+#### Step 2B: If MULTI-context
+
+1. Extract contexts and propose structure:
+   ```markdown
+   Detected contexts:
+   1. OAuth Auth → oauth-auth.yaml
+   2. Stripe Payment → stripe-payment.yaml (depends_on: [oauth-auth])
+
+   Create separate files?
    ```
 
-3. **Use PLAN_PATH consistently** throughout:
-   - Phase 2 (Plan Creation): Write to PLAN_PATH
-   - Phase 3 (Review): Submit PLAN_PATH to plan-reviewer
-   - Phase 5 (Final Output): Confirm save to PLAN_PATH
+2. Store:
+   ```python
+   PLAN_PATHS = {
+       "oauth-auth": {
+           "file": ".sisyphus/tasks/oauth-auth.yaml",
+           "plan_id": "oauth-authentication",
+           "depends_on": []
+       },
+       "stripe-payment": {
+           "file": ".sisyphus/tasks/stripe-payment.yaml",
+           "plan_id": "stripe-integration",
+           "depends_on": ["oauth-authentication"]  # uses depends_on field
+       }
+   }
+   ```
+
+3. For review, submit directory: `".sisyphus/tasks/"` (not single file)
 
 ### Phase 1: Initial Analysis and Information Gathering
 

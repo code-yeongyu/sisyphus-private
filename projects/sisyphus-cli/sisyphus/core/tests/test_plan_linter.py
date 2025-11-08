@@ -1,8 +1,11 @@
 """PlanLinter unit tests."""
 
+from pathlib import Path
+
 import pytest
 
 from sisyphus.core.plan_linter import LintError, PlanLinter
+from sisyphus.core.plans.models import PlanDocument
 
 pytestmark = [pytest.mark.anyio]
 
@@ -232,7 +235,6 @@ async def test_lint_invalid_enum__when_todo_status_invalid__returns_error() -> N
 async def test_lint_ref_integrity__when_ref_id_not_found__returns_error() -> None:
     # given
     linter = PlanLinter({})
-    # v3.0 PlanDocument structure
     data = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
@@ -252,7 +254,7 @@ async def test_lint_ref_integrity__when_ref_id_not_found__returns_error() -> Non
                     "description": "Test",
                     "file_structure": None,
                     "references": [
-                        {"type": "file", "path": "a.py", "description": "A", "id": "ref1"},
+                        {"ref_id": "ref1", "uri": "file://a.py"},
                     ],
                 },
                 "workflow": {"dependency_diagram": "Test", "critical_path": []},
@@ -263,10 +265,11 @@ async def test_lint_ref_integrity__when_ref_id_not_found__returns_error() -> Non
                         "id": "1",
                         "title": "Task",
                         "status": "pending",
-                        "references": [{"type": "pointer", "ref_id": "nonexistent"}],
+                        "references": [{"ref_id": "nonexistent"}],
                         "verification_spec": [],
                     }
                 ],
+                "references": [],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
                 "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
@@ -276,11 +279,12 @@ async def test_lint_ref_integrity__when_ref_id_not_found__returns_error() -> Non
     }
 
     # when
-    errors = linter.lint(data)
+    plan_doc = PlanDocument(**data)  # pyright: ignore[reportArgumentType]
+    errors = linter.validate_all(plan_doc, Path("test.yaml"))
 
     # then
-    assert any("ref_id" in e.location for e in errors)
-    assert any("not found" in e.message.lower() for e in errors)
+    assert len(errors) > 0
+    assert any("nonexistent" in e.message for e in errors)
 
 
 async def test_lint_multiple_errors__when_multiple_issues__returns_all_errors() -> None:
@@ -389,50 +393,6 @@ async def test_lint_recursive_children__when_child_has_error__returns_error() ->
     # then
     assert any("work_plans[0].todos[0].children[0].status" in e.location for e in errors)
     assert any("Invalid enum" in e.message for e in errors)
-
-
-async def test_lint_discriminated_union__when_type_field_missing__returns_error() -> None:
-    # given
-    linter = PlanLinter({})
-    # v3.0 PlanDocument structure
-    data = {
-        "version": "3.0",
-        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "work_plans": [
-            {
-                "id": "test-plan",
-                "name": "Test Plan",
-                "depends_on": [],
-                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
-                "objectives": {"core": "Test", "detailed": []},
-                "background": {
-                    "current_situation": "A",
-                    "reason_for_change": "B",
-                    "changes_to_make": "C",
-                },
-                "required_background": {
-                    "description": "Test",
-                    "file_structure": None,
-                    "references": [{"path": "a.py", "description": "A"}],
-                },
-                "workflow": {"dependency_diagram": "Test", "critical_path": []},
-                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
-                "final_verification": [],
-                "todos": [],
-                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
-                "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
-                "current_work": "",
-            }
-        ],
-    }
-
-    # when
-    errors = linter.lint(data)
-
-    # then
-    assert any("work_plans[0].required_background.references[0].type" in e.location for e in errors)
-    assert any("Missing required field" in e.message for e in errors)
 
 
 async def test_format_error__when_all_fields_present__returns_formatted_message() -> None:
@@ -845,3 +805,271 @@ async def test_validate_todos__if_empty__returns_error() -> None:
     assert "empty" in errors[0].message.lower()
     assert errors[0].expected == "at least one todo"
     assert errors[0].actual == "empty list"
+
+
+async def test_validate_all_success__when_all_checks_pass__returns_empty_list() -> None:
+    # given
+    linter = PlanLinter({})
+    data = {
+        "version": "3.0",
+        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
+        "work_plans": [
+            {
+                "id": "plan-1",
+                "name": "Valid Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test objective", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
+                    {
+                        "id": "1",
+                        "title": "Test task",
+                        "status": "pending",
+                        "references": [],
+                        "verification_spec": [],
+                    }
+                ],
+                "references": [],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
+            }
+        ],
+    }
+    plan_doc = PlanDocument(**data)  # pyright: ignore[reportArgumentType]
+    plan_path = Path("/tmp/test.yaml")
+
+    # when
+    errors = linter.validate_all(plan_doc, plan_path)
+
+    # then
+    assert errors == []
+
+
+async def test_validate_all_with_dependency_errors__when_missing_plan__returns_dependency_error() -> None:
+    # given
+    linter = PlanLinter({})
+    data = {
+        "version": "3.0",
+        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
+        "work_plans": [
+            {
+                "id": "plan-1",
+                "name": "Plan with missing dependency",
+                "depends_on": ["nonexistent-plan"],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
+                    {"id": "1", "title": "Test", "status": "pending", "references": [], "verification_spec": []}
+                ],
+                "references": [],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
+            }
+        ],
+    }
+    plan_doc = PlanDocument(**data)  # pyright: ignore[reportArgumentType]
+    plan_path = Path("/tmp/test.yaml")
+
+    # when
+    errors = linter.validate_all(plan_doc, plan_path)
+
+    # then
+    assert len(errors) > 0
+    assert any(e.category == "dependency" for e in errors)
+    assert any("nonexistent-plan" in e.message for e in errors)
+
+
+async def test_validate_all_with_cycle_errors__when_circular_dependency__returns_cycle_error() -> None:
+    # given
+    linter = PlanLinter({})
+    data = {
+        "version": "3.0",
+        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
+        "work_plans": [
+            {
+                "id": "plan-a",
+                "name": "Plan A",
+                "depends_on": ["plan-b"],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
+                    {"id": "1", "title": "Test", "status": "pending", "references": [], "verification_spec": []}
+                ],
+                "references": [],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
+            },
+            {
+                "id": "plan-b",
+                "name": "Plan B",
+                "depends_on": ["plan-a"],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
+                    {"id": "1", "title": "Test", "status": "pending", "references": [], "verification_spec": []}
+                ],
+                "references": [],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
+            },
+        ],
+    }
+    plan_doc = PlanDocument(**data)  # pyright: ignore[reportArgumentType]
+    plan_path = Path("/tmp/test.yaml")
+
+    # when
+    errors = linter.validate_all(plan_doc, plan_path)
+
+    # then
+    assert len(errors) > 0
+    assert any(e.category == "dependency" for e in errors)
+    assert any("Circular dependency" in e.message for e in errors)
+
+
+async def test_validate_all_with_reference_errors__when_inline_too_long__returns_reference_error() -> None:
+    # given
+    linter = PlanLinter({})
+    long_inline = "x" * 600
+    data = {
+        "version": "3.0",
+        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
+        "work_plans": [
+            {
+                "id": "plan-1",
+                "name": "Plan with long inline reference",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
+                    {"id": "1", "title": "Test", "status": "pending", "references": [], "verification_spec": []}
+                ],
+                "references": [{"id": "long-ref", "inline": long_inline}],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
+            }
+        ],
+    }
+    plan_doc = PlanDocument(**data)  # pyright: ignore[reportArgumentType]
+    plan_path = Path("/tmp/test.yaml")
+
+    # when
+    errors = linter.validate_all(plan_doc, plan_path)
+
+    # then
+    assert len(errors) > 0
+    assert any(e.category == "reference" for e in errors)
+    assert any("inline reference too long" in e.message for e in errors)
+
+
+async def test_validate_all_returns_list_of_lint_errors__when_called__returns_correct_type() -> None:
+    # given
+    linter = PlanLinter({})
+    data = {
+        "version": "3.0",
+        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
+        "work_plans": [
+            {
+                "id": "plan-1",
+                "name": "Test Plan",
+                "depends_on": [],
+                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
+                "objectives": {"core": "Test", "detailed": []},
+                "background": {
+                    "current_situation": "A",
+                    "reason_for_change": "B",
+                    "changes_to_make": "C",
+                },
+                "required_background": {"description": "Test", "file_structure": None, "references": []},
+                "workflow": {"dependency_diagram": "Test", "critical_path": []},
+                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+                "final_verification": [],
+                "todos": [
+                    {"id": "1", "title": "Test", "status": "pending", "references": [], "verification_spec": []}
+                ],
+                "references": [],
+                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
+                "work_mode": {"parallel_requested": False, "current_task_id": None},
+                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
+                "current_work": "",
+            }
+        ],
+    }
+    plan_doc = PlanDocument(**data)  # pyright: ignore[reportArgumentType]
+    plan_path = Path("/tmp/test.yaml")
+
+    # when
+    errors = linter.validate_all(plan_doc, plan_path)
+
+    # then
+    assert isinstance(errors, list)
+    assert all(isinstance(e, LintError) for e in errors)
+
+
+async def test_lint_error_category_field__when_created__has_category() -> None:
+    # given
+    error = LintError(
+        category="dependency",
+        location="test",
+        message="test message",
+        expected="test expected",
+        actual="test actual",
+    )
+
+    # then
+    assert hasattr(error, "category")
+    assert error.category == "dependency"

@@ -9,7 +9,6 @@ from sisyphus.cli.plan import plan_app
 
 pytestmark = [
     pytest.mark.anyio,
-    pytest.mark.skip(reason="CLI tests require v2.1 compatibility layer - deferred to post-v3.0 release"),
 ]
 
 runner = CliRunner()
@@ -18,42 +17,50 @@ runner = CliRunner()
 def test_lint__with_valid_yaml__passes(tmp_path: Path) -> None:
     # given
     yaml_file = tmp_path / "test.yaml"
-    yaml_content = """metadata:
+    yaml_content = """version: "3.0"
+metadata:
   created_at: "2025-01-01T00:00:00Z"
   updated_at: "2025-01-01T00:00:00Z"
-user_request:
-  original: "Test request"
-  created_at: "2025-01-01T00:00:00Z"
-  additional: []
-objectives:
-  core: "Test objective"
-background:
-  current_situation: "Test"
-  reason_for_change: "Test"
-  changes_to_make: "Test"
-required_background:
-  description: "Test"
-  references: []
-status:
-  execution:
-    started: false
-    completed: false
-  work_mode:
-    parallel_requested: false
-  progress:
-    total_tasks: 0
-    completed: 0
-    in_progress: 0
-    pending: 0
-  current_work: ""
-workflow:
-  dependency_diagram: ""
-todos: []
-success_vision:
-  user_perspective: []
-  business_perspective: []
-  technical_criteria: []
-final_verification: []
+work_plans:
+  - id: test-plan
+    name: Test Plan
+    depends_on: []
+    user_request:
+      original: "Test request"
+      created_at: "2025-01-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test objective"
+      detailed: []
+    background:
+      current_situation: "Test"
+      reason_for_change: "Test"
+      changes_to_make: "Test"
+    required_background:
+      description: "Test"
+      file_structure: ""
+      references: []
+    workflow:
+      dependency_diagram: ""
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
+    todos: []
+    references: []
+    execution:
+      started: false
+      completed: false
+    work_mode:
+      parallel_requested: false
+    progress:
+      total_tasks: 0
+      completed: 0
+      in_progress: 0
+      pending: 0
+    current_work: ""
 """
     yaml_file.write_text(yaml_content)
 
@@ -75,53 +82,61 @@ def test_lint__with_invalid_yaml__fails(tmp_path: Path) -> None:
 
     # then
     assert result.exit_code == 1
-    assert "✗ Validation failed" in result.stdout
+    assert "Schema validation failed" in result.stdout
 
 
 def test_lint__with_cwd_option__resolves_path(tmp_path: Path) -> None:
     # given
     yaml_file = tmp_path / "ai-todolist.yaml"
-    yaml_content = """metadata:
+    yaml_content = """version: "3.0"
+metadata:
   created_at: "2025-01-01T00:00:00Z"
   updated_at: "2025-01-01T00:00:00Z"
-user_request:
-  original: "Test"
-  created_at: "2025-01-01T00:00:00Z"
-  additional: []
-objectives:
-  core: "Test"
-background:
-  current_situation: "Test"
-  reason_for_change: "Test"
-  changes_to_make: "Test"
-required_background:
-  description: "Test"
-  references: []
-status:
-  execution:
-    started: false
-    completed: false
-  work_mode:
-    parallel_requested: false
-  progress:
-    total_tasks: 0
-    completed: 0
-    in_progress: 0
-    pending: 0
-  current_work: ""
-workflow:
-  dependency_diagram: ""
-todos: []
-success_vision:
-  user_perspective: []
-  business_perspective: []
-  technical_criteria: []
-final_verification: []
+work_plans:
+  - id: test-plan
+    name: Test Plan
+    depends_on: []
+    user_request:
+      original: "Test"
+      created_at: "2025-01-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test"
+      detailed: []
+    background:
+      current_situation: "Test"
+      reason_for_change: "Test"
+      changes_to_make: "Test"
+    required_background:
+      description: "Test"
+      file_structure: ""
+      references: []
+    workflow:
+      dependency_diagram: ""
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
+    todos: []
+    references: []
+    execution:
+      started: false
+      completed: false
+    work_mode:
+      parallel_requested: false
+    progress:
+      total_tasks: 0
+      completed: 0
+      in_progress: 0
+      pending: 0
+    current_work: ""
 """
     yaml_file.write_text(yaml_content)
 
     # when
-    result = runner.invoke(plan_app, ["lint", "--cwd", str(tmp_path)])
+    result = runner.invoke(plan_app, ["lint", "--file", "ai-todolist.yaml", "--cwd", str(tmp_path)])
 
     # then
     assert result.exit_code == 0

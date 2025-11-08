@@ -11,7 +11,6 @@ from sisyphus.cli.common import resolve_cwd
 
 pytestmark = [
     pytest.mark.anyio,
-    pytest.mark.skip(reason="CLI tests require v2.1 compatibility layer - deferred to post-v3.0 release"),
 ]
 
 runner = CliRunner()
@@ -22,42 +21,50 @@ def test_plan_lint__with_cwd_option__resolves_path(tmp_path: Path) -> None:
     cwd_dir = tmp_path / "subdir"
     cwd_dir.mkdir()
     yaml_file = cwd_dir / "test.yaml"
-    yaml_file.write_text("""metadata:
+    yaml_file.write_text("""version: "3.0"
+metadata:
   created_at: "2025-11-01T00:00:00Z"
   updated_at: "2025-11-01T00:00:00Z"
-user_request:
-  original: "Test"
-  created_at: "2025-11-01T00:00:00Z"
-  additional: []
-objectives:
-  core: "Test"
-background:
-  current_situation: "Test"
-  reason_for_change: "Test"
-  changes_to_make: "Test"
-required_background:
-  description: "Test"
-  references: []
-status:
-  execution:
-    started: false
-    completed: false
-  work_mode:
-    parallel_requested: false
-  progress:
-    total_tasks: 0
-    completed: 0
-    in_progress: 0
-    pending: 0
-  current_work: ""
-workflow:
-  dependency_diagram: ""
-todos: []
-success_vision:
-  user_perspective: []
-  business_perspective: []
-  technical_criteria: []
-final_verification: []
+work_plans:
+  - id: test-plan
+    name: Test Plan
+    depends_on: []
+    user_request:
+      original: "Test"
+      created_at: "2025-11-01T00:00:00Z"
+      additional: []
+    objectives:
+      core: "Test"
+      detailed: []
+    background:
+      current_situation: "Test"
+      reason_for_change: "Test"
+      changes_to_make: "Test"
+    required_background:
+      description: "Test"
+      file_structure: ""
+      references: []
+    workflow:
+      dependency_diagram: ""
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
+    todos: []
+    references: []
+    execution:
+      started: false
+      completed: false
+    work_mode:
+      parallel_requested: false
+    progress:
+      total_tasks: 0
+      completed: 0
+      in_progress: 0
+      pending: 0
+    current_work: ""
 """)
 
     # when

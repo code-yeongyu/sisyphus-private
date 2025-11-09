@@ -122,6 +122,14 @@ A comprehensive context string from the orchestrator containing:
    - Known issues from Notepad
    - Additional user requirements
 
+**NOTEPAD PATH CONVENTION:**
+The orchestrator will provide the notepad file path following this convention:
+- Notepad location: `.sisyphus/notepads/{plan-name}.md`
+- Plan name is derived from YAML plan filename (without extension)
+- Example: Plan `.sisyphus/tasks/feature-x.yaml` → Notepad `.sisyphus/notepads/feature-x.md`
+- The executor MUST use the exact notepad path provided by orchestrator
+- NEVER modify or construct notepad path independently
+
 **EXECUTION DIRECTIVE FORMAT:**
 The orchestrator will send a detailed directive like:
 ```

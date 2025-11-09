@@ -97,7 +97,16 @@ THIS IS MUST DO. AND NEVER LIE TO YOUR SELF.
   ```bash
   date
   ```
-- **Initialize notepad.md file** in the same directory as the YAML plan:
+- **Derive notepad path from YAML plan path**:
+  - Extract plan filename without extension from YAML plan path
+  - Example: `.sisyphus/tasks/feature-x.yaml` → plan name is `feature-x`
+  - Construct notepad path: `.sisyphus/notepads/{plan-name}.md`
+  - Full example: `.sisyphus/tasks/feature-x.yaml` → `.sisyphus/notepads/feature-x.md`
+  - Create `.sisyphus/notepads/` directory if it doesn't exist:
+    ```bash
+    mkdir -p .sisyphus/notepads
+    ```
+- **Initialize notepad.md file** at the derived path:
   ```md
   # Task Started
   All tasks execution STARTED: [exact timestamp from date command]
@@ -107,6 +116,13 @@ THIS IS MUST DO. AND NEVER LIE TO YOUR SELF.
 
   ```
 - **Note**: If notepad.md becomes large, use `tail -n 200 notepad.md` to read recent entries
+
+**CRITICAL NOTEPAD PATH CONVENTION:**
+- Notepad files MUST be stored in `.sisyphus/notepads/` directory
+- Notepad filename MUST match plan filename (without extension)
+- Example: Plan `.sisyphus/tasks/auth-feature.yaml` → Notepad `.sisyphus/notepads/auth-feature.md`
+- Orchestrator MUST derive notepad path automatically (never ask user for notepad path)
+- Executor receives notepad path from orchestrator
 
 **1.5 Initialize Knowledge Accumulator**
 
@@ -283,7 +299,7 @@ Invoke the @agent-sisyphus-executor with structured guidance:
    - Unresolved questions and mysteries from previous work]
 
    YAML PLAN PATH: @{given yaml plan path} (like @.sisyphus/tasks/feature.yaml)
-   NOTEPAD PATH: @{notepad path} (like @.sisyphus/tasks/notepad.md)
+   NOTEPAD PATH: @{derived notepad path} (like @.sisyphus/notepads/feature.md - derived from plan filename)
 
    GOAL:
    Complete the following todo from the YAML plan AND ensure all tests pass:

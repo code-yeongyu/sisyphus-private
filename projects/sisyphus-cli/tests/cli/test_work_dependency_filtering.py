@@ -346,3 +346,54 @@ async def test_is_plan_executable__if_multiple_dependencies_one_incomplete__retu
     result = await _is_plan_executable(integration_file, tasks_dir)
 
     assert result is False
+
+
+async def test_is_plan_executable__if_plan_already_completed__returns_false(tmp_path: Path) -> None:
+    tasks_dir = tmp_path / ".sisyphus" / "tasks"
+    tasks_dir.mkdir(parents=True)
+
+    completed_file = tasks_dir / "completed.yaml"
+    completed_content = create_minimal_plan_yaml(
+        plan_id="completed-plan",
+        plan_name="Completed Plan",
+        description="Already completed plan",
+        depends_on=[],
+        todo_status="completed",
+        execution_completed=True,
+    )
+    completed_file.write_text(completed_content)
+
+    result = await _is_plan_executable(completed_file, tasks_dir)
+
+    assert result is False
+
+
+async def test_is_plan_executable__if_plan_completed_with_dependencies__returns_false(tmp_path: Path) -> None:
+    tasks_dir = tmp_path / ".sisyphus" / "tasks"
+    tasks_dir.mkdir(parents=True)
+
+    dep_file = tasks_dir / "foundation.yaml"
+    dep_content = create_minimal_plan_yaml(
+        plan_id="foundation",
+        plan_name="Foundation",
+        description="Dependency plan",
+        depends_on=[],
+        todo_status="completed",
+        execution_completed=True,
+    )
+    dep_file.write_text(dep_content)
+
+    completed_file = tasks_dir / "app.yaml"
+    completed_content = create_minimal_plan_yaml(
+        plan_id="app",
+        plan_name="App",
+        description="Completed app with dependency",
+        depends_on=["foundation"],
+        todo_status="completed",
+        execution_completed=True,
+    )
+    completed_file.write_text(completed_content)
+
+    result = await _is_plan_executable(completed_file, tasks_dir)
+
+    assert result is False

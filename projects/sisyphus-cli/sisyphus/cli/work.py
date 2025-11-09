@@ -106,19 +106,23 @@ async def _is_plan_executable(
     plan_path: Path,
     tasks_dir: Path,
 ) -> bool:
-    """Check if all dependencies of a plan are completed.
+    """Check if all dependencies of a plan are completed and plan is not yet completed.
 
     Args:
         plan_path: Path to plan file to check
         tasks_dir: .sisyphus/tasks directory path
 
     Returns:
-        True if plan is executable (all dependencies completed), False otherwise
+        True if plan is executable (all dependencies completed and not yet done), False otherwise
     """
     try:
         plan_doc = await load_plan(plan_path)
 
         for work_plan in plan_doc.work_plans:
+            # Skip already completed plans
+            if work_plan.execution.completed:
+                return False
+
             for dep_id in work_plan.depends_on:
                 if not await _is_dependency_satisfied(dep_id, tasks_dir):
                     return False

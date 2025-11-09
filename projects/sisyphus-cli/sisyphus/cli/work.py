@@ -102,6 +102,98 @@ async def _validate_plan(plan_path: Path, ui: UIProtocol) -> None:
                     raise ValueError(f"Dependency '{dep_id}' not completed")
 
 
+async def _is_plan_executable(
+    plan_path: Path,
+    tasks_dir: Path,
+) -> bool:
+    """Check if all dependencies of a plan are completed.
+
+    Args:
+        plan_path: Path to plan file to check
+        tasks_dir: .sisyphus/tasks directory path
+
+    Returns:
+        True if plan is executable (all dependencies completed), False otherwise
+    """
+    try:
+        plan_doc = await load_plan(plan_path)
+
+        for work_plan in plan_doc.work_plans:
+            for dep_id in work_plan.depends_on:
+                if not await _is_dependency_satisfied(dep_id, tasks_dir):
+                    return False
+
+        return True
+    except Exception:
+        return False
+
+
+async def _is_dependency_satisfied(
+    dep_id: str,
+    tasks_dir: Path,
+) -> bool:
+    """Check if a dependency is completed.
+
+    Args:
+        dep_id: Dependency ID (file:..., registry:..., or plain plan-id)
+        tasks_dir: .sisyphus/tasks directory path
+
+    Returns:
+        True if dependency is completed, False otherwise
+    """
+    # file:path/to/plan.yaml#plan-id format
+    if dep_id.startswith("file:"):
+        file_ref = dep_id[5:]  # Remove "file:" prefix
+        if "#" in file_ref:
+            file_path_str, plan_id = file_ref.split("#", 1)
+            file_path = tasks_dir / file_path_str
+        else:
+            file_path = tasks_dir / file_ref
+            plan_id = None
+
+        # Check file exists
+        if not file_path.exists():
+            return False
+
+        # Load plan and check completion
+        try:
+            plan_doc = await load_plan(file_path)
+        except Exception:
+            return False
+
+        # If plan_id specified, find that specific plan
+        if plan_id:
+            for wp in plan_doc.work_plans:
+                if wp.id == plan_id:
+                    return wp.execution.completed
+            return False
+
+        # If no plan_id, check first plan
+        if plan_doc.work_plans:
+            return plan_doc.work_plans[0].execution.completed
+
+        return False
+
+    # registry:plan-id format
+    elif dep_id.startswith("registry:"):
+        # Registry implementation needed: registry.yaml parsing
+        # Temporarily return False until registry feature is implemented
+        return False
+
+    # Plain plan-id format (local search)
+    else:
+        for pattern in ("**/*.yaml", "**/*.yml", "**/*.YAML", "**/*.YML"):
+            for yaml_file in tasks_dir.glob(pattern):
+                try:
+                    plan_doc = await load_plan(yaml_file)
+                    for wp in plan_doc.work_plans:
+                        if wp.id == dep_id:
+                            return wp.execution.completed
+                except Exception:
+                    continue
+        return False
+
+
 async def _detect_plan_path(ui: UIProtocol) -> Path | None:
     """Detect YAML plan file with improved UX.
 
@@ -144,23 +236,27 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
     # 파일명 기준 정렬 (표시 순서와 실제 선택 인덱스 일치 보장)
     yaml_files.sort(key=lambda p: p.name)
 
-    if len(yaml_files) == 0:
+    executable_plans = []
+    for yaml_file in yaml_files:
+        if await _is_plan_executable(yaml_file, tasks_dir):
+            executable_plans.append(yaml_file)
+
+    if len(executable_plans) == 0:
         await ui.show_status(
-            "[yellow]No YAML plans in '.sisyphus/tasks/'.[/yellow]\n\n"
-            "Create v3.0 YAML plan:\n"
-            "  vi .sisyphus/tasks/my-plan.yaml"
+            "[yellow]No executable plans found.[/yellow]\n\n"
+            "All plans have unresolved dependencies. Complete dependency plans first."
         )
         return None
-    elif len(yaml_files) == 1:
-        return yaml_files[0].absolute()
+    elif len(executable_plans) == 1:
+        return executable_plans[0].absolute()
     else:
         # 다중 YAML: 사용자 선택 입력 (사용자 요청 반영)
-        rel_paths = [f.relative_to(worktree_root) for f in yaml_files]
+        rel_paths = [f.relative_to(worktree_root) for f in executable_plans]
 
         # CLI 모드: typer.prompt 사용 가능
         # TUI 모드: ui.get_input() 사용 (UIProtocol 메서드)
         await ui.show_status(
-            f"[yellow]Multiple YAML plans found ({len(yaml_files)} files).[/yellow]\n\nAvailable plans:"
+            f"[yellow]Multiple executable plans found ({len(executable_plans)} files).[/yellow]\n\nAvailable plans:"
         )
 
         for idx, path in enumerate(rel_paths, start=1):
@@ -171,7 +267,7 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
 
         # TUI 모드: show_status로 프롬프트 표시 후 get_input() 호출
         if isinstance(ui, TUI):
-            await ui.show_status(f"\n[yellow]Enter selection (1-{len(yaml_files)}):[/yellow]")
+            await ui.show_status(f"\n[yellow]Enter selection (1-{len(executable_plans)}):[/yellow]")
             selection = await ui.get_input()
             if selection is None:
                 raise ValueError("User cancelled selection")
@@ -179,15 +275,15 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
             # CLI 모드: anyio.to_thread.run_sync로 typer.prompt 래핑 (이벤트 루프 블로킹 방지)
             selection = str(
                 await anyio.to_thread.run_sync(  # pyright: ignore[reportAttributeAccessIssue]
-                    lambda: typer.prompt(f"Select plan (1-{len(yaml_files)})", default=1, type=int)
+                    lambda: typer.prompt(f"Select plan (1-{len(executable_plans)})", default=1, type=int)
                 )
             )
 
         try:
             idx = int(selection) - 1
-            if idx < 0 or idx >= len(yaml_files):
+            if idx < 0 or idx >= len(executable_plans):
                 raise ValueError("Index out of range")
-            return yaml_files[idx].absolute()
+            return executable_plans[idx].absolute()
         except (ValueError, IndexError) as e:
             await ui.show_status(f"[red]Invalid selection: {selection}[/red]")
             raise ValueError(f"Invalid plan selection: {selection}") from e

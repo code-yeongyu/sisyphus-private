@@ -1411,7 +1411,7 @@ class PlanLinter:
 
         try:
             registry = load_registry(registry_path)
-            external_file_path, resolved_plan_id = resolve_registry_plan(plan_id, registry, sisyphus_dir)
+            external_file_path, resolved_plan_id = resolve_registry_plan(plan_id, registry, sisyphus_dir.parent)
         except ValueError:
             available_plans = []
             try:

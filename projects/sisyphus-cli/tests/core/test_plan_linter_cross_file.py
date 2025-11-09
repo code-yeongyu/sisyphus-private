@@ -271,7 +271,7 @@ def test_validate_registry_dependency__if_valid_reference__returns_none(
         ],
     )
 
-    backend_file_path = tasks_dir / "backend.yaml"
+    backend_file_path = tmp_path / "backend.yaml"
     yaml = YAML()
     with open(backend_file_path, "w") as f:
         yaml.dump(backend_plan_doc.model_dump(mode="json"), f)
@@ -280,7 +280,7 @@ def test_validate_registry_dependency__if_valid_reference__returns_none(
         "version": "1.0",
         "plans": [
             {
-                "file": "tasks/backend.yaml",
+                "file": "backend.yaml",
                 "plans": ["backend-api"],
             }
         ],
@@ -338,7 +338,7 @@ def test_validate_registry_dependency__if_plan_not_in_registry__returns_error(
         "version": "1.0",
         "plans": [
             {
-                "file": "tasks/backend.yaml",
+                "file": "backend.yaml",
                 "plans": ["backend-auth"],
             }
         ],
@@ -482,7 +482,7 @@ def test_validate_depends_on__if_registry_reference__validates_via_registry(
         ],
     )
 
-    backend_file_path = tasks_dir / "backend.yaml"
+    backend_file_path = tmp_path / "backend.yaml"
     yaml = YAML()
     with open(backend_file_path, "w") as f:
         yaml.dump(backend_plan_doc.model_dump(mode="json"), f)
@@ -491,7 +491,7 @@ def test_validate_depends_on__if_registry_reference__validates_via_registry(
         "version": "1.0",
         "plans": [
             {
-                "file": "tasks/backend.yaml",
+                "file": "backend.yaml",
                 "plans": ["backend-api"],
             }
         ],
@@ -567,7 +567,7 @@ def test_validate_depends_on__if_mixed_references__validates_all_types(
         ],
     )
 
-    backend_file_path = tasks_dir / "backend.yaml"
+    backend_file_path = tmp_path / "backend.yaml"
     yaml = YAML()
     with open(backend_file_path, "w") as f:
         yaml.dump(backend_plan_doc.model_dump(mode="json"), f)
@@ -600,7 +600,7 @@ def test_validate_depends_on__if_mixed_references__validates_all_types(
         "version": "1.0",
         "plans": [
             {
-                "file": "tasks/backend.yaml",
+                "file": "backend.yaml",
                 "plans": ["backend-api"],
             }
         ],

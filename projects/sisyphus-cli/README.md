@@ -614,6 +614,144 @@ uv run sisyphus plan convert-legacy ai-todolist.md --output .sisyphus/tasks/main
 
 See `docs/migration-v2-to-v3.md` for detailed migration guide.
 
+### Cross-File Dependencies
+
+Sisyphus v3.0 supports cross-file dependencies, allowing you to split large projects into multiple YAML files while maintaining execution order.
+
+#### File Path Reference
+
+Reference plans in other files using `file:` prefix:
+
+```yaml
+work_plans:
+  - id: frontend-app
+    name: "Frontend Application"
+    depends_on:
+      - file:backend.yaml#backend-api  # Relative or absolute path
+```
+
+The format is `file:<path>#<plan-id>`:
+- **Path**: Relative (to current file) or absolute
+- **Hash separator** (`#`): Separates file path from plan ID
+- **Validation**: PlanLinter automatically checks file existence and plan ID validity
+
+**Example:**
+```yaml
+# frontend.yaml
+work_plans:
+  - id: frontend-app
+    depends_on:
+      - file:../backend/api.yaml#backend-api
+      - file:/absolute/path/auth.yaml#auth-service
+```
+
+#### Global Registry
+
+For larger projects, use `.sisyphus/registry.yaml` to centrally manage all plan files:
+
+```yaml
+# .sisyphus/registry.yaml
+version: "1.0"
+plans:
+  - file: tasks/backend.yaml
+    plans:
+      - backend-api
+      - backend-auth
+  - file: tasks/frontend.yaml
+    plans:
+      - frontend-app
+```
+
+Then reference plans using `registry:` prefix:
+
+```yaml
+# frontend.yaml
+work_plans:
+  - id: frontend-app
+    depends_on:
+      - registry:backend-api  # Resolved via registry
+```
+
+**Benefits:**
+- Centralized plan management for large projects
+- No need to track file paths in dependencies
+- Easier refactoring (update registry instead of all YAML files)
+
+#### When to Use Each Method
+
+**File Path Reference** (`file:`):
+- Small to medium projects (2-5 plan files)
+- Direct 1-to-1 dependencies
+- Explicit file relationships
+
+**Registry Reference** (`registry:`):
+- Large projects (10+ plan files)
+- Complex dependency graphs
+- Multiple plans depending on same external plan
+- Team projects requiring centralized plan tracking
+
+#### Validation
+
+Run `sisyphus plan lint` to validate cross-file dependencies:
+
+```bash
+# Lint all plans in directory (auto-detects external references)
+uv run sisyphus plan lint .sisyphus/tasks/
+
+# Lint specific file
+uv run sisyphus plan lint .sisyphus/tasks/frontend.yaml
+```
+
+PlanLinter automatically:
+- Resolves `file:` references and checks if files exist
+- Validates plan IDs exist in referenced files
+- Loads and validates `registry.yaml` structure
+- Detects circular dependencies across files
+
+#### Visualization
+
+Visualize cross-file dependency graphs:
+
+```bash
+# ASCII format (terminal-friendly)
+uv run sisyphus plan graph .sisyphus/tasks/ --format ascii
+
+# Example output:
+# backend-api (backend.yaml)
+#   └─> frontend-app (frontend.yaml)
+
+# Mermaid format
+uv run sisyphus plan graph .sisyphus/tasks/ --format mermaid
+
+# PNG format (requires graphviz)
+uv run sisyphus plan graph .sisyphus/tasks/ --format png --output graph.png
+```
+
+#### Complete Example
+
+See `examples/multi-file/` for a working example:
+
+```bash
+# View the example
+cd examples/multi-file/
+
+# Validate plans
+uv run sisyphus plan lint .
+
+# Visualize dependencies
+uv run sisyphus plan graph . --format ascii
+
+# Expected output:
+# backend-api
+#   └─> frontend-app
+```
+
+The example demonstrates:
+- Backend plan with no dependencies (`backend.yaml`)
+- Frontend plan depending on backend via file reference (`frontend.yaml`)
+- Global registry setup (`.sisyphus/registry.yaml`)
+- Both reference methods (file path and registry)
+
 ---
 
 ## Session Management

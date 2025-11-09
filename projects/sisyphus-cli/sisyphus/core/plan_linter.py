@@ -9,9 +9,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from ruamel.yaml import YAML
+
 from sisyphus.core.graph.dependencies import build_plan_graph, detect_cycles
 from sisyphus.core.plans.models import PlanDocument, RetrievalType, TodoStatus
 from sisyphus.core.plans.references import ReferenceResolver
+from sisyphus.core.plans.registry import load_registry, resolve_registry_plan
 
 
 @dataclass
@@ -1283,6 +1286,192 @@ class PlanLinter:
 
         return errors
 
+    def _load_plan_sync(self, path: Path) -> PlanDocument:
+        """Load plan file synchronously (for linter usage).
+
+        Args:
+            path: Path to YAML plan file
+
+        Returns:
+            PlanDocument instance
+
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            ValueError: If YAML is invalid or version is not 3.0
+        """
+        if not path.exists():
+            raise FileNotFoundError(f"Plan file not found: {path}")
+
+        with open(path) as f:
+            content = f.read()
+
+        yaml = YAML()
+        data = yaml.load(content)
+
+        version = data.get("version")
+        if not version:
+            raise ValueError(f"Plan file {path} missing 'version' field")
+
+        if version != "3.0":
+            raise ValueError(f"Unsupported version: {version}. Only v3.0 supported.")
+
+        return PlanDocument(**data)
+
+    def _validate_external_dependency(
+        self,
+        dep_ref: str,
+        source_plan_id: str,
+        source_path: Path,
+    ) -> str | None:
+        """Validate external file dependency.
+
+        Args:
+            dep_ref: Dependency reference in 'file:backend.yaml#backend-api' format
+            source_plan_id: ID of the plan that has this dependency
+            source_path: Path to the source plan file
+
+        Returns:
+            Error message string if validation fails, None if successful
+        """
+        if not dep_ref.startswith("file:"):
+            return f"External dependency '{dep_ref}' must start with 'file:' prefix"
+
+        dep_ref_content = dep_ref[5:]
+
+        if "#" not in dep_ref_content:
+            return f"External dependency '{dep_ref}' is malformed. Expected format: 'file:path/to/plan.yaml#plan-id'"
+
+        file_path_str, plan_id = dep_ref_content.split("#", 1)
+
+        if not file_path_str:
+            return f"External dependency '{dep_ref}' has empty file path"
+
+        if not plan_id:
+            return f"External dependency '{dep_ref}' has empty plan ID"
+
+        external_file_path = Path(file_path_str)
+        if not external_file_path.is_absolute():
+            external_file_path = source_path.parent / external_file_path
+
+        if not external_file_path.exists():
+            return (
+                f"Plan '{source_plan_id}' depends on external file '{external_file_path}' that does not exist. "
+                f"Fix: Create the file or correct the path in depends_on"
+            )
+
+        try:
+            external_plan_doc = self._load_plan_sync(external_file_path)
+        except Exception as e:
+            return (
+                f"Plan '{source_plan_id}' depends on external file '{external_file_path}' "
+                f"that could not be loaded: {e}"
+            )
+
+        external_plan_ids = {plan.id for plan in external_plan_doc.work_plans}
+        if plan_id not in external_plan_ids:
+            available = ", ".join(f"'{p}'" for p in external_plan_ids)
+            return (
+                f"Plan '{source_plan_id}' depends on plan '{plan_id}' in file '{external_file_path}' "
+                f"that does not exist. Fix: Either create a plan with id '{plan_id}' in that file, "
+                f"or change the dependency to one of: {available}"
+            )
+
+        return None
+
+    def _validate_registry_dependency(
+        self,
+        plan_id: str,
+        source_plan_id: str,
+        plan_path: Path,
+    ) -> str | None:
+        """Validate registry-based dependency.
+
+        Args:
+            plan_id: Plan ID referenced (without 'registry:' prefix)
+            source_plan_id: ID of the plan that has this dependency
+            plan_path: Path to the source plan file
+
+        Returns:
+            Error message string if validation fails, None if successful
+        """
+        sisyphus_dir = self._find_sisyphus_dir(plan_path)
+        if sisyphus_dir is None:
+            return (
+                f"Plan '{source_plan_id}' uses registry reference but .sisyphus directory not found. "
+                f"Fix: Create .sisyphus/registry.yaml or use 'file:' reference instead"
+            )
+
+        registry_path = sisyphus_dir / "registry.yaml"
+        if not registry_path.exists():
+            return (
+                f"Plan '{source_plan_id}' depends on 'registry:{plan_id}' "
+                f"but registry file not found at {registry_path}. "
+                f"Fix: Create registry.yaml file or use 'file:' reference instead"
+            )
+
+        try:
+            registry = load_registry(registry_path)
+            external_file_path, resolved_plan_id = resolve_registry_plan(plan_id, registry, sisyphus_dir)
+        except ValueError:
+            available_plans = []
+            try:
+                registry = load_registry(registry_path)
+                for entry in registry.plans:
+                    available_plans.extend(entry.plans)
+            except Exception:
+                pass
+
+            available_str = ", ".join(f"'{p}'" for p in available_plans) if available_plans else "none"
+            return (
+                f"Plan '{source_plan_id}' depends on 'registry:{plan_id}' that does not exist in registry. "
+                f"Available plans: {available_str}. Fix: Add plan to registry.yaml or correct the dependency"
+            )
+        except Exception as e:
+            return f"Plan '{source_plan_id}' depends on 'registry:{plan_id}' but registry could not be loaded: {e}"
+
+        if not external_file_path.exists():
+            return (
+                f"Plan '{source_plan_id}' depends on 'registry:{plan_id}' "
+                f"but referenced file {external_file_path} does not exist. "
+                f"Fix: Create the file or update registry.yaml"
+            )
+
+        try:
+            external_plan_doc = self._load_plan_sync(external_file_path)
+        except Exception as e:
+            return (
+                f"Plan '{source_plan_id}' depends on 'registry:{plan_id}' "
+                f"but file {external_file_path} could not be loaded: {e}"
+            )
+
+        external_plan_ids = {plan.id for plan in external_plan_doc.work_plans}
+        if resolved_plan_id not in external_plan_ids:
+            available = ", ".join(f"'{p}'" for p in external_plan_ids)
+            return (
+                f"Plan '{source_plan_id}' depends on 'registry:{plan_id}' "
+                f"but plan '{resolved_plan_id}' does not exist in file {external_file_path}. "
+                f"Available plans: {available}. Fix: Create the plan or update registry.yaml"
+            )
+
+        return None
+
+    def _find_sisyphus_dir(self, plan_path: Path) -> Path | None:
+        """Find .sisyphus directory by searching upward from plan_path.
+
+        Args:
+            plan_path: Path to the plan file
+
+        Returns:
+            Path to .sisyphus directory, or None if not found
+        """
+        current = plan_path.parent
+        while current != current.parent:
+            sisyphus_dir = current / ".sisyphus"
+            if sisyphus_dir.exists() and sisyphus_dir.is_dir():
+                return sisyphus_dir
+            current = current.parent
+        return None
+
     def validate_depends_on(self, plan_document: PlanDocument, plan_path: Path) -> list[str]:
         """Validate depends_on field for all work plans.
 
@@ -1299,7 +1488,16 @@ class PlanLinter:
 
         for plan in plan_document.work_plans:
             for dep_id in plan.depends_on:
-                if dep_id not in plans:
+                if dep_id.startswith("file:"):
+                    error = self._validate_external_dependency(dep_id, plan.id, plan_path)
+                    if error:
+                        errors.append(error)
+                elif dep_id.startswith("registry:"):
+                    plan_id = dep_id[9:]
+                    error = self._validate_registry_dependency(plan_id, plan.id, plan_path)
+                    if error:
+                        errors.append(error)
+                elif dep_id not in plans:
                     available = ", ".join(f"'{p}'" for p in plans.keys())
                     errors.append(
                         f"Plan '{plan.id}' depends on plan '{dep_id}' that does not exist. "

@@ -297,6 +297,15 @@ def my_fixture(): ...
 
 10. **Plan references support inline + URI**: Use `inline: "quick note"` for context or `uri: "https://..."` for external docs. Both can coexist.
 
+11. **Cross-file dependencies**: v3.0 supports splitting plans across multiple files:
+   - Use `file:path/to/plan.yaml#plan-id` for direct file references (relative or absolute paths)
+   - Use `registry:plan-id` with `.sisyphus/registry.yaml` for central management in large projects
+   - PlanLinter validates external dependencies automatically (file existence, plan ID validity, circular deps)
+   - Both methods can coexist in the same project
+   - File path reference best for 2-5 plan files with direct dependencies
+   - Registry reference best for 10+ plan files with complex dependency graphs
+   - See `examples/multi-file/` for complete usage examples with backend/frontend split
+
 **Security:**
 - No credential validation for Claude/OpenCode APIs
 - YAML files world-readable (no encryption)

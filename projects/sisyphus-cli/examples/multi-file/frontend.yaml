@@ -1,0 +1,100 @@
+# Frontend Application
+# Depends on backend API via file path reference
+
+version: "3.0"
+
+metadata:
+  created_at: "2025-11-09T15:00:00Z"
+  updated_at: "2025-11-09T15:00:00Z"
+
+work_plans:
+  - id: frontend-app
+    name: "Frontend Application"
+    depends_on:
+      - file:backend.yaml#backend-api  # File path reference - runs after backend completes
+
+    user_request:
+      original: "Build React frontend for backend API"
+      created_at: "2025-11-09T15:00:00Z"
+      additional: []
+
+    objectives:
+      core: "Create user-friendly frontend interface for API consumption"
+      detailed:
+        - goal: "React project setup"
+          measurable: "Vite-based React app with TypeScript"
+        - goal: "API integration"
+          measurable: "Axios client communicating with backend endpoints"
+
+    background:
+      current_situation: "Backend API is complete, no frontend exists"
+      reason_for_change: "Users need visual interface to interact with system"
+      changes_to_make: "Build React SPA with TypeScript and Vite"
+
+    required_background:
+      description: "React 18+, TypeScript, Vite, Axios, Tailwind CSS"
+      references:
+        - ref_id: "react_docs"
+          uri: "https://react.dev/"
+
+    workflow:
+      dependency_diagram: "Task 1 → Task 2 → Task 3"
+      critical_path: ["1", "2", "3"]
+
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria:
+        - category: "Frontend Build"
+          criteria: "Production build succeeds"
+          expected: "npm run build completes without errors"
+
+    final_verification: []
+
+    todos:
+      - id: "1"
+        title: "Setup React project"
+        description: "Initialize React with TypeScript and Vite"
+        status: pending
+
+        references:
+          - inline: "Use Vite for fast dev server, TypeScript for type safety"
+
+        verification_spec: []
+
+      - id: "2"
+        title: "API client implementation"
+        description: "Create axios-based API client for backend endpoints"
+        status: pending
+
+        children:
+          - id: "2.1"
+            title: "User API client"
+            description: "Client methods for user CRUD operations"
+            status: pending
+            verification_spec: []
+
+          - id: "2.2"
+            title: "Post API client"
+            description: "Client methods for post CRUD operations"
+            status: pending
+            verification_spec: []
+
+        references:
+          - inline: "Base URL: http://localhost:8000/api, use axios interceptors for auth headers"
+
+        verification_spec: []
+
+      - id: "3"
+        title: "UI components"
+        description: "Build user dashboard and post list components"
+        status: pending
+
+        references:
+          - inline: "Use shadcn/ui components, Tailwind CSS for styling"
+
+        verification_spec: []
+
+    references:
+      - ref_id: "react_docs"
+        uri: "https://react.dev/"

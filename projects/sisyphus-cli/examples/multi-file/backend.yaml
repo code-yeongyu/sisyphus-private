@@ -1,0 +1,96 @@
+# Backend API Implementation
+# Independent plan with no external dependencies
+
+version: "3.0"
+
+metadata:
+  created_at: "2025-11-09T15:00:00Z"
+  updated_at: "2025-11-09T15:00:00Z"
+
+work_plans:
+  - id: backend-api
+    name: "Backend API Implementation"
+    depends_on: []  # No dependencies - runs first
+
+    user_request:
+      original: "Implement backend REST API with FastAPI"
+      created_at: "2025-11-09T15:00:00Z"
+      additional: []
+
+    objectives:
+      core: "Build production-ready REST API for user and post management"
+      detailed:
+        - goal: "Database schema implementation"
+          measurable: "PostgreSQL tables with proper indexes and relationships"
+        - goal: "API endpoint development"
+          measurable: "CRUD endpoints with Pydantic validation"
+
+    background:
+      current_situation: "No backend infrastructure exists"
+      reason_for_change: "Need API layer for frontend application"
+      changes_to_make: "Implement FastAPI-based REST API with PostgreSQL database"
+
+    required_background:
+      description: "Python 3.12+, FastAPI, PostgreSQL, SQLAlchemy"
+      references:
+        - ref_id: "fastapi_docs"
+          uri: "https://fastapi.tiangolo.com/"
+
+    workflow:
+      dependency_diagram: "Task 1 → Task 2 → Task 3"
+      critical_path: ["1", "2", "3"]
+
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria:
+        - category: "API Functionality"
+          criteria: "All CRUD endpoints operational"
+          expected: "HTTP 200 responses for valid requests"
+
+    final_verification: []
+
+    todos:
+      - id: "1"
+        title: "Database schema design"
+        description: "Create PostgreSQL tables for users and posts"
+        status: pending
+
+        references:
+          - inline: "Use UUID for primary keys, add created_at/updated_at timestamps"
+
+        verification_spec: []
+
+      - id: "2"
+        title: "REST API endpoints"
+        description: "Implement CRUD endpoints with FastAPI"
+        status: pending
+
+        children:
+          - id: "2.1"
+            title: "User endpoints (/api/users)"
+            description: "GET, POST, PUT, DELETE for users"
+            status: pending
+            verification_spec: []
+
+          - id: "2.2"
+            title: "Post endpoints (/api/posts)"
+            description: "GET, POST, PUT, DELETE for posts"
+            status: pending
+            verification_spec: []
+
+        references:
+          - inline: "Use Pydantic models for request/response validation"
+
+        verification_spec: []
+
+      - id: "3"
+        title: "Authentication middleware"
+        description: "Add JWT-based authentication"
+        status: pending
+
+        verification_spec: []
+
+    references:
+      - ref_id: "fastapi_docs"
+        uri: "https://fastapi.tiangolo.com/"

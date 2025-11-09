@@ -207,6 +207,16 @@ class Metadata(BaseModel):
     updated_at: str | None = None
 
 
+class RegistryPlanEntry(BaseModel):
+    file: str
+    plans: list[str]
+
+
+class PlanRegistry(BaseModel):
+    version: str
+    plans: list[RegistryPlanEntry]
+
+
 class PlanDocument(BaseModel):
     version: str
     metadata: Metadata

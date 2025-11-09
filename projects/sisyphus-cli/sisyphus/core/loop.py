@@ -539,7 +539,7 @@ class ExecutionLoop:
         final_session_id = self.execute_agent.session_id
         if final_session_id and final_session_id != actual_session_id:
             self.execute_logger.info(f"Updating session ID: '{actual_session_id}' -> '{final_session_id}'")
-            await self.session_store.save_session(agent_type, final_session_id)
+            await self.session_store.save_session(agent_type, final_session_id, self._current_plan_id)
 
         await self.execute_agent.close()
         self.execute_logger.info("Execute phase complete")
@@ -685,7 +685,7 @@ class ExecutionLoop:
 
                     # Delete invalid session (verify always uses new session)
                     agent_type = type(self.verify_agent).__name__.lower().replace("agent", "")
-                    await self.session_store.delete_session(agent_type)
+                    await self.session_store.delete_session(agent_type, self._current_plan_id)
 
                     raise RetryRequiredError(f"SDK error: {sdk_exception}")
                 else:

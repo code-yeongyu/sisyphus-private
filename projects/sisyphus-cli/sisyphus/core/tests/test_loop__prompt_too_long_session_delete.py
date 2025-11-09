@@ -79,7 +79,7 @@ async def test_execution_loop__if_prompt_too_long_error__deletes_session(tmp_pat
     session_dir = tmp_path / "sessions"
     session_store = SessionStore(base_dir=session_dir)
 
-    await session_store.save_session("mockwithprompterror", "old-session-id")
+    await session_store.save_session("mockwithprompterror", "old-session-id", "default")
 
     agent = MockAgentWithPromptError(fail_count=1)
     ui = MockUI()
@@ -100,8 +100,8 @@ async def test_execution_loop__if_prompt_too_long_error__deletes_session(tmp_pat
 
     # then
     sessions = await session_store.list_sessions()
-    assert sessions["mockwithprompterror"]["session_id"] != "old-session-id"
-    assert sessions["mockwithprompterror"]["session_id"] == "new-session-123"
+    assert sessions["mockwithprompterror"]["default"]["session_id"] != "old-session-id"
+    assert sessions["mockwithprompterror"]["default"]["session_id"] == "new-session-123"
 
     assert any("Session 'mockwithprompterror' cleared" in msg for msg in ui.status_messages)
     assert any("prompt length exceeded" in msg for msg in ui.status_messages)
@@ -113,7 +113,7 @@ async def test_execution_loop__if_prompt_too_long_error__starts_new_session(tmp_
     session_dir = tmp_path / "sessions"
     session_store = SessionStore(base_dir=session_dir)
 
-    await session_store.save_session("mockwithprompterror", "old-session-id")
+    await session_store.save_session("mockwithprompterror", "old-session-id", "default")
 
     agent = MockAgentWithPromptError(fail_count=1)
     ui = MockUI()

@@ -24,7 +24,7 @@ async def test_execute_phase__if_sdk_exception__deletes_session_and_retries() ->
 
     ui = MockUI()
     session_store = MockSessionStore()
-    await session_store.save_session("mockwithsdkerror", "invalid-session-id")
+    await session_store.save_session("mockwithsdkerror", "invalid-session-id", "default")
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
@@ -33,6 +33,7 @@ async def test_execute_phase__if_sdk_exception__deletes_session_and_retries() ->
         session_store=session_store,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
     )
+    loop._current_plan_id = "default"
 
     # when
     retry_count = 0
@@ -55,7 +56,7 @@ async def test_execute_phase__if_sdk_exception__deletes_session_and_retries() ->
     # then
     assert success is True
     assert execute_agent.start_session_call_count == 2
-    loaded_session = await session_store.get_session("mockwithsdkerror")
+    loaded_session = await session_store.get_session("mockwithsdkerror", "default")
     assert loaded_session is not None
     assert loaded_session == "new-session-2"
 
@@ -67,7 +68,7 @@ async def test_execute_phase__if_sdk_exception_3_times__exits_phase() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    await session_store.save_session("mockwithsdkerror", "invalid-session-id")
+    await session_store.save_session("mockwithsdkerror", "invalid-session-id", "default")
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
@@ -76,6 +77,7 @@ async def test_execute_phase__if_sdk_exception_3_times__exits_phase() -> None:
         session_store=session_store,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
     )
+    loop._current_plan_id = "default"
 
     # when
     retry_count = 0
@@ -101,7 +103,7 @@ async def test_execute_phase__if_sdk_exception_3_times__exits_phase() -> None:
     # then
     assert final_exception_raised is True
     assert execute_agent.stream_call_count == 3
-    loaded_session = await session_store.get_session("mockwithsdkerror")
+    loaded_session = await session_store.get_session("mockwithsdkerror", "default")
     assert loaded_session is None
 
 
@@ -112,7 +114,7 @@ async def test_verify_phase__if_sdk_exception__deletes_session_and_retries() -> 
 
     ui = MockUI()
     session_store = MockSessionStore()
-    await session_store.save_session("mockwithsdkerror", "invalid-session-id")
+    await session_store.save_session("mockwithsdkerror", "invalid-session-id", "default")
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
 
@@ -124,6 +126,7 @@ async def test_verify_phase__if_sdk_exception__deletes_session_and_retries() -> 
         logger_factory=logger_factory,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
     )
+    loop._current_plan_id = "default"
 
     # when
     retry_count = 0
@@ -146,7 +149,7 @@ async def test_verify_phase__if_sdk_exception__deletes_session_and_retries() -> 
     # then
     assert success is True
     assert verify_agent.start_session_call_count == 2
-    loaded_session = await session_store.get_session("mockwithsdkerror")
+    loaded_session = await session_store.get_session("mockwithsdkerror", "default")
     assert loaded_session is None
 
 
@@ -219,22 +222,24 @@ class MockUI:
 
 class MockSessionStore:
     def __init__(self) -> None:
-        self.sessions: dict[str, str] = {}
+        self.sessions: dict[str, dict[str, str]] = {}
 
-    async def get_session(self, agent_type: str) -> str | None:
-        return self.sessions.get(agent_type)
+    async def get_session(self, agent_type: str, plan_id: str) -> str | None:
+        if agent_type not in self.sessions:
+            return None
+        return self.sessions[agent_type].get(plan_id)
 
-    async def save_session(self, agent_type: str, session_id: str) -> None:
-        self.sessions[agent_type] = session_id
+    async def save_session(self, agent_type: str, session_id: str, plan_id: str) -> None:
+        if agent_type not in self.sessions:
+            self.sessions[agent_type] = {}
+        self.sessions[agent_type][plan_id] = session_id
 
-    async def delete_session(self, agent_type: str) -> None:
-        if agent_type in self.sessions:
-            del self.sessions[agent_type]
+    async def delete_session(self, agent_type: str, plan_id: str) -> None:
+        if agent_type in self.sessions and plan_id in self.sessions[agent_type]:
+            del self.sessions[agent_type][plan_id]
 
-    async def list_sessions(self) -> dict[str, dict[str, str]]:
-        return {k: {"session_id": v} for k, v in self.sessions.items()}
-
-
+    async def list_sessions(self) -> dict[str, dict[str, dict[str, str]]]:
+        return {k: {p: {"session_id": s} for p, s in v.items()} for k, v in self.sessions.items()}
 
 
 class MockLoggerFactory:

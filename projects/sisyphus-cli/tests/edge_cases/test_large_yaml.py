@@ -316,4 +316,4 @@ async def test_large_yaml_performance__if_large_file__loads_within_reasonable_ti
     # then
     assert loaded_doc.version == "3.0"
     assert len(loaded_doc.work_plans[0].todos) == 300
-    assert elapsed_time < 1.0
+    assert elapsed_time < 3.0

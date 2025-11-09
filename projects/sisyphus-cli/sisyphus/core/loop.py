@@ -318,6 +318,7 @@ class ExecutionLoop:
                                 return False
 
                             find_and_reset_task(work_plan.todos)
+                            work_plan.execution.completed = False
 
                     await save_plan(self.task_validator.todolist_path, plan_doc)
                     await self.ui.show_status(

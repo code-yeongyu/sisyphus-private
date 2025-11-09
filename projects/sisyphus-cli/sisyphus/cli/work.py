@@ -200,6 +200,7 @@ async def _main_cli(
     verify_extra: str | None,
     ui: UIProtocol,
     session_store: SessionStore,
+    working_directory: Path,
 ) -> None:
     """CLI mode main function (original logic).
 
@@ -210,6 +211,7 @@ async def _main_cli(
         verify_extra: Additional verify prompt
         ui: UI Protocol implementation
         session_store: SessionStore instance
+        working_directory: Execution working directory
     """
     start_time = time.time()
 
@@ -228,6 +230,7 @@ async def _main_cli(
         logger_factory=logger_factory,
         verify_agent=verify_agent,
         task_validator=task_validator,
+        working_directory=working_directory,
     )
 
     await loop.run(
@@ -259,6 +262,7 @@ async def _main_tui(
     verify_extra: str | None,
     ui: UIProtocol,
     session_store: SessionStore,
+    working_directory: Path,
 ) -> None:
     """TUI mode main function (parallel execution of TUI and ExecutionLoop).
 
@@ -269,6 +273,7 @@ async def _main_tui(
         verify_extra: Additional verify prompt
         ui: UI Protocol implementation
         session_store: SessionStore instance
+        working_directory: Execution working directory
     """
     if not isinstance(ui, TUI):
         raise TypeError("ui must be TUI instance for TUI mode")
@@ -307,6 +312,7 @@ async def _main_tui(
                 logger_factory=logger_factory,
                 verify_agent=verify_agent,
                 task_validator=task_validator,
+                working_directory=working_directory,
             )
 
             if isinstance(ui, TUI):
@@ -374,6 +380,8 @@ def run(
     log: Path | None = typer.Option(None, "--log", help="Log file path"),
 ) -> None:
     """Work with Sisyphus multi-agent system."""
+    execution_pwd = Path.cwd()
+
     if ctx.invoked_subcommand is not None:
         return
 
@@ -399,8 +407,12 @@ def run(
     if execute_spec is None:
         raise typer.BadParameter("Execute agent must be specified")
 
-    execute_agent = create_agent(execute_spec, execute_sdk_options, exec_bin, opencode_server_url)
-    verify_agent = create_agent(verify_spec, verify_sdk_options, ver_bin, opencode_server_url) if verify_spec else None
+    execute_agent = create_agent(execute_spec, execute_sdk_options, exec_bin, opencode_server_url, cwd=execution_pwd)
+    verify_agent = (
+        create_agent(verify_spec, verify_sdk_options, ver_bin, opencode_server_url, cwd=execution_pwd)
+        if verify_spec
+        else None
+    )
 
     resolved_theme = resolve_theme(theme)
     ui = create_ui("cli" if no_tui else "tui", theme=resolved_theme if not no_tui else None)
@@ -417,6 +429,7 @@ def run(
                 verify_extra_prompt,
                 ui,
                 session_store,
+                execution_pwd,
             )
         else:
             anyio.run(
@@ -427,6 +440,7 @@ def run(
                 verify_extra_prompt,
                 ui,
                 session_store,
+                execution_pwd,
                 backend="asyncio",
             )
     except KeyboardInterrupt:

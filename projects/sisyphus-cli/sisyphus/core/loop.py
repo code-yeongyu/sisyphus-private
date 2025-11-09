@@ -51,6 +51,7 @@ class ExecutionLoop:
         logger_factory: LoggerFactory,
         verify_agent: Agent | None = None,
         task_validator: TaskValidatorProtocol | None = None,
+        working_directory: Path | None = None,
     ) -> None:
         """Initialize ExecutionLoop.
 
@@ -61,6 +62,7 @@ class ExecutionLoop:
             logger_factory: Logger factory
             verify_agent: Optional agent for verify phase
             task_validator: Optional task validator for loop control
+            working_directory: Optional execution working directory
         """
         self.execute_agent = execute_agent
         self.verify_agent = verify_agent
@@ -68,6 +70,7 @@ class ExecutionLoop:
         self.session_store = session_store
         self.logger_factory = logger_factory
         self.task_validator = task_validator
+        self.working_directory = working_directory
 
         # DEBUG: Verify verify_agent during ExecutionLoop initialization
         print(f"DEBUG ExecutionLoop.__init__: verify_agent={verify_agent}", file=sys.stderr)

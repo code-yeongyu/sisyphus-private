@@ -1472,6 +1472,34 @@ class PlanLinter:
             current = current.parent
         return None
 
+    def _search_plan_in_sibling_files(self, plan_id: str, source_path: Path) -> bool:
+        """Search for plan_id in sibling YAML files in .sisyphus/tasks directory.
+
+        Args:
+            plan_id: Plan ID to search for
+            source_path: Path to the source plan file
+
+        Returns:
+            True if plan_id found in any sibling file, False otherwise
+        """
+        tasks_dir = source_path.parent
+        if not tasks_dir.exists():
+            return False
+
+        for yaml_file in tasks_dir.glob("**/*.y*ml"):
+            if yaml_file == source_path:
+                continue
+
+            try:
+                plan_doc = self._load_plan_sync(yaml_file)
+                plan_ids = {plan.id for plan in plan_doc.work_plans}
+                if plan_id in plan_ids:
+                    return True
+            except Exception:
+                continue
+
+        return False
+
     def validate_depends_on(self, plan_document: PlanDocument, plan_path: Path) -> list[str]:
         """Validate depends_on field for all work plans.
 
@@ -1498,6 +1526,10 @@ class PlanLinter:
                     if error:
                         errors.append(error)
                 elif dep_id not in plans:
+                    found_in_file = self._search_plan_in_sibling_files(dep_id, plan_path)
+                    if found_in_file:
+                        continue
+
                     available = ", ".join(f"'{p}'" for p in plans.keys())
                     errors.append(
                         f"Plan '{plan.id}' depends on plan '{dep_id}' that does not exist. "

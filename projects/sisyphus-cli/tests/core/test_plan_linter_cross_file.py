@@ -653,3 +653,118 @@ def test_validate_depends_on__if_mixed_references__validates_all_types(
 
     # then
     assert len(errors) == 0
+
+
+def test_validate_depends_on__if_auto_cross_file_search__finds_plan_in_sibling(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+    tmp_path: Path,
+) -> None:
+    # given
+    linter = PlanLinter({})
+
+    tasks_dir = tmp_path
+    tasks_dir.mkdir(exist_ok=True)
+
+    backend_plan_doc = PlanDocument(
+        version="3.0",
+        metadata=Metadata(created_at="2025-11-09T00:00:00Z"),
+        work_plans=[
+            WorkPlan(
+                id="plan-1-foundation",
+                name="Foundation",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                depends_on=[],
+                todos=[],
+            )
+        ],
+    )
+
+    backend_file_path = tasks_dir / "plan-1-foundation.yaml"
+    yaml = YAML()
+    with open(backend_file_path, "w") as f:
+        yaml.dump(backend_plan_doc.model_dump(mode="json"), f)
+
+    frontend_plan_doc = PlanDocument(
+        version="3.0",
+        metadata=Metadata(created_at="2025-11-09T00:00:00Z"),
+        work_plans=[
+            WorkPlan(
+                id="plan-2-rendering-engine",
+                name="Rendering Engine",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                depends_on=["plan-1-foundation"],
+                todos=[],
+            )
+        ],
+    )
+
+    frontend_file_path = tasks_dir / "plan-2-rendering-engine.yaml"
+
+    # when
+    errors = linter.validate_depends_on(frontend_plan_doc, frontend_file_path)
+
+    # then
+    assert len(errors) == 0
+
+
+def test_validate_depends_on__if_auto_cross_file_search__plan_not_found__returns_error(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+    tmp_path: Path,
+) -> None:
+    # given
+    linter = PlanLinter({})
+
+    tasks_dir = tmp_path
+    tasks_dir.mkdir(exist_ok=True)
+
+    frontend_plan_doc = PlanDocument(
+        version="3.0",
+        metadata=Metadata(created_at="2025-11-09T00:00:00Z"),
+        work_plans=[
+            WorkPlan(
+                id="plan-2-rendering-engine",
+                name="Rendering Engine",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                depends_on=["plan-1-foundation"],
+                todos=[],
+            )
+        ],
+    )
+
+    frontend_file_path = tasks_dir / "plan-2-rendering-engine.yaml"
+
+    # when
+    errors = linter.validate_depends_on(frontend_plan_doc, frontend_file_path)
+
+    # then
+    assert len(errors) == 1
+    assert "plan-1-foundation" in errors[0]
+    assert "does not exist" in errors[0]

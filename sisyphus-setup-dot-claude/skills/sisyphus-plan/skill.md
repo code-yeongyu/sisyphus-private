@@ -148,7 +148,285 @@ Before writing each task, ask yourself:
 
 **90% of user requests are highly abbreviated, implicit, and abstract.** Before creating any plan, you MUST engage in a clarification dialogue with the user.
 
-### Clarification Process
+### Step 0: Essential Requirement Gathering (ABSOLUTE GATE - DO NOT SKIP)
+
+**🚨 CRITICAL BLOCKING REQUIREMENT 🚨**
+
+**YOU ARE ABSOLUTELY FORBIDDEN FROM PROCEEDING TO PLAN CREATION UNTIL ALL ESSENTIAL QUESTIONS ARE ANSWERED.**
+
+This is NOT a suggestion. This is NOT optional. This is an ABSOLUTE GATE that BLOCKS all plan creation work.
+
+**Enforcement:**
+- If user provides vague answers → Ask again with specific examples
+- If user skips a question → STOP and request answer before proceeding
+- If user says "I don't know" → Help them think through it with guided questions
+- If user tries to rush → Explain that incomplete requirements lead to failed plans
+
+**Why this is non-negotiable:**
+- Vague requirements → Vague plans → Executor makes wrong assumptions → Wasted work
+- Missing constraints → Executor violates rules → Need to redo everything
+- Unknown risks → Executor breaks critical systems → Production incidents
+- Unclear success criteria → No way to verify completion → Endless iteration
+
+**MANDATORY: Before ANY analysis or plan creation, ask the user these questions to gather critical requirements that MUST be documented in the plan.**
+
+#### Question 1: Expected Outcome (Success Vision)
+
+**Ask the user:**
+```
+이 작업이 완료되었을 때 기대하는 모습을 구체적으로 알려주세요.
+
+예를 들어:
+- 특정 기능이 어떻게 작동해야 하나요?
+- 어떤 기술/언어로 작성되어야 하나요? (예: TypeScript로 작성되어야 합니다)
+- 어떤 결과물이 나와야 하나요?
+- 사용자 관점에서 어떤 경험을 제공해야 하나요?
+```
+
+**What to capture:**
+- Functional requirements (feature behavior, user experience)
+- Technical requirements (language, framework, architecture)
+- Quality attributes (performance, security, maintainability)
+- Deliverables (code, documentation, tests)
+
+**Where to document in plan:**
+- `user_request.additional[]` - **ALWAYS add**: "Expected Outcome: [full answer]"
+- `objectives.core` - Core goal
+- `objectives.detailed[]` - Measurable objectives
+- `success_vision.user_perspective[]` - User scenarios
+- `success_vision.technical_criteria[]` - Technical success criteria
+
+#### Question 2: Forbidden Outcomes (What Must NOT Happen)
+
+**Ask the user:**
+```
+이 작업이 완료되었을 때 절대 있으면 안 되는 것들을 알려주세요.
+
+예를 들어:
+- 피해야 할 코드 패턴이 있나요? (예: any 타입 사용 금지)
+- 기존 기능 중 영향받으면 안 되는 부분이 있나요?
+- 사용하면 안 되는 라이브러리나 접근 방식이 있나요?
+- 성능 저하가 있으면 안 됩니까?
+```
+
+**What to capture:**
+- Anti-patterns to avoid (code smells, bad practices)
+- Regression constraints (existing features that must remain untouched)
+- Forbidden dependencies (libraries, frameworks to avoid)
+- Performance/security red lines (must not exceed/violate)
+
+**Where to document in plan:**
+- `user_request.additional[]` - **ALWAYS add**: "Forbidden Outcomes: [full answer]"
+- `required_background.description` - Include constraints section
+- `todos[].references[].inline` - Task-specific constraints
+- `final_verification[]` - Verification items to check forbidden outcomes
+
+**Example documentation:**
+```yaml
+required_background:
+  description: |
+    Technical Stack: TypeScript, React 18, Next.js 14
+
+    CRITICAL CONSTRAINTS:
+    - NO any types allowed (must use proper TypeScript types)
+    - NO modification to existing auth module (src/auth/*)
+    - NO new external dependencies without approval
+    - NO breaking changes to public API contracts
+    - Performance: API response time must stay < 200ms
+```
+
+#### Question 3: Special Concerns & Risks (What to Watch Out For)
+
+**Ask the user:**
+```
+이 작업을 진행하면서 제가 특별히 주의해야 할 것들을 알려주세요.
+
+예를 들어:
+- 특정 기능을 건드릴까 봐 걱정되시나요?
+- 데이터 손실 위험이 있는 부분이 있나요?
+- 성능 영향을 받기 쉬운 부분이 있나요?
+- 다른 팀이나 시스템과의 조율이 필요한가요?
+```
+
+**What to capture:**
+- Fragile code areas (high-risk modules to handle carefully)
+- Data integrity concerns (migrations, destructive operations)
+- Integration points (external systems, APIs, dependencies)
+- Team coordination needs (code review, approval gates)
+
+**Where to document in plan:**
+- `user_request.additional[]` - **ALWAYS add**: "Special Concerns: [full answer]"
+- `background.current_situation` - Mention risky areas
+- `required_background.description` - Detail concerns
+- `todos[].references[].inline` - Task-specific warnings
+- `workflow.dependency_diagram` - Show careful sequencing
+
+**Example documentation:**
+```yaml
+background:
+  current_situation: |
+    Current payment system handles 10K daily transactions.
+
+    HIGH-RISK AREAS:
+    - src/payment/processor.ts handles live transactions (CRITICAL - any bug = money loss)
+    - Database migration on users table (500K rows - downtime sensitive)
+    - Integration with Stripe API (rate limits, webhook handling)
+```
+
+#### Question 4: Tech Stack Selection (CONDITIONAL - Ask Only for New Features)
+
+**⚠️ IMPORTANT: This question is OPTIONAL and depends on task type.**
+
+**DECISION LOGIC - Should I ask this question?**
+
+```
+STEP 1: Analyze the user request
+→ Is this creating NEW functionality/features/modules?
+  → YES: Proceed to STEP 2
+  → NO: Skip Question 4 (existing tech stack is fine)
+
+STEP 2: Check if existing tech stack handles the requirement
+→ Read project's current tech stack (package.json, requirements.txt, etc.)
+→ Can existing stack handle this new feature?
+  → YES and sufficient: Skip Question 4
+  → NO or uncertain: Proceed to STEP 3
+
+STEP 3: Research is MANDATORY before asking
+→ DO NOT ask user immediately
+→ REQUIRED: Use WebSearch/WebFetch to research
+→ Research these aspects:
+  1. Industry-standard tech stacks for this feature type
+  2. Popular libraries/frameworks (by GitHub stars, npm downloads, PyPI stats)
+  3. Compatibility with existing project tech stack
+  4. Pros/cons of top 2-3 options
+→ ONLY AFTER research: Proceed to ask user with AskUserQuestion tool
+```
+
+**Examples of when to ASK:**
+- ✅ Adding new authentication system (research: OAuth libraries, JWT vs sessions, etc.)
+- ✅ Implementing real-time features (research: WebSocket vs SSE, Socket.io vs native, etc.)
+- ✅ Adding payment processing (research: Stripe vs PayPal SDK, server-side vs client-side)
+- ✅ Implementing data visualization (research: Chart.js vs D3.js vs Recharts)
+- ✅ Adding state management to new frontend (research: Redux vs Zustand vs Jotai)
+
+**Examples of when to SKIP:**
+- ❌ Modifying existing auth endpoints (already using Passport.js → use Passport.js)
+- ❌ Adding new API endpoint (already using Express → use Express)
+- ❌ Fixing bug in React component (already using React → use React)
+- ❌ Refactoring database queries (already using Prisma → use Prisma)
+- ❌ Adding test for existing feature (already using Jest → use Jest)
+
+**Research Process (MANDATORY before asking):**
+
+1. **Identify Feature Category**
+   ```
+   Example: "Add real-time chat" → Category: Real-time communication
+   Example: "Add charts" → Category: Data visualization
+   Example: "Add auth" → Category: Authentication/Authorization
+   ```
+
+2. **Web Research (Use WebSearch + WebFetch)**
+   ```bash
+   # Execute parallel searches:
+   WebSearch("best [category] libraries 2025")
+   WebSearch("[category] [language] popular frameworks comparison")
+   WebFetch("https://npmjs.com") → Search for category
+   WebFetch("https://pypi.org") → Search for category (if Python)
+   ```
+
+3. **Gather Top 3 Options**
+   - Identify 3 most popular/recommended solutions
+   - Check compatibility with project's existing stack
+   - Note pros/cons of each option
+
+4. **Prepare Research Summary**
+   ```
+   Example summary:
+   "I researched real-time communication options for your Node.js project.
+
+   Top 3 popular choices:
+   1. Socket.io (★60K GitHub stars)
+      - Pros: Auto-fallback, room support, battle-tested
+      - Cons: Heavier, custom protocol
+
+   2. Native WebSocket + ws library (★20K stars)
+      - Pros: Standard protocol, lightweight, simple
+      - Cons: No auto-fallback, manual room management
+
+   3. Server-Sent Events (SSE) native
+      - Pros: HTTP-based, simple server→client
+      - Cons: One-way only, no binary support
+
+   For bidirectional chat, Socket.io or native WebSocket would work."
+   ```
+
+5. **Ask User with AskUserQuestion (ONLY after research)**
+
+   ```python
+   AskUserQuestion(
+       questions=[
+           {
+               "question": "제가 실시간 채팅 기능을 위한 기술 스택을 조사했습니다. 어떤 방식을 사용하시겠습니까?",
+               "header": "Tech Stack",
+               "multiSelect": false,
+               "options": [
+                   {
+                       "label": "Socket.io (가장 인기)",
+                       "description": "양방향 통신, 자동 fallback, room 지원. 가장 많이 사용됨 (GitHub 60K stars)"
+                   },
+                   {
+                       "label": "Native WebSocket",
+                       "description": "표준 프로토콜, 가볍고 심플. 직접 구현 필요 (GitHub 20K stars)"
+                   },
+                   {
+                       "label": "Server-Sent Events",
+                       "description": "HTTP 기반, 서버→클라이언트 단방향만 가능. 간단한 푸시용"
+                   }
+               ]
+           }
+       ]
+   )
+   ```
+
+**What to capture:**
+- Selected tech stack/library/framework
+- Version requirements (if specified)
+- Integration approach (how it fits with existing stack)
+- Any special setup needs
+
+**Where to document in plan:**
+- `user_request.additional[]` - **IF APPLICABLE, add**: "Tech Stack Decision: [full answer with rationale]"
+- `required_background.description` - Tech stack section
+- `required_background.references[]` - Official docs for chosen tech
+- `todos[]` - Installation/setup tasks if needed
+- `success_vision.technical_criteria[]` - Tech-specific success criteria
+
+**Example documentation:**
+```yaml
+required_background:
+  description: |
+    Existing Stack: Node.js 18, Express 4, React 18, TypeScript
+
+    NEW TECH STACK (for real-time chat):
+    - Socket.io 4.x (user selected)
+    - Reason: Bidirectional communication, automatic fallback, room support
+    - Integration: Socket.io server on existing Express app, Socket.io client in React
+
+  references:
+    - ref_id: 'socketio-docs'
+      uri: 'https://socket.io/docs/v4/'
+      inline: null
+```
+
+**CRITICAL REMINDERS:**
+
+1. **ALWAYS research BEFORE asking** - Never ask user to choose without providing researched options
+2. **Use AskUserQuestion tool** - This ensures user sees formatted options with descriptions
+3. **Only ask for NEW features** - Don't ask about tech stack for modifications to existing code
+4. **Make it optional** - If existing stack works fine, don't force user to make a choice
+5. **Document the decision** - Whatever user chooses MUST be documented in required_background
+
+### Clarification Process (After Essential Questions)
 
 1. **Identify Implicit Knowledge**
    - What assumptions is the user making?
@@ -175,8 +453,93 @@ Before writing each task, ask yourself:
 5. **Document Clarified Requirements**
    - Once clarified, document the final understood requirements
    - Include both explicit user statements and confirmed implicit assumptions
+   - **CRITICAL**: Ensure all essential questions are answered and documented
 
-**DO NOT PROCEED** to plan creation until requirements are sufficiently concrete and verified with the user.
+**🚨 ABSOLUTE BLOCKING GATE - DO NOT PROCEED 🚨**
+
+**YOU ARE FORBIDDEN FROM STARTING PLAN CREATION UNTIL ALL OF THE FOLLOWING ARE SATISFIED:**
+
+### Mandatory Requirements (MUST be completed):
+
+✅ **Question 1 (Expected Outcome)** - ANSWERED
+   - User has provided specific, concrete expected outcomes
+   - Success criteria are clear and measurable
+   - No vague statements like "make it work" or "improve performance"
+
+✅ **Question 2 (Forbidden Outcomes)** - ANSWERED
+   - User has identified constraints and anti-patterns to avoid
+   - Regression boundaries are defined (what must NOT break)
+   - Clear list of "must not" items documented
+
+✅ **Question 3 (Special Concerns & Risks)** - ANSWERED
+   - User has identified risky areas and concerns
+   - High-risk modules/features are flagged
+   - Coordination needs are clarified
+
+### Conditional Requirement (Complete if applicable):
+
+⚠️ **Question 4 (Tech Stack Selection)** - IF APPLICABLE
+   - IF creating new features/functionality:
+     - ✅ Research completed (WebSearch/WebFetch for popular options)
+     - ✅ Top 3 options identified with pros/cons
+     - ✅ User asked via AskUserQuestion tool
+     - ✅ User's selection documented
+   - IF modifying existing code with existing tech stack:
+     - ⏭️ SKIP this question (not applicable)
+
+### Additional Clarifications:
+
+✅ **All ambiguities resolved** - User has answered follow-up questions
+✅ **Requirements are concrete** - No guesswork needed (≥90% confidence)
+✅ **User has confirmed understanding** - You presented summary, user agreed
+
+---
+
+**ENFORCEMENT PROTOCOL:**
+
+If ANY mandatory question is unanswered or vague:
+1. 🛑 **STOP IMMEDIATELY** - Do not proceed to information gathering or planning
+2. 📢 **NOTIFY USER** - Explain which question needs better answer and why
+3. 🔄 **RE-ASK** - Ask the question again with specific examples
+4. ⏸️ **WAIT** - Do not continue until user provides satisfactory answer
+
+**Example Enforcement Response:**
+```
+🚨 계획 작성을 시작할 수 없습니다
+
+Question 2 (금지사항)에 대한 답변이 불충분합니다.
+
+현재 답변: "그냥 잘 만들면 돼요"
+
+이것은 구체적이지 않습니다. 명확한 제약사항이 필요합니다.
+
+다시 질문드립니다:
+이 작업 완료 후 절대 있으면 안 되는 것들을 구체적으로 알려주세요.
+
+예를 들어:
+- any 타입 사용 금지
+- 기존 인증 모듈(src/auth/*) 수정 금지
+- 새로운 외부 라이브러리 추가 금지
+- API 응답 시간 200ms 이상 증가 금지
+
+위와 같이 구체적으로 말씀해주세요.
+```
+
+**Why This Gate Exists:**
+
+Without complete answers:
+- ❌ Executor makes wrong assumptions → Waste time building wrong thing
+- ❌ Executor violates constraints → Need to redo everything
+- ❌ Executor breaks critical code → Production incidents
+- ❌ No clear success criteria → Endless revisions and debates
+
+With complete answers:
+- ✅ Executor knows exactly what to build
+- ✅ Executor knows exactly what to avoid
+- ✅ Executor handles risks carefully
+- ✅ Clear verification of success
+
+**This gate is not negotiable. This gate saves time, prevents mistakes, and ensures quality plans.**
 
 ## Work Process
 
@@ -300,13 +663,55 @@ work_plans:
 
   - id: 'plan-payment'
     name: 'Payment System Integration'
-    depends_on: ['plan-auth']  # Requires auth to be complete first
+    depends_on: ['plan-auth']  # Requires auth to be complete first (same file)
     # ... rest of plan
 
   - id: 'plan-frontend'
     name: 'Frontend Dashboard'
-    depends_on: ['plan-auth', 'plan-payment']  # Needs both auth and payment
+    depends_on: ['plan-auth', 'plan-payment']  # Needs both auth and payment (same file)
     # ... rest of plan
+```
+
+**depends_on Format:**
+
+The `depends_on` field supports TWO formats:
+
+1. **Same-file reference** (simple plan ID):
+   ```yaml
+   depends_on: ['plan-foundation']  # References plan in same YAML file
+   ```
+
+2. **Cross-file reference** (file path + plan ID):
+   ```yaml
+   depends_on: ['file:backend.yaml#backend-api']  # References plan in different file
+   ```
+
+**Cross-file reference syntax:**
+- Format: `file:<path>#<plan-id>`
+- Path can be relative or absolute
+- Example: `file:../infrastructure/database.yaml#db-setup`
+- Example: `file:.sisyphus/tasks/backend.yaml#backend-api`
+
+**Multi-file example:**
+
+`.sisyphus/tasks/backend.yaml`:
+```yaml
+version: '3.0'
+metadata: { ... }
+work_plans:
+  - id: 'backend-api'
+    name: 'Backend API'
+    depends_on: []  # No dependencies
+```
+
+`.sisyphus/tasks/frontend.yaml`:
+```yaml
+version: '3.0'
+metadata: { ... }
+work_plans:
+  - id: 'frontend-app'
+    name: 'Frontend App'
+    depends_on: ['file:backend.yaml#backend-api']  # Cross-file dependency
 ```
 
 **Important Notes:**
@@ -315,6 +720,8 @@ work_plans:
 - **Cross-plan references**: Plans can reference each other in `required_background.references`
 - **Execution order**: Sisyphus executor respects `depends_on` and won't start dependent plans until prerequisites complete
 - **Atomic commits**: Each plan should represent a logically complete, committable unit of work
+- **File path validation**: Linter will ERROR if file path in `file:path#id` doesn't exist
+- **Plan ID validation**: Linter will ERROR if plan ID doesn't exist in referenced file
 
 **This analysis MUST happen BEFORE information gathering** - it determines what context you need to collect and how to organize your research.
 
@@ -443,6 +850,11 @@ work_plans:  # REQUIRED, list[WorkPlan] - array of work plans
       original: "[사용자의 정확한 최초 요청 내용]"  # REQUIRED, string
       created_at: "2025-11-04T00:00:00Z"            # REQUIRED, ISO 8601
       additional: []                                 # OPTIONAL, list[string]
+        # USE THIS FIELD to document Step 0 question answers:
+        # - "Expected Outcome: [Answer to Question 1]"
+        # - "Forbidden Outcomes: [Answer to Question 2]"
+        # - "Special Concerns: [Answer to Question 3]"
+        # - "Tech Stack Decision: [Answer to Question 4 if applicable]"
 
     objectives:
       core: "[핵심 목표를 1-2문장으로 명확하게 설명]"  # REQUIRED, string

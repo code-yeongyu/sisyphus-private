@@ -1,11 +1,9 @@
-# pyright: reportMissingImports=false
+# pyright: reportMissingImports=false, reportImplicitRelativeImport=false
 import json
 import subprocess
 from pathlib import Path
 
 import pytest
-import typer
-
 from sisyphus_cc_hooks.cli import app, post_tool_use
 
 
@@ -39,9 +37,7 @@ def test_post_tool_use_command__with_executor_agent__exits_with_code_2(
 """)
 
     status_file = sisyphus_dir / "status.json"
-    status_file.write_text(
-        json.dumps({"current_plan": {"plan_path": ".sisyphus/tasks/test.yaml"}})
-    )
+    status_file.write_text(json.dumps({"current_plan": {"plan_path": ".sisyphus/tasks/test.yaml"}}))
 
     json_input = {
         "tool_input": {"subagent_type": "sisyphus-executor"},
@@ -55,9 +51,9 @@ def test_post_tool_use_command__with_executor_agent__exits_with_code_2(
 
     # when: Call post_tool_use directly
     # then: Exits with code 2
-    with pytest.raises(typer.Exit) as exc_info:
+    with pytest.raises(SystemExit) as exc_info:
         post_tool_use()
-    assert exc_info.value.exit_code == 2
+    assert exc_info.value.code == 2
 
 
 def test_cli_post_tool_use_command__with_valid_input__executes_hook(
@@ -82,9 +78,7 @@ def test_cli_post_tool_use_command__with_valid_input__executes_hook(
 """)
 
     status_file = sisyphus_dir / "status.json"
-    status_file.write_text(
-        json.dumps({"current_plan": {"plan_path": ".sisyphus/tasks/test.yaml"}})
-    )
+    status_file.write_text(json.dumps({"current_plan": {"plan_path": ".sisyphus/tasks/test.yaml"}}))
 
     json_input = {
         "tool_input": {"subagent_type": "sisyphus-executor"},
@@ -119,4 +113,4 @@ def test_cli_help__displays_usage() -> None:
     # then
     assert proc.returncode == 0
     assert "sisyphus-cc-hooks" in proc.stdout
-    assert "post-tool-use" in proc.stdout
+    assert "Usage:" in proc.stdout

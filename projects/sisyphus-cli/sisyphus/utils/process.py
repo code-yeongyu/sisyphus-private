@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import json
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import anyio
 
 from sisyphus.utils.errors import ProcessTimeoutError
+
+if TYPE_CHECKING:
+    import anyio.abc
 
 
 class ProcessManager:

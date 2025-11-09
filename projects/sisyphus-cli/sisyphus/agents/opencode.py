@@ -18,6 +18,8 @@ from sisyphus.utils.types import AgentMessage
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
+    import anyio.abc
+
 
 class OpenCodeAgent:
     """OpenCode agent with server auto-start and SSE streaming."""

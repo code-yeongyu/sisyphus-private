@@ -115,6 +115,7 @@ def create_agent(
             working_dir = str(cwd) if cwd else str(Path.cwd())
             return cast("Agent", ClaudeAgent(model=model, sdk_options=sdk_options, cwd=working_dir))
         case "opencode":
-            return cast("Agent", OpenCodeAgent(binary=binary_path, server_url=opencode_url))
+            working_dir = str(cwd) if cwd else str(Path.cwd())
+            return cast("Agent", OpenCodeAgent(binary=binary_path, server_url=opencode_url, cwd=working_dir))
         case _:
             raise typer.BadParameter(f"Unknown agent type: {agent_type}")

@@ -18,6 +18,7 @@ class ProcessManager:
     async def run_with_timeout(
         cmd: list[str],
         timeout_seconds: float = 30.0,
+        cwd: str | None = None,
     ) -> anyio.abc.Process:
         """
         Run a process with timeout.
@@ -25,6 +26,7 @@ class ProcessManager:
         Args:
             cmd: Command and arguments to execute
             timeout_seconds: Timeout in seconds
+            cwd: Optional working directory for the process
 
         Returns:
             Started process instance
@@ -34,7 +36,7 @@ class ProcessManager:
         """
         try:
             with anyio.fail_after(timeout_seconds):
-                process = await anyio.open_process(cmd)
+                process = await anyio.open_process(cmd, cwd=cwd)
                 return process
         except (TimeoutError, anyio.get_cancelled_exc_class()) as e:
             raise ProcessTimeoutError(f"Process did not start within {timeout_seconds}s: {cmd}") from e

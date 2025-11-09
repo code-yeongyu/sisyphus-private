@@ -28,15 +28,18 @@ class OpenCodeAgent:
         self,
         binary: Path | None = None,
         server_url: str | None = None,
+        cwd: str | None = None,
     ) -> None:
         """Initialize OpenCodeAgent.
 
         Args:
             binary: Optional path to opencode binary
             server_url: Optional external server URL (skips auto-start if provided)
+            cwd: Optional working directory path for the opencode server process
         """
         self._binary = binary
         self._server_url = server_url
+        self._cwd = cwd
         self._binary_path: Path | None = None
         self._process: anyio.abc.Process | None = None
         self._session_id: str | None = None
@@ -141,7 +144,7 @@ class OpenCodeAgent:
         ]
 
         try:
-            self._process = await ProcessManager.run_with_timeout(cmd, timeout_seconds=10.0)
+            self._process = await ProcessManager.run_with_timeout(cmd, timeout_seconds=10.0, cwd=self._cwd)
         except Exception as e:
             raise ServerStartError(f"Failed to start OpenCode server: {e}") from e
 

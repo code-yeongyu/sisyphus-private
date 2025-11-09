@@ -1722,5 +1722,3 @@ Use the format below, **in the same language as the work plan**.
 - **Reference integrity** with all files verified and providing useful guidance
 
 **Strike the right balance**: Prevent critical failures while empowering developer autonomy. A plan doesn't need to be perfect—it needs to be executable without guessing business requirements or critical architecture.
-
-ALWAYS CALL CODEX TO VERIFY TOO.

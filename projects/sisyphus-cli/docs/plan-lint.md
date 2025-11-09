@@ -134,7 +134,7 @@ jobs:
         run: uv sync
 
       - name: Validate work plan
-        run: uv run sisyphus plan lint --file ai-todolist.yaml
+        run: sisyphus plan lint --file ai-todolist.yaml
 ```
 
 ### Pre-commit Hook 예시
@@ -145,7 +145,7 @@ jobs:
 set -e
 
 echo "Validating work plan..."
-uv run sisyphus plan lint --file ai-todolist.yaml
+sisyphus plan lint --file ai-todolist.yaml
 
 if [ $? -ne 0 ]; then
   echo "Work plan validation failed. Commit aborted."
@@ -171,14 +171,14 @@ echo "Work plan validation passed."
 ### Valid YAML (검증 성공)
 
 ```bash
-$ uv run sisyphus plan lint --file ai-todolist.yaml
+$ sisyphus plan lint --file ai-todolist.yaml
 ✓ YAML validation passed. 0 errors.
 ```
 
 ### Invalid YAML (검증 실패)
 
 ```bash
-$ uv run sisyphus plan lint --file broken-plan.yaml
+$ sisyphus plan lint --file broken-plan.yaml
 ✗ Validation failed: 5 error(s)
 
   • Error: unknown_field - Unknown field (not in schema). Expected: one of ['background', 'final_verification', 'metadata', 'objectives', 'required_background', 'status', 'success_vision', 'todos', 'user_request', 'workflow']. Actual: unknown_field. Suggestion: Remove 'unknown_field' or check spelling
@@ -191,6 +191,6 @@ $ uv run sisyphus plan lint --file broken-plan.yaml
 ### File Not Found
 
 ```bash
-$ uv run sisyphus plan lint --file nonexistent.yaml
+$ sisyphus plan lint --file nonexistent.yaml
 Error: File not found: nonexistent.yaml
 ```

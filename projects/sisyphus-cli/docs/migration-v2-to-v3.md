@@ -277,7 +277,7 @@ sisyphus plan convert-legacy ai-todolist.yaml --output .sisyphus/tasks/main.yaml
 
 ```bash
 # Lint the new v3.0 file
-uv run sisyphus plan lint --file .sisyphus/tasks/main.yaml
+sisyphus plan lint --file .sisyphus/tasks/main.yaml
 
 # Check for errors
 # Expected: "✓ YAML validation passed. 0 errors."

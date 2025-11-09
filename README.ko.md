@@ -108,7 +108,7 @@ uv sync
 
 개발 모드로 직접 실행:
 ```sh
-uv run sisyphus work
+sisyphus work
 ```
 
 ### 첫 작업
@@ -121,7 +121,7 @@ uv run sisyphus work
 
 2. **시지푸스 실행**
    ```sh
-   uv run sisyphus work
+   sisyphus work
    ```
 
 3. **관찰** - TUI가 뜨면서 에이전트가 일하는 모습이 보입니다.
@@ -141,13 +141,13 @@ uv run sisyphus work
 
 ```sh
 # 기본 실행 (Claude + TUI)
-uv run sisyphus work
+sisyphus work
 
 # CLI 모드로 실행 (자동화에 유용)
-uv run sisyphus work --no-tui
+sisyphus work --no-tui
 
 # OpenCode 에이전트 사용
-uv run sisyphus work --agent opencode
+sisyphus work --agent opencode
 ```
 
 ### 에이전트 선택
@@ -157,23 +157,23 @@ uv run sisyphus work --agent opencode
 **Claude**
 ```sh
 # 기본 모델
-uv run sisyphus work --agent claude
+sisyphus work --agent claude
 
 # 특정 모델 지정
-uv run sisyphus work --agent claude:sonnet
+sisyphus work --agent claude:sonnet
 
 # SDK 옵션 조정
-uv run sisyphus work --agent claude \
+sisyphus work --agent claude \
   --execute-sdk-options '{"temperature": 0.8}'
 ```
 
 **OpenCode** (Alpha Support)
 ```sh
 # 자동으로 서버 시작
-uv run sisyphus work --agent opencode
+sisyphus work --agent opencode
 
 # 외부 서버 사용
-uv run sisyphus work --agent opencode \
+sisyphus work --agent opencode \
   --opencode-server-url http://localhost:8080
 ```
 
@@ -183,12 +183,12 @@ uv run sisyphus work --agent opencode \
 
 ```sh
 # Claude로 작업하고, OpenCode로 검증
-uv run sisyphus work \
+sisyphus work \
   --execute claude:sonnet \
   --verify opencode
 
 # 실행만 하고 검증 생략
-uv run sisyphus work --execute claude
+sisyphus work --execute claude
 ```
 
 검증 에이전트는 항상 새로운 세션에서 시작합니다. 컨텍스트가 깨끗합니다. 편향되지 않습니다.
@@ -199,21 +199,21 @@ uv run sisyphus work --execute claude
 
 ```sh
 # 슬래시 커맨드 (내장 프롬프트)
-uv run sisyphus work \
+sisyphus work \
   --execute-prompt /execute \
   --verify-prompt /architect
 
 # 파일에서 읽기
-uv run sisyphus work \
+sisyphus work \
   --execute-prompt prompts/my-execute.md \
   --verify-prompt prompts/my-verify.md
 
 # 직접 텍스트로 전달
-uv run sisyphus work \
+sisyphus work \
   --execute-prompt "ai-todolist.md의 모든 작업을 완료하세요"
 
 # 추가 지시사항 덧붙이기
-uv run sisyphus work \
+sisyphus work \
   --execute-extra-prompt "타입 힌트를 반드시 사용하세요" \
   --verify-extra-prompt "보안 취약점을 중점적으로 검토하세요"
 ```
@@ -224,10 +224,10 @@ uv run sisyphus work \
 
 ```sh
 # 세션과 로그만 삭제
-uv run sisyphus reset
+sisyphus reset
 
 # 작업 계획서까지 삭제 (처음부터 다시)
-uv run sisyphus reset --include-task-specs
+sisyphus reset --include-task-specs
 ```
 
 ---
@@ -264,13 +264,13 @@ Textual 기반의 터미널 UI입니다.
 
 ```sh
 # 자동 감지 (기본)
-uv run sisyphus work --theme system
+sisyphus work --theme system
 
 # 다크 모드 (Catppuccin Mocha)
-uv run sisyphus work --theme mocha
+sisyphus work --theme mocha
 
 # 라이트 모드 (Catppuccin Latte)
-uv run sisyphus work --theme latte
+sisyphus work --theme latte
 ```
 
 ---
@@ -328,7 +328,7 @@ uv run sisyphus work --theme latte
 작업이 완전히 완료됐음을 확인하면, 세션 관련 내용을 삭제해 다음 작업에 영향을 주지 않도록 해야 합니다.
 
 ```sh
-uv run sisyphus reset
+sisyphus reset
 ```
 
 ---
@@ -341,7 +341,7 @@ OpenCode가 PATH에 없습니다.
 
 ```sh
 # 바이너리 위치 직접 지정
-uv run sisyphus work --agent opencode \
+sisyphus work --agent opencode \
   --binary /path/to/opencode
 
 # 또는 PATH에 추가
@@ -354,7 +354,7 @@ OpenCode 서버가 이미 실행 중이거나 다른 프로세스가 사용 중�
 
 ```sh
 # 외부 서버 사용
-uv run sisyphus work --agent opencode \
+sisyphus work --agent opencode \
   --opencode-server-url http://localhost:8080
 
 # 포트 확인

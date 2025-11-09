@@ -304,7 +304,7 @@ run()
      - 새로운 테스트 디렉토리에서 간단한 작업 수행
      - ai-todolist.md 작성
    - [ ] 5.2 실제 sisyphus 실행
-     - `uv run sisyphus run` 실행
+     - `sisyphus run` 실행
      - Execute -> Task Validator -> Verify 순서 확인
    - [ ] 5.3 로그 분석
      - logs/ 디렉토리에서 각 Phase 실행 로그 확인

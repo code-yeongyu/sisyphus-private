@@ -412,7 +412,7 @@ Validate YAML file.
 
 **Example:**
 ```bash
-uv run sisyphus plan lint --file .sisyphus/tasks/main.yaml
+sisyphus plan lint --file .sisyphus/tasks/main.yaml
 ```
 
 #### `sisyphus plan overview [--rich] [--cwd DIR]`
@@ -431,7 +431,7 @@ Initialize new plan YAML template.
 
 **Example:**
 ```bash
-uv run sisyphus plan init --path .sisyphus/tasks/foundation.yaml
+sisyphus plan init --path .sisyphus/tasks/foundation.yaml
 ```
 
 #### `sisyphus plan graph [--format FORMAT] [--cwd DIR]`
@@ -443,7 +443,7 @@ Display plan dependency graph.
 
 **Example:**
 ```bash
-uv run sisyphus plan graph --format mermaid
+sisyphus plan graph --format mermaid
 ```
 
 #### `sisyphus plan export YAML_PATH [--output FILE] [--cwd DIR]`
@@ -458,7 +458,7 @@ Export WorkPlan YAML to Markdown.
 
 **Example:**
 ```bash
-uv run sisyphus plan export .sisyphus/tasks/main.yaml --output ai-todolist.md
+sisyphus plan export .sisyphus/tasks/main.yaml --output ai-todolist.md
 ```
 
 ---
@@ -520,7 +520,7 @@ Execute next bash verification.
 
 **Example:**
 ```bash
-uv run sisyphus task verify bash --evidence "All tests passed"
+sisyphus task verify bash --evidence "All tests passed"
 ```
 
 #### `sisyphus task verify llm [--cwd DIR]`
@@ -546,7 +546,7 @@ Mark LLM verification as complete.
 
 **Example:**
 ```bash
-uv run sisyphus task verify llm-mark verify-001 --evidence "Claude reviewed and approved"
+sisyphus task verify llm-mark verify-001 --evidence "Claude reviewed and approved"
 ```
 
 #### `sisyphus task verify manual [--cwd DIR]`
@@ -610,10 +610,10 @@ Delete Sisyphus-generated files.
 **Example:**
 ```bash
 # Dry run
-uv run sisyphus reset --dry-run
+sisyphus reset --dry-run
 
 # Reset all including task specs
-uv run sisyphus reset --include-task-specs --yes
+sisyphus reset --include-task-specs --yes
 ```
 
 ---

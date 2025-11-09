@@ -119,7 +119,7 @@ Sisyphus v3.0 uses **WorkPlan YAML files** for structured task management.
 
 ```sh
 # Create a new plan template
-uv run sisyphus plan init --destination .sisyphus/tasks/my-project.yaml
+sisyphus plan init --destination .sisyphus/tasks/my-project.yaml
 ```
 
 This creates a v3.0 YAML file with the following structure:
@@ -157,10 +157,10 @@ Open `.sisyphus/tasks/my-project.yaml` and customize:
 
 ```sh
 # Check for errors, cycles, missing dependencies
-uv run sisyphus plan lint .sisyphus/tasks/
+sisyphus plan lint .sisyphus/tasks/
 
 # Visualize dependency graph
-uv run sisyphus plan graph .sisyphus/tasks/ --format ascii
+sisyphus plan graph .sisyphus/tasks/ --format ascii
 ```
 
 Example graph output:
@@ -174,7 +174,7 @@ plan-foundation
 
 ```sh
 # Start working on tasks with Claude agent
-uv run sisyphus task continue --execute claude:sonnet
+sisyphus task continue --execute claude:sonnet
 ```
 
 The TUI appears showing agent progress:
@@ -186,13 +186,13 @@ The TUI appears showing agent progress:
 
 ```sh
 # Show current task
-uv run sisyphus task current
+sisyphus task current
 
 # Show next task
-uv run sisyphus task next
+sisyphus task next
 
 # Export YAML to Markdown for review
-uv run sisyphus plan export .sisyphus/tasks/my-project.yaml
+sisyphus plan export .sisyphus/tasks/my-project.yaml
 ```
 
 ---
@@ -207,10 +207,10 @@ Create a new v3.0 WorkPlan template.
 
 ```sh
 # Create in default location (.sisyphus/tasks/)
-uv run sisyphus plan init
+sisyphus plan init
 
 # Specify custom path
-uv run sisyphus plan init --destination .sisyphus/tasks/feature-auth.yaml
+sisyphus plan init --destination .sisyphus/tasks/feature-auth.yaml
 ```
 
 #### `sisyphus plan lint`
@@ -219,10 +219,10 @@ Validate YAML structure, dependencies, and references.
 
 ```sh
 # Lint all plans in directory
-uv run sisyphus plan lint .sisyphus/tasks/
+sisyphus plan lint .sisyphus/tasks/
 
 # Lint specific file
-uv run sisyphus plan lint .sisyphus/tasks/my-plan.yaml
+sisyphus plan lint .sisyphus/tasks/my-plan.yaml
 ```
 
 Checks for:
@@ -237,13 +237,13 @@ Visualize plan dependencies.
 
 ```sh
 # ASCII format (terminal-friendly)
-uv run sisyphus plan graph .sisyphus/tasks/ --format ascii
+sisyphus plan graph .sisyphus/tasks/ --format ascii
 
 # Mermaid format (for documentation)
-uv run sisyphus plan graph .sisyphus/tasks/ --format mermaid
+sisyphus plan graph .sisyphus/tasks/ --format mermaid
 
 # PNG format (requires graphviz)
-uv run sisyphus plan graph .sisyphus/tasks/ --format png --output graph.png
+sisyphus plan graph .sisyphus/tasks/ --format png --output graph.png
 ```
 
 #### `sisyphus plan export`
@@ -252,10 +252,10 @@ Convert YAML to Markdown format (ai-todolist.md style).
 
 ```sh
 # Output to stdout
-uv run sisyphus plan export .sisyphus/tasks/my-plan.yaml
+sisyphus plan export .sisyphus/tasks/my-plan.yaml
 
 # Save to file
-uv run sisyphus plan export .sisyphus/tasks/my-plan.yaml --output ai-todolist.md
+sisyphus plan export .sisyphus/tasks/my-plan.yaml --output ai-todolist.md
 ```
 
 #### `sisyphus plan overview`
@@ -263,7 +263,7 @@ uv run sisyphus plan export .sisyphus/tasks/my-plan.yaml --output ai-todolist.md
 Show summary of all plans and current status.
 
 ```sh
-uv run sisyphus plan overview
+sisyphus plan overview
 ```
 
 ### Task Execution (`sisyphus task`)
@@ -274,10 +274,10 @@ Resume or start task execution with agents.
 
 ```sh
 # Use Claude agent with TUI
-uv run sisyphus task continue --execute claude:sonnet
+sisyphus task continue --execute claude:sonnet
 
 # CLI mode (no TUI)
-uv run sisyphus task continue --execute claude:sonnet --no-tui
+sisyphus task continue --execute claude:sonnet --no-tui
 ```
 
 #### `sisyphus task current`
@@ -285,7 +285,7 @@ uv run sisyphus task continue --execute claude:sonnet --no-tui
 Show the currently active task.
 
 ```sh
-uv run sisyphus task current
+sisyphus task current
 ```
 
 #### `sisyphus task next`
@@ -293,7 +293,7 @@ uv run sisyphus task current
 Show the next pending task.
 
 ```sh
-uv run sisyphus task next
+sisyphus task next
 ```
 
 #### `sisyphus task show`
@@ -301,7 +301,7 @@ uv run sisyphus task next
 Display details of a specific task.
 
 ```sh
-uv run sisyphus task show --id 1
+sisyphus task show --id 1
 ```
 
 #### `sisyphus task verify`
@@ -310,10 +310,10 @@ Run verification checks for tasks.
 
 ```sh
 # Run bash verification commands
-uv run sisyphus task verify bash
+sisyphus task verify bash
 
 # Manual verification status
-uv run sisyphus task verify status
+sisyphus task verify status
 ```
 
 ### Legacy Support (`sisyphus work`)
@@ -322,13 +322,13 @@ The original `sisyphus work` command still works for v2.1 compatibility.
 
 ```sh
 # Basic execution (Claude + TUI)
-uv run sisyphus work
+sisyphus work
 
 # CLI mode (useful for automation)
-uv run sisyphus work --no-tui
+sisyphus work --no-tui
 
 # Use OpenCode agent
-uv run sisyphus work --agent opencode
+sisyphus work --agent opencode
 ```
 
 ### Agent Selection
@@ -338,23 +338,23 @@ Sisyphus supports two agents.
 **Claude**
 ```sh
 # Default model
-uv run sisyphus work --agent claude
+sisyphus work --agent claude
 
 # Specify model
-uv run sisyphus work --agent claude:sonnet
+sisyphus work --agent claude:sonnet
 
 # Adjust SDK options
-uv run sisyphus work --agent claude \
+sisyphus work --agent claude \
   --execute-sdk-options '{"temperature": 0.8}'
 ```
 
 **OpenCode** (Alpha Support)
 ```sh
 # Auto-start server
-uv run sisyphus work --agent opencode
+sisyphus work --agent opencode
 
 # Use external server
-uv run sisyphus work --agent opencode \
+sisyphus work --agent opencode \
   --opencode-server-url http://localhost:8080
 ```
 
@@ -364,12 +364,12 @@ This is Sisyphus's core feature. You can use different agents for execution and 
 
 ```sh
 # Execute with Claude, verify with OpenCode
-uv run sisyphus work \
+sisyphus work \
   --execute claude:sonnet \
   --verify opencode
 
 # Execute only, skip verification
-uv run sisyphus work --execute claude
+sisyphus work --execute claude
 ```
 
 The verification agent always starts with a fresh session. Clean context. No bias.
@@ -380,21 +380,21 @@ You can change the instructions given to agents.
 
 ```sh
 # Slash commands (built-in prompts)
-uv run sisyphus work \
+sisyphus work \
   --execute-prompt /execute \
   --verify-prompt /architect
 
 # Read from files
-uv run sisyphus work \
+sisyphus work \
   --execute-prompt prompts/my-execute.md \
   --verify-prompt prompts/my-verify.md
 
 # Pass as direct text
-uv run sisyphus work \
+sisyphus work \
   --execute-prompt "Complete all tasks in ai-todolist.md"
 
 # Append additional instructions
-uv run sisyphus work \
+sisyphus work \
   --execute-extra-prompt "Must use type hints" \
   --verify-extra-prompt "Focus on security vulnerabilities"
 ```
@@ -405,10 +405,10 @@ Clean up the work environment.
 
 ```sh
 # Delete only sessions and logs
-uv run sisyphus reset
+sisyphus reset
 
 # Delete work plans too (start from scratch)
-uv run sisyphus reset --include-task-specs
+sisyphus reset --include-task-specs
 ```
 
 ### Managing Sisyphus Files in Existing Projects
@@ -421,13 +421,13 @@ Use `sisyphus ignore` to automatically add Sisyphus-generated files to your git 
 
 ```sh
 # Default: Add to .gitignore (shared with team)
-uv run sisyphus ignore
+sisyphus ignore
 
 # Local-only: Add to .git/info/exclude (not version-controlled)
-uv run sisyphus ignore --exclude-only
+sisyphus ignore --exclude-only
 
 # Both: Add to both .gitignore and .git/info/exclude
-uv run sisyphus ignore --both
+sisyphus ignore --both
 ```
 
 **What gets ignored:**
@@ -449,13 +449,13 @@ If Sisyphus files were accidentally committed, use `sisyphus clean-history` to r
 
 ```sh
 # Show what would be cleaned (safe to run)
-uv run sisyphus clean-history --dry-run
+sisyphus clean-history --dry-run
 
 # Auto-detect base branch and show cleanup guide
-uv run sisyphus clean-history
+sisyphus clean-history
 
 # Specify base branch manually
-uv run sisyphus clean-history --base-branch origin/develop
+sisyphus clean-history --base-branch origin/develop
 ```
 
 **How it works:**
@@ -522,13 +522,13 @@ Auto-detects system theme. Manual override available.
 
 ```sh
 # Auto-detect (default)
-uv run sisyphus work --theme system
+sisyphus work --theme system
 
 # Dark mode (Catppuccin Mocha)
-uv run sisyphus work --theme mocha
+sisyphus work --theme mocha
 
 # Light mode (Catppuccin Latte)
-uv run sisyphus work --theme latte
+sisyphus work --theme latte
 ```
 
 ---
@@ -600,8 +600,8 @@ See the `examples/` directory for complete examples:
 cat examples/simple-project.yaml
 
 # Try the examples
-uv run sisyphus plan lint examples/simple-project.yaml
-uv run sisyphus plan graph examples/multi-plan-dependencies.yaml --format ascii
+sisyphus plan lint examples/simple-project.yaml
+sisyphus plan graph examples/multi-plan-dependencies.yaml --format ascii
 ```
 
 ### Migration from v2.1 (ai-todolist.md)
@@ -609,7 +609,7 @@ uv run sisyphus plan graph examples/multi-plan-dependencies.yaml --format ascii
 If you have an old Markdown-based plan, use the converter:
 
 ```bash
-uv run sisyphus plan convert-legacy ai-todolist.md --output .sisyphus/tasks/main.yaml
+sisyphus plan convert-legacy ai-todolist.md --output .sisyphus/tasks/main.yaml
 ```
 
 See `docs/migration-v2-to-v3.md` for detailed migration guide.
@@ -696,10 +696,10 @@ Run `sisyphus plan lint` to validate cross-file dependencies:
 
 ```bash
 # Lint all plans in directory (auto-detects external references)
-uv run sisyphus plan lint .sisyphus/tasks/
+sisyphus plan lint .sisyphus/tasks/
 
 # Lint specific file
-uv run sisyphus plan lint .sisyphus/tasks/frontend.yaml
+sisyphus plan lint .sisyphus/tasks/frontend.yaml
 ```
 
 PlanLinter automatically:
@@ -714,17 +714,17 @@ Visualize cross-file dependency graphs:
 
 ```bash
 # ASCII format (terminal-friendly)
-uv run sisyphus plan graph .sisyphus/tasks/ --format ascii
+sisyphus plan graph .sisyphus/tasks/ --format ascii
 
 # Example output:
 # backend-api (backend.yaml)
 #   └─> frontend-app (frontend.yaml)
 
 # Mermaid format
-uv run sisyphus plan graph .sisyphus/tasks/ --format mermaid
+sisyphus plan graph .sisyphus/tasks/ --format mermaid
 
 # PNG format (requires graphviz)
-uv run sisyphus plan graph .sisyphus/tasks/ --format png --output graph.png
+sisyphus plan graph .sisyphus/tasks/ --format png --output graph.png
 ```
 
 #### Complete Example
@@ -736,10 +736,10 @@ See `examples/multi-file/` for a working example:
 cd examples/multi-file/
 
 # Validate plans
-uv run sisyphus plan lint .
+sisyphus plan lint .
 
 # Visualize dependencies
-uv run sisyphus plan graph . --format ascii
+sisyphus plan graph . --format ascii
 
 # Expected output:
 # backend-api
@@ -773,7 +773,7 @@ Sisyphus remembers even if you stop mid-work. It saves to session files.
 Once work is completely done, delete session-related content to avoid affecting the next task.
 
 ```sh
-uv run sisyphus reset
+sisyphus reset
 ```
 
 ---
@@ -786,7 +786,7 @@ OpenCode not in PATH.
 
 ```sh
 # Specify binary path directly
-uv run sisyphus work --agent opencode \
+sisyphus work --agent opencode \
   --binary /path/to/opencode
 
 # Or add to PATH
@@ -799,7 +799,7 @@ OpenCode server already running or port used by another process.
 
 ```sh
 # Use external server
-uv run sisyphus work --agent opencode \
+sisyphus work --agent opencode \
   --opencode-server-url http://localhost:8080
 
 # Check port
@@ -824,16 +824,16 @@ For large projects, split work into multiple interdependent plans:
 
 ```bash
 # Create foundation plan
-uv run sisyphus plan init --destination .sisyphus/tasks/foundation.yaml
+sisyphus plan init --destination .sisyphus/tasks/foundation.yaml
 
 # Create main plan (depends on foundation)
-uv run sisyphus plan init --destination .sisyphus/tasks/main.yaml
+sisyphus plan init --destination .sisyphus/tasks/main.yaml
 
 # Edit main.yaml to add dependency:
 # depends_on: ["plan-foundation"]
 
 # Visualize the full graph
-uv run sisyphus plan graph .sisyphus/tasks/ --format ascii
+sisyphus plan graph .sisyphus/tasks/ --format ascii
 ```
 
 Output:
@@ -857,10 +857,10 @@ git worktree add ../sisyphus-feature feature/auth
 
 # Each worktree has independent status
 cd ../sisyphus-feature
-uv run sisyphus task continue  # Works on feature/auth tasks
+sisyphus task continue  # Works on feature/auth tasks
 
 cd ../sisyphus
-uv run sisyphus task continue  # Works on main branch tasks
+sisyphus task continue  # Works on main branch tasks
 ```
 
 The `.sisyphus/status.json` file tracks the current plan per worktree.
@@ -871,10 +871,10 @@ Use `--cwd` to run Sisyphus from a different directory:
 
 ```bash
 # Manage tasks in a subdirectory
-uv run sisyphus plan lint --cwd ./temp/
+sisyphus plan lint --cwd ./temp/
 
 # Execute tasks in experimental directory
-uv run sisyphus task continue --cwd ./experiments/ --execute claude:sonnet
+sisyphus task continue --cwd ./experiments/ --execute claude:sonnet
 ```
 
 ---

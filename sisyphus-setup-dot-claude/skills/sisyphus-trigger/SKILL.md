@@ -108,7 +108,7 @@ Pattern: `sisyphus-dev-ai/{descriptive-name}`
 git checkout -b "$BRANCH_NAME"
 
 # Reset Sisyphus environment
-uv run sisyphus reset --include-task-specs
+sisyphus reset --include-task-specs
 git add .
 git commit -m "sisyphus reset"
 

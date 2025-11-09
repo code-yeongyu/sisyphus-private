@@ -198,32 +198,32 @@ uv run ruff format       # Format
 **Run (various modes):**
 ```bash
 # v3.0 YAML workflow
-uv run sisyphus plan init
-uv run sisyphus plan lint .sisyphus/tasks/
-uv run sisyphus task continue
+sisyphus plan init
+sisyphus plan lint .sisyphus/tasks/
+sisyphus task continue
 
 # Task navigation
-uv run sisyphus task current
-uv run sisyphus task next
-uv run sisyphus task show <task-id>
+sisyphus task current
+sisyphus task next
+sisyphus task show <task-id>
 
 # Verification
-uv run sisyphus task verify bash
-uv run sisyphus task verify status
+sisyphus task verify bash
+sisyphus task verify status
 
 # Plan visualization
-uv run sisyphus plan graph .sisyphus/tasks/ --format ascii
-uv run sisyphus plan graph .sisyphus/tasks/ --format mermaid
-uv run sisyphus plan graph .sisyphus/tasks/ --format png --output graph.png
+sisyphus plan graph .sisyphus/tasks/ --format ascii
+sisyphus plan graph .sisyphus/tasks/ --format mermaid
+sisyphus plan graph .sisyphus/tasks/ --format png --output graph.png
 ```
 
 **Git Management:**
 ```bash
 # Add Sisyphus files to .gitignore
-uv run sisyphus ignore
+sisyphus ignore
 
 # Show cleanup guide for git history
-uv run sisyphus clean-history --dry-run
+sisyphus clean-history --dry-run
 ```
 
 ## CONVENTIONS

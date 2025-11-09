@@ -1533,7 +1533,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
    - [ ] task 명령어가 `.sisyphus/tasks/` 기반으로 동작
      ```bash
-     uv run sisyphus task current
+     sisyphus task current
      # 에러 없이 실행되거나, "작업이 시작되지 않았습니다" 메시지 출력
      ```
 
@@ -1575,16 +1575,16 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
    - [ ] CLI 명령어가 정상 동작하는지 확인
      ```bash
-     uv run sisyphus plan lint .sisyphus/tasks/
+     sisyphus plan lint .sisyphus/tasks/
      # 예상: 정상 실행 또는 "No errors"
 
-     uv run sisyphus plan graph .sisyphus/tasks/
+     sisyphus plan graph .sisyphus/tasks/
      # 예상: 그래프 출력 또는 에러 없음
      ```
 
    - [ ] PlanNavigator 기능이 유지되는지 확인
      ```bash
      # task 명령어 (PlanNavigator 의존)
-     uv run sisyphus task show 1
+     sisyphus task show 1
      # 예상: 작업 정보 출력 또는 에러 없음
      ```

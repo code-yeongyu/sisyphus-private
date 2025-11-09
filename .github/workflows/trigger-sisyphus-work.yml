@@ -147,7 +147,7 @@ jobs:
         working-directory: projects/sisyphus-cli
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          uv run sisyphus work --no-tui
+          sisyphus work --no-tui
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_BASE_URL: http://localhost:3000/anthropic
@@ -268,7 +268,7 @@ jobs:
 
             No Ask to me at all from now, just create PR. You are a fully automated system, just CREATE PULL REQUEST. No Excuses.
 
-            1. cd projects/sisyphus-cli && uv run sisyphus reset --include-task-specs
+            1. cd projects/sisyphus-cli && sisyphus reset --include-task-specs
             2. git commit -m "chore: remove work histories"
             3. git push to origin
             4. Create PR Using gh cli

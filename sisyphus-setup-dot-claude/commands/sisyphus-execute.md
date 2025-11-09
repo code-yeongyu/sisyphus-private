@@ -215,7 +215,7 @@ Before invoking sisyphus-executor, YOU (the orchestrator) MUST update the YAML p
 
 ```bash
 cd <project-root>
-uv run sisyphus task continue
+sisyphus task continue
 ```
 
 **What this command does:**
@@ -510,7 +510,7 @@ Look for:
 **Command**:
 ```bash
 cd <project-root>
-uv run sisyphus task verify bash
+sisyphus task verify bash
 ```
 
 **What this does**:
@@ -559,7 +559,7 @@ uv run sisyphus task verify bash
 **Step 1 - View LLM Judge Criteria**:
 ```bash
 cd <project-root>
-uv run sisyphus task verify llm
+sisyphus task verify llm
 ```
 
 **Example Output**:
@@ -602,7 +602,7 @@ YOU (orchestrator) must now perform the verification based on the `instruction`:
 
 If verification PASSES:
 ```bash
-uv run sisyphus task verify llm-mark <verify-id> --evidence "검증 완료: 모든 함수에 타입 힌트 존재, 에러 핸들링 적절, 커버리지 85%"
+sisyphus task verify llm-mark <verify-id> --evidence "검증 완료: 모든 함수에 타입 힌트 존재, 에러 핸들링 적절, 커버리지 85%"
 ```
 
 If verification FAILS:
@@ -625,7 +625,7 @@ If verification FAILS:
 **Step 1 - View Manual Verification Items**:
 ```bash
 cd <project-root>
-uv run sisyphus task verify manual
+sisyphus task verify manual
 ```
 
 **Example Output**:
@@ -647,7 +647,7 @@ uv run sisyphus task verify manual
 
 If verification PASSES:
 ```bash
-uv run sisyphus task verify manual-mark <verify-id> --evidence "브라우저 테스트 완료: 로그인 폼 렌더링 정상, submit 동작 확인, 에러 메시지 표시 정상"
+sisyphus task verify manual-mark <verify-id> --evidence "브라우저 테스트 완료: 로그인 폼 렌더링 정상, submit 동작 확인, 에러 메시지 표시 정상"
 ```
 
 If verification FAILS:
@@ -663,7 +663,7 @@ If verification FAILS:
 After running all verification types, check overall status:
 
 ```bash
-uv run sisyphus task verify status
+sisyphus task verify status
 ```
 
 **Example Output**:
@@ -701,7 +701,7 @@ uv run sisyphus task verify status
 **ONLY if ALL verifications passed**, update todo status to completed:
 
 ```bash
-uv run sisyphus task continue
+sisyphus task continue
 ```
 
 **CRITICAL: `sisyphus task continue` has built-in verification checks**:
@@ -729,7 +729,7 @@ Then check status with:
 
 **Only when ALL verifications pass**:
 ```bash
-uv run sisyphus task continue
+sisyphus task continue
 # ✓ Todo [auth-001] marked as completed
 # ✓ Moving to next task: [auth-002]
 # ✓ Todo [auth-002] status updated to in_progress
@@ -753,23 +753,23 @@ cat .sisyphus/tasks/feature.yaml | grep -A 30 "id: auth-001"
 
 # Step 2.1: Run bash verification
 cd /path/to/project
-uv run sisyphus task verify bash
+sisyphus task verify bash
 # Output: ✓ 성공 (exit_code=0)
 
 # Step 2.2: Run LLM verification
-uv run sisyphus task verify llm
+sisyphus task verify llm
 # Output shows instruction: "Check type hints and error handling"
 # Perform manual review of code
 # If passed:
-uv run sisyphus task verify llm-mark verify-code-quality-001 --evidence "모든 함수에 타입 힌트 존재, try-except 블록 적절히 사용, 에러 로깅 확인"
+sisyphus task verify llm-mark verify-code-quality-001 --evidence "모든 함수에 타입 힌트 존재, try-except 블록 적절히 사용, 에러 로깅 확인"
 # Output: ✓ LLM 검증이 완료 표시되었습니다
 
 # Step 3: Check overall status
-uv run sisyphus task verify status
+sisyphus task verify status
 # Output: 검증 상태: 2/2 완료 ✓ 모든 검증이 완료되었습니다!
 
 # Step 4: Update todo status to completed
-uv run sisyphus task continue
+sisyphus task continue
 # This marks auth-001 as completed and moves to next task
 ```
 

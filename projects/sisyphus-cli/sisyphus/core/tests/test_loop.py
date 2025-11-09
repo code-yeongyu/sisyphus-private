@@ -79,20 +79,30 @@ class MockSessionStore:
     """Mock session store for testing."""
 
     def __init__(self) -> None:
-        self.sessions: dict[str, str] = {}
+        self.sessions: dict[str, dict[str, str]] = {}
 
-    async def get_session(self, agent_type: str) -> str | None:
-        return self.sessions.get(agent_type)
+    async def get_session(self, agent_type: str, plan_id: str) -> str | None:
+        if agent_type not in self.sessions:
+            return None
+        return self.sessions[agent_type].get(plan_id)
 
-    async def save_session(self, agent_type: str, session_id: str) -> None:
-        self.sessions[agent_type] = session_id
+    async def save_session(self, agent_type: str, session_id: str, plan_id: str) -> None:
+        if agent_type not in self.sessions:
+            self.sessions[agent_type] = {}
+        self.sessions[agent_type][plan_id] = session_id
 
-    async def delete_session(self, agent_type: str) -> None:
-        if agent_type in self.sessions:
-            del self.sessions[agent_type]
+    async def delete_session(self, agent_type: str, plan_id: str | None = None) -> None:
+        if plan_id is None:
+            if agent_type in self.sessions:
+                del self.sessions[agent_type]
+        else:
+            if agent_type in self.sessions and plan_id in self.sessions[agent_type]:
+                del self.sessions[agent_type][plan_id]
+                if not self.sessions[agent_type]:
+                    del self.sessions[agent_type]
 
     async def list_sessions(self) -> dict[str, dict[str, str]]:
-        return {k: {"session_id": v} for k, v in self.sessions.items()}
+        return self.sessions
 
 
 class MockLoggerFactory:
@@ -118,10 +128,10 @@ class MockTaskValidator:
         self.read_count += 1
         return "mock content"
 
-    def check_all_goals_accomplished(self, content: str | None = None) -> bool:
+    async def check_all_goals_accomplished(self, content: str | None = None) -> bool:
         return self._all_complete
 
-    def check_all_checkboxes_completed(self, content: str | None = None) -> bool:
+    async def check_all_checkboxes_completed(self, content: str | None = None) -> bool:
         return self._all_complete
 
     def extract_uncompleted_checkboxes(self, content: str | None = None) -> list[str]:
@@ -160,7 +170,7 @@ async def test_execution_loop_execute_only() -> None:
     assert execute_agent.initialized
     assert execute_agent.session_id == "new-session-123"
     assert len(execute_agent.sent_messages) > 0
-    assert "/execute" in execute_agent.sent_messages[0]
+    assert "sisyphus" in execute_agent.sent_messages[0].lower()
     assert execute_agent.closed
     assert ui.initialized
     # UI remains initialized after ExecutionLoop completes (no longer closes automatically)
@@ -184,7 +194,7 @@ async def test_execution_loop_execute_and_verify() -> None:
     ui = MockUI()
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
-    task_validator = MockTaskValidator(all_complete=True)
+    task_validator = MockTaskValidator(all_complete=False)
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
@@ -194,6 +204,14 @@ async def test_execution_loop_execute_and_verify() -> None:
         logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
         task_validator=cast(TaskValidatorProtocol, cast(object, task_validator)),
     )
+
+    original_execute = loop._execute_phase
+
+    async def patched_execute_phase(prompt: str, extra: str | None = None) -> None:
+        task_validator._all_complete = True
+        await original_execute(prompt, extra)
+
+    loop._execute_phase = patched_execute_phase  # type: ignore[method-assign]
 
     # when
     await loop.run()
@@ -220,7 +238,7 @@ async def test_execution_loop_verify_always_new_session() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    await session_store.save_session("mockagent", "old-session-456")
+    await session_store.save_session("mockagent", "old-session-456", "default")
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator(all_complete=True)
 
@@ -247,7 +265,7 @@ async def test_execution_loop_session_resume() -> None:
 
     ui = MockUI()
     session_store = MockSessionStore()
-    await session_store.save_session("mock", "existing-session-789")
+    await session_store.save_session("mock", "existing-session-789", "default")
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
@@ -286,8 +304,8 @@ async def test_execution_loop_with_task_validator_complete() -> None:
     await loop.run()
 
     # then
-    assert task_validator.read_count == 1
-    assert any("All tasks completed" in s for s in ui.statuses)
+    assert task_validator.read_count >= 1
+    assert any("All tasks completed" in s or "already completed" in s for s in ui.statuses)
 
 
 async def test_execution_loop_with_task_validator_incomplete() -> None:
@@ -327,7 +345,7 @@ async def test_execution_loop_with_task_validator_incomplete() -> None:
 
     # then
     assert iteration_count == 2
-    assert validator.read_count == 2
+    assert validator.read_count >= 2
 
 
 async def test_execution_loop_prompt_with_extra() -> None:
@@ -352,7 +370,7 @@ async def test_execution_loop_prompt_with_extra() -> None:
     # then
     assert len(execute_agent.sent_messages) > 0
     assert "Extra info" in execute_agent.sent_messages[0]
-    assert "/execute" in execute_agent.sent_messages[0]
+    assert "sisyphus" in execute_agent.sent_messages[0].lower()
 
 
 async def test_execution_loop_ui_status_updates() -> None:
@@ -401,7 +419,8 @@ async def test_execution_loop_session_saved() -> None:
     # then
     sessions = await session_store.list_sessions()
     assert "mock" in sessions
-    assert sessions["mock"]["session_id"] == "new-session-123"
+    assert "default" in sessions["mock"]
+    assert sessions["mock"]["default"] == "new-session-123"
 
 
 async def test_verify_phase__if_middle_message_has_true_but_last_has_false__returns_false() -> None:

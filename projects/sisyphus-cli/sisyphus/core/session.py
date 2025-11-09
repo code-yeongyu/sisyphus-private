@@ -16,6 +16,8 @@ class SessionStore:
 
     Sessions are stored in .sisyphus/sessions/ directory, with worktree-aware
     detection to support multiple git worktrees.
+
+    Structure: {agent_type: {plan_id: {session_id, updated}}}
     """
 
     def __init__(self, base_dir: Path | None = None) -> None:
@@ -68,16 +70,13 @@ class SessionStore:
 
     def _load_sessions_sync(self) -> dict[str, dict[str, Any]]:
         """Load sessions from file with corruption recovery (synchronous)"""
-        # Try main file first
         if self.sessions_file.exists():
             try:
                 content = self.sessions_file.read_text(encoding="utf-8")
                 return json.loads(content)  # type: ignore[no-any-return]
             except (json.JSONDecodeError, OSError):
-                # Main file corrupted, try backup
                 pass
 
-        # Try backup file
         if self.backup_file.exists():
             try:
                 content = self.backup_file.read_text(encoding="utf-8")
@@ -85,7 +84,6 @@ class SessionStore:
             except (json.JSONDecodeError, OSError):
                 pass
 
-        # Both failed, start fresh
         return {}
 
     async def _save_sessions_atomic(self, sessions: dict[str, dict[str, Any]]) -> None:
@@ -95,47 +93,82 @@ class SessionStore:
                 await anyio.to_thread.run_sync(self._remove_path_sync, self.backup_file)
             await anyio.to_thread.run_sync(self.sessions_file.rename, self.backup_file)
 
-        # Write to temporary file
         temp_file = self.base_dir / f"sessions.json.tmp.{uuid.uuid4().hex}"
         try:
             async with await anyio.open_file(temp_file, "w", encoding="utf-8") as f:
                 await f.write(json.dumps(sessions, indent=2, ensure_ascii=False))
                 await f.flush()
 
-            # Atomic rename
             await anyio.to_thread.run_sync(temp_file.rename, self.sessions_file)
         except Exception:
-            # Clean up temp file on failure
             if temp_file.exists():
                 await anyio.to_thread.run_sync(temp_file.unlink)
             raise
 
-    async def get_session(self, agent_type: str) -> str | None:
-        """Get session ID for specific agent"""
+    async def get_session(self, agent_type: str, plan_id: str) -> str | None:
+        """Get session ID for specific agent and plan
+
+        Args:
+            agent_type: Type of agent (claude, opencode, etc.)
+            plan_id: Plan ID
+
+        Returns:
+            Session ID if found, None otherwise
+        """
         async with self.lock:
             sessions = await anyio.to_thread.run_sync(self._load_sessions_sync)
             agent_data = sessions.get(agent_type)
             if agent_data is None:
                 return None
-            return agent_data.get("session_id")  # type: ignore[no-any-return]
 
-    async def save_session(self, agent_type: str, session_id: str) -> None:
-        """Save session ID for specific agent"""
+            plan_data = agent_data.get(plan_id)
+            if plan_data is None:
+                return None
+            return plan_data.get("session_id")  # type: ignore[no-any-return]
+
+    async def save_session(self, agent_type: str, session_id: str, plan_id: str) -> None:
+        """Save session ID for specific agent and plan
+
+        Args:
+            agent_type: Type of agent (claude, opencode, etc.)
+            session_id: Session ID to save
+            plan_id: Plan ID
+        """
         async with self.lock:
             sessions = await anyio.to_thread.run_sync(self._load_sessions_sync)
-            sessions[agent_type] = {
+
+            if agent_type not in sessions:
+                sessions[agent_type] = {}
+
+            sessions[agent_type][plan_id] = {
                 "session_id": session_id,
                 "updated": datetime.now(UTC).isoformat(),
             }
+
             await self._save_sessions_atomic(sessions)
 
-    async def delete_session(self, agent_type: str) -> None:
-        """Delete session for specific agent"""
+    async def delete_session(self, agent_type: str, plan_id: str | None = None) -> None:
+        """Delete session for specific agent and plan
+
+        Args:
+            agent_type: Type of agent (claude, opencode, etc.)
+            plan_id: Optional plan ID. If None, deletes all sessions for the agent
+        """
         async with self.lock:
             sessions = await anyio.to_thread.run_sync(self._load_sessions_sync)
-            if agent_type in sessions:
+            if agent_type not in sessions:
+                return
+
+            if plan_id is None:
                 del sessions[agent_type]
-                await self._save_sessions_atomic(sessions)
+            else:
+                agent_data = sessions[agent_type]
+                if plan_id in agent_data:
+                    del agent_data[plan_id]
+                    if not agent_data:
+                        del sessions[agent_type]
+
+            await self._save_sessions_atomic(sessions)
 
     async def list_sessions(self) -> dict[str, dict[str, Any]]:
         """List all sessions"""

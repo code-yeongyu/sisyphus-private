@@ -72,7 +72,6 @@ class ExecutionLoop:
         self.task_validator = task_validator
         self.working_directory = working_directory
 
-        # DEBUG: Verify verify_agent during ExecutionLoop initialization
         print(f"DEBUG ExecutionLoop.__init__: verify_agent={verify_agent}", file=sys.stderr)
 
         self.execute_logger: logging.Logger | None = None
@@ -86,6 +85,7 @@ class ExecutionLoop:
         self._execute_resume_fail_count: int = 0
         self._sdk_exception_count: int = 0
         self._should_exit_execute_phase = False
+        self._current_plan_id: str = ""
 
     async def run(
         self,
@@ -121,6 +121,12 @@ class ExecutionLoop:
         if self.task_validator and self.task_validator.todolist_path:
             try:
                 plan_doc = await load_plan(self.task_validator.todolist_path)
+
+                if not plan_doc.work_plans:
+                    self._current_plan_id = "default"
+                else:
+                    self._current_plan_id = plan_doc.work_plans[0].id
+
                 uncompleted_todos = []
                 for plan in plan_doc.work_plans:
                     for todo in plan.todos:
@@ -134,7 +140,9 @@ class ExecutionLoop:
 
                     execute_prompt = build_execute_prompt(str(self.task_validator.todolist_path), todo_summary)
             except Exception:
-                pass
+                self._current_plan_id = "default"
+        else:
+            self._current_plan_id = "default"
 
         await self._run_unified_mode(execute_prompt, execute_extra, DEFAULT_VERIFY_PROMPT, verify_extra)
 
@@ -226,7 +234,7 @@ class ExecutionLoop:
 
                     if isinstance(error, PromptTooLongError):
                         agent_type = type(self.execute_agent).__name__.lower().replace("agent", "")
-                        await self.session_store.delete_session(agent_type)
+                        await self.session_store.delete_session(agent_type, self._current_plan_id)
                         await self.ui.show_status(
                             f"Session '{agent_type}' cleared due to prompt length exceeded. Starting new session."
                         )
@@ -356,8 +364,11 @@ class ExecutionLoop:
 
         await self.execute_agent.initialize()
 
+        if not self._current_plan_id:
+            raise ValueError("plan_id is required for session management")
+
         agent_type = type(self.execute_agent).__name__.lower().replace("agent", "")
-        session_id = await self.session_store.get_session(agent_type)
+        session_id = await self.session_store.get_session(agent_type, self._current_plan_id)
 
         self.execute_logger = self.logger_factory.create_logger(agent_type, session_id)
         self.execute_logger.info(f"Execute phase starting (session_id={session_id})")
@@ -386,13 +397,13 @@ class ExecutionLoop:
 
             if self._execute_resume_fail_count >= 3:
                 self.execute_logger.info("Session resume failed 3 times. Resetting session store.")
-                await self.session_store.delete_session(agent_type)
+                await self.session_store.delete_session(agent_type, self._current_plan_id)
                 self._execute_resume_fail_count = 0
 
             self.execute_logger.info("Starting new session instead")
             actual_session_id = await self.execute_agent.start_session(None)
 
-        await self.session_store.save_session(agent_type, actual_session_id)
+        await self.session_store.save_session(agent_type, actual_session_id, self._current_plan_id)
 
         # Send initial prompt (outside while loop - only once)
         await self.execute_agent.send(final_prompt)
@@ -401,9 +412,8 @@ class ExecutionLoop:
         self._resumed_once = False
 
         while True:
-            # Create new CancelScope for each loop iteration
             self._current_cancel_scope = anyio.CancelScope()
-            monitor_scope = self._current_cancel_scope
+            monitor_scope: anyio.CancelScope = self._current_cancel_scope
 
             async def consume_stream() -> None:
                 """Consume messages from stream and display in UI"""
@@ -411,14 +421,12 @@ class ExecutionLoop:
                 stream = self.execute_agent.stream()
                 async for message in stream:
                     if self._interrupt_flag:
-                        # Interrupt occurred - cancel monitor_input and break loop
                         monitor_scope.cancel()
                         break
 
                     await self.ui.show_message(message, source="execute")
                     self.execute_logger.debug(f"Message: {message.role} - {message.content[:100]}...")
 
-                # Stream completed normally - cancel monitor_input to terminate Task Group
                 monitor_scope.cancel()
 
             async def monitor_input() -> None:
@@ -431,7 +439,6 @@ class ExecutionLoop:
                             self.execute_logger.info(f"Sending user message: {msg[:100]}...")
                             await self.execute_agent.send(msg)
                         else:
-                            # Short sleep when get_input() returns None (prevents CPU 100%)
                             await anyio.sleep(0.01)
 
             try:
@@ -479,7 +486,7 @@ class ExecutionLoop:
                     )
                     self.execute_logger.info("SDK error detected. Deleting invalid session.")
 
-                    await self.session_store.delete_session(agent_type)
+                    await self.session_store.delete_session(agent_type, self._current_plan_id)
                     if self._sdk_exception_count >= 3:
                         self.execute_logger.error("SDK error occurred 3 times. Exiting execute phase.")
                         self._should_exit_execute_phase = True
@@ -496,7 +503,7 @@ class ExecutionLoop:
 
                     if self._execute_resume_fail_count >= 3:
                         self.execute_logger.info("Exception occurred 3 times. Resetting session store.")
-                        await self.session_store.delete_session(agent_type)
+                        await self.session_store.delete_session(agent_type, self._current_plan_id)
                         self._execute_resume_fail_count = 0
                         self._should_exit_execute_phase = True
                     else:
@@ -578,9 +585,8 @@ class ExecutionLoop:
         judgment_retry_count = 0
 
         while True:
-            # Create new CancelScope for each loop iteration
             self._current_cancel_scope = anyio.CancelScope()
-            monitor_scope = self._current_cancel_scope
+            monitor_scope: anyio.CancelScope = self._current_cancel_scope
             has_judgment = False
 
             async def consume_stream() -> None:
@@ -591,7 +597,6 @@ class ExecutionLoop:
                 stream = self.verify_agent.stream()
                 async for message in stream:
                     if self._interrupt_flag:
-                        # Interrupt occurred - cancel monitor_input and break loop
                         monitor_scope.cancel()
                         break
 
@@ -601,7 +606,6 @@ class ExecutionLoop:
                     if message.role == "assistant":
                         feedback_messages.append(message.content)
 
-                # Stream completed - check FULLY_DONE only in last assistant message
                 if not feedback_messages:
                     monitor_scope.cancel()
                     has_judgment = False
@@ -633,7 +637,6 @@ class ExecutionLoop:
                             self.verify_logger.info(f"Sending user message: {msg[:100]}...")
                             await self.verify_agent.send(msg)
                         else:
-                            # Short sleep when get_input() returns None (prevents CPU 100%)
                             await anyio.sleep(0.01)
 
             try:

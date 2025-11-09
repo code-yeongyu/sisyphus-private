@@ -1,11 +1,11 @@
 ---
 name: plan-writer-yaml
-description: Create YAML v3.0 format work plans saved as .sisyphus/tasks/{name}.yaml with strict schema validation. Analyze user requirements, gather project context, and generate structured plans with verification specs. ALWAYS includes mandatory plan-reviewer verification. Use when users request YAML-based work planning or Sisyphus-compatible task breakdown.
+description: Create YAML format work plans saved as .sisyphus/tasks/{name}.yaml with strict schema validation. Analyze user requirements, gather project context, and generate structured plans with verification specs. ALWAYS includes mandatory plan-reviewer verification. Use when users request YAML-based work planning or Sisyphus-compatible task breakdown.
 ---
 
-# Plan Writer (YAML v3.0)
+# Plan Writer (YAML)
 
-Create systematic, actionable work plans in **Sisyphus YAML v3.0 format** by analyzing user requirements and project context. **Every plan is automatically reviewed by plan-reviewer agent before finalization.**
+Create systematic, actionable work plans in **YAML format** by analyzing user requirements and project context. **Every plan is automatically reviewed by plan-reviewer agent before finalization.**
 
 ## When to Use This Skill
 
@@ -186,12 +186,15 @@ Before starting any plan creation work, use the TodoWrite tool to register all u
 
 ```
 Use TodoWrite to create todos for the following:
-1. Clarify and refine user requirements
-2. Analyze codebase and gather implementation information
-3. Create YAML work plan draft (v3.0 format)
-4. Request plan-reviewer verification (MANDATORY)
-5. Incorporate reviewer feedback and iterate until "OKAY"
-6. Save final approved plan to .sisyphus/tasks/{name}.yaml
+1. Analyze user request and decide: single plan vs multiple plans (CRITICAL FIRST DECISION)
+2. Clarify and refine user requirements
+3. Gather implementation context via massive parallel information gathering
+4. Create YAML work plan draft (v3.0 format)
+5. Request plan-reviewer verification (MANDATORY)
+6. Incorporate reviewer feedback and iterate until "OKAY"
+7. Run sisyphus plan lint to validate YAML schema (MANDATORY)
+8. Fix any linter errors and re-lint until PASSED
+9. Save final approved and validated plan to .sisyphus/tasks/{name}.yaml
 
 Mark each step as 'pending' initially, then update to 'in_progress' and 'completed' as you work through them.
 ```
@@ -216,7 +219,106 @@ Check user request for mode indicators:
    - Set priorities
    - Review phased implementation feasibility
 
-#### 1.3 MASSIVE PARALLEL INFORMATION GATHERING (CRITICAL PHASE)
+#### 1.3 Multi-Plan Decomposition Analysis (CRITICAL FIRST QUESTION)
+
+**Before gathering information or creating any plan, ALWAYS ask yourself:**
+
+**"Should this user request be decomposed into multiple work plans with dependency relationships?"**
+
+This is the FIRST and most important architectural decision. Analyze:
+
+1. **Functional Boundaries**
+   - Does the request span multiple independent features/modules?
+   - Can work be naturally separated into distinct functional units?
+   - Example: "Add auth + payment system" → Two plans: auth plan, payment plan
+
+2. **Dependency Analysis**
+   - Do some parts need to complete before others can start?
+   - Are there clear prerequisite relationships?
+   - Example: Payment system depends_on auth system being complete
+
+3. **Size and Complexity**
+   - Would a single plan exceed ~15-20 tasks?
+   - Is the scope too broad for one cohesive work plan?
+   - Can the work be broken into logical phases?
+
+4. **Parallelization Opportunities**
+   - Can multiple teams/workers work on different parts simultaneously?
+   - Are there independent work streams that don't block each other?
+   - Example: Frontend + Backend can often work in parallel
+
+**Decomposition Decision Framework:**
+
+```
+Ask: "Does this request involve 2+ major features/modules?"
+→ YES: Consider multi-plan decomposition
+→ NO: Single plan is likely appropriate
+
+Ask: "Would a single plan have 15+ tasks?"
+→ YES: Look for natural split points by feature/phase
+→ NO: Single plan is manageable
+
+Ask: "Are there clear dependency chains?"
+→ YES: Each chain may be a separate plan with depends_on
+→ NO: Evaluate other criteria
+
+Ask: "Can work be parallelized across teams?"
+→ YES: Each parallel stream may be a separate plan
+→ NO: Sequential work often fits in one plan
+```
+
+**When to Use Multiple Plans:**
+
+✅ **USE multiple plans when:**
+- Request spans 2+ major features (e.g., "auth + payments + analytics")
+- Clear prerequisite dependencies exist (e.g., "API must exist before frontend can consume it")
+- Total scope exceeds ~15-20 tasks when estimated
+- Multiple independent work streams can progress in parallel
+- Different technical domains are involved (e.g., infrastructure + application + frontend)
+
+❌ **USE single plan when:**
+- Request is focused on one feature/module
+- Tasks naturally flow sequentially without major branching
+- Scope is manageable (< 15 tasks estimated)
+- Work is tightly coupled without clear separation points
+
+**Multi-Plan Structure in YAML:**
+
+When creating multiple plans, structure them in the `work_plans` array with `depends_on` relationships:
+
+```yaml
+version: '3.0'
+metadata:
+  created_at: "2025-11-09T00:00:00Z"
+  updated_at: "2025-11-09T00:00:00Z"
+
+work_plans:
+  - id: 'plan-auth'
+    name: 'Authentication System Implementation'
+    depends_on: []  # No dependencies, can start immediately
+    # ... rest of plan
+
+  - id: 'plan-payment'
+    name: 'Payment System Integration'
+    depends_on: ['plan-auth']  # Requires auth to be complete first
+    # ... rest of plan
+
+  - id: 'plan-frontend'
+    name: 'Frontend Dashboard'
+    depends_on: ['plan-auth', 'plan-payment']  # Needs both auth and payment
+    # ... rest of plan
+```
+
+**Important Notes:**
+
+- **Document decisions**: In each plan's `background.reason_for_change`, explain why it's separate
+- **Cross-plan references**: Plans can reference each other in `required_background.references`
+- **Execution order**: Sisyphus executor respects `depends_on` and won't start dependent plans until prerequisites complete
+- **Atomic commits**: Each plan should represent a logically complete, committable unit of work
+
+**This analysis MUST happen BEFORE information gathering** - it determines what context you need to collect and how to organize your research.
+
+#### 1.4 MASSIVE PARALLEL INFORMATION GATHERING (CRITICAL PHASE)
 
 **CORE PRINCIPLE: PARALLEL EXECUTION FIRST**
 
@@ -320,150 +422,185 @@ Check user request for mode indicators:
 
 ### Phase 2: YAML Plan Creation
 
-#### 2.1 YAML v3.0 Plan Structure (MANDATORY FORMAT)
+#### 2.1 YAML Plan Structure (MANDATORY FORMAT)
 
-**CRITICAL: Use ONLY this YAML structure. This is Sisyphus v3.0 format with strict schema validation.**
+**CRITICAL: Use ONLY this YAML structure. This is the required format with strict schema validation.**
 
 ```yaml
+# Root Document Structure
+version: '3.0'  # REQUIRED, string
+
 metadata:
   created_at: "2025-11-04T00:00:00Z"  # ISO 8601 format, REQUIRED
   updated_at: "2025-11-04T00:00:00Z"  # ISO 8601 format, REQUIRED
-  format_version: "2.1"                # REQUIRED, string
 
-user_request:
-  original: "[사용자의 정확한 최초 요청 내용]"  # REQUIRED, string
-  created_at: "2025-11-04T00:00:00Z"            # REQUIRED, ISO 8601
-  additional: []                                 # OPTIONAL, list[string]
+work_plans:  # REQUIRED, list[WorkPlan] - array of work plans
+  - id: 'plan-id'              # REQUIRED, string - unique plan identifier
+    name: '작업 계획서 이름'     # REQUIRED, string - human-readable plan name
+    depends_on: []             # REQUIRED, list[string] - array of plan IDs this depends on
 
-objectives:
-  core: "[핵심 목표를 1-2문장으로 명확하게 설명]"  # REQUIRED, string
-  detailed: []  # OPTIONAL, list of {goal: str, measurable: str}
-    # - goal: "[세부 목표 설명]"
-    #   measurable: "[측정 가능한 지표]"
+    user_request:
+      original: "[사용자의 정확한 최초 요청 내용]"  # REQUIRED, string
+      created_at: "2025-11-04T00:00:00Z"            # REQUIRED, ISO 8601
+      additional: []                                 # OPTIONAL, list[string]
 
-background:
-  current_situation: "[시스템의 현재 상태, 존재하는 문제점]"  # REQUIRED, string
-  reason_for_change: "[이 작업이 필요한 이유, 해결하려는 문제]"  # REQUIRED, string
-  changes_to_make: "[현재 상태 → 미래 상태 명확하게 대비]"      # REQUIRED, string
+    objectives:
+      core: "[핵심 목표를 1-2문장으로 명확하게 설명]"  # REQUIRED, string
+      detailed: []  # OPTIONAL, list of {goal: str, measurable: str}
+        # - goal: "[세부 목표 설명]"
+        #   measurable: "[측정 가능한 지표]"
 
-required_background:
-  description: "[이 작업을 수행하는데 필요한 도메인 지식, 기술 스택 등]"  # REQUIRED, string
-  file_structure: null  # OPTIONAL, string | null
-  references: []  # OPTIONAL, list[ReferenceItem]
-    # Example:
-    # - type: file
-    #   id: "ref_main"
-    #   path: "src/main.py"
-    #   description: "Main entry point"
-    #   retrieval:
-    #     type: keywords
-    #     keywords: ["main", "init"]
-    #   notes: "Check initialization pattern"
-    #
-    # - type: url
-    #   id: "ref_docs"
-    #   url: "https://docs.example.com"
-    #   description: "Official documentation"
-    #   notes: "Search for 'authentication' section"
-    #
-    # - type: markdown
-    #   id: "ref_note"
-    #   description: "Quick reference note"
-    #   content: "# Important\nRemember to validate input"
+    background:
+      current_situation: "[시스템의 현재 상태, 존재하는 문제점]"  # REQUIRED, string
+      reason_for_change: "[이 작업이 필요한 이유, 해결하려는 문제]"  # REQUIRED, string
+      changes_to_make: "[현재 상태 → 미래 상태 명확하게 대비]"      # REQUIRED, string
 
-status:
-  execution:
-    started: false      # REQUIRED, boolean
-    completed: false    # REQUIRED, boolean
-    started_at: null    # OPTIONAL, string | null (ISO 8601)
-    completed_at: null  # OPTIONAL, string | null (ISO 8601)
-  work_mode:
-    parallel_requested: false  # REQUIRED, boolean
-    current_task_id: null      # OPTIONAL, string | null
-  progress:
-    total_tasks: 0      # REQUIRED, int
-    completed: 0        # REQUIRED, int
-    in_progress: 0      # REQUIRED, int
-    pending: 0          # REQUIRED, int
-  current_work: ""      # REQUIRED, string
+    required_background:
+      description: "[이 작업을 수행하는데 필요한 도메인 지식, 기술 스택 등]"  # REQUIRED, string
+      file_structure: null  # OPTIONAL, string | null
+      references: []  # OPTIONAL, list[ReferenceItem]
+        # Example:
+        # - ref_id: 'ref-docs-001'
+        #   uri: 'https://docs.example.com'
+        #   inline: null
+        #
+        # - ref_id: null
+        #   uri: null
+        #   inline: "Quick inline reference content"
 
-workflow:
-  dependency_diagram: |  # REQUIRED, string (multi-line)
-    Task 1 (Foundation)
-       ↓
-    Task 2 (depends on 1's output)
-       ↓
-    Task 3 || Task 4 (parallel, both depend on 2)
-       ↓
-    Task 5 (integration, depends on 3 & 4)
-  critical_path: []  # OPTIONAL, list[string]
+    workflow:
+      dependency_diagram: |  # REQUIRED, string (multi-line)
+        Task 1 (Foundation)
+           ↓
+        Task 2 (depends on 1's output)
+           ↓
+        Task 3 || Task 4 (parallel, both depend on 2)
+           ↓
+        Task 5 (integration, depends on 3 & 4)
+      critical_path: []  # OPTIONAL, list[string]
 
-todos:  # REQUIRED, list[Todo]
-  - id: "1"           # REQUIRED, string (pattern: ^\d+(\.\d+)*$)
-    title: "[Task 1 - 기능 설명]"  # REQUIRED, string
-    status: pending   # REQUIRED, enum: pending | in_progress | completed
-    parallel_group: null  # OPTIONAL, int | null
-    created_at: "2025-11-04T00:00:00Z"   # REQUIRED, ISO 8601
-    updated_at: "2025-11-04T00:00:00Z"   # REQUIRED, ISO 8601
-    status_changed_at: null               # OPTIONAL, ISO 8601 | null
-    references: []    # OPTIONAL, list[ReferenceItem]
-      # - type: file
-      #   path: "models/Product.ts"
-      #   description: "Pattern reference"
-      #   retrieval:
-      #     type: keywords
-      #     keywords: ["@Column", "timestamp"]
-    details:          # OPTIONAL, dict
-      implementation_notes: "[구현 시 주의사항]"
-      reference_sources: "[참조할 파일 경로 + 검색 키워드]"
-    verification_spec: []  # OPTIONAL, list[VerificationItem]
-      # - id: "verify-1"
-      #   title: "Test passes"
-      #   description: "All tests pass"
+    success_vision:
+      user_perspective: []     # OPTIONAL, list of {scenario: str, experience: str}
+      business_perspective: [] # OPTIONAL, list of {metric: str, target: str}
+      technical_criteria: []   # OPTIONAL, list of {category: str, criteria: str, command: str | null, expected: str}
+
+    final_verification: []  # REQUIRED, list[FinalVerificationItem]
+      # - id: "final-1"
+      #   title: "Feature works end-to-end"
+      #   category: "Integration"
+      #   description: "User can complete full workflow"
       #   verified: false
+      #   verified_at: null
+      #   verification_evidence: null
       #   orchestrator_manually_verified: false  # REQUIRED
       #   manual_verification_evidence: ""       # REQUIRED
       #   bash:  # OPTIONAL (bash OR llm_judge required)
-      #     - execute: "pytest tests/"
-      #       expected_stdout: "passed"
+      #     - execute: "curl -X POST http://localhost:8000/api/test"
+      #       expected_stdout: "success"
       #       expected_exit_code: 0
       #   llm_judge: []  # OPTIONAL
-    children: []      # OPTIONAL, list[Todo] (recursive)
 
-success_vision:
-  user_perspective: []     # OPTIONAL, list of {scenario: str, experience: str}
-  business_perspective: [] # OPTIONAL, list of {metric: str, target: str}
-  technical_criteria: []   # OPTIONAL, list of {category: str, criteria: str, command: str | null, expected: str}
+    todos:  # REQUIRED, list[Todo]
+      - id: "1"           # REQUIRED, string (pattern: ^\d+(\.\d+)*$)
+        title: "[Task 1 - 기능 설명]"  # REQUIRED, string
+        description: null   # OPTIONAL, string | null - brief task summary
+        status: pending     # REQUIRED, enum: pending | in_progress | completed
+        references: []      # OPTIONAL, list[ReferenceItem]
+          # - ref_id: 'ref-docs-001'
+          #   uri: null
+          #   inline: null
+        verification_spec: []  # OPTIONAL, list[VerificationItem]
+          # - id: "verify-1"
+          #   title: "Test passes"
+          #   description: "All tests pass"
+          #   verified: false
+          #   verified_at: null
+          #   verification_evidence: null
+          #   orchestrator_manually_verified: false  # REQUIRED
+          #   manual_verification_evidence: ""       # REQUIRED
+          #   bash:  # OPTIONAL (bash OR llm_judge required)
+          #     - execute: "pytest tests/"
+          #       expected_stdout: "passed"
+          #       expected_exit_code: 0
+          #       notes: null
+          #   llm_judge: []  # OPTIONAL
+        children: null      # OPTIONAL, list[Todo] | null (recursive)
 
-final_verification: []  # REQUIRED, list[FinalVerificationItem]
-  # - id: "final-1"
-  #   title: "Feature works end-to-end"
-  #   category: "Integration"  # REQUIRED (v2.1 addition)
-  #   description: "User can complete full workflow"
-  #   verified: false
-  #   orchestrator_manually_verified: false  # REQUIRED
-  #   manual_verification_evidence: ""       # REQUIRED
-  #   bash:  # OPTIONAL (bash OR llm_judge required)
-  #     - execute: "curl -X POST http://localhost:8000/api/test"
-  #       expected_stdout: "success"
-  #   llm_judge: []  # OPTIONAL
+    references: []  # REQUIRED, list[ReferenceItem] - global references
+      # - ref_id: 'ref-docs-001'
+      #   uri: 'https://example.com/framework-docs'
+      #   inline: null
+
+    execution:
+      started: false      # REQUIRED, boolean
+      completed: false    # REQUIRED, boolean
+      started_at: null    # OPTIONAL, string | null (ISO 8601)
+      completed_at: null  # OPTIONAL, string | null (ISO 8601)
+
+    work_mode:
+      parallel_requested: false  # REQUIRED, boolean
+      current_task_id: null      # OPTIONAL, string | null
+
+    progress:
+      total_tasks: 0      # REQUIRED, int
+      completed: 0        # REQUIRED, int
+      in_progress: 0      # REQUIRED, int
+      pending: 0          # REQUIRED, int
+
+    current_work: ''      # REQUIRED, string
 ```
 
 #### 2.2 YAML Schema Constraints (STRICT VALIDATION)
 
-**CRITICAL: Sisyphus linter (`sisyphus plan lint`) will REJECT plans that violate these rules.**
+**CRITICAL: Linter (`sisyphus plan lint`) will REJECT plans that violate these rules.**
 
-##### Root Level Rules
-- **ONLY** these 10 fields allowed at root: `metadata`, `user_request`, `objectives`, `background`, `required_background`, `status`, `workflow`, `todos`, `success_vision`, `final_verification`
-- **NO extra fields** permitted
-- **ALL 10 fields are REQUIRED** (even if some are empty lists/strings)
+##### Root Level Rules (PlanDocument)
+- **ONLY** these 3 fields allowed at root:
+  - `version`: string (REQUIRED) - e.g., "3.0"
+  - `metadata`: Metadata object (REQUIRED)
+  - `work_plans`: list[WorkPlan] (REQUIRED) - array of work plans
+- **NO extra root fields** permitted
 
-##### Field Type Validation
-- Strings: `metadata.created_at`, `user_request.original`, `objectives.core`, etc.
-- Booleans: `status.execution.started`, `status.work_mode.parallel_requested`, etc.
-- Integers: `status.progress.total_tasks`, `todos[].parallel_group`, etc.
-- Lists: `user_request.additional`, `todos`, `final_verification`, etc.
-- Dicts: `metadata`, `status`, `workflow`, etc.
+##### Metadata Rules
+- **REQUIRED fields**:
+  - `created_at`: ISO 8601 timestamp string
+  - `updated_at`: ISO 8601 timestamp string or null
+
+##### WorkPlan Rules (items in work_plans array)
+- **REQUIRED fields**:
+  - `id`: string - unique plan identifier
+  - `name`: string - human-readable plan name
+  - `depends_on`: list[string] - array of plan IDs this depends on (can be empty)
+  - `user_request`: UserRequest object
+  - `objectives`: Objectives object
+  - `background`: Background object
+  - `required_background`: RequiredBackground object
+  - `workflow`: Workflow object
+  - `success_vision`: SuccessVision object
+  - `final_verification`: list[FinalVerificationItem]
+  - `todos`: list[Todo]
+  - `references`: list[ReferenceItem] (default: [])
+  - `execution`: ExecutionStatus object
+  - `work_mode`: WorkMode object
+  - `progress`: Progress object
+  - `current_work`: string (default: "")
+
+##### ExecutionStatus, WorkMode, Progress Fields
+- **ExecutionStatus** (`execution` field in WorkPlan):
+  - `started`: boolean (REQUIRED)
+  - `completed`: boolean (REQUIRED)
+  - `started_at`: ISO 8601 string | null (OPTIONAL)
+  - `completed_at`: ISO 8601 string | null (OPTIONAL)
+
+- **WorkMode** (`work_mode` field in WorkPlan):
+  - `parallel_requested`: boolean (REQUIRED)
+  - `current_task_id`: string | null (OPTIONAL)
+
+- **Progress** (`progress` field in WorkPlan):
+  - `total_tasks`: int (REQUIRED)
+  - `completed`: int (REQUIRED)
+  - `in_progress`: int (REQUIRED)
+  - `pending`: int (REQUIRED)
 
 ##### Todo ID Pattern (CRITICAL)
 - **Pattern**: `^\d+(\.\d+)*$`
@@ -474,13 +611,38 @@ final_verification: []  # REQUIRED, list[FinalVerificationItem]
 - **Valid values**: `pending`, `in_progress`, `completed`
 - **Invalid**: "done", "finished", "working", etc.
 
-##### ReferenceItem Discriminated Union
-- **MUST have `type` field**: "pointer", "file", "url", "markdown"
-- **Type-specific required fields**:
-  - `type: pointer` → `ref_id` required
-  - `type: file` → `path`, `description` required
-  - `type: url` → `url`, `description` required
-  - `type: markdown` → `description`, `content` required
+##### Todo Description Field
+- **OPTIONAL**: `description` field in Todo is optional (string | null)
+- Use `description` for brief task summary
+- For detailed implementation notes, use verification context or reference materials
+
+##### ReferenceItem Structure
+- **Available fields**:
+  - `ref_id`: string | null (OPTIONAL) - reference to global reference ID
+  - `uri`: string | null (OPTIONAL) - external URL
+  - `inline`: string | null (OPTIONAL) - inline content
+- **Exclusivity rule**: `uri` and `inline` CANNOT coexist (use one or the other)
+- **At least one required**: Must have at least one of `ref_id`, `uri`, or `inline`
+
+**Inline Content Multiline Formatting:**
+Use YAML literal block scalar (`|`) for multiline inline content to avoid `\n` escape sequences:
+
+```yaml
+references:
+  - ref_id: 'ref-example'
+    uri: null
+    inline: |
+      This is a multiline inline reference.
+
+      You can include code snippets:
+      ```python
+      def example():
+          return "Hello"
+      ```
+
+      Or detailed notes spanning multiple lines
+      without using \n escape sequences.
+```
 
 ##### VerificationItem Rules
 - **MUST have `orchestrator_manually_verified` (boolean)**
@@ -490,18 +652,20 @@ final_verification: []  # REQUIRED, list[FinalVerificationItem]
   - `execute` (string, REQUIRED)
   - `expected_stdout`, `expected_stderr` (string | null, OPTIONAL)
   - `expected_exit_code` (int, OPTIONAL, default: 0)
+  - `notes` (string | null, OPTIONAL)
 - **LLMJudgeVerification** fields:
   - `instruction` (string, REQUIRED)
   - `by` (enum: "orchestrator-agent" | "external-agent", OPTIONAL, default: "orchestrator-agent")
   - `context_commands` (list[string], OPTIONAL)
 
 ##### Reference Integrity
-- **ReferencePointer** (`type: pointer`) → `ref_id` MUST exist in `required_background.references[].id`
-- Linter will ERROR if pointer references non-existent ID
+- When using `ref_id` in ReferenceItem, the ID MUST exist in the global `references[]` array
+- Linter will ERROR if ref_id references non-existent reference
 
 ##### Timestamps
 - **Format**: ISO 8601 (e.g., "2025-11-04T00:00:00Z")
-- **Required**: `metadata.created_at`, `metadata.updated_at`, `user_request.created_at`, `todos[].created_at`, `todos[].updated_at`
+- **Required in Metadata**: `created_at`, `updated_at`
+- **Required in UserRequest**: `created_at`
 
 #### 2.3 Verification Spec Design (CRITICAL GUIDELINES)
 
@@ -721,6 +885,88 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
    - Nulls: `null` (lowercase)
    - Multi-line strings: Use `|` or `>` for readability
 
+8. **Include Explicit Commit Steps**
+
+   **CRITICAL: After each meaningful unit of work, include a dedicated task for creating a git commit.**
+
+   This ensures:
+   - Work is properly versioned at logical checkpoints
+   - Commit messages are thoughtful and descriptive
+   - Code history is clean and understandable
+   - Rollback points are clearly defined
+
+   **When to add commit tasks:**
+   - After completing a feature implementation
+   - After fixing a bug
+   - After refactoring a module
+   - After adding tests
+   - Before starting a new major task that depends on previous work
+
+   **Commit task structure:**
+   ```yaml
+   - id: 'X.Y'
+     title: 'Commit changes with appropriate message'
+     description: 'Create git commit for completed work'
+     status: 'pending'
+     references:
+       - ref_id: null
+         uri: null
+         inline: |
+           Create a descriptive commit message following project conventions.
+
+           Commit message should:
+           - Summarize what was implemented/fixed/refactored
+           - Follow conventional commits format if applicable (feat:, fix:, refactor:, etc.)
+           - Include relevant context about why changes were made
+           - Reference related issues or tasks if applicable
+
+           Example:
+           ```bash
+           git add .
+           git commit -m "feat: implement feature X
+
+           - Add core functionality for X
+           - Include comprehensive unit tests
+           - Update relevant documentation
+           - Ensure backward compatibility"
+           ```
+     verification_spec:
+       - id: 'verify-X.Y-1'
+         title: 'Commit created'
+         description: 'Changes are committed to git with appropriate message'
+         verified: false
+         verified_at: null
+         verification_evidence: null
+         orchestrator_manually_verified: false
+         manual_verification_evidence: ''
+         bash:
+           - execute: 'git log -1 --oneline'
+             expected_stdout: null
+             expected_stderr: null
+             expected_exit_code: 0
+             notes: 'Verify latest commit exists'
+         llm_judge:
+           - by: 'orchestrator-agent'
+             instruction: |
+               Verify that:
+               1. A new commit was created
+               2. Commit message is descriptive and follows project conventions
+               3. All relevant changes from previous tasks are included
+               4. No unrelated changes are included in this commit
+             context_commands:
+               - 'git log -1 --stat'
+               - 'git show --name-only'
+               - 'git diff HEAD~1'
+   ```
+
+   **Best practices for commit tasks:**
+   - Place commit task immediately after the implementation task it commits
+   - Use descriptive commit messages that explain "why" not just "what"
+   - Follow project's commit message conventions (conventional commits, etc.)
+   - Ensure commit includes all related changes (code + tests + docs)
+   - Keep commits atomic - one logical change per commit
+   - Use llm_judge to verify commit quality and completeness
+
 ### Phase 3: Mandatory Review Processing (ALWAYS EXECUTE)
 
 **CRITICAL: Plan review by plan-reviewer agent is MANDATORY. No plan is finalized without "OKAY" approval.**
@@ -781,39 +1027,80 @@ When modifying existing plan:
 5. **Submit for Review (MANDATORY)**
    - Even edits must go through review process
 
-### Phase 5: Final Output
+### Phase 5: Final Validation and Output
 
-1. **Validate YAML Syntax**
-   - Use proper YAML indentation (2 spaces)
-   - Quote strings with special characters
-   - Use `|` for multi-line strings
+**CRITICAL: This phase has TWO MANDATORY validation gates that must BOTH pass before completion.**
 
-2. **Save Plan**
-   - Write to `.sisyphus/tasks/{name}.yaml`
-   - Ensure UTF-8 encoding
+#### Step 1: Save Plan
+- Write to `.sisyphus/tasks/{name}.yaml`
+- Ensure UTF-8 encoding
+- Use proper YAML indentation (2 spaces)
+- Quote strings with special characters
+- Use `|` for multi-line strings
 
-3. **Run Linter (CRITICAL)**
-   ```bash
-   sisyphus plan lint --file .sisyphus/tasks/{name}.yaml
-   ```
-   - If errors: Fix and re-validate
-   - If success: Proceed to success report
+#### Step 2: Run Linter (MANDATORY VALIDATION #1)
 
-4. **Success Report**
-   ```
-   ✅ YAML plan creation complete!
+**⚠️ CRITICAL: ALWAYS run the linter after saving the plan. This is NOT optional.**
 
-   * Plan file: .sisyphus/tasks/{name}.yaml
-   * Format: Sisyphus YAML v3.0 (v2.1 internal)
-   * Total tasks: N
-   * Verification specs: N bash, N llm_judge
-   * Language: [Korean/English]
-   * Review status: ✅ Approved by plan-reviewer
-   * Lint status: ✅ PASSED
+```bash
+sisyphus plan lint --file .sisyphus/tasks/{name}.yaml
+```
 
-   The plan is ready for execution with:
-   sisyphus task continue --execute claude:sonnet
-   ```
+**Linter validates:**
+- YAML syntax correctness
+- Schema compliance (all required fields present)
+- Field type correctness (string, boolean, int, list, dict)
+- Todo ID pattern validity (`^\d+(\.\d+)*$`)
+- TodoStatus enum values (pending/in_progress/completed)
+- Timestamp ISO 8601 format
+- ReferenceItem structure and integrity
+- VerificationItem required fields
+- No extra root fields
+
+**Action based on linter result:**
+- ✅ **If PASSED**: Proceed to success report
+- ❌ **If ERRORS**:
+  1. Read error messages carefully
+  2. Fix ALL reported issues
+  3. Re-save the plan
+  4. Re-run linter
+  5. Repeat until PASSED
+
+**Common linter errors and fixes:**
+
+| Error | Fix |
+|-------|-----|
+| `Missing required field: X` | Add the required field with appropriate value |
+| `Invalid todo ID pattern` | Use format like "1", "1.1", "1.2.3" (digits + dots only) |
+| `Invalid enum value for status` | Use only: pending, in_progress, completed |
+| `Reference integrity error` | Ensure ref_id exists in global references[] |
+| `Extra field at root` | Remove any fields not in schema (only version, metadata, work_plans allowed) |
+| `Invalid timestamp format` | Use ISO 8601: "2025-11-09T00:00:00Z" |
+
+**NEVER skip the linter.** Plans that pass plan-reviewer but fail linter are invalid and will cause execution errors.
+
+#### Step 3: Success Report (Only After Lint PASSED)
+
+```
+✅ YAML plan creation complete!
+
+📄 Plan file: .sisyphus/tasks/{name}.yaml
+📋 Format: Sisyphus YAML v3.0
+📊 Total tasks: N
+✓ Verification specs: N bash, N llm_judge
+🌐 Language: [Korean/English]
+✓ Review status: ✅ APPROVED by plan-reviewer
+✓ Lint status: ✅ PASSED
+
+Ready for execution:
+  sisyphus task continue --execute claude:sonnet
+```
+
+**Both validations must show ✅:**
+1. ✅ APPROVED by plan-reviewer (Phase 3)
+2. ✅ PASSED sisyphus plan lint (Phase 5)
+
+Only when BOTH are satisfied is the plan truly complete and ready for execution.
 
 ## Quality Checklist
 

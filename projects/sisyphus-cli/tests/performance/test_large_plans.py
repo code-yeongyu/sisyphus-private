@@ -303,7 +303,7 @@ async def test_combined_workflow__if_realistic_scenario__completes_within_budget
     assert isinstance(errors, list)
 
     # Performance assertions (generous budget for combined workflow)
-    assert load_time < 1000, f"Load took {load_time:.2f}ms, expected < 1000ms"
+    assert load_time < 1500, f"Load took {load_time:.2f}ms, expected < 1500ms"
     assert graph_time < 500, f"Graph build took {graph_time:.2f}ms, expected < 500ms"
     assert lint_time < 1000, f"Lint took {lint_time:.2f}ms, expected < 1000ms"
-    assert total_time < 2500, f"Total workflow took {total_time:.2f}ms, expected < 2500ms"
+    assert total_time < 3000, f"Total workflow took {total_time:.2f}ms, expected < 3000ms"

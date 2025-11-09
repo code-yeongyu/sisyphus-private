@@ -133,12 +133,11 @@ class ExecutionLoop:
                         if todo.status != "completed":
                             uncompleted_todos.append(f"  - [{todo.id}] {todo.title}")
 
-                if uncompleted_todos:
-                    todo_summary = "\n".join(uncompleted_todos[:10])
-                    if len(uncompleted_todos) > 10:
-                        todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
+                todo_summary = "\n".join(uncompleted_todos[:10]) if uncompleted_todos else "All tasks completed"
+                if len(uncompleted_todos) > 10:
+                    todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
 
-                    execute_prompt = build_execute_prompt(str(self.task_validator.todolist_path), todo_summary)
+                execute_prompt = build_execute_prompt(str(self.task_validator.todolist_path), todo_summary)
             except Exception:
                 self._current_plan_id = "default"
         else:

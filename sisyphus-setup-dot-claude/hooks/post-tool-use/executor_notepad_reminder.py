@@ -124,10 +124,10 @@ Current system time: {current_time}
     print(
         f"""
 {"=" * 40}
-📋 NOTEPAD.MD DOCUMENTATION REQUIREMENTS
+📋 NOTEPAD FILE DOCUMENTATION REQUIREMENTS
 {"=" * 40}
 
-**당신은 executor agent입니다. @notepad.md에 메모하며 진행하는 것을 잊지마세요!**
+**당신은 executor agent입니다. .sisyphus/notepads/{{plan-name}}.md에 메모하며 진행하는 것을 잊지마세요!**
 
 메모해야 할 내용:
 - 작업 시점에 요구받은 내용 (정확한 요구사항 기록)
@@ -143,22 +143,37 @@ Current system time: {current_time}
 - 테스트 결과 (성공/실패 여부와 이유)
 - 코드 변경 사항 요약 (어떤 파일을 왜 수정했는지)
 
-메모 추가 방법 예시:
+**CRITICAL: ALWAYS use bash append - NEVER use Edit tool**
+
+메모 추가 방법 (MANDATORY):
 ```bash
-current_time=$(date '+%Y-%m-%d %H:%M:%S')
-echo '## '$current_time' - 작업 제목' >> ./notepad.md
-echo '' >> ./notepad.md
-echo '### 요구사항' >> ./notepad.md
-echo '- [작업 시작 시 받은 요구사항]' >> ./notepad.md
-echo '' >> ./notepad.md
-echo '### 작업 로그' >> ./notepad.md
-echo '1. [수행한 첫 번째 단계]' >> ./notepad.md
-echo '2. [수행한 두 번째 단계]' >> ./notepad.md
-echo '' >> ./notepad.md
-echo '### 인사이트' >> ./notepad.md
-echo '- [발견한 중요한 내용]' >> ./notepad.md
-echo '' >> ./notepad.md
+# ALWAYS use heredoc append for notepad updates
+cat >> .sisyphus/notepads/{{plan-name}}.md <<'NOTEPAD_EOF'
+
+[$(date '+%Y-%m-%d %H:%M')] - 작업 제목
+
+### 요구사항
+- [작업 시작 시 받은 요구사항]
+
+### 작업 로그
+1. [수행한 첫 번째 단계]
+2. [수행한 두 번째 단계]
+
+### 인사이트
+- [발견한 중요한 내용]
+
+### LEARNINGS
+- [프로젝트 특화 발견사항]
+- [올바른 명령어: npm run build:prod not build]
+
+NOTEPAD_EOF
 ```
+
+**Why bash append?**
+✅ Guarantees append-only (no overwrites)
+✅ Atomic operation
+✅ Works with large files
+❌ Edit tool risks file corruption
 """,
         file=sys.stderr,
     )
@@ -174,12 +189,12 @@ echo '' >> ./notepad.md
 (일시적인 세팅 오류라도 넘어가서는 안되고 성공하는 것을 명시적으로 확인하여야 합니다.)
 
 [COMMIT REMINDER]
-After modifying notepad.md, don't forget to commit your notepad.md changes!
-Example: git add notepad.md && git commit -m 'docs: update notepad with [task name] findings'
+After modifying .sisyphus/notepads/{{plan-name}}.md, don't forget to commit your changes!
+Example: git add .sisyphus/notepads/{{plan-name}}.md && git commit -m 'docs: update notepad with [task name] findings'
 
 [CRITICAL EXECUTION STANDARDS]
 ✅ MUST DO:
-  - Write detailed notes in notepad.md BEFORE, DURING, and AFTER each task
+  - Write detailed notes in .sisyphus/notepads/{{plan-name}}.md BEFORE, DURING, and AFTER each task
   - Run ALL tests and ensure they pass (pytest, ruff, typecheck, etc.)
   - Verify your work thoroughly - assume orchestrator will check everything
   - Document REAL findings, not placeholders or generic statements

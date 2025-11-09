@@ -106,16 +106,23 @@ THIS IS MUST DO. AND NEVER LIE TO YOUR SELF.
     ```bash
     mkdir -p .sisyphus/notepads
     ```
-- **Initialize notepad.md file** at the derived path:
-  ```md
-  # Task Started
-  All tasks execution STARTED: [exact timestamp from date command]
-  YAML Plan: <path>
-  Plan ID: <metadata.plan_id>
+- **Initialize notepad.md file** at the derived path using bash:
+  ```bash
+  # Create notepad directory
+  mkdir -p .sisyphus/notepads
+
+  # Initialize notepad file with header
+  cat > .sisyphus/notepads/{plan-name}.md <<'NOTEPAD_INIT_EOF'
+# Task Started
+All tasks execution STARTED: [exact timestamp from date command]
+YAML Plan: <path>
+Plan ID: <metadata.plan_id>
 
 
+NOTEPAD_INIT_EOF
   ```
-- **Note**: If notepad.md becomes large, use `tail -n 200 notepad.md` to read recent entries
+- **Note**: If notepad.md becomes large, use `tail -n 200 .sisyphus/notepads/{plan-name}.md` to read recent entries
+- **CRITICAL**: Always use bash `cat >>` to append, NEVER use Edit tool to prevent overwrites
 
 **CRITICAL NOTEPAD PATH CONVENTION:**
 - Notepad files MUST be stored in `.sisyphus/notepads/` directory
@@ -173,7 +180,7 @@ Continue the following loop until all tasks are complete:
 **2.3 Prepare Comprehensive Context for Executor**
 
 - Read current YAML plan state
-- Read notepad.md (use `tail -n 200 notepad.md` if file is large)
+- Read notepad.md (use `tail -n 200 .sisyphus/notepads/{plan-name}.md` if file is large)
 - Identify the specific uncompleted todo to work on (by `id` and `status`)
 - Quote the exact task text from the YAML todo verbatim
 - Extract any relevant context from notepad.md for the next task
@@ -352,8 +359,18 @@ Invoke the @agent-sisyphus-executor with structured guidance:
    - Success criteria: [how to verify it works]]
 
    KNOWLEDGE TRANSFER DOCUMENTATION (CRITICAL!):
-   You MUST document ALL findings in notepad.md file for the next sisyphus-executor.
-   Append to notepad.md (do NOT overwrite existing content).
+   You MUST document ALL findings in `.sisyphus/notepads/{plan-name}.md` file for the next sisyphus-executor.
+   ALWAYS use bash append command (do NOT use Edit tool):
+
+   ```bash
+   cat >> .sisyphus/notepads/{plan-name}.md <<'NOTEPAD_EOF'
+
+   [YYYY-MM-DD HH:MM] - [Task Name]
+
+   ### WORK CONTEXT & HISTORY
+   ...your findings...
+   NOTEPAD_EOF
+   ```
 
    ### WORK CONTEXT & HISTORY
    - Complete narrative of what you did and in what order
@@ -940,13 +957,16 @@ When all todos appear complete:
   ```bash
   date
   ```
-- Append to notepad.md with completion time:
-  ```
-  ## ORCHESTRATION LOG
-  All tasks execution STARTED: [start timestamp]
-  All tasks execution COMPLETED: [exact timestamp from date command]
-  YAML Plan: <path>
-  Plan ID: <metadata.plan_id>
+- Append to notepad.md with completion time using bash:
+  ```bash
+  cat >> .sisyphus/notepads/{plan-name}.md <<'NOTEPAD_EOF'
+
+## ORCHESTRATION LOG
+All tasks execution STARTED: [start timestamp]
+All tasks execution COMPLETED: [exact timestamp from date command]
+YAML Plan: <path>
+Plan ID: <metadata.plan_id>
+NOTEPAD_EOF
   ```
 - Report final summary with:
   - Total todos completed

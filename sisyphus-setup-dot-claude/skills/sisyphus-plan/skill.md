@@ -37,7 +37,52 @@ This means:
    - **HOW**: Task flow (dependencies, sequence, logical connections)
    - **Success Vision**: End state from product/user perspective (not just "code works")
 
-2. **Clarity Through Logical References**
+2. **Test-First Planning (MANDATORY - CRITICAL FOR PLAN-REVIEWER APPROVAL)**
+   - **CRITICAL**: Every implementation task MUST be followed by a corresponding test task
+   - **Test tasks are NOT optional** - plan-reviewer will AUTOMATICALLY REJECT plans without tests
+   - Test tasks must clearly specify:
+     - What behaviors/scenarios to test
+     - Expected outcomes for each test case
+     - Test types (unit, integration, e2e) where applicable
+   - Include automated verification (bash command or llm_judge)
+   - Interleave test tasks with implementation (don't defer all testing to the end)
+
+   **Example Test Task Structure:**
+   ```yaml
+   - id: "X.Y"
+     title: "Test [feature name]"
+     description: "Verify [feature] works correctly"
+     status: pending
+     references:
+       - ref_id: null
+         uri: null
+         inline: |
+           Test coverage required:
+           1. [Scenario 1]: [Expected outcome]
+           2. [Scenario 2]: [Expected outcome]
+           3. [Error case]: [Expected error handling]
+
+           Test all edge cases including:
+           - Empty/null inputs
+           - Invalid data
+           - Success paths
+           - Failure paths
+     verification_spec:
+       - id: "verify-X.Y-1"
+         title: "All tests pass"
+         description: "Test suite executes successfully"
+         verified: false
+         verified_at: null
+         verification_evidence: null
+         orchestrator_manually_verified: false
+         manual_verification_evidence: ''
+         bash:
+           - execute: "pytest tests/test_feature.py -v"
+             expected_exit_code: 0
+             notes: "All test cases must pass"
+   ```
+
+3. **Clarity Through Logical References**
    - Every task MUST provide clear navigation paths:
      - File paths with searchable concepts (e.g., `models/User.ts` - search for `@Column` decorator patterns)
      - URLs with searchable sections (e.g., `https://example.com/docs` - find "JWT token creation" section)
@@ -1379,6 +1424,201 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
    - Keep commits atomic - one logical change per commit
    - Use llm_judge to verify commit quality and completeness
 
+9. **Include Comprehensive Test Tasks (MANDATORY - CRITICAL FOR PLAN-REVIEWER APPROVAL)**
+
+   **CRITICAL: plan-reviewer will AUTOMATICALLY REJECT plans that implement code changes without corresponding test tasks.**
+
+   This ensures:
+   - Code quality is validated through automated testing
+   - Regressions are caught early through test suites
+   - Implementation correctness is objectively verifiable
+   - Feedback loops enable self-correcting execution
+
+   **When to add test tasks:**
+   - ALWAYS after implementing new features or functionality
+   - ALWAYS after fixing bugs (to prevent regressions)
+   - After refactoring (to ensure behavior unchanged)
+   - After adding new API endpoints or database changes
+   - After implementing business logic or algorithms
+
+   **What test tasks must include:**
+   - Clear specification of what scenarios/behaviors to test
+   - Test types (unit, integration, e2e) where applicable
+   - Expected outcomes for each test case
+   - Edge cases and error conditions to cover
+   - Automated verification (bash command or llm_judge)
+
+   **Test task placement:**
+   - Interleave test tasks with implementation (don't defer to end)
+   - Place test task immediately after the feature it tests
+   - Allow parallel work streams (implementation + testing)
+
+   **Test task structure:**
+   ```yaml
+   - id: 'X.Y'
+     title: 'Test [feature name] implementation'
+     description: 'Comprehensive test coverage for [feature]'
+     status: 'pending'
+     references:
+       - ref_id: null
+         uri: null
+         inline: |
+           Test coverage requirements:
+
+           **Unit Tests:**
+           1. [Component/Function name] - [Behavior to test]
+              - Input: [Test input]
+              - Expected: [Expected output]
+           2. [Component/Function name] - [Edge case]
+              - Input: [Test input]
+              - Expected: [Expected behavior]
+
+           **Integration Tests:**
+           1. [System integration point] - [Integration scenario]
+              - Setup: [Required state/data]
+              - Action: [What to test]
+              - Expected: [Expected outcome]
+
+           **Error Cases:**
+           1. Invalid input - [Expected error handling]
+           2. Edge case - [Expected behavior]
+           3. Failure scenario - [Expected recovery/error message]
+
+           **Test Implementation Notes:**
+           - Follow existing test patterns in [reference test file]
+           - Use [testing framework] (already in project)
+           - Mock external dependencies (APIs, databases)
+           - Ensure tests are deterministic and repeatable
+     verification_spec:
+       - id: 'verify-X.Y-1'
+         title: 'All tests pass'
+         description: 'Test suite executes successfully with full coverage'
+         verified: false
+         verified_at: null
+         verification_evidence: null
+         orchestrator_manually_verified: false
+         manual_verification_evidence: ''
+         bash:
+           - execute: 'pytest tests/test_feature.py -v --cov=module'
+             expected_exit_code: 0
+             notes: 'All tests must pass, check coverage report'
+         llm_judge:
+           - by: 'orchestrator-agent'
+             instruction: |
+               Verify test implementation quality:
+               1. All specified scenarios are covered by tests
+               2. Tests follow project testing conventions
+               3. Edge cases and error conditions are tested
+               4. Tests are well-organized and readable
+               5. No flaky or timing-dependent tests
+             context_commands:
+               - 'cat tests/test_feature.py'
+               - 'pytest tests/test_feature.py -v'
+   ```
+
+   **Best practices for test tasks:**
+   - Specify concrete test scenarios (not vague "test everything")
+   - Include both success paths and failure cases
+   - Reference existing test files for pattern consistency
+   - Use bash verification for deterministic test execution
+   - Use llm_judge for test quality assessment
+   - Ensure tests are maintainable and well-documented
+   - Test behavior, not implementation details
+
+   **Common test coverage requirements:**
+   ```yaml
+   # API Endpoint Tests
+   - Valid requests return correct status and data
+   - Invalid requests return appropriate errors (400, 404, etc.)
+   - Authentication/authorization enforced
+   - Input validation works correctly
+
+   # Business Logic Tests
+   - Core functionality works with valid inputs
+   - Edge cases handled correctly (empty, null, boundary values)
+   - Error conditions raise appropriate exceptions
+   - State transitions work as expected
+
+   # UI Component Tests
+   - Component renders correctly
+   - User interactions trigger expected behavior
+   - Props/state changes update UI appropriately
+   - Error states display correctly
+   ```
+
+   **Example: Feature Implementation + Test Task Flow**
+   ```yaml
+   todos:
+     # Implementation task
+     - id: "1"
+       title: "Implement user authentication API"
+       description: "Add login/logout endpoints"
+       # ... implementation details ...
+
+     # MANDATORY test task immediately after
+     - id: "2"
+       title: "Test user authentication API"
+       description: "Comprehensive test coverage for auth endpoints"
+       references:
+         - ref_id: null
+           uri: null
+           inline: |
+             Test coverage required:
+             1. POST /login - Valid credentials return JWT token
+             2. POST /login - Invalid credentials return 401
+             3. POST /logout - Authenticated user logout succeeds
+             4. POST /logout - Unauthenticated request returns 401
+             5. Token validation - Expired token rejected
+             6. Token validation - Invalid token rejected
+       verification_spec:
+         - id: "verify-2-1"
+           title: "All auth tests pass"
+           bash:
+             - execute: "pytest tests/api/test_auth.py -v"
+               expected_exit_code: 0
+
+     # Commit task after tests pass
+     - id: "3"
+       title: "Commit authentication implementation"
+       # ... commit details ...
+   ```
+
+   **plan-reviewer rejection examples:**
+   ```yaml
+   # REJECT - No test tasks
+   todos:
+     - id: "1"
+       title: "Implement payment processing"
+     - id: "2"
+       title: "Deploy to production"
+   # Missing: Test task for payment processing
+
+   # REJECT - Vague test requirements
+   todos:
+     - id: "1"
+       title: "Add user registration"
+     - id: "2"
+       title: "Test the feature"  # Too vague!
+       description: "Make sure it works"  # No specific scenarios
+
+   # ACCEPT - Clear test coverage
+   todos:
+     - id: "1"
+       title: "Implement user registration"
+     - id: "2"
+       title: "Test user registration flow"
+       references:
+         - inline: |
+             Test coverage:
+             1. Valid registration succeeds (201)
+             2. Duplicate email rejected (400)
+             3. Invalid email format rejected (400)
+             4. Password strength validated
+       verification_spec:
+         - bash:
+             - execute: "pytest tests/test_registration.py -v"
+   ```
+
 ### Phase 3: Mandatory Review Processing (ALWAYS EXECUTE)
 
 **CRITICAL: Plan review by plan-reviewer agent is MANDATORY. No plan is finalized without "OKAY" approval.**
@@ -1565,7 +1805,79 @@ Only when BOTH are satisfied is the plan truly complete and ready for execution.
 - [ ] **Task flow (HOW)** in `workflow.dependency_diagram`
 - [ ] **Success vision** in `success_vision`
 
-### Criterion 6: Language Consistency
+### Criterion 6: Test Coverage Completeness (MANDATORY - CRITICAL FOR PLAN-REVIEWER)
+
+**CRITICAL: plan-reviewer will AUTOMATICALLY REJECT plans without comprehensive test coverage.**
+
+**This criterion ensures that tests rigorously verify work completion, forming proper feedback loops for self-correcting execution.**
+
+- [ ] **Every implementation task has a corresponding test task**
+  - No code changes without test coverage
+  - Test tasks immediately follow implementation tasks
+  - Refactoring tasks include tests to ensure behavior unchanged
+
+- [ ] **Test tasks specify concrete test scenarios**
+  - NOT vague: "Test the feature", "Make sure it works"
+  - YES specific: "Test login with valid credentials returns JWT", "Test invalid email returns 400"
+  - Include both success paths and error cases
+  - Cover edge cases (empty inputs, null values, boundary conditions)
+
+- [ ] **Test tasks enable objective verification of completion**
+  - Tests verify business requirements are met (not just "code runs")
+  - Tests validate expected behavior against specifications
+  - Tests confirm error handling works as designed
+  - Tests provide measurable proof of correctness
+
+- [ ] **Test verification specs are executable**
+  - Bash commands for deterministic test execution
+  - LLM judge for test quality assessment
+  - Clear expected outcomes (exit codes, test counts, coverage targets)
+  - Automated checks that can run without human judgment
+
+- [ ] **Test tasks form proper feedback loops**
+  - Tests catch errors early (before cascading)
+  - Tests validate each component before building on it
+  - Tests enable course-correction when deviations occur
+  - Tests provide confidence to proceed to next task
+
+**Example Checklist for Test Coverage:**
+
+For a plan with these implementation tasks:
+```yaml
+- id: "1" - Implement user authentication API
+- id: "2" - Implement payment processing
+- id: "3" - Build admin dashboard UI
+```
+
+Verify test tasks exist:
+- [x] Test task after #1: "Test authentication API (login, logout, token validation)"
+- [x] Test task after #2: "Test payment processing (success, failure, refunds)"
+- [x] Test task after #3: "Test admin dashboard (rendering, interactions, data display)"
+
+Verify test quality:
+- [x] Each test task specifies 5+ concrete scenarios
+- [x] Each test task includes error/edge cases
+- [x] Each test task has executable verification (bash/llm_judge)
+- [x] Tests verify business requirements, not just technical functionality
+
+**Auto-REJECT if:**
+- ANY implementation task lacks a corresponding test task
+- Test tasks are vague ("test everything", "make sure it works")
+- Test tasks have no verification specs (no bash, no llm_judge)
+- Tests only check "code runs" without verifying correctness
+- All tests deferred to end (should be interleaved with implementation)
+
+**The Feedback Loop Principle:**
+
+Tests are NOT just for code validation - they are the primary mechanism for:
+1. **Detecting errors** before they compound
+2. **Verifying correctness** at each step
+3. **Enabling course-correction** when deviations occur
+4. **Providing objective proof** that work is complete and correct
+
+Without comprehensive tests, the executor has no way to know if implementation is correct or complete. Tests transform subjective assessment ("looks good") into objective verification ("all 15 test scenarios pass").
+
+### Criterion 7: Language Consistency
 
 - [ ] **Entire plan matches user's language**
 - [ ] **All sections consistent** (no mixing)
@@ -1578,6 +1890,7 @@ Only when BOTH are satisfied is the plan truly complete and ready for execution.
 4. **Mandatory Review**: ALL plans need plan-reviewer "OKAY"
 5. **90% Confidence**: Workers need minimal guesswork
 6. **Big Picture First**: WHY, WHAT, HOW before tasks
+7. **Comprehensive Test Coverage (MANDATORY)**: Every implementation task MUST have corresponding test task with concrete scenarios, executable verification, and objective completion criteria - plan-reviewer will AUTOMATICALLY REJECT plans without tests
 
 ## Success Indicators
 

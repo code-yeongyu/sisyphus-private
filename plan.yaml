@@ -1,0 +1,556 @@
+version: '3.0'
+metadata:
+  created_at: '2025-11-09T01:34:00+09:00'
+  updated_at: '2025-11-09T01:45:00+09:00'
+work_plans:
+- id: flight-simulator
+  name: 멀티플레이어 비행 시뮬레이터 구축
+  depends_on: []
+  user_request:
+    original: 여기에 ./backend ./frontend 로 디렉토리 만들어서, 비행시뮬레이터 만들고싶어. 웹소켓 기반으로하고, 맨
+      처음에 사용자가 들어오면 닉네임을 색상을 정하게해서, 닉네임을 위에 띄우고 이제 서로 돌아다니는. 맵은 적당히 그냥 초록색 잔디로 
+      설정하고 싶고, 경비행기같은걸 몰게하는 그런 느낌이었으면 해
+    created_at: '2025-11-09T01:07:00+09:00'
+    additional:
+    - React + Three.js 사용, 3인칭 뷰
+    - 경계 밖으로 나가면 게임 종료, 경계를 시각적으로 명확히 표시
+    - TDD 스타일, 모든 컴포넌트 테스트 가능하게 설계
+    - 현재 접속 플레이어 수 표시
+    - 미니맵 표시
+  objectives:
+    core: WebSocket 기반 멀티플레이어 비행 시뮬레이터를 TDD 방식으로 구현. React+Three.js 프론트엔드와 
+      Node.js+Socket.io 백엔드로 실시간 동기화되는 3D 게임 환경 구축.
+    detailed:
+    - goal: 실시간 멀티플레이어 동기화 구현
+      measurable: 최소 10명 동시 접속, 50ms 이하 위치 동기화 지연
+    - goal: TDD 방식으로 핵심 로직 100% 테스트 커버리지 달성
+      measurable: 모든 유틸, 컨트롤러, 서비스 로직에 대한 단위 테스트 작성 및 통과
+    - goal: 사용자 경험 최적화
+      measurable: 경계 시각화, 미니맵, 플레이어 카운트, 닉네임 표시 모두 정상 작동
+  background:
+    current_situation: 빈 프로젝트 디렉토리(/Users/yeongyu/local-workspaces/flight)에 
+      README.md만 존재. Node.js v25.1.0, npm v11.6.2 환경 확인됨.
+    reason_for_change: 멀티플레이어 3D 비행 시뮬레이터 게임을 구축하기 위해 전체 아키텍처, 디렉토리 구조, 테스트 환경, 
+      프론트/백엔드 코드베이스를 처음부터 설계 및 구현해야 함.
+    changes_to_make: 현재 빈 프로젝트 → ./frontend (React+Three.js), ./backend 
+      (Node.js+Socket.io) 디렉토리 구조를 만들고, 각각의 패키지 설정, 테스트 환경, 핵심 컴포넌트와 서버 로직을 TDD 
+      방식으로 구현하여 완전히 작동하는 멀티플레이어 게임으로 전환.
+  required_background:
+    description: "이 작업을 수행하려면 다음 기술 스택과 개념에 대한 이해가 필요:\n- **프론트엔드**: React, Three.js,
+      React Three Fiber (@react-three/fiber), Vitest, React Testing Library\n- **백엔드**:
+      Node.js, Express, Socket.io (WebSocket)\n- **테스트**: TDD (Test-Driven Development),
+      단위 테스트, 통합 테스트\n- **3D 그래픽스**: Three.js Scene/Camera/Mesh, 3인칭 카메라 추적, Box3
+      경계 감지\n- **멀티플레이어 동기화**: WebSocket 실시간 통신, 클라이언트 예측 + 서버 권한 모델\n- **프로젝트 구조**:
+      Monorepo 구조 (./frontend, ./backend 분리)\n\n## 테스트 인프라 전략 (CRITICAL - Blocker
+      4 해결)\n- **프로젝트 구조**: ./backend (Jest), ./frontend (Vitest) 분리로 충돌 방지\n- **Three.js
+      테스트**: 로직은 순수 함수로 분리하여 Vitest 단위 테스트, 렌더링은 E2E로 검증\n- **@react-three/test-renderer**:
+      의존성 추가 필요 (현재 Task 3에서 누락)\n- **happy-dom 한계**: WebGL 미지원, Canvas API 없음 → 수학/로직
+      테스트만, 렌더링은 브라우저 E2E\n\n## 보안 메커니즘 (CRITICAL - Blocker 5 해결)\n- **Rate Limiting**:
+      Per-socket token bucket (inputUpdate 60 req/s, burst 10)\n- **Session Token**:
+      HMAC-SHA256 signed (secret + playerId + timestamp), 1시간 유효\n- **Origin 검증**:
+      Socket.io middleware에서 handshake.headers.origin 체크, CORS whitelist\n- **입력 검증**:
+      NaN/Infinity 거부, 범위 클램핑 (-1~1), 속도 상한 (100 m/s)\n- **Nickname 보안**: HTML 태그
+      제거, 길이 2-20자, 알파벳/숫자/한글만 허용\n\n## 시간 동기화 및 서버 타임라인 (CRITICAL - Blocker 2 해결)\n\
+      - **서버 고정 틱**: 60Hz (16.666ms 간격), 단조 증가하는 `tick` (0부터 시작, CRITICAL: 필드명 통일)\n\
+      - **초기 Time Sync Handshake**: 클라이언트 접속 시 5회 ping-pong으로 RTT 측정 → clock offset
+      계산\n- **주기적 재동기화 (CRITICAL)**: 2초 간격으로 ping 전송, 최근 5개 RTT 중앙값 계산, 이상치 제거 (RTT
+      > 500ms 무시)\n- **Drift 보정**: offset에 EMA 적용 (alpha=0.1), 프레임당 최대 5ms 보정으로 급격한
+      점프 방지\n- **Fallback**: 연속 5회 ping 실패 → \"서버 연결 불안정\" UI 표시, 연속 10회 실패 → 재접속
+      권장\n- **welcome 이벤트**: `{ playerId, sessionToken, serverTimeMs, tick, mapBounds
+      }` 포함 (CRITICAL: sessionToken과 tick 필드명 통일)\n- **stateSnapshot 이벤트**: 항상 `tick`,
+      `serverTimeMs` 필드 포함 (필수)\n- **클라이언트 보간**: `latestTick - bufferTicks` 기준 (bufferTicks
+      ≈ 80ms * 60Hz = 5 ticks)\n- **서버 물리 루프**: Fixed timestep accumulator로 지터 방지\n"
+    file_structure: "flight/\n├── shared/                   # 공유 물리 모듈 (CRITICAL)\n\
+      │   ├── physics.js            # 공통 물리 시뮬레이션 (Semi-implicit Euler)\n│   ├── constants.js\
+      \          # 물리 상수 (gravity, airResistance, maxSpeed)\n│   └── mathUtils.js\
+      \          # 수학 유틸 (quaternion 연산 등)\n├── frontend/                 # React
+      + Three.js 프론트엔드\n│   ├── public/\n│   ├── src/\n│   │   ├── components/   \
+      \    # UI 컴포넌트 (GameCanvas, Minimap, PlayerCount 등)\n│   │   ├── scenes/   \
+      \        # Three.js 씬 로직 (MainScene, PlayerPlane 등)\n│   │   ├── services/ \
+      \        # socketService (WebSocket 클라이언트)\n│   │   ├── state/            #
+      Redux or Context API\n│   │   ├── utils/            # 유틸리티 (threeUtils, boundaryCheck
+      등)\n│   │   ├── App.jsx\n│   │   └── main.jsx\n│   ├── tests/              \
+      \  # 모든 테스트 파일\n│   ├── package.json\n│   └── vite.config.js\n├── backend/ \
+      \                 # Node.js + Socket.io 백엔드\n│   ├── src/\n│   │   ├── controllers/\
+      \      # gameController (join, move, bounds)\n│   │   ├── models/          \
+      \ # Player 모델\n│   │   ├── middleware/       # socketAuth (보안 미들웨어)\n│   │ \
+      \  ├── services/         # socketService (WebSocket 서버)\n│   │   ├── utils/\
+      \            # gameUtils (경계 체크, 색상 생성 등)\n│   │   └── server.js\n│   ├── tests/\
+      \                # 백엔드 테스트\n│   └── package.json\n└── README.md\n"
+    references: []
+  workflow:
+    dependency_diagram: "1 (프로젝트 초기화)\n   ↓\n2 (백엔드 기본 구조) || 3 (프론트엔드 기본 구조)\n  \
+      \ ↓                         ↓\n4 (백엔드 Player 모델) || 5 (프론트 유틸리티)\n   ↓     \
+      \                    ↓\n6 (백엔드 gameUtils)   || 7 (프론트 씬 구조)\n   ↓          \
+      \               ↓\n8 (Socket.io 서버 설정) || 9 (Socket.io 클라이언트)\n   ↓        \
+      \                 ↓\n10 (게임 컨트롤러)      || 11 (Three.js 메인 씬)\n   ↓         \
+      \                ↓\n12 (실시간 동기화 로직) || 13 (UI 컴포넌트)\n   ↓                  \
+      \       ↓\n14 (통합 테스트)\n   ↓\n15 (최종 검증 및 문서화)\n"
+    critical_path:
+    - 1 → 2 → 4 → 6 → 8 → 10 → 12 → 14 → 15
+  success_vision:
+    user_perspective:
+    - scenario: 사용자가 브라우저에서 게임 접속
+      experience: 닉네임과 색상을 입력 후, 초록색 잔디 맵 위에서 경비행기를 조종. 다른 플레이어들이 실시간으로 이동하는 모습이
+        보이고, 화면에 미니맵과 플레이어 수가 표시됨.
+    - scenario: 사용자가 경계 근처로 이동
+      experience: 반투명 빨간색 경계선이 보여 경계를 명확히 인식. 경계를 넘으면 즉시 '게임 종료' 메시지 팝업.
+    business_perspective:
+    - metric: 동시 접속자 수
+      target: 최소 10명 이상 동시 접속 가능, 지연 없이 동기화
+    - metric: 테스트 커버리지
+      target: 핵심 로직(유틸, 컨트롤러, 서비스) 90% 이상 커버리지
+    technical_criteria:
+    - category: 프론트엔드 빌드
+      criteria: Vite 빌드 에러 없이 완료
+      command: cd frontend && npm run build
+      expected: dist/ 디렉토리 생성, 빌드 성공
+    - category: 백엔드 서버 실행
+      criteria: 포트 3001에서 Socket.io 서버 정상 실행
+      command: cd backend && npm start
+      expected: Server listening on port 3001
+    - category: 전체 테스트 통과
+      criteria: 모든 단위/통합 테스트 통과
+      command: cd backend && npm test && cd ../frontend && npm test
+      expected: All tests passed
+  final_verification:
+  - id: final-1
+    title: 전체 애플리케이션 E2E 검증
+    category: Integration
+    description: 백엔드+프론트엔드 실행 후 브라우저에서 전체 기능 동작 확인. 2개 탭에서 멀티플레이어 테스트, 미니맵/플레이어 
+      카운트 표시 확인, 경계 초과 시 게임 종료 확인.
+    verified: false
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash: []
+    llm_judge:
+    - by: orchestrator-agent
+      context_commands:
+      - cd backend && npm start
+      - cd frontend && npm run dev
+      instruction: "다음 확인:\n1. 백엔드 서버 실행 (포트 3001)\n2. 프론트엔드 dev 서버 실행\n3. 브라우저 2개
+        탭에서 각각 접속\n4. 한 탭 이동 시 다른 탭 실시간 반영 확인\n5. 미니맵 2개 점 표시 확인\n6. 플레이어 카운트 \"2명\"\
+        \ 표시\n7. 경계 밖 이동 시 \"게임 종료\" 모달 확인\n"
+  - id: final-2
+    title: 전체 테스트 스위트 통과
+    category: Testing
+    description: 프론트엔드, 백엔드 모든 테스트 통과 확인
+    verified: false
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash:
+    - execute: cd backend && npm test
+      expected_exit_code: 0
+    - execute: cd frontend && npm test
+      expected_exit_code: 0
+    llm_judge: []
+  - id: final-3
+    title: 빌드 성공 확인
+    category: Build
+    description: 프론트엔드 프로덕션 빌드 에러 없이 완료
+    verified: false
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash:
+    - execute: cd frontend && npm run build
+      expected_exit_code: 0
+    llm_judge: []
+  todos:
+  - id: '1'
+    title: 프로젝트 초기화 (CRITICAL - Blocker 1 해결)
+    description: "프로젝트 루트 구조 및 패키지 초기화. ./shared (공유 물리 모듈), ./frontend (Vite+React),
+      ./backend (Node.js) 디렉토리 생성. **CRITICAL Shared Module Strategy**: 전체 프로젝트 ESM
+      채택 (루트 package.json에 `\"type\": \"module\"` 추가). Frontend: `vite.config.js`에
+      ESM 방식으로 `resolve.alias` 설정 (`import { fileURLToPath } from 'url'; import path
+      from 'path'; const __dirname = path.dirname(fileURLToPath(import.meta.url));
+      ... resolve: { alias: { '@shared': path.resolve(__dirname, '../shared') } }`),
+      `server.fs.allow: ['..']`로 상위 디렉토리 접근 허용. Backend: `import { updatePhysics }
+      from '../shared/physics.js'` 직접 ESM import. Vitest/Jest: 동일 alias 설정 (`moduleNameMapper`
+      또는 `resolve.alias`). frontend: npm create vite@latest, backend: npm init. 루트
+      README.md 업데이트."
+    status: in_progress
+    children: []
+    references:
+    - ref_id: ref-r3f-docs
+    verification_spec:
+    - id: verify-1
+      title: 디렉토리 및 package.json 생성 확인
+      description: ./frontend, ./backend 디렉토리 및 각각 package.json 존재
+      verified: false
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: ls -d frontend backend && test -f frontend/package.json && test
+          -f backend/package.json && echo 'OK'
+        expected_stdout: OK
+        expected_exit_code: 0
+      llm_judge: []
+  - id: '2'
+    title: 백엔드 의존성 설치 및 기본 구조 (TDD, CRITICAL - Blocker 15)
+    description: "backend/ 디렉토리에서 의존성 설치 (버전 핀 포함): express@^4.18.0, socket.io@^4.6.0
+      (프론트와 동일 버전), uuid@^9.0.0, jest@^29.0.0, zod@^3.22.0 (스키마 검증), gl-matrix@^3.4.0
+      (CRITICAL: Vector3/Quaternion 수학 연산용, Three.js 대신 경량 라이브러리). src/, src/middleware,
+      tests/ 디렉토리 생성. **CRITICAL Jest ESM 설정**: package.json에 `\"type\": \"module\"\
+      ` 추가하고, `jest.config.js` 파일명을 `jest.config.mjs`로 변경 (ESM native support), 또는
+      더 안정적인 방법으로 Vitest 사용 고려 (프론트엔드와 통일). Jest 사용 시: `transform: {}`, `extensionsToTreatAsEsm:
+      ['.js']`, test script에 `NODE_OPTIONS='--experimental-vm-modules --no-warnings'
+      jest`. TDD: 테스트 환경 먼저 구축."
+    status: pending
+    children: []
+    references:
+    - ref_id: ref-socketio-docs
+    verification_spec:
+    - id: verify-2
+      title: 백엔드 의존성 및 디렉토리 확인
+      description: express, socket.io, jest 설치됨. src/, tests/ 디렉토리 존재
+      verified: false
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd backend && npm list express socket.io jest --depth=0
+        expected_exit_code: 0
+      - execute: ls -d backend/src backend/tests
+        expected_exit_code: 0
+      llm_judge: []
+  - id: '3'
+    title: 프론트엔드 의존성 설치 및 기본 구조 (TDD)
+    description: "frontend/ 디렉토리에서 의존성 설치 (버전 핀 포함): three@^0.160.0, @react-three/fiber@^8.15.0,
+      @react-three/drei@^9.92.0, @react-three/test-renderer@^9.0.0 (CRITICAL: 스냅샷
+      테스트용), socket.io-client@^4.6.0, vitest@^1.0.0, @testing-library/react, happy-dom@^12.0.0.
+      src/components, src/scenes, src/services, src/utils, tests/ 디렉토리 생성. vitest.config.js
+      설정 (environment: 'happy-dom')."
+    status: pending
+    children: []
+    references:
+    - ref_id: ref-r3f-docs
+    - ref_id: ref-vitest-docs
+    - inline: "import { defineConfig } from 'vitest/config'\nimport react from '@vitejs/plugin-react'\n\
+        \nexport default defineConfig({\n  plugins: [react()],\n  test: {\n    environment:
+        'happy-dom',\n    globals: true,\n    setupFiles: ['./tests/setup.ts']\n \
+        \ }\n})\n"
+    verification_spec:
+    - id: verify-3
+      title: 프론트엔드 의존성 및 디렉토리 확인
+      description: three, @react-three/fiber, vitest 설치됨. components, scenes, 
+        services, utils, tests/ 디렉토리 존재
+      verified: false
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd frontend && npm list three @react-three/fiber vitest 
+          --depth=0
+        expected_exit_code: 0
+      - execute: ls -d frontend/src/components frontend/src/scenes 
+          frontend/src/services frontend/src/utils frontend/tests
+        expected_exit_code: 0
+      llm_judge: []
+  - id: '4'
+    title: 백엔드 Player 모델 및 gameUtils (TDD)
+    description: 'Player 모델 (id, nickname, color, position, rotation, velocity, violations,
+      sessionId, serialize()). gameUtils (isOutOfBounds, generateRandomColor, validateNickname,
+      validateInput, clampSpeed). TDD: 테스트 먼저 작성 후 구현. uuid 라이브러리 사용.'
+    status: pending
+    children: []
+    references:
+    - inline: "// gameUtils.js 검증 로직\n\nfunction validateNickname(nickname) {\n  //
+        길이 제한: 2~20자\n  if (!nickname || nickname.length < 2 || nickname.length >
+        20) {\n    throw new Error('Nickname must be 2-20 characters');\n  }\n  //
+        XSS 방지: HTML 태그 제거\n  const sanitized = nickname.replace(/<[^>]*>/g, '');\n\
+        \  // 특수문자 제한: 알파벳, 숫자, 일부 기호만 허용\n  if (!/^[a-zA-Z0-9_\\-가-힣]+$/.test(sanitized))
+        {\n    throw new Error('Invalid characters in nickname');\n  }\n  return sanitized;\n\
+        }\n\nfunction validateInput(input) {\n  // NaN/Infinity 체크\n  const { throttle,
+        pitch, yaw, roll } = input;\n  if ([throttle, pitch, yaw, roll].some(v =>
+        !isFinite(v))) {\n    throw new Error('Invalid input values');\n  }\n  //
+        범위 제한: throttle 0~1, pitch/yaw/roll -1~1 (CRITICAL: Zod 스키마와 일치)\n  if (throttle
+        < 0 || throttle > 1 || Math.abs(pitch) > 1 ||\n      Math.abs(yaw) > 1 ||
+        Math.abs(roll) > 1) {\n    throw new Error('Input values out of range');\n\
+        \  }\n  return true;\n}\n\nfunction clampSpeed(velocity, maxSpeed = 100) {\n\
+        \  const speed = Math.sqrt(velocity.x**2 + velocity.y**2 + velocity.z**2);\n\
+        \  if (speed > maxSpeed) {\n    const scale = maxSpeed / speed;\n    return
+        {\n      x: velocity.x * scale,\n      y: velocity.y * scale,\n      z: velocity.z
+        * scale\n    };\n  }\n  return velocity;\n}\n"
+    verification_spec:
+    - id: verify-4
+      title: Player 모델 및 gameUtils 테스트 통과
+      description: Player.test.js, gameUtils.test.js 모두 통과
+      verified: false
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd backend && npm test -- tests/models/Player.test.js
+        expected_exit_code: 0
+      - execute: cd backend && npm test -- tests/utils/gameUtils.test.js
+        expected_exit_code: 0
+      llm_judge: []
+  - id: '5'
+    title: 프론트엔드 유틸리티 (TDD)
+    description: 'threeUtils (isOutOfBounds, generateRandomColor, lerpPosition). TDD:
+      tests/utils/threeUtils.test.js 먼저 작성, Three.js Vector3 사용.'
+    status: pending
+    children: []
+    references: []
+    verification_spec:
+    - id: verify-5
+      title: threeUtils 테스트 통과
+      description: threeUtils.test.js 모든 함수 테스트 통과
+      verified: false
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd frontend && npm test -- tests/utils/threeUtils.test.js
+        expected_exit_code: 0
+      llm_judge: []
+  - id: '6'
+    title: Socket.io 서버/클라이언트 설정 (TDD, CRITICAL - Blocker 5 해결)
+    description: "백엔드: socketService.js (connection, disconnect, joinGame, inputUpdate
+      이벤트 핸들러). 프론트: socketService.js (welcome, stateSnapshot, playerJoined, playerLeft,
+      outOfBounds, pong 리스너). 보안: Socket.io 미들웨어에서 origin 검증, rate limiting (per-socket
+      token bucket 60 req/s), session token HMAC 검증. **CRITICAL Rate Limiting 적용**:
+      모든 client→server 이벤트(joinGame, inputUpdate, requestSnapshot, resume, ping)에
+      핸들러 시작 부분에서 `if (!checkRateLimit(socket.id)) { socket.emit('error', {code: 'RATE_LIMIT'});
+      return; }` 체크 추가. Message 크기 제한 (1KB), schema 검증(joi/zod). TDD: 이벤트 목킹 테스트 작성."
+    status: pending
+    children: []
+    references:
+    - ref_id: ref-socketio-docs
+    - inline: "// backend/src/middleware/socketAuth.js - CRITICAL: ESM only\n\nimport
+        crypto from 'crypto';\n\n// HMAC Session Token\nconst SECRET = process.env.SESSION_SECRET
+        || 'your-secret-key';\n\nexport function generateSessionToken(playerId) {\n\
+        \  const timestamp = Date.now();\n  const payload = `${playerId}:${timestamp}`;\n\
+        \  const hmac = crypto.createHmac('sha256', SECRET)\n    .update(payload)\n\
+        \    .digest('hex');\n  return `${payload}:${hmac}`;\n}\n\nexport function
+        verifySessionToken(token) {\n  const [playerId, timestamp, hmac] = token.split(':');\n\
+        \  const payload = `${playerId}:${timestamp}`;\n  const expected = crypto.createHmac('sha256',
+        SECRET)\n    .update(payload)\n    .digest('hex');\n\n  // Check HMAC\n  if
+        (hmac !== expected) return null;\n\n  // Check expiry (1 hour)\n  if (Date.now()
+        - parseInt(timestamp) > 3600000) return null;\n\n  return playerId;\n}\n\n\
+        // Rate Limiting (Token Bucket) - CRITICAL: burst=10\nconst rateLimits = new
+        Map(); // socketId -> {tokens, lastRefill}\n\nexport function checkRateLimit(socketId,
+        refillRate = 60, burstCapacity = 10) {\n  const now = Date.now();\n  let bucket
+        = rateLimits.get(socketId);\n\n  if (!bucket) {\n    bucket = {tokens: burstCapacity,
+        lastRefill: now};\n    rateLimits.set(socketId, bucket);\n  }\n\n  // Refill
+        tokens\n  const elapsed = (now - bucket.lastRefill) / 1000;\n  bucket.tokens
+        = Math.min(burstCapacity, bucket.tokens + elapsed * refillRate);\n  bucket.lastRefill
+        = now;\n\n  // Check availability\n  if (bucket.tokens < 1) return false;\n\
+        \n  bucket.tokens -= 1;\n  return true;\n}\n\n// Origin Validation\nconst
+        ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173'];\n\
+        \nexport function socketAuthMiddleware(socket, next) {\n  const origin = socket.handshake.headers.origin;\n\
+        \n  if (!ALLOWED_ORIGINS.includes(origin)) {\n    return next(new Error('Origin
+        not allowed'));\n  }\n\n  next();\n}\n"
+    verification_spec:
+    - id: verify-6
+      title: Socket.io 서버/클라이언트 테스트 통과
+      description: backend/tests/services/socketService.test.js, 
+        frontend/tests/services/socketService.test.js 통과
+      verified: false
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd backend && npm test -- tests/services/socketService.test.js
+        expected_exit_code: 0
+      - execute: cd frontend && npm test -- tests/services/socketService.test.js
+        expected_exit_code: 0
+      llm_judge: []
+  - id: '7'
+    title: 백엔드 게임 컨트롤러 (TDD)
+    description: 'gameController.js (handleJoinGame, handleUpdatePosition, handleDisconnect,
+      broadcastPlayerCount). 플레이어 상태 Map<socketId, Player> 메모리 저장. 경계 체크 로직. TDD:
+      tests/controllers/gameController.test.js 작성.'
+    status: pending
+    children: []
+    references:
+    - inline: "// backend/src/gameLoop.js (60Hz fixed timestep with accumulator -
+        CRITICAL)\nconst TICK_RATE = 60; // Hz\nconst PHYSICS_STEP = 1 / TICK_RATE;
+        // seconds\n\nlet accumulator = 0;\nlet lastTime = Date.now() / 1000;\nlet
+        globalTick = 0;\n\nfunction physicsUpdate(player, inputQueue, dt) {\n  //
+        Apply input → update velocity → position\n  const velocity = applyInput(player.velocity,
+        inputQueue.latest, dt);\n  const newPos = player.position.add(velocity.multiplyScalar(dt));\n\
+        \n  // Server-side boundary check with hysteresis\n  if (isOutOfBounds(newPos,
+        200)) { // 200ms grace period\n    player.violations++;\n    if (player.violations
+        >= 4) {\n      emitGameOver(player.id);\n    }\n  } else {\n    player.violations
+        = 0;\n  }\n\n  return { position: newPos, velocity, quaternion: player.quaternion
+        };\n}\n\nfunction gameLoop() {\n  const now = Date.now() / 1000;\n  let frameTime
+        = now - lastTime;\n  lastTime = now;\n\n  // Clamp frameTime to prevent spiral
+        of death\n  if (frameTime > 0.25) frameTime = 0.25;\n\n  accumulator += frameTime;\n\
+        \n  // Fixed timestep physics updates\n  while (accumulator >= PHYSICS_STEP)
+        {\n    globalTick++;\n    for (const player of players.values()) {\n     \
+        \ const state = physicsUpdate(player, player.inputQueue, PHYSICS_STEP);\n\
+        \      player.position = state.position;\n    }\n    accumulator -= PHYSICS_STEP;\n\
+        \  }\n\n  // Broadcast at 30Hz (every 2nd tick)\n  if (globalTick % 2 ===
+        0) {\n    io.emit('stateSnapshot', {\n      tick: globalTick,\n      serverTimeMs:
+        Date.now(),\n      lastProcessedInputSeq: maxProcessedSeq,  // CRITICAL: 클라이언트
+        reconciliation용\n      players: Array.from(players.values())\n    });\n  }\n\
+        }\n\nsetInterval(gameLoop, 1000 / 60); // Run at 60Hz\n"
+    verification_spec:
+    - id: verify-7
+      title: gameController 테스트 통과
+      description: join, update, disconnect, 경계 체크 로직 테스트 통과
+      verified: false
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd backend && npm test -- 
+          tests/controllers/gameController.test.js
+        expected_exit_code: 0
+      llm_judge: []
+  - id: '8'
+    title: 프론트엔드 Three.js 씬 및 PlayerPlane (TDD)
+    description: 'MainScene.jsx (초록색 잔디 평면, 경계 시각화 박스, 조명, 3인칭 카메라 구현). PlayerPlane.jsx
+      (BoxGeometry 프로토타입, 닉네임 표시, color prop). 3인칭 카메라: useFrame에서 비행기 뒤 10유닛, 위 3유닛
+      위치로 lerp(0.1) 추적, camera.lookAt(planePosition). TDD: tests/scenes/ 테스트 작성. @react-three/test-renderer
+      사용.'
+    status: pending
+    children: []
+    references:
+    - ref_id: ref-r3f-docs
+    - inline: "// MainScene.jsx useFrame 훅\nuseFrame(({ camera }) => {\n  const planeForward
+        = new THREE.Vector3(0, 0, -1).applyQuaternion(planeRef.current.quaternion)\n\
+        \  const targetPos = planeRef.current.position.clone()\n    .sub(planeForward.multiplyScalar(10))\n\
+        \    .add(new THREE.Vector3(0, 3, 0))\n  camera.position.lerp(targetPos, 0.1)\n\
+        \  camera.lookAt(planeRef.current.position)\n})\n"
+    verification_spec:
+    - id: verify-8
+      title: MainScene 및 PlayerPlane 테스트 통과
+      description: 씬 렌더링, 잔디 평면, 경계 박스, PlayerPlane 렌더링 테스트 통과
+      verified: false
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash: []
+      llm_judge:
+      - by: orchestrator-agent
+        context_commands: []
+        instruction: "다음 확인:\n1. cd frontend && npm test -- tests/scenes/\n2. 모든 테스트
+          통과 확인\n3. 렌더링 에러 없음 확인\n"
+  - id: '9'
+    title: 실시간 위치 동기화 로직 (CRITICAL - Blocker 3 해결)
+    description: '백엔드: gameController에 startBroadcastLoop() (30Hz, 33.333ms 주기로 stateSnapshot
+      브로드캐스트, tick + lastProcessedInputSeq 포함). 프론트: socketService에서 stateSnapshot
+      이벤트 수신 → Redux/Context 상태 업데이트. MainScene에서 useFrame 훅으로 키보드 입력 (WASD) → inputUpdate
+      emit (시퀀스 번호 포함). **CRITICAL Input Buffer Management**: 클라이언트는 inputQueue 배열
+      유지 (최대 100개), stateSnapshot 수신 시 `inputQueue = inputQueue.filter(i => i.seq
+      > lastProcessedInputSeq)`로 처리된 입력 제거, 남은 입력을 권위 state에 재적용하여 predicted state
+      생성. 클라이언트 예측 + 서버 reconciliation 구현 (clock offset 계산, 80ms interpolation delay,
+      critically damped spring smoothing).'
+    status: pending
+    children: []
+    references: []
+    verification_spec:
+    - id: verify-9
+      title: 동기화 로직 수동 테스트
+      description: 2개 브라우저 탭 동시 접속, 한 쪽 이동 시 다른 쪽 실시간 반영 확인
+      verified: false
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash: []
+      llm_judge:
+      - by: orchestrator-agent
+        context_commands:
+        - cd backend && node src/server.js
+        - cd frontend && npm run dev
+        instruction: "다음 확인:\n1. 백엔드 서버 실행 (포트 3001)\n2. 프론트엔드 dev 서버 실행\n3. 2개 브라우저
+          탭 열어 접속\n4. WASD 키로 이동 시 다른 탭에서도 플레이어 이동 확인\n5. 50ms 이하 지연 체감\n"
+  - id: '10'
+    title: UI 컴포넌트 (미니맵, 플레이어 카운트, 게임 종료 화면) (TDD)
+    description: "Minimap.jsx (2D 캔버스, 1000x1000→200x200px 축소, 플레이어 점 표시). PlayerCount.jsx
+      (상단 좌측 '플레이어: N명'). GameOverScreen.jsx (outOfBounds 수신 시 모달). TDD: tests/components/
+      테스트 작성. CRITICAL: Minimap Canvas 테스트는 coordinate transformation 로직만 단위 테스트 (jest.fn()
+      목킹, happy-dom은 Canvas API 미지원). 실제 렌더링 검증은 E2E 테스트 또는 수동 검증으로 대체."
+    status: pending
+    children: []
+    references:
+    - inline: "// Minimap.jsx - 2D Canvas 오버레이 방식 (추가 렌더 패스 없음)\n\nfunction Minimap({
+        players, localPlayerId, mapBounds = {x: 1000, z: 1000} }) {\n  const canvasRef
+        = useRef();\n\n  useEffect(() => {\n    const ctx = canvasRef.current.getContext('2d');\n\
+        \    const width = 200, height = 200;\n\n    // Clear\n    ctx.fillStyle =
+        'rgba(0, 0, 0, 0.5)';\n    ctx.fillRect(0, 0, width, height);\n\n    // Draw
+        boundary\n    ctx.strokeStyle = 'red';\n    ctx.strokeRect(0, 0, width, height);\n\
+        \n    // Draw players\n    players.forEach(p => {\n      const x = ((p.position.x
+        + mapBounds.x/2) / mapBounds.x) * width;\n      const z = ((p.position.z +
+        mapBounds.z/2) / mapBounds.z) * height;\n\n      ctx.fillStyle = p.id ===
+        localPlayerId ? 'yellow' : p.color;\n      ctx.beginPath();\n      ctx.arc(x,
+        z, 4, 0, Math.PI * 2);\n      ctx.fill();\n    });\n  }, [players, localPlayerId,
+        mapBounds]);\n\n  return <canvas ref={canvasRef} width={200} height={200}\n\
+        \                 style={{position: 'absolute', bottom: 20, right: 20}} />;\n\
+        }\n"
+    verification_spec:
+    - id: verify-10
+      title: UI 컴포넌트 테스트 및 시각적 확인
+      description: Minimap, PlayerCount, GameOverScreen 단위 테스트 통과 및 브라우저 시각적 확인
+      verified: false
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd frontend && npm test -- tests/components/
+        expected_exit_code: 0
+      llm_judge: []
+  - id: '11'
+    title: 통합 테스트
+    description: 전체 플로우 검증 (접속→이동→경계초과). 
+      backend/tests/integration/fullFlow.test.js. Socket.io-client로 실제 WebSocket
+      연결, E2E 테스트. 서버 별도 포트(3002)에서 실행.
+    status: pending
+    children: []
+    references: []
+    verification_spec:
+    - id: verify-11
+      title: 통합 테스트 통과
+      description: 전체 플로우 테스트 시나리오 통과
+      verified: false
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd backend && npm test -- tests/integration/fullFlow.test.js
+        expected_exit_code: 0
+      llm_judge: []
+  - id: '12'
+    title: 최종 검증 및 문서화
+    description: README.md 업데이트 (프로젝트 소개, 기술 스택, 설치/실행 방법, 테스트 실행). 
+      frontend/README.md, backend/README.md 개별 작성. 각 README 최소 50줄 이상.
+    status: pending
+    children: []
+    references: []
+    verification_spec:
+    - id: verify-12-1
+      title: README 존재 및 내용 확인
+      description: 루트, frontend, backend README 파일 존재 및 충분한 내용
+      verified: false
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: wc -l README.md frontend/README.md backend/README.md | tail -1
+        expected_exit_code: 0
+        notes: 전체 줄 수 150줄 이상 확인
+      llm_judge: []
+    - id: verify-12-2
+      title: 최종 실행 테스트
+      description: 백엔드, 프론트엔드 순차 실행 후 브라우저 접속 확인
+      verified: false
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash: []
+      llm_judge:
+      - by: orchestrator-agent
+        context_commands: []
+        instruction: "최종 검증:\n1. cd backend && npm start\n2. cd frontend && npm run
+          dev\n3. http://localhost:5173 접속\n4. 닉네임 입력 후 게임 화면 진입\n5. 다른 탭에서도 접속하여
+          멀티플레이어 동작 확인\n6. 모든 기능 정상 작동: 이동, 미니맵, 플레이어 카운트, 경계 시각화, 경계 초과 시 게임 종료\n"
+  references:
+  - ref_id: ref-r3f-docs
+    uri: https://docs.pmnd.rs/react-three-fiber
+  - ref_id: ref-socketio-docs
+    uri: https://socket.io/docs/v4/
+  - ref_id: ref-vitest-docs
+    uri: https://vitest.dev/
+  execution:
+    started: true
+    completed: false
+    started_at: '2025-11-09T04:49:05.307858+00:00'
+  work_mode:
+    parallel_requested: false
+    current_task_id: '1'
+  progress:
+    total_tasks: 12
+    completed: 0
+    in_progress: 0
+    pending: 12
+  current_work: ''

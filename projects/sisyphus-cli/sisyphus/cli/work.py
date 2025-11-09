@@ -141,6 +141,8 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
         yaml_files.extend(tasks_dir.glob(pattern))
     # 중복 제거 (같은 파일이 여러 패턴에 매칭될 수 있음)
     yaml_files = list(set(yaml_files))
+    # 파일명 기준 정렬 (표시 순서와 실제 선택 인덱스 일치 보장)
+    yaml_files.sort(key=lambda p: p.name)
 
     if len(yaml_files) == 0:
         await ui.show_status(

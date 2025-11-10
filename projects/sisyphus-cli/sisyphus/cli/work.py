@@ -493,10 +493,10 @@ def run(
 
     if agent:
         execute_spec = agent
-        verify_spec = agent
     else:
         execute_spec = execute if execute else "claude"
-        verify_spec = verify if verify else execute_spec
+
+    verify_spec = "claude"
 
     if opencode_server_url:
         opencode_server_url = validate_url(opencode_server_url)

@@ -1,5 +1,5 @@
 ---
-name: plan-reviewer-yaml-simplified
+name: plan-reviewer-yaml
 description: "Agent loop workflow reviewer - ensures self-correcting execution with explicit knowledge and feedback loops"
 tools: Read, Grep, Glob, Bash, Task, WebFetch, WebSearch, TodoWrite, mcp__context7__resolve-library-id, mcp__context7__get-library-docs
 model: claude-opus-4-1

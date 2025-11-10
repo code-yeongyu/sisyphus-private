@@ -934,12 +934,12 @@ Based on Phase 0.5 decomposition decision, initialize the appropriate number of 
 2. **Run sisyphus plan init (N times if needed)**
    ```bash
    # Single plan or multiple plans in one file:
-   sisyphus plan init .sisyphus/tasks/{plan-name}.yaml
+   sisyphus plan init --path .sisyphus/tasks/{plan-name}.yaml
 
    # Multiple plans in separate files:
-   sisyphus plan init .sisyphus/tasks/{plan-1-name}.yaml
-   sisyphus plan init .sisyphus/tasks/{plan-2-name}.yaml
-   sisyphus plan init .sisyphus/tasks/{plan-N-name}.yaml
+   sisyphus plan init --path .sisyphus/tasks/{plan-1-name}.yaml
+   sisyphus plan init --path .sisyphus/tasks/{plan-2-name}.yaml
+   sisyphus plan init --path .sisyphus/tasks/{plan-N-name}.yaml
    ```
 
 3. **Read Generated File(s)**
@@ -1034,12 +1034,12 @@ Based on Phase 0.5 decomposition decision, initialize the appropriate number of 
 
    **Common dependency errors:**
 
-   | Error | Fix |
-   |-------|-----|
-   | `Plan ID 'plan-X' referenced but not found` | Add missing plan OR fix typo in depends_on |
-   | `File 'backend.yaml' not found` | Fix file path OR create missing file |
-   | `Circular dependency detected` | Restructure depends_on to remove cycle |
-   | `Invalid depends_on format` | Use correct format: 'plan-id' or 'file:path#plan-id' |
+   | Error                                       | Fix                                                  |
+   | ------------------------------------------- | ---------------------------------------------------- |
+   | `Plan ID 'plan-X' referenced but not found` | Add missing plan OR fix typo in depends_on           |
+   | `File 'backend.yaml' not found`             | Fix file path OR create missing file                 |
+   | `Circular dependency detected`              | Restructure depends_on to remove cycle               |
+   | `Invalid depends_on format`                 | Use correct format: 'plan-id' or 'file:path#plan-id' |
 
 7. **Announce Completion and Proceed**
    ```
@@ -1064,7 +1064,7 @@ User: "Implement user authentication system"
 Phase 0.5 Decision: Single plan (focused feature)
 
 Phase 0.6 Execution:
-1. [Run: sisyphus plan init .sisyphus/tasks/auth-system.yaml]
+1. [Run: sisyphus plan init --path .sisyphus/tasks/auth-system.yaml]
 2. [Read and update with user request]
 3. [Save]
 4. "Work plan file has been created: auth-system.yaml"
@@ -1076,7 +1076,7 @@ User: "Build e-commerce platform (auth + products + payment)"
 Phase 0.5 Decision: 3 plans in one file
 
 Phase 0.6 Execution:
-1. [Run: sisyphus plan init .sisyphus/tasks/ecommerce-platform.yaml]
+1. [Run: sisyphus plan init --path .sisyphus/tasks/ecommerce-platform.yaml]
 2. [Read and add 3 work_plan items with depends_on relationships]
 3. [Save]
 4. "Work plan file has been created: ecommerce-platform.yaml (includes 3 plans)"
@@ -1088,8 +1088,8 @@ User: "Build full-stack app (backend API + frontend)"
 Phase 0.5 Decision: 2 separate plans (frontend depends on backend)
 
 Phase 0.6 Execution:
-1. [Run: sisyphus plan init .sisyphus/tasks/backend-api.yaml]
-2. [Run: sisyphus plan init .sisyphus/tasks/frontend-app.yaml]
+1. [Run: sisyphus plan init --path .sisyphus/tasks/backend-api.yaml]
+2. [Run: sisyphus plan init --path .sisyphus/tasks/frontend-app.yaml]
 3. [Update backend-api.yaml: depends_on: []]
 4. [Update frontend-app.yaml: depends_on: ['file:backend-api.yaml#backend-api']]
 5. [Save both]
@@ -2076,14 +2076,14 @@ sisyphus plan lint --file .sisyphus/tasks/{name}.yaml
 
 **Common linter errors and fixes:**
 
-| Error | Fix |
-|-------|-----|
-| `Missing required field: X` | Add the required field with appropriate value |
-| `Invalid todo ID pattern` | Use format like "1", "1.1", "1.2.3" (digits + dots only) |
-| `Invalid enum value for status` | Use only: pending, in_progress, completed |
-| `Reference integrity error` | Ensure ref_id exists in global references[] |
-| `Extra field at root` | Remove any fields not in schema (only version, metadata, work_plans allowed) |
-| `Invalid timestamp format` | Use ISO 8601: "2025-11-09T00:00:00Z" |
+| Error                           | Fix                                                                          |
+| ------------------------------- | ---------------------------------------------------------------------------- |
+| `Missing required field: X`     | Add the required field with appropriate value                                |
+| `Invalid todo ID pattern`       | Use format like "1", "1.1", "1.2.3" (digits + dots only)                     |
+| `Invalid enum value for status` | Use only: pending, in_progress, completed                                    |
+| `Reference integrity error`     | Ensure ref_id exists in global references[]                                  |
+| `Extra field at root`           | Remove any fields not in schema (only version, metadata, work_plans allowed) |
+| `Invalid timestamp format`      | Use ISO 8601: "2025-11-09T00:00:00Z"                                         |
 
 **NEVER skip the linter.** Plans that pass plan-reviewer but fail linter are invalid and will cause execution errors.
 
@@ -2255,4 +2255,4 @@ Plan creation is complete when:
 - YAML schema valid (passes linter)
 - All verification specs follow guidelines (conservative bash)
 - Approved by plan-reviewer ("OKAY")
-- Ready for `sisyphus task continue` execution
+- Tell user to execute with: `sisyphus work`

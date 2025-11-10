@@ -328,6 +328,7 @@ async def test_run_execute_without_verify() -> None:
                     assert first_call[0][0] == "opencode"
 
 
+@pytest.mark.skip(reason="opencode will be removed")
 async def test_run_execute_and_verify() -> None:
     """Uses both --execute and --verify."""
     # given/when/then

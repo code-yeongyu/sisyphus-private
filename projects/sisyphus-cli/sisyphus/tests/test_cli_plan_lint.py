@@ -87,7 +87,7 @@ work_plans: []
 
     # then
     assert result.exit_code == 1
-    assert "Validation failed" in result.stdout
+    assert "Schema validation failed" in result.stdout
     assert "error" in result.stdout.lower()
 
 
@@ -127,7 +127,7 @@ work_plans:
     final_verification: []
     todos: []
     execution:
-      started: "true"
+      started: "not-a-boolean"
       completed: false
       started_at: null
       completed_at: null
@@ -148,9 +148,9 @@ work_plans:
 
     # then
     assert result.exit_code == 1
-    assert "Validation failed" in result.stdout
-    assert "work_plans[0].execution.started" in result.stdout
-    assert "Type mismatch" in result.stdout
+    assert "Schema validation failed" in result.stdout
+    assert "work_plans.0.execution.started" in result.stdout
+    assert "boolean" in result.stdout
 
 
 async def test_plan_lint__when_file_not_found__exits_1() -> None:
@@ -222,9 +222,9 @@ work_plans:
 
     # then
     assert result.exit_code == 1
-    assert "Validation failed" in result.stdout
-    assert "work_plans[0].todos[0].status" in result.stdout
-    assert "Invalid enum" in result.stdout
+    assert "Schema validation failed" in result.stdout
+    assert "work_plans.0.todos.0.status" in result.stdout
+    assert "enum" in result.stdout.lower()
 
 
 async def test_plan_lint__when_yaml_syntax_error__exits_1_and_shows_parsing_error(tmp_path: Path) -> None:

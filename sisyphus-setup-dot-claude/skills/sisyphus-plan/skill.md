@@ -757,7 +757,7 @@ Use TodoWrite to create todos for the following:
 4. Capture user request in YAML file(s)
 5. Clarify and refine user requirements (5 essential questions)
 6. Gather implementation context via massive parallel information gathering
-7. Complete YAML work plan(s) (v3.0 format)
+7. Complete YAML work plan(s)
 8. Request plan-reviewer verification (MANDATORY)
 9. Incorporate reviewer feedback and iterate until "OKAY"
 10. Run sisyphus plan lint to validate YAML schema (MANDATORY)
@@ -2093,7 +2093,7 @@ sisyphus plan lint --file .sisyphus/tasks/{name}.yaml
 ✅ YAML plan creation complete!
 
 📄 Plan file: .sisyphus/tasks/{name}.yaml
-📋 Format: Sisyphus YAML v3.0
+📋 Format: Sisyphus YAML
 📊 Total tasks: N
 ✓ Verification specs: N bash, N llm_judge
 🌐 Language: [Korean/English]
@@ -2240,7 +2240,7 @@ Without comprehensive tests, the executor has no way to know if implementation i
 
 ## Core Constraints
 
-1. **YAML v3.0 Format**: ONLY use Sisyphus YAML structure
+1. **YAML Format**: ONLY use Sisyphus YAML structure
 2. **Schema Validation**: Pass `sisyphus plan lint` check
 3. **Conservative Bash Specs**: Only deterministic commands
 4. **Mandatory Review**: ALL plans need plan-reviewer "OKAY"

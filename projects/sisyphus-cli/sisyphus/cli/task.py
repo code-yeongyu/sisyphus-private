@@ -325,6 +325,18 @@ def continue_work(
                 ver_total = report.verification_summary["total"]
                 console.print(f"  - 검증: {ver_completed}/{ver_total} 완료")
 
+
+                manual_completed = report.manual_verification_summary["completed"]
+                manual_total = report.manual_verification_summary["total"]
+                console.print(f"  - 수동 검증: {manual_completed}/{manual_total} 완료")
+
+                if not report.all_manual_verifications_completed:
+                    console.print("\n[bold yellow]수동 검증 안내:[/bold yellow]")
+                    console.print(
+                        "[yellow]모든 검증 항목은 verified=True AND orchestrator_manually_verified=True AND "
+                        "manual_verification_evidence 입력이 필요합니다.[/yellow]"
+                    )
+                    console.print("[yellow]sisyphus task verify manual-mark 명령어로 수동 검증을 완료하세요.[/yellow]")
                 console.print("\n[bold cyan]미완료 검증 항목:[/bold cyan]")
                 for idx, verify_item in enumerate(current_task.verification_spec, 1):
                     if not verify_item.verified:
@@ -591,6 +603,16 @@ def verify_manual_mark(
     cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
     """Mark manual verification as completed with evidence."""
+    if len(evidence) < 100:
+        raise typer.BadParameter(
+            "증거(evidence)는 최소 100자 이상이어야 합니다.\n\n"
+            "이유: 철저한 검증은 상세한 기록을 통해 품질을 보장합니다.\n\n"
+            "좋은 예시:\n"
+            '"Chrome 120.0 환경에서 로그인 플로우 테스트 완료. 5개 계정으로 테스트, '
+            "비밀번호 재설정 확인, 이메일 알림 수신 확인, 30분 후 세션 타임아웃 동작 검증. "
+            '모든 에러 핸들링 정상 작동."\n\n'
+            "가이드: 더 많은 검증을 수행하고 상세히 기록해주세요."
+        )
 
     async def _mark() -> None:
         working_dir = resolve_cwd(cwd)
@@ -651,12 +673,12 @@ def verify_status(
         working_dir = resolve_cwd(cwd)
         plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
 
-        all_verifications: list[tuple[str, str, bool]] = []
+        all_verifications: list[tuple[str, str, Any]] = []
 
         def collect_verifications(todos: list[Any], prefix: str = "") -> None:
             for todo in todos:
                 for verify_item in todo.verification_spec:
-                    all_verifications.append((f"{prefix}{todo.title}", verify_item.title, verify_item.verified))
+                    all_verifications.append((f"{prefix}{todo.title}", verify_item.title, verify_item))
                 if todo.children:
                     collect_verifications(todo.children, prefix=f"{prefix}{todo.title} > ")
 
@@ -666,7 +688,7 @@ def verify_status(
             console.print("[yellow]검증 항목이 없습니다.[/yellow]")
             return
 
-        verified_count = sum(1 for _, _, verified in all_verifications if verified)
+        verified_count = sum(1 for _, _, item in all_verifications if item.verified)
         total_count = len(all_verifications)
 
         console.print(f"[cyan]검증 상태: {verified_count}/{total_count} 완료[/cyan]\n")
@@ -675,14 +697,25 @@ def verify_status(
         table.add_column("작업", style="cyan")
         table.add_column("검증 항목", style="yellow")
         table.add_column("상태", style="green")
+        table.add_column("수동 검증", style="magenta")
+        table.add_column("증거", style="blue")
 
-        for task_title, verify_title, verified in all_verifications:
-            status_emoji = "✓" if verified else "○"
-            status_color = "green" if verified else "yellow"
+        for task_title, verify_title, verify_item in all_verifications:
+            status_emoji = "✓" if verify_item.verified else "○"
+            status_color = "green" if verify_item.verified else "yellow"
+
+            manual_verified_emoji = "✓" if verify_item.orchestrator_manually_verified else "✗"
+            manual_verified_color = "green" if verify_item.orchestrator_manually_verified else "red"
+
+            evidence_status = "Present" if verify_item.manual_verification_evidence else "Missing"
+            evidence_color = "green" if verify_item.manual_verification_evidence else "red"
+
             table.add_row(
                 task_title,
                 verify_title,
                 f"[{status_color}]{status_emoji}[/{status_color}]",
+                f"[{manual_verified_color}]{manual_verified_emoji}[/{manual_verified_color}]",
+                f"[{evidence_color}]{evidence_status}[/{evidence_color}]",
             )
 
         console.print(table)

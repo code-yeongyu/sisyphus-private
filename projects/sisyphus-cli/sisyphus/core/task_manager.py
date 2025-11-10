@@ -13,6 +13,8 @@ class CompletionReport:
     children_summary: dict[str, int]
     all_verifications_completed: bool
     verification_summary: dict[str, int]
+    manual_verification_summary: dict[str, int]
+    all_manual_verifications_completed: bool
     can_complete: bool
 
 
@@ -244,7 +246,6 @@ class TaskManager:
         if task is None:
             raise ValueError(f"작업 ID를 찾을 수 없습니다: {task_id}")
 
-        # 1. Children 체크
         descendants = self.get_all_descendants(task_id)
         children_summary = {
             "completed": sum(1 for d in descendants if d.status == TodoStatus.completed),
@@ -253,7 +254,6 @@ class TaskManager:
         }
         all_children_completed = len(descendants) == 0 or children_summary["completed"] == len(descendants)
 
-        # 2. Verification 체크
         verifications = task.verification_spec
         verification_summary = {
             "completed": sum(1 for v in verifications if v.verified),
@@ -263,8 +263,19 @@ class TaskManager:
             verifications
         )
 
-        # 3. 완료 가능 여부
-        can_complete = all_children_completed and all_verifications_completed
+        manual_verification_summary = {
+            "completed": sum(
+                1
+                for v in verifications
+                if v.verified and v.orchestrator_manually_verified and v.manual_verification_evidence != ""
+            ),
+            "total": len(verifications),
+        }
+        all_manual_verifications_completed = len(verifications) == 0 or manual_verification_summary[
+            "completed"
+        ] == len(verifications)
+
+        can_complete = all_children_completed and all_verifications_completed and all_manual_verifications_completed
 
         return CompletionReport(
             task_id=task_id,
@@ -273,6 +284,8 @@ class TaskManager:
             children_summary=children_summary,
             all_verifications_completed=all_verifications_completed,
             verification_summary=verification_summary,
+            manual_verification_summary=manual_verification_summary,
+            all_manual_verifications_completed=all_manual_verifications_completed,
             can_complete=can_complete,
         )
 

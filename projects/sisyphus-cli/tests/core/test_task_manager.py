@@ -562,3 +562,300 @@ async def test_check_task_completion__if_children_pending__cannot_complete(
 
     assert report.all_children_completed is False
     assert report.can_complete is False
+
+
+async def test_check_task_completion__if_manual_verification_incomplete__cannot_complete(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
+    # given: task with verification that has verified=True but orchestrator_manually_verified=False
+    from sisyphus.core.plans.models import BashVerification, VerificationItem
+
+    plan_doc = PlanDocument(
+        version="3.0",
+        metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
+        work_plans=[
+            WorkPlan(
+                id="test-plan",
+                name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                todos=[
+                    Todo(
+                        id="1",
+                        title="Task with incomplete manual verification",
+                        status=TodoStatus.in_progress,
+                        references=[],
+                        verification_spec=[
+                            VerificationItem(
+                                id="v1",
+                                title="Test verification",
+                                description="Test",
+                                verified=True,
+                                orchestrator_manually_verified=False,
+                                manual_verification_evidence="",
+                                bash=[BashVerification(execute="echo test", expected_exit_code=0)],
+                            )
+                        ],
+                    )
+                ],
+            )
+        ],
+    )
+    manager = TaskManager(plan_doc, "test-plan")
+
+    # when
+    report = manager.check_task_completion("1")
+
+    # then
+    assert report.all_verifications_completed is True
+    assert report.all_manual_verifications_completed is False
+    assert report.manual_verification_summary["completed"] == 0
+    assert report.manual_verification_summary["total"] == 1
+    assert report.can_complete is False
+
+
+async def test_check_task_completion__if_manual_verification_missing_evidence__cannot_complete(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
+    # given: task with verification that has verified=True and orchestrator_manually_verified=True but evidence=""
+    from sisyphus.core.plans.models import BashVerification, VerificationItem
+
+    plan_doc = PlanDocument(
+        version="3.0",
+        metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
+        work_plans=[
+            WorkPlan(
+                id="test-plan",
+                name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                todos=[
+                    Todo(
+                        id="1",
+                        title="Task with missing evidence",
+                        status=TodoStatus.in_progress,
+                        references=[],
+                        verification_spec=[
+                            VerificationItem(
+                                id="v1",
+                                title="Test verification",
+                                description="Test",
+                                verified=True,
+                                orchestrator_manually_verified=True,
+                                manual_verification_evidence="",
+                                bash=[BashVerification(execute="echo test", expected_exit_code=0)],
+                            )
+                        ],
+                    )
+                ],
+            )
+        ],
+    )
+    manager = TaskManager(plan_doc, "test-plan")
+
+    # when
+    report = manager.check_task_completion("1")
+
+    # then
+    assert report.all_verifications_completed is True
+    assert report.all_manual_verifications_completed is False
+    assert report.manual_verification_summary["completed"] == 0
+    assert report.manual_verification_summary["total"] == 1
+    assert report.can_complete is False
+
+
+async def test_check_task_completion__if_all_manual_verification_complete__can_complete(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
+    # given: task with all three manual verification conditions met
+    from sisyphus.core.plans.models import BashVerification, VerificationItem
+
+    plan_doc = PlanDocument(
+        version="3.0",
+        metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
+        work_plans=[
+            WorkPlan(
+                id="test-plan",
+                name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                todos=[
+                    Todo(
+                        id="1",
+                        title="Task with complete manual verification",
+                        status=TodoStatus.in_progress,
+                        references=[],
+                        verification_spec=[
+                            VerificationItem(
+                                id="v1",
+                                title="Test verification",
+                                description="Test",
+                                verified=True,
+                                orchestrator_manually_verified=True,
+                                manual_verification_evidence="Complete evidence with more than 100 characters to satisfy the validation requirements for manual verification evidence in the system.",
+                                bash=[BashVerification(execute="echo test", expected_exit_code=0)],
+                            )
+                        ],
+                    )
+                ],
+            )
+        ],
+    )
+    manager = TaskManager(plan_doc, "test-plan")
+
+    # when
+    report = manager.check_task_completion("1")
+
+    # then
+    assert report.all_verifications_completed is True
+    assert report.all_manual_verifications_completed is True
+    assert report.manual_verification_summary["completed"] == 1
+    assert report.manual_verification_summary["total"] == 1
+    assert report.can_complete is True
+
+
+async def test_check_task_completion__if_mixed_verification_types_with_manual_incomplete__cannot_complete(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
+    # given: task with bash verification complete (verified=True only) and manual verification incomplete
+    from sisyphus.core.plans.models import BashVerification, VerificationItem
+
+    plan_doc = PlanDocument(
+        version="3.0",
+        metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
+        work_plans=[
+            WorkPlan(
+                id="test-plan",
+                name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                todos=[
+                    Todo(
+                        id="1",
+                        title="Task with mixed verification types",
+                        status=TodoStatus.in_progress,
+                        references=[],
+                        verification_spec=[
+                            VerificationItem(
+                                id="v1",
+                                title="Bash verification",
+                                description="Automated bash check",
+                                verified=True,
+                                orchestrator_manually_verified=False,
+                                manual_verification_evidence="",
+                                bash=[BashVerification(execute="echo test", expected_exit_code=0)],
+                            ),
+                            VerificationItem(
+                                id="v2",
+                                title="Manual verification",
+                                description="Manual check",
+                                verified=True,
+                                orchestrator_manually_verified=False,
+                                manual_verification_evidence="",
+                                bash=[BashVerification(execute="echo test2", expected_exit_code=0)],
+                            ),
+                        ],
+                    )
+                ],
+            )
+        ],
+    )
+    manager = TaskManager(plan_doc, "test-plan")
+
+    # when
+    report = manager.check_task_completion("1")
+
+    # then
+    assert report.all_verifications_completed is True
+    assert report.all_manual_verifications_completed is False
+    assert report.manual_verification_summary["completed"] == 0
+    assert report.manual_verification_summary["total"] == 2
+    assert report.can_complete is False
+
+
+async def test_check_task_completion__if_no_verifications__can_complete(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
+    # given: task with empty verification_spec list
+    plan_doc = PlanDocument(
+        version="3.0",
+        metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
+        work_plans=[
+            WorkPlan(
+                id="test-plan",
+                name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                todos=[
+                    Todo(
+                        id="1",
+                        title="Task with no verifications",
+                        status=TodoStatus.in_progress,
+                        references=[],
+                        verification_spec=[],
+                    )
+                ],
+            )
+        ],
+    )
+    manager = TaskManager(plan_doc, "test-plan")
+
+    # when
+    report = manager.check_task_completion("1")
+
+    # then
+    assert report.all_verifications_completed is True
+    assert report.all_manual_verifications_completed is True
+    assert report.manual_verification_summary["completed"] == 0
+    assert report.manual_verification_summary["total"] == 0
+    assert report.can_complete is True

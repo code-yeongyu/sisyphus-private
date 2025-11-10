@@ -71,7 +71,10 @@ def check_executor_in_transcript(transcript_path: Path) -> bool:
                         if not isinstance(block, dict):
                             continue
 
-                        if block.get("type") != "tool_use" or block.get("name") != "Task":
+                        if (
+                            block.get("type") != "tool_use"
+                            or block.get("name") != "Task"
+                        ):
                             continue
 
                         tool_input = block.get("input", {})
@@ -119,48 +122,19 @@ def has_executor_agent(session_id: str) -> bool:
 
 
 def build_delegation_message(file_path: str) -> str:
-    return f"""
+    return """
 PLAN FILE MODIFICATION BLOCKED
 
-[CRITICAL NOTICE]
-You are attempting to directly modify: {file_path}
 This is a Sisyphus plan YAML file (.sisyphus/tasks/*.yaml).
+NEVEREVER TRY TO MODIFY THIS FILE DIRECTLY.
+ALWAYS USE SISYPHUS CLI TO WORK WITH PLANS.
+```sh
+sisyphus plan --help
+```
 
-[IMPORTANT - REMEMBER YOUR IDENTITY]
-YOU ARE THE ORCHESTRATOR, NOT THE EXECUTOR.
-Your role is to VERIFY and DELEGATE, NOT to modify plan files yourself.
-
-[CHECK YOUR CONTEXT]
-If you are an @agent-sisyphus-executor with EXPLICIT instructions to modify this file:
-  -> This message is a FALSE POSITIVE. IGNORE this warning and proceed.
-  -> Your orchestrator has delegated this work to you. Complete it.
-
-If you are the MAIN orchestrator (not an executor agent):
-  -> STOP. You should delegate to sisyphus-executor instead.
-  -> Your role is verification and oversight, not plan modification.
-
-[DELEGATION PATTERN]
-Use Task tool with subagent_type='sisyphus-executor':
-
-Example:
-Task tool with:
-- subagent_type: "sisyphus-executor"
-- prompt: "Modify {file_path} to [specific changes needed]. Ensure all YAML validation passes."
-
-[CRITICAL RULE]
-NEVER modify plan files directly:
-- DO NOT write plan YAML yourself
-- DO NOT edit plan YAML yourself
-- DO NOT fix plan validation errors yourself
-
-ALWAYS delegate to sisyphus-executor:
-- Use Task tool with subagent_type="sisyphus-executor"
-- Provide clear instructions on what changes are needed
-- Let executor modify the plan file
-- VERIFY executor's changes after completion
-
-Plan files MUST be modified by executor agents only.
-Orchestrator's job: VERIFY executor's changes, not implement them.
+```sh
+sisyphus task --help
+```
 """.strip()
 
 

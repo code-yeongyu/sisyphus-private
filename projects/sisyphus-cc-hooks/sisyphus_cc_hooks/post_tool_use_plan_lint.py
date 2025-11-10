@@ -44,7 +44,9 @@ def run_sisyphus_plan_lint(yaml_path: str, cwd: str) -> tuple[bool, str]:
         if result.returncode == 0:
             return True, ""
 
-        error_output = result.stderr.strip() if result.stderr.strip() else result.stdout.strip()
+        error_output = (
+            result.stderr.strip() if result.stderr.strip() else result.stdout.strip()
+        )
 
         message = f"""
 SISYPHUS PLAN YAML VALIDATION FAILED
@@ -58,9 +60,7 @@ REQUIRED ACTION:
 The YAML file you just wrote/edited has validation errors.
 You MUST fix these errors before proceeding.
 
-1. Read the error message above carefully
-2. Fix the validation issues in the YAML file
-3. The hook will automatically re-run when you save
+FIX. NOW.
 
 DO NOT proceed to the next task until validation passes.
 """.strip()

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 
@@ -17,6 +16,7 @@ from sisyphus.core.graph.renderer import AsciiRenderer, MermaidRenderer
 from sisyphus.core.plan_linter import LintError, PlanLinter
 from sisyphus.core.plans.loader import load_plan
 from sisyphus.core.plans.models import PlanDocument
+from sisyphus.core.plans.template import PlanTemplateGenerator
 
 plan_app = typer.Typer(name="plan", help="Plan management commands")
 console = Console()
@@ -87,14 +87,31 @@ def lint_plan(
 @plan_app.command(name="init")
 def init_plan(
     path: Path = typer.Option(
-        Path("./.sisyphus/tasks/ai-todolist.yaml"),
+        Path("./.sisyphus/tasks/plan.yaml"),
         "--path",
         "-p",
         help="Path where plan YAML will be created",
     ),
+    template: str = typer.Option(
+        "minimal",
+        "--template",
+        "-t",
+        help="Template type: 'minimal' (TODO placeholders) or 'full' (complete example)",
+    ),
     cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
-    """Initialize new plan YAML template."""
+    """Initialize new plan YAML template.
+
+    Examples:
+        # Create minimal template with TODO placeholders
+        sisyphus plan init
+
+        # Create full example with all fields populated
+        sisyphus plan init --template full
+
+        # Custom path
+        sisyphus plan init --path .sisyphus/tasks/my-plan.yaml
+    """
     working_dir = resolve_cwd(cwd)
     resolved_path = working_dir / path if not path.is_absolute() else path
 
@@ -102,71 +119,28 @@ def init_plan(
         console.print(f"[red]Error: File already exists: {resolved_path}[/red]")
         raise typer.Exit(1)
 
-    now = datetime.now(UTC).isoformat()
+    # ✅ PlanTemplateGenerator 사용 (스펙 준수 자동 보장)
+    try:
+        if template == "full":
+            doc = PlanTemplateGenerator.full_example()
+            tip_msg = (
+                "[yellow]Tip: This is a full example with all fields populated.\n"
+                "      Edit the values to match your project requirements.[/yellow]"
+            )
+        else:
+            doc = PlanTemplateGenerator.minimal()
+            tip_msg = (
+                "[yellow]Tip: Replace TODO placeholders with your actual content.\n"
+                "      Use --template full to see a complete example.[/yellow]"
+            )
+    except FileNotFoundError as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"[red]Template generation failed:[/red] {e}")
+        raise typer.Exit(1)
 
-    template = {
-        "version": "3.0",
-        "metadata": {
-            "created_at": now,
-            "updated_at": None,
-        },
-        "work_plans": [
-            {
-                "id": "new-plan",
-                "name": "New Plan",
-                "depends_on": [],
-                "user_request": {
-                    "original": "TODO: Describe your work request here",
-                    "created_at": now,
-                    "additional": [],
-                },
-                "objectives": {
-                    "core": "TODO: Write core objective here",
-                    "detailed": [],
-                },
-                "background": {
-                    "current_situation": "TODO: Describe current state",
-                    "reason_for_change": "TODO: Why this work is needed",
-                    "changes_to_make": "TODO: What will change",
-                },
-                "required_background": {
-                    "description": "TODO: Required context and knowledge",
-                    "file_structure": None,
-                    "references": [],
-                },
-                "workflow": {
-                    "dependency_diagram": "TODO: Add task dependency diagram",
-                    "critical_path": [],
-                },
-                "success_vision": {
-                    "user_perspective": [],
-                    "business_perspective": [],
-                    "technical_criteria": [],
-                },
-                "final_verification": [],
-                "todos": [],
-                "references": [],
-                "execution": {
-                    "started": False,
-                    "completed": False,
-                    "started_at": None,
-                    "completed_at": None,
-                },
-                "work_mode": {
-                    "parallel_requested": False,
-                    "current_task_id": None,
-                },
-                "progress": {
-                    "total_tasks": 0,
-                    "completed": 0,
-                    "in_progress": 0,
-                    "pending": 0,
-                },
-                "current_work": "",
-            }
-        ],
-    }
-
+    # YAML 저장
     yaml = YAML()
     yaml.preserve_quotes = True
     yaml.default_flow_style = False
@@ -174,9 +148,12 @@ def init_plan(
     resolved_path.parent.mkdir(parents=True, exist_ok=True)
 
     with resolved_path.open("w", encoding="utf-8") as f:
-        yaml.dump(template, f)
+        # Use by_alias and exclude_none for clean YAML output
+        # mode="json" ensures Enums are serialized as values
+        yaml.dump(doc.model_dump(mode="json", by_alias=True, exclude_none=False), f)
 
     console.print(f"[green]✓ Plan template created: {resolved_path}[/green]")
+    console.print(tip_msg)
 
 
 @plan_app.command(name="graph")

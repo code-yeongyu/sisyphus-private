@@ -182,7 +182,7 @@ def test_init__with_cwd_option__creates_in_cwd(tmp_path: Path) -> None:
 
     # then
     assert result.exit_code == 0
-    assert (work_dir / ".sisyphus" / "tasks" / "ai-todolist.yaml").exists()
+    assert (work_dir / ".sisyphus" / "tasks" / "plan.yaml").exists()
 
 
 def test_graph__with_v3_plan__displays_graph(tmp_path: Path) -> None:

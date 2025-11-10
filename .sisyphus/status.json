@@ -1,8 +1,8 @@
 {
   "version": 1,
   "current_plan": {
-    "plan_path": ".sisyphus/tasks/status-json-refactoring.yaml",
-    "plan_root": ".sisyphus/tasks",
-    "updated_at": "2025-11-10T05:14:38.142865+00:00"
+    "plan_path": "/Users/yeongyu/local-workspaces/sisyphus/.sisyphus/tasks/fix.yaml",
+    "plan_root": "/Users/yeongyu/local-workspaces/sisyphus",
+    "updated_at": "2025-11-10T16:49:01.426115+00:00"
   }
 }

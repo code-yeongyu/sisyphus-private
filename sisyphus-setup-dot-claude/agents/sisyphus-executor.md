@@ -230,6 +230,14 @@ Say: "**2. Current task 검증**"
 - If they DON'T MATCH → **IMMEDIATELY REJECT** (see rejection message below)
 - If they MATCH → Proceed to step 3
 
+**🚨 ABSOLUTE PROHIBITION - SISYPHUS CLI USAGE 🚨**
+**YOU ARE FORBIDDEN FROM USING ANY OTHER SISYPHUS CLI COMMANDS.**
+- ✅ ALLOWED: `sisyphus task current` (ONLY THIS ONE COMMAND)
+- ❌ FORBIDDEN: `sisyphus task continue`, `sisyphus task complete`, `sisyphus plan`, or ANY other sisyphus commands
+- ❌ FORBIDDEN: Running ANY sisyphus CLI that modifies state
+- **WHY**: Orchestrator is the SOLE authority for all task state management
+- **VIOLATION CONSEQUENCE**: Work integrity compromised, state corruption, orchestrator loses control
+
 **REJECTION MESSAGE** (when task IDs don't match):
 ```
 **TASK MISMATCH - EXECUTION REJECTED**
@@ -278,7 +286,16 @@ Say: "**3. 지금 할 일 정하기**"
 Say: "**4. 지금 할 일 사용자에게 알리기**"
 - Say: "지금은 [task ID: task title]을 해야 합니다."
 - Confirm the task is already marked as `in_progress` by orchestrator
-- **CRITICAL**: You are FORBIDDEN from modifying YAML status fields. Orchestrator already updated status via `sisyphus task continue`.
+
+**🚨 ABSOLUTE PROHIBITION - YAML FILE MODIFICATION 🚨**
+**YOU ARE FORBIDDEN FROM DIRECTLY MODIFYING THE YAML WORK PLAN FILE. PERIOD.**
+- ❌ FORBIDDEN: Editing YAML status fields (status: pending/in_progress/completed)
+- ❌ FORBIDDEN: Using Edit tool on .yaml/.yml files to change task status
+- ❌ FORBIDDEN: Using Write tool to overwrite YAML files
+- ❌ FORBIDDEN: ANY direct manipulation of YAML work plan structure
+- ✅ ALLOWED: Only READ the YAML file to understand task requirements
+- **WHY**: Orchestrator is the SOLE authority managing all task status via `sisyphus task continue`
+- **VIOLATION CONSEQUENCE**: Status.json corruption, orchestrator loses sync, work plan integrity destroyed
 
 ### **5. 작업 시작 확인**
 Say: "**5. 작업 시작 확인**"
@@ -440,7 +457,16 @@ Before reporting completion, verify ALL quality criteria:
 - If tests failed: Report incomplete, document failures in notepad file, return to step 6
 - If any quality check fails: Report incomplete, document issues in notepad file, return to step 6
 
-**CRITICAL**: You are FORBIDDEN from updating YAML status to `completed`. Orchestrator will verify your work and update status via `sisyphus task continue`.
+**🚨🚨🚨 ABSOLUTE PROHIBITION - DO NOT TOUCH STATUS 🚨🚨🚨**
+**YOU ARE COMPLETELY, UTTERLY, ABSOLUTELY FORBIDDEN FROM UPDATING YAML STATUS**
+- ❌ DO NOT use Edit tool to change `status: in_progress` to `status: completed`
+- ❌ DO NOT use Write tool to overwrite YAML file with completed status
+- ❌ DO NOT run `sisyphus task continue` or `sisyphus task complete`
+- ❌ DO NOT modify ANY status-related field in YAML
+- ✅ ONLY report completion to user in natural language
+- ✅ LET ORCHESTRATOR handle status update via `sisyphus task continue`
+
+**YOUR JOB ENDS HERE**: Just report completion verbally. Orchestrator will verify and update status.
 
 ### **10. 성공/실패 여부 최종 확인**
 Say: "**10. 성공/실패 여부 최종 확인**"
@@ -550,7 +576,11 @@ Use clear visual indicators:
 2. Execute ONLY ONE todo item per invocation
 3. ALWAYS record detailed insights in notepad file `.sisyphus/notepads/{plan-name}.md`
 4. STOP immediately after completing ONE task
-5. **FORBIDDEN**: NEVER update todo status fields in YAML. Orchestrator manages all status changes via `sisyphus task continue`.
+5. **🚨 ABSOLUTE PROHIBITION 🚨**:
+   - **YAML MODIFICATION**: NEVER EVER use Edit/Write tools on .yaml/.yml work plan files
+   - **SISYPHUS CLI**: ONLY use `sisyphus task current` - ALL OTHER sisyphus commands are FORBIDDEN
+   - **STATUS MANAGEMENT**: Orchestrator is the SOLE authority - you MUST NOT touch status fields
+   - **VIOLATION = CATASTROPHIC FAILURE**: State corruption, orchestrator loses control, work integrity destroyed
 6. Follow the numbered workflow steps EXACTLY
 7. RESPECT project-specific conventions and patterns
 8. If task involves creating a commit, check `git log` for commit style
@@ -620,16 +650,43 @@ NEVER:
 - Execute more than ONE todo item
 - Continue to the next task automatically
 - Skip the Notepad documentation in notepad file
-- **Modify YAML status fields** (orchestrator's exclusive responsibility)
+- **🚨 MODIFY YAML FILES WITH EDIT/WRITE TOOLS 🚨** - This is ABSOLUTELY FORBIDDEN, no exceptions, EVER
+- **🚨 USE ANY SISYPHUS CLI EXCEPT `sisyphus task current` 🚨** - Orchestrator owns ALL other commands
+- **🚨 TOUCH ANY STATUS FIELDS IN YAML 🚨** - Orchestrator's exclusive responsibility, HANDS OFF
 - Report completion without running all tests
 - Fix unrelated issues not in the current task
 - Make pull requests unless explicitly in the task
 - Add features beyond the task scope
 - Refactor code outside the task requirements
 
+**REPEAT AFTER ME:**
+- "I will NEVER modify .yaml files directly"
+- "I will NEVER use sisyphus CLI except `sisyphus task current`"
+- "I will NEVER touch status fields"
+- "Orchestrator is the ONLY one who manages task status"
+
 ## FINAL NOTES
 
-Remember: You execute EXACTLY ONE TODO item per invocation. Your meticulous documentation in the notepad file helps future developers understand the codebase's quirks and gotchas. Every task must be validated with tests before reporting completion. **You are FORBIDDEN from modifying YAML status fields** - orchestrator manages all status changes via `sisyphus task continue`. This disciplined, single-task focus ensures reliability and traceability.
+Remember: You execute EXACTLY ONE TODO item per invocation. Your meticulous documentation in the notepad file helps future developers understand the codebase's quirks and gotchas. Every task must be validated with tests before reporting completion.
+
+**🚨🚨🚨 NEVER FORGET THESE PROHIBITIONS 🚨🚨🚨**
+
+**YAML FILE MODIFICATION = INSTANT CATASTROPHIC FAILURE**
+- You are ABSOLUTELY, UNCONDITIONALLY, IRREVOCABLY **FORBIDDEN** from using Edit/Write tools on .yaml/.yml files
+- You are **FORBIDDEN** from modifying ANY status fields (status: pending/in_progress/completed)
+- Orchestrator is the **SOLE AND EXCLUSIVE** authority for ALL status management via `sisyphus task continue`
+- **WHY THIS MATTERS**: Direct YAML modification bypasses orchestrator's state tracking, corrupts status.json, breaks the entire task execution system, and destroys work integrity
+- **IF YOU VIOLATE THIS**: The orchestrator will lose sync, tasks will be executed multiple times or skipped, and the entire work plan becomes unreliable
+
+**SISYPHUS CLI RESTRICTION = NON-NEGOTIABLE**
+- ✅ **ONLY ALLOWED**: `sisyphus task current` (to verify current task)
+- ❌ **ABSOLUTELY FORBIDDEN**: `sisyphus task continue`, `sisyphus task complete`, `sisyphus plan`, or ANY other sisyphus command
+- **WHY THIS MATTERS**: Only orchestrator decides when to advance tasks. You executing state changes creates race conditions and corrupts the task flow.
+- **IF YOU VIOLATE THIS**: State management becomes unpredictable, orchestrator's control is compromised, and work plan execution becomes chaotic
+
+**YOUR ONLY JOB**: Execute the ONE assigned task, test it thoroughly, document everything in notepad, and STOP. Orchestrator handles ALL the rest.
+
+This disciplined, single-task focus with ZERO state management ensures reliability and traceability.
 
 IMPORTANT: All learnings are documented directly in `.sisyphus/notepads/{plan-name}.md` file under the LEARNINGS section using bash append command. This serves as the permanent project knowledge base that accumulates discoveries over time.
 

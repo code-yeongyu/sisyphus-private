@@ -30,7 +30,7 @@ async def test_execute__if_no_feedback_history__uses_original_extra() -> None:
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
-    task_validator.all_complete = True
+    task_validator.completion_sequence = [False, False, True]
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
@@ -40,6 +40,7 @@ async def test_execute__if_no_feedback_history__uses_original_extra() -> None:
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
     )
+    loop._current_plan_id = "default"
 
     # when
     await loop._run_unified_mode(
@@ -70,7 +71,7 @@ async def test_execute__if_feedback_history_exists__appends_feedback_section() -
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
-    task_validator.completion_sequence = [True, True]
+    task_validator.completion_sequence = [False, False, True, True]
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
@@ -80,6 +81,7 @@ async def test_execute__if_feedback_history_exists__appends_feedback_section() -
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
     )
+    loop._current_plan_id = "default"
 
     # when
     await loop._run_unified_mode(
@@ -118,7 +120,7 @@ async def test_execute__if_multiple_feedbacks__includes_all_with_correct_numberi
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
-    task_validator.completion_sequence = [True, True, True]
+    task_validator.completion_sequence = [False, False, True, True, True]
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
@@ -128,6 +130,7 @@ async def test_execute__if_multiple_feedbacks__includes_all_with_correct_numberi
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
     )
+    loop._current_plan_id = "default"
 
     # when
     await loop._run_unified_mode(
@@ -226,13 +229,13 @@ class MockSessionStore:
     def __init__(self) -> None:
         self.sessions: dict[str, str] = {}
 
-    async def get_session(self, agent_type: str) -> str | None:
+    async def get_session(self, agent_type: str, plan_id: str) -> str | None:
         return self.sessions.get(agent_type)
 
-    async def save_session(self, agent_type: str, session_id: str) -> None:
+    async def save_session(self, agent_type: str, session_id: str, plan_id: str) -> None:
         self.sessions[agent_type] = session_id
 
-    async def delete_session(self, agent_type: str) -> None:
+    async def delete_session(self, agent_type: str, plan_id: str | None = None) -> None:
         if agent_type in self.sessions:
             del self.sessions[agent_type]
 
@@ -259,18 +262,19 @@ class MockTaskValidator:
         self.all_complete = False
         self.completion_sequence: list[bool] = []
         self.call_count = 0
+        self.todolist_path = None
 
     def read_content(self) -> str:
         return "mock content"
 
-    def check_all_goals_accomplished(self, content: str) -> bool:
+    async def check_all_goals_accomplished(self, content: str) -> bool:
         if self.completion_sequence:
             result = self.completion_sequence[min(self.call_count, len(self.completion_sequence) - 1)]
             return result
         return self.all_complete
 
-    def check_all_checkboxes_completed(self, content: str) -> bool:
-        result = self.check_all_goals_accomplished(content)
+    async def check_all_checkboxes_completed(self, content: str) -> bool:
+        result = await self.check_all_goals_accomplished(content)
         self.call_count += 1
         return result
 

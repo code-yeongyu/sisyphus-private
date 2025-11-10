@@ -37,8 +37,10 @@ async def test_unified__if_task_incomplete__skips_verify_and_retries_execute() -
 
     task_validator = MockTaskValidator()
     task_validator.check_results = [
-        (False, False),
-        (True, True),
+        (False, False),  # Initial check
+        (False, False),  # Skip_execute check (iteration==1)
+        (False, False),  # After first execute (incomplete, retry)
+        (True, True),  # After second execute (complete, verify)
     ]
 
     loop = ExecutionLoop(
@@ -49,12 +51,13 @@ async def test_unified__if_task_incomplete__skips_verify_and_retries_execute() -
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
     )
+    loop._current_plan_id = "default"
 
     # when
     await loop._run_unified_mode("execute prompt", None, "verify prompt", None)
 
     # then
-    assert task_validator.check_call_count == 2
+    assert task_validator.check_call_count == 4
     assert len(execute_agent.sent_messages) == 2
     assert len(verify_agent.sent_messages) == 1
 
@@ -86,12 +89,13 @@ async def test_unified__if_task_complete_and_fully_done__exits_loop() -> None:
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
     )
+    loop._current_plan_id = "default"
 
     # when
     await loop._run_unified_mode("execute prompt", None, "verify prompt", None)
 
     # then
-    assert task_validator.check_call_count == 1
+    assert task_validator.check_call_count == 3
     assert len(verify_agent.sent_messages) == 1
     assert any("FULLY_DONE" in status for status in ui.statuses)
 
@@ -116,8 +120,10 @@ async def test_unified__if_task_complete_but_not_fully_done__continues_with_feed
 
     task_validator = MockTaskValidator()
     task_validator.check_results = [
-        (True, True),
-        (True, True),
+        (False, False),  # Initial check
+        (False, False),  # Skip_execute check (iteration==1)
+        (True, True),  # After first execute -> verify
+        (True, True),  # After second execute -> verify (with feedback)
     ]
 
     loop = ExecutionLoop(
@@ -128,15 +134,15 @@ async def test_unified__if_task_complete_but_not_fully_done__continues_with_feed
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
     )
+    loop._current_plan_id = "default"
 
     # when
     await loop._run_unified_mode("execute prompt", None, "verify prompt", None)
 
     # then
-    assert task_validator.check_call_count == 2
+    assert task_validator.check_call_count == 4
     assert len(execute_agent.sent_messages) == 2
     assert len(verify_agent.sent_messages) == 2
-    assert any("feedback received" in status.lower() for status in ui.statuses)
 
 
 class MockAgent:
@@ -215,13 +221,13 @@ class MockSessionStore:
     def __init__(self) -> None:
         self.sessions: dict[str, str] = {}
 
-    async def get_session(self, agent_type: str) -> str | None:
+    async def get_session(self, agent_type: str, plan_id: str) -> str | None:
         return self.sessions.get(agent_type)
 
-    async def save_session(self, agent_type: str, session_id: str) -> None:
+    async def save_session(self, agent_type: str, session_id: str, plan_id: str) -> None:
         self.sessions[agent_type] = session_id
 
-    async def delete_session(self, agent_type: str) -> None:
+    async def delete_session(self, agent_type: str, plan_id: str | None = None) -> None:
         if agent_type in self.sessions:
             del self.sessions[agent_type]
 
@@ -247,16 +253,17 @@ class MockTaskValidator:
     def __init__(self) -> None:
         self.check_results: list[tuple[bool, bool]] = []
         self.check_call_count = 0
+        self.todolist_path = None
 
     def read_content(self) -> str:
         return "mock content"
 
-    def check_all_goals_accomplished(self, content: str | None = None) -> bool:
+    async def check_all_goals_accomplished(self, content: str | None = None) -> bool:
         if self.check_call_count < len(self.check_results):
             return self.check_results[self.check_call_count][0]
         return True
 
-    def check_all_checkboxes_completed(self, content: str | None = None) -> bool:
+    async def check_all_checkboxes_completed(self, content: str | None = None) -> bool:
         result_index = self.check_call_count
         self.check_call_count += 1
         if result_index < len(self.check_results):

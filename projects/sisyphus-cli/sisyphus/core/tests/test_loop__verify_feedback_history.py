@@ -40,6 +40,7 @@ async def test_verify__if_no_feedback_history__uses_original_prompt() -> None:
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
     )
+    loop._current_plan_id = "default"
 
     original_verify_prompt = "Please verify the work."
 
@@ -83,6 +84,7 @@ async def test_verify__if_feedback_history_exists__prepends_history_section() ->
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
     )
+    loop._current_plan_id = "default"
 
     original_verify_prompt = "Please verify the work."
 
@@ -131,6 +133,7 @@ async def test_verify__if_multiple_feedbacks__includes_all_in_history() -> None:
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
     )
+    loop._current_plan_id = "default"
 
     original_verify_prompt = "Please verify the work."
 
@@ -237,13 +240,13 @@ class MockSessionStore:
     def __init__(self) -> None:
         self.sessions: dict[str, str] = {}
 
-    async def get_session(self, agent_type: str) -> str | None:
+    async def get_session(self, agent_type: str, plan_id: str) -> str | None:
         return self.sessions.get(agent_type)
 
-    async def save_session(self, agent_type: str, session_id: str) -> None:
+    async def save_session(self, agent_type: str, session_id: str, plan_id: str) -> None:
         self.sessions[agent_type] = session_id
 
-    async def delete_session(self, agent_type: str) -> None:
+    async def delete_session(self, agent_type: str, plan_id: str | None = None) -> None:
         if agent_type in self.sessions:
             del self.sessions[agent_type]
 
@@ -270,18 +273,19 @@ class MockTaskValidator:
         self.all_complete = False
         self.completion_sequence: list[bool] = []
         self.call_count = 0
+        self.todolist_path = None
 
     def read_content(self) -> str:
         return "mock content"
 
-    def check_all_goals_accomplished(self, content: str) -> bool:
+    async def check_all_goals_accomplished(self, content: str) -> bool:
         if self.completion_sequence:
             result = self.completion_sequence[min(self.call_count, len(self.completion_sequence) - 1)]
             return result
         return self.all_complete
 
-    def check_all_checkboxes_completed(self, content: str) -> bool:
-        result = self.check_all_goals_accomplished(content)
+    async def check_all_checkboxes_completed(self, content: str) -> bool:
+        result = await self.check_all_goals_accomplished(content)
         self.call_count += 1
         return result
 

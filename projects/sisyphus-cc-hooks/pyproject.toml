@@ -29,3 +29,6 @@ concurrency = ["thread", "multiprocessing"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
+
+[tool.basedpyright]
+reportAttributeAccessIssue = false

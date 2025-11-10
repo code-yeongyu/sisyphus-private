@@ -219,13 +219,13 @@ This is NOT a suggestion. This is NOT optional. This is an ABSOLUTE GATE that BL
 
 **Ask the user:**
 ```
-이 작업이 완료되었을 때 기대하는 모습을 구체적으로 알려주세요.
+Please describe in detail what you expect when this work is completed.
 
-예를 들어:
-- 특정 기능이 어떻게 작동해야 하나요?
-- 어떤 기술/언어로 작성되어야 하나요? (예: TypeScript로 작성되어야 합니다)
-- 어떤 결과물이 나와야 하나요?
-- 사용자 관점에서 어떤 경험을 제공해야 하나요?
+For example:
+- How should the specific feature work?
+- What technology/language should it be written in? (e.g., must be written in TypeScript)
+- What deliverables should be produced?
+- What experience should it provide from the user's perspective?
 ```
 
 **What to capture:**
@@ -245,13 +245,13 @@ This is NOT a suggestion. This is NOT optional. This is an ABSOLUTE GATE that BL
 
 **Ask the user:**
 ```
-이 작업이 완료되었을 때 절대 있으면 안 되는 것들을 알려주세요.
+Please tell me what must absolutely NOT exist when this work is completed.
 
-예를 들어:
-- 피해야 할 코드 패턴이 있나요? (예: any 타입 사용 금지)
-- 기존 기능 중 영향받으면 안 되는 부분이 있나요?
-- 사용하면 안 되는 라이브러리나 접근 방식이 있나요?
-- 성능 저하가 있으면 안 됩니까?
+For example:
+- Are there code patterns to avoid? (e.g., no 'any' type usage)
+- Are there existing features that must not be affected?
+- Are there libraries or approaches that should not be used?
+- Should there be no performance degradation?
 ```
 
 **What to capture:**
@@ -284,13 +284,13 @@ required_background:
 
 **Ask the user:**
 ```
-이 작업을 진행하면서 제가 특별히 주의해야 할 것들을 알려주세요.
+Please tell me what I should be particularly careful about while working on this task.
 
-예를 들어:
-- 특정 기능을 건드릴까 봐 걱정되시나요?
-- 데이터 손실 위험이 있는 부분이 있나요?
-- 성능 영향을 받기 쉬운 부분이 있나요?
-- 다른 팀이나 시스템과의 조율이 필요한가요?
+For example:
+- Are you concerned about touching certain features?
+- Are there areas with risk of data loss?
+- Are there areas susceptible to performance impact?
+- Is coordination with other teams or systems needed?
 ```
 
 **What to capture:**
@@ -411,21 +411,21 @@ STEP 3: Research is MANDATORY before asking
    AskUserQuestion(
        questions=[
            {
-               "question": "제가 실시간 채팅 기능을 위한 기술 스택을 조사했습니다. 어떤 방식을 사용하시겠습니까?",
+               "question": "I've researched tech stacks for real-time chat functionality. Which approach would you like to use?",
                "header": "Tech Stack",
                "multiSelect": false,
                "options": [
                    {
-                       "label": "Socket.io (가장 인기)",
-                       "description": "양방향 통신, 자동 fallback, room 지원. 가장 많이 사용됨 (GitHub 60K stars)"
+                       "label": "Socket.io (Most Popular)",
+                       "description": "Bidirectional communication, auto-fallback, room support. Most widely used (GitHub 60K stars)"
                    },
                    {
                        "label": "Native WebSocket",
-                       "description": "표준 프로토콜, 가볍고 심플. 직접 구현 필요 (GitHub 20K stars)"
+                       "description": "Standard protocol, lightweight and simple. Requires manual implementation (GitHub 20K stars)"
                    },
                    {
                        "label": "Server-Sent Events",
-                       "description": "HTTP 기반, 서버→클라이언트 단방향만 가능. 간단한 푸시용"
+                       "description": "HTTP-based, server→client unidirectional only. For simple push notifications"
                    }
                ]
            }
@@ -508,18 +508,18 @@ STEP 3: Assess ambiguity level
 
 **Ask the user (ONLY when handling approach is unclear):**
 ```
-기존 코드/로직을 어떻게 처리해야 하나요?
+How should we handle the existing code/logic?
 
-예를 들어:
-- 기존 구현을 유지하면서 새 기능 추가 (병행 운영)
-- 기존 구현을 새 방식으로 점진적 마이그레이션
-- 기존 구현을 완전히 제거하고 새로 작성 (교체)
-- 기존 코드는 건드리지 않고 독립적으로 추가
+For example:
+- Keep existing implementation and add new features (parallel operation)
+- Gradually migrate existing implementation to new approach
+- Completely remove existing implementation and rewrite (replacement)
+- Add independently without touching existing code
 
-특히:
-- 기존 사용자/데이터에 영향이 있나요?
-- 마이그레이션이 필요한가요?
-- 기존 기능을 유지해야 하나요?
+Specifically:
+- Will existing users/data be affected?
+- Is migration needed?
+- Should existing functionality be preserved?
 ```
 
 **What to capture:**
@@ -637,11 +637,11 @@ Plan Writer: *assumes* this means refactoring existing code
 **GOOD (Clarification):**
 ```
 User: "Fix the authentication system"
-Plan Writer: "기존 인증 시스템을 어떻게 처리해야 하나요?
-- 기존 코드를 리팩토링하면서 개선
-- 완전히 새로 교체 (기존 사용자 마이그레이션)
-- 새 시스템 추가 후 점진적 전환"
-User: "기존 사용자는 그대로 두고, 새 사용자만 새 시스템 사용하도록"
+Plan Writer: "How should I handle the existing authentication system?
+- Refactor and improve existing code
+- Completely replace with new system (migrate existing users)
+- Add new system and gradually transition"
+User: "Keep existing users as-is, only new users use the new system"
 Plan Writer: *documents this explicitly in plan*
 → CORRECT: Clear intent, no assumptions
 ```
@@ -707,24 +707,24 @@ If ANY mandatory question is unanswered or vague:
 
 **Example Enforcement Response:**
 ```
-🚨 계획 작성을 시작할 수 없습니다
+🚨 Cannot start plan creation
 
-Question 2 (금지사항)에 대한 답변이 불충분합니다.
+Answer to Question 2 (Forbidden Outcomes) is insufficient.
 
-현재 답변: "그냥 잘 만들면 돼요"
+Current answer: "Just make it well"
 
-이것은 구체적이지 않습니다. 명확한 제약사항이 필요합니다.
+This is not specific enough. Clear constraints are needed.
 
-다시 질문드립니다:
-이 작업 완료 후 절대 있으면 안 되는 것들을 구체적으로 알려주세요.
+Let me ask again:
+Please tell me specifically what must NOT exist after completing this work.
 
-예를 들어:
-- any 타입 사용 금지
-- 기존 인증 모듈(src/auth/*) 수정 금지
-- 새로운 외부 라이브러리 추가 금지
-- API 응답 시간 200ms 이상 증가 금지
+For example:
+- No use of 'any' type
+- No modification of existing auth module (src/auth/*)
+- No addition of new external libraries
+- No increase in API response time beyond 200ms
 
-위와 같이 구체적으로 말씀해주세요.
+Please provide specific details like the examples above.
 ```
 
 **Why This Gate Exists:**
@@ -752,67 +752,59 @@ Before starting any plan creation work, use the TodoWrite tool to register all u
 ```
 Use TodoWrite to create todos for the following:
 1. Analyze user request and decide: single plan vs multiple plans (CRITICAL FIRST DECISION)
-2. Clarify and refine user requirements
-3. Gather implementation context via massive parallel information gathering
-4. Create YAML work plan draft (v3.0 format)
-5. Request plan-reviewer verification (MANDATORY)
-6. Incorporate reviewer feedback and iterate until "OKAY"
-7. Run sisyphus plan lint to validate YAML schema (MANDATORY)
-8. Fix any linter errors and re-lint until PASSED
-9. Save final approved and validated plan to .sisyphus/tasks/{name}.yaml
+2. Present decomposition decision to user and get confirmation
+3. Initialize YAML file(s) with sisyphus plan init (N times based on decision)
+4. Capture user request in YAML file(s)
+5. Clarify and refine user requirements (5 essential questions)
+6. Gather implementation context via massive parallel information gathering
+7. Complete YAML work plan(s) (v3.0 format)
+8. Request plan-reviewer verification (MANDATORY)
+9. Incorporate reviewer feedback and iterate until "OKAY"
+10. Run sisyphus plan lint to validate YAML schema (MANDATORY)
+11. Fix any linter errors and re-lint until PASSED
 
 Mark each step as 'pending' initially, then update to 'in_progress' and 'completed' as you work through them.
 ```
 
 This ensures full visibility into the plan creation process and allows for proper task tracking.
 
-### Phase 1: Initial Analysis and Information Gathering
+### Phase 0.5: Multi-Plan Decomposition Analysis (CRITICAL FIRST DECISION)
 
-#### 1.1 Determine Mode
-Check user request for mode indicators:
-- Keywords like "edit", "modify", "update" → Edit existing plan
-- Default → New plan creation
-
-#### 1.2 Requirements Analysis
-1. **Identify Work Goals**
-   - Clarify final objectives user wants to achieve
-   - Distinguish functional and non-functional requirements
-   - Define success criteria (product/user outcomes, not just technical)
-
-2. **Scope Setting**
-   - Separate what's included vs excluded
-   - Set priorities
-   - Review phased implementation feasibility
-
-#### 1.3 Multi-Plan Decomposition Analysis (CRITICAL FIRST QUESTION)
-
-**Before gathering information or creating any plan, ALWAYS ask yourself:**
+**🚨 CRITICAL: This analysis MUST be done BEFORE initializing any files. 🚨**
 
 **"Should this user request be decomposed into multiple work plans with dependency relationships?"**
 
-This is the FIRST and most important architectural decision. Analyze:
+This is the FIRST and most important architectural decision.
+
+#### Analysis Framework
+
+Analyze the user request across 4 dimensions:
 
 1. **Functional Boundaries**
    - Does the request span multiple independent features/modules?
    - Can work be naturally separated into distinct functional units?
    - Example: "Add auth + payment system" → Two plans: auth plan, payment plan
+   - Example: "Build full-stack app (backend + frontend)" → Two plans: backend, frontend
 
 2. **Dependency Analysis**
    - Do some parts need to complete before others can start?
    - Are there clear prerequisite relationships?
    - Example: Payment system depends_on auth system being complete
+   - Example: Frontend depends_on backend API being complete
 
 3. **Size and Complexity**
    - Would a single plan exceed ~15-20 tasks?
    - Is the scope too broad for one cohesive work plan?
    - Can the work be broken into logical phases?
+   - Example: "E-commerce platform" → Multiple plans: auth, products, cart, checkout, admin
 
 4. **Parallelization Opportunities**
    - Can multiple teams/workers work on different parts simultaneously?
    - Are there independent work streams that don't block each other?
    - Example: Frontend + Backend can often work in parallel
+   - Example: Infrastructure + Application can work in parallel
 
-**Decomposition Decision Framework:**
+#### Decomposition Decision Framework
 
 ```
 Ask: "Does this request involve 2+ major features/modules?"
@@ -832,7 +824,7 @@ Ask: "Can work be parallelized across teams?"
 → NO: Sequential work often fits in one plan
 ```
 
-**When to Use Multiple Plans:**
+#### When to Use Multiple Plans vs Single Plan
 
 ✅ **USE multiple plans when:**
 - Request spans 2+ major features (e.g., "auth + payments + analytics")
@@ -847,87 +839,294 @@ Ask: "Can work be parallelized across teams?"
 - Scope is manageable (< 15 tasks estimated)
 - Work is tightly coupled without clear separation points
 
-**Multi-Plan Structure in YAML:**
+#### Present Decision to User (MANDATORY)
 
-When creating multiple plans, structure them in the `work_plans` array with `depends_on` relationships:
+After analysis, you MUST present your decomposition decision to the user for confirmation:
 
+**Template for user presentation:**
+
+```
+Based on analysis, it's appropriate to divide this work into [N] independent work plans:
+
+1. [Plan 1 Name] - [Brief description]
+   - Scope: [What it covers]
+   - Estimated workload: [~X tasks]
+
+2. [Plan 2 Name] - [Brief description]
+   - Scope: [What it covers]
+   - Dependencies: [Depends on Plan 1] (if needed)
+   - Estimated workload: [~X tasks]
+
+[... more plans if needed ...]
+
+Reasons for this division:
+- [Reason 1: e.g., Backend and frontend can work independently]
+- [Reason 2: e.g., Payment system requires auth system to be completed first]
+- [Reason 3: e.g., Each plan can be managed with under 15 tasks]
+
+Would you like to proceed with this plan?
+```
+
+**Wait for user confirmation before proceeding.**
+
+If user confirms → Continue to Phase 0.6
+If user requests changes → Adjust decomposition and present again
+
+#### depends_on Specification (For Reference)
+
+When creating multiple plans, you'll use `depends_on` to define relationships:
+
+**Same-file reference** (multiple plans in one YAML):
 ```yaml
 version: '3.0'
-metadata:
-  created_at: "2025-11-09T00:00:00Z"
-  updated_at: "2025-11-09T00:00:00Z"
-
 work_plans:
   - id: 'plan-auth'
-    name: 'Authentication System Implementation'
-    depends_on: []  # No dependencies, can start immediately
-    # ... rest of plan
-
-  - id: 'plan-payment'
-    name: 'Payment System Integration'
-    depends_on: ['plan-auth']  # Requires auth to be complete first (same file)
-    # ... rest of plan
-
-  - id: 'plan-frontend'
-    name: 'Frontend Dashboard'
-    depends_on: ['plan-auth', 'plan-payment']  # Needs both auth and payment (same file)
-    # ... rest of plan
-```
-
-**depends_on Format:**
-
-The `depends_on` field supports TWO formats:
-
-1. **Same-file reference** (simple plan ID):
-   ```yaml
-   depends_on: ['plan-foundation']  # References plan in same YAML file
-   ```
-
-2. **Cross-file reference** (file path + plan ID):
-   ```yaml
-   depends_on: ['file:backend.yaml#backend-api']  # References plan in different file
-   ```
-
-**Cross-file reference syntax:**
-- Format: `file:<path>#<plan-id>`
-- Path can be relative or absolute
-- Example: `file:../infrastructure/database.yaml#db-setup`
-- Example: `file:.sisyphus/tasks/backend.yaml#backend-api`
-
-**Multi-file example:**
-
-`.sisyphus/tasks/backend.yaml`:
-```yaml
-version: '3.0'
-metadata: { ... }
-work_plans:
-  - id: 'backend-api'
-    name: 'Backend API'
     depends_on: []  # No dependencies
+  - id: 'plan-payment'
+    depends_on: ['plan-auth']  # Requires auth first
 ```
 
-`.sisyphus/tasks/frontend.yaml`:
+**Cross-file reference** (plans in separate YAMLs):
 ```yaml
-version: '3.0'
-metadata: { ... }
-work_plans:
-  - id: 'frontend-app'
-    name: 'Frontend App'
-    depends_on: ['file:backend.yaml#backend-api']  # Cross-file dependency
+# frontend.yaml
+depends_on: ['file:backend.yaml#backend-api']
 ```
 
-**Important Notes:**
+**Format**: `file:<path>#<plan-id>`
+- Path can be relative or absolute
+- Linter validates file existence and plan ID
 
-- **Document decisions**: In each plan's `background.reason_for_change`, explain why it's separate
-- **Cross-plan references**: Plans can reference each other in `required_background.references`
-- **Execution order**: Sisyphus executor respects `depends_on` and won't start dependent plans until prerequisites complete
-- **Atomic commits**: Each plan should represent a logically complete, committable unit of work
-- **File path validation**: Linter will ERROR if file path in `file:path#id` doesn't exist
-- **Plan ID validation**: Linter will ERROR if plan ID doesn't exist in referenced file
+### Phase 0.6: Initialize YAML File(s) (MANDATORY AFTER DECOMPOSITION)
 
-**This analysis MUST happen BEFORE information gathering** - it determines what context you need to collect and how to organize your research.
+**🚨 CRITICAL: This MUST be done AFTER decomposition decision is confirmed by user. 🚨**
 
-#### 1.4 MASSIVE PARALLEL INFORMATION GATHERING (CRITICAL PHASE)
+**Why Initialize First:**
+- Creates proper file structure immediately
+- Captures user's exact original request before any clarification
+- Enables incremental updates as we gather more information
+- Ensures clean workflow: File exists → Fill gradually → Complete plan
+
+#### Step-by-Step Process
+
+Based on Phase 0.5 decomposition decision, initialize the appropriate number of files:
+
+**Decision: Single Plan**
+- Initialize 1 file
+- Use descriptive plan name (e.g., `auth-system.yaml`, `payment-integration.yaml`)
+
+**Decision: Multiple Plans (Same File)**
+- Initialize 1 file with descriptive name covering all plans
+- Example: `ecommerce-platform.yaml` (contains: auth, payment, frontend plans)
+- File will have multiple items in `work_plans` array
+
+**Decision: Multiple Plans (Separate Files)**
+- Initialize N files, one per plan
+- Use descriptive names for each (e.g., `backend-api.yaml`, `frontend-app.yaml`)
+- Each file has 1 item in `work_plans` array
+
+#### Initialization Steps (Repeat for Each File)
+
+1. **Determine Plan Name(s)**
+   - Use kebab-case format (e.g., `auth-system`, `payment-integration`)
+   - For multiple plans in one file: use umbrella name (e.g., `ecommerce-platform`)
+   - For separate files: use specific names (e.g., `backend-api`, `frontend-app`)
+
+2. **Run sisyphus plan init (N times if needed)**
+   ```bash
+   # Single plan or multiple plans in one file:
+   sisyphus plan init .sisyphus/tasks/{plan-name}.yaml
+
+   # Multiple plans in separate files:
+   sisyphus plan init .sisyphus/tasks/{plan-1-name}.yaml
+   sisyphus plan init .sisyphus/tasks/{plan-2-name}.yaml
+   sisyphus plan init .sisyphus/tasks/{plan-N-name}.yaml
+   ```
+
+3. **Read Generated File(s)**
+   ```python
+   Read(file_path=".sisyphus/tasks/{plan-name}.yaml")
+   # Repeat for each file
+   ```
+
+4. **Fill Initial Fields in Each File**
+
+   Update ONLY these fields at this stage:
+
+   **For single plan OR multiple plans in one file:**
+   ```yaml
+   metadata:
+     created_at: "{current-timestamp-ISO8601}"
+     updated_at: "{current-timestamp-ISO8601}"
+
+   work_plans:
+     - id: 'plan-{name-1}'
+       name: '{Human-readable plan name 1}'
+       depends_on: []  # or ['plan-X'] if has dependencies
+       user_request:
+         original: "{User's exact initial request - do not modify a single character}"
+         created_at: "{current-timestamp-ISO8601}"
+         additional: []  # Will be filled during Question 1-5
+
+     # If multiple plans in one file, add more items:
+     - id: 'plan-{name-2}'
+       name: '{Human-readable plan name 2}'
+       depends_on: ['plan-{name-1}']  # if has dependency
+       user_request:
+         original: "{same user request - identical user request}"
+         created_at: "{current-timestamp-ISO8601}"
+         additional: []
+   ```
+
+   **For multiple plans in separate files:**
+   Each file gets one work_plan item with appropriate `depends_on`:
+   ```yaml
+   # backend-api.yaml
+   work_plans:
+     - id: 'backend-api'
+       depends_on: []
+       user_request:
+         original: "{User's exact initial request}"
+
+   # frontend-app.yaml
+   work_plans:
+     - id: 'frontend-app'
+       depends_on: ['file:backend-api.yaml#backend-api']  # cross-file dependency
+       user_request:
+         original: "{same user request - identical user request}"
+   ```
+
+5. **Save File(s)**
+   ```python
+   Write(file_path=".sisyphus/tasks/{plan-name}.yaml", content="{updated-yaml}")
+   # Repeat for each file
+   ```
+
+6. **Validate Dependencies with plan lint (MANDATORY)**
+
+   **🚨 CRITICAL: After setting up depends_on relationships, IMMEDIATELY run linter to validate.**
+
+   Run `sisyphus plan lint` on each created file:
+   ```bash
+   # For single file or multiple plans in one file:
+   sisyphus plan lint --file .sisyphus/tasks/{plan-name}.yaml
+
+   # For multiple separate files:
+   sisyphus plan lint --file .sisyphus/tasks/{plan-1}.yaml
+   sisyphus plan lint --file .sisyphus/tasks/{plan-2}.yaml
+   ...
+   ```
+
+   **What the linter validates:**
+   - ✅ Same-file dependencies: Plan IDs exist in `work_plans` array
+   - ✅ Cross-file dependencies: Referenced files exist at specified paths
+   - ✅ Cross-file dependencies: Referenced plan IDs exist in target files
+   - ✅ YAML schema correctness
+   - ✅ No circular dependencies
+
+   **Action based on linter result:**
+   - ✅ **If PASSED**: Proceed to step 7
+   - ❌ **If ERRORS**:
+     - Read error messages (e.g., "Plan ID 'plan-auth' not found in backend.yaml")
+     - Fix depends_on relationships or plan IDs
+     - Re-save files
+     - Re-run linter
+     - Repeat until PASSED
+
+   **Common dependency errors:**
+
+   | Error | Fix |
+   |-------|-----|
+   | `Plan ID 'plan-X' referenced but not found` | Add missing plan OR fix typo in depends_on |
+   | `File 'backend.yaml' not found` | Fix file path OR create missing file |
+   | `Circular dependency detected` | Restructure depends_on to remove cycle |
+   | `Invalid depends_on format` | Use correct format: 'plan-id' or 'file:path#plan-id' |
+
+7. **Announce Completion and Proceed**
+   ```
+   "{N} work plan files have been created:
+   - .sisyphus/tasks/{plan-1}.yaml
+   - .sisyphus/tasks/{plan-2}.yaml
+   ...
+
+   ✅ Dependency validation complete (sisyphus plan lint PASSED)
+
+   Now I will ask the essential questions."
+   ```
+   - Proceed to Question 1-5 (Initial Requirements Clarification)
+   - As each question is answered, update `user_request.additional[]` in ALL files
+   - Keep files synchronized with same user requirements
+
+#### Example Flows
+
+**Example 1: Single Plan**
+```
+User: "Implement user authentication system"
+Phase 0.5 Decision: Single plan (focused feature)
+
+Phase 0.6 Execution:
+1. [Run: sisyphus plan init .sisyphus/tasks/auth-system.yaml]
+2. [Read and update with user request]
+3. [Save]
+4. "Work plan file has been created: auth-system.yaml"
+```
+
+**Example 2: Multiple Plans (Same File)**
+```
+User: "Build e-commerce platform (auth + products + payment)"
+Phase 0.5 Decision: 3 plans in one file
+
+Phase 0.6 Execution:
+1. [Run: sisyphus plan init .sisyphus/tasks/ecommerce-platform.yaml]
+2. [Read and add 3 work_plan items with depends_on relationships]
+3. [Save]
+4. "Work plan file has been created: ecommerce-platform.yaml (includes 3 plans)"
+```
+
+**Example 3: Multiple Plans (Separate Files)**
+```
+User: "Build full-stack app (backend API + frontend)"
+Phase 0.5 Decision: 2 separate plans (frontend depends on backend)
+
+Phase 0.6 Execution:
+1. [Run: sisyphus plan init .sisyphus/tasks/backend-api.yaml]
+2. [Run: sisyphus plan init .sisyphus/tasks/frontend-app.yaml]
+3. [Update backend-api.yaml: depends_on: []]
+4. [Update frontend-app.yaml: depends_on: ['file:backend-api.yaml#backend-api']]
+5. [Save both]
+6. "2 work plan files have been created:
+   - backend-api.yaml
+   - frontend-app.yaml (starts after backend-api completion)"
+```
+
+**Benefits of This Approach:**
+- ✅ User's exact request captured immediately (no loss/modification)
+- ✅ Files exist from start → can be viewed/tracked by user
+- ✅ Incremental updates as we gather info → transparent progress
+- ✅ Clean separation: Decompose → Init → Capture → Question → Fill → Complete
+- ✅ Dependency relationships (`depends_on`) set up from the beginning
+- ✅ No risk of forgetting user's original words after long clarification
+
+### Phase 1: Initial Analysis and Information Gathering
+
+**⚠️ NOTE: Phase 0.5 (Decomposition) and Phase 0.6 (Initialize YAML Files) MUST be completed before Phase 1.**
+
+#### 1.1 Determine Mode
+Check user request for mode indicators:
+- Keywords like "edit", "modify", "update" → Edit existing plan
+- Default → New plan creation
+
+#### 1.2 Requirements Analysis
+1. **Identify Work Goals**
+   - Clarify final objectives user wants to achieve
+   - Distinguish functional and non-functional requirements
+   - Define success criteria (product/user outcomes, not just technical)
+
+2. **Scope Setting**
+   - Separate what's included vs excluded
+   - Set priorities
+   - Review phased implementation feasibility
+
+#### 1.3 MASSIVE PARALLEL INFORMATION GATHERING (CRITICAL PHASE)
 
 **CORE PRINCIPLE: PARALLEL EXECUTION FIRST**
 
@@ -1045,11 +1244,11 @@ metadata:
 
 work_plans:  # REQUIRED, list[WorkPlan] - array of work plans
   - id: 'plan-id'              # REQUIRED, string - unique plan identifier
-    name: '작업 계획서 이름'     # REQUIRED, string - human-readable plan name
+    name: 'Work Plan Name'     # REQUIRED, string - human-readable plan name
     depends_on: []             # REQUIRED, list[string] - array of plan IDs this depends on
 
     user_request:
-      original: "[사용자의 정확한 최초 요청 내용]"  # REQUIRED, string
+      original: "[User's exact initial request]"  # REQUIRED, string
       created_at: "2025-11-04T00:00:00Z"            # REQUIRED, ISO 8601
       additional: []                                 # OPTIONAL, list[string]
         # USE THIS FIELD to document Step 0 question answers:
@@ -1059,18 +1258,18 @@ work_plans:  # REQUIRED, list[WorkPlan] - array of work plans
         # - "Tech Stack Decision: [Answer to Question 4 if applicable]"
 
     objectives:
-      core: "[핵심 목표를 1-2문장으로 명확하게 설명]"  # REQUIRED, string
+      core: "[Clearly explain core goal in 1-2 sentences]"  # REQUIRED, string
       detailed: []  # OPTIONAL, list of {goal: str, measurable: str}
-        # - goal: "[세부 목표 설명]"
-        #   measurable: "[측정 가능한 지표]"
+        # - goal: "[Detailed goal description]"
+        #   measurable: "[Measurable metrics]"
 
     background:
-      current_situation: "[시스템의 현재 상태, 존재하는 문제점]"  # REQUIRED, string
-      reason_for_change: "[이 작업이 필요한 이유, 해결하려는 문제]"  # REQUIRED, string
-      changes_to_make: "[현재 상태 → 미래 상태 명확하게 대비]"      # REQUIRED, string
+      current_situation: "[Current system state, existing problems]"  # REQUIRED, string
+      reason_for_change: "[Why this work is needed, problems to solve]"  # REQUIRED, string
+      changes_to_make: "[Clearly contrast current state → future state]"      # REQUIRED, string
 
     required_background:
-      description: "[이 작업을 수행하는데 필요한 도메인 지식, 기술 스택 등]"  # REQUIRED, string
+      description: "[Domain knowledge, tech stack, etc. needed to perform this work]"  # REQUIRED, string
       file_structure: null  # OPTIONAL, string | null
       references: []  # OPTIONAL, list[ReferenceItem]
         # Example:
@@ -1116,7 +1315,7 @@ work_plans:  # REQUIRED, list[WorkPlan] - array of work plans
 
     todos:  # REQUIRED, list[Todo]
       - id: "1"           # REQUIRED, string (pattern: ^\d+(\.\d+)*$)
-        title: "[Task 1 - 기능 설명]"  # REQUIRED, string
+        title: "[Task 1 - Feature description]"  # REQUIRED, string
         description: null   # OPTIONAL, string | null - brief task summary
         status: pending     # REQUIRED, enum: pending | in_progress | completed
         references: []      # OPTIONAL, list[ReferenceItem]

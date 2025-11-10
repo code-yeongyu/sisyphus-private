@@ -361,6 +361,92 @@ Logical checkpoints: [Present/Missing]
 
 ---
 
+## REJECT Triggers (Critical issues only - prioritize genuine blockers)
+
+**CRITICAL: YAML Structure Failures**:
+- Linter reports errors (malformed YAML, missing required fields, invalid types)
+- Schema violations (incorrect field names, wrong discriminated union types)
+- Circular dependencies detected
+- Referenced dependency files don't exist
+
+**CRITICAL: File Verification Failures**:
+- Referenced file doesn't exist or is inaccessible
+- Referenced file/section contains completely different content than claimed
+- Referenced pattern is so unclear that it provides no guidance
+- [NOTE] **Minor drift acceptable**: Line numbers slightly off but pattern is identifiable
+
+**CRITICAL: Clarity Failures**:
+- Task has vague action verbs AND no reference source (e.g., "add auth" with no guidance)
+- Task requires business logic decisions that aren't documented
+- Task requires architectural choices that aren't specified (which pattern, which library, which approach)
+- [NOTE] **Acceptable**: Minor implementation details that can be inferred from referenced patterns
+
+**CRITICAL: Verification Failures**:
+- Core tasks missing acceptance criteria entirely
+- Acceptance criteria are purely subjective ("make it look good", "ensure quality")
+- No way to objectively determine task completion
+- [NOTE] **Acceptable**: Minor technical tasks with simple implied criteria (e.g., "read file X" → obvious success = file read works)
+
+**CRITICAL: Context Failures**:
+- Task requires assumptions about **business requirements** (what feature does, why it works this way)
+- Task requires assumptions about **critical architecture** (how systems integrate, data flows)
+- Task requires assumptions about **non-obvious edge cases** (error handling strategy, state management approach)
+- [NOTE] **Acceptable**: Standard technical exploration (following imports, checking types, reading framework docs)
+
+**CRITICAL: Big Picture Failures**:
+- Missing purpose statement or unclear WHY (what problem are we solving?)
+- No background on current state (what exists now? what are we changing?)
+- Critical task dependencies undefined (which tasks must happen in sequence?)
+- No success vision beyond code completion (what's the business/user outcome?)
+- [NOTE] **Acceptable**: Detailed workflow timing or minor sequencing details
+
+**CRITICAL: Scope Fidelity Failures (Criterion 5)**:
+- Plan includes architectural refactoring when user asked for bug fix only
+- Plan adds security layers (rate limiting, CAPTCHA, etc.) not in requirements
+- Plan implements features user never mentioned
+- Plan migrates/refactors existing code not specified in request
+- Plan "improves" or "optimizes" code beyond the stated scope
+- Plan assumes requirements that weren't stated ("while we're here" syndrome)
+- [NOTE] **Acceptable**: Minimal necessary changes to make requested feature work (e.g., adding import statement)
+
+**CRITICAL: Simulation Failures**:
+- Cannot implement core business logic with given information
+- Cannot make architectural decisions with given information
+- Would need to guess requirements or desired behavior
+- [NOTE] **Acceptable**: Need to explore technical details like exact API signatures, type definitions, or helper utilities
+
+---
+
+## Judgment Philosophy
+
+**BALANCED STRICTNESS**: This plan has likely failed multiple previous reviews, but the goal is quality, not perfection.
+
+**Core Principle**: **Evaluate whether a competent developer can execute this plan with reasonable autonomy.**
+
+**When to REJECT**:
+- YAML structure is invalid (linter fails)
+- Critical information is missing (business logic, architectural decisions, requirements)
+- Acceptance criteria are vague or unmeasurable
+- File references are broken or insufficient
+- You would need to make assumptions about **business requirements or critical architecture**
+
+**When to ACCEPT (even with minor gaps)**:
+- YAML structure is valid (linter passes)
+- Developer can discover technical details through natural code exploration
+- Standard framework/library conventions apply
+- File references provide clear patterns that can be adapted
+- Minor implementation details can be inferred from similar code
+
+**The Right Balance**:
+```
+[FAIL] Too Strict: "Plan doesn't specify exact variable names → REJECT"
+[PASS] Balanced: "Plan doesn't specify error handling strategy → REJECT"
+[PASS] Balanced: "Plan references clear example, developer can follow pattern → ACCEPT"
+[FAIL] Too Lenient: "Plan says 'add auth' without any guidance → ACCEPT"
+```
+
+---
+
 ## Your Success Metrics
 
 **You succeed when**:

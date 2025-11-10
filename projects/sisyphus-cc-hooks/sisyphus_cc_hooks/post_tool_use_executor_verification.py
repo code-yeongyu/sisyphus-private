@@ -6,6 +6,7 @@
 # pyright: reportMissingImports=false
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import NotRequired, TypedDict
@@ -36,6 +37,24 @@ def run_verify_status(cwd: str) -> str:
             return "[Verification status unavailable]"
     except Exception:
         return "[Verification status unavailable]"
+
+
+def check_git_status(cwd: str) -> bool:
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            check=False,
+            cwd=cwd,
+            capture_output=True,
+            text=False,
+        )
+        if result.returncode == 0:
+            output = result.stdout.decode("utf-8", errors="replace").strip()
+            return len(output) > 0
+        else:
+            return False
+    except Exception:
+        return False
 
 
 def format_verification_guide() -> str:
@@ -136,14 +155,38 @@ Shows:
 
 AFTER ALL VERIFICATIONS
 Once all verifications show complete:
+
+4. COMMIT YOUR CHANGES (MANDATORY)
+  Before proceeding, check for uncommitted changes:
+  ```sh
+  git status
+  ```
+
+  If there are uncommitted changes:
+  - Review the changes: git diff
+  - Stage relevant files: git add <files>
+  - Create a meaningful commit:
+    ```sh
+    git commit -m "feat: <description of changes>"
+    ```
+
+  COMMIT STRATEGY:
+  - Commit logical units of work (feature + tests together)
+  - Use conventional commit format (feat:, fix:, refactor:, etc.)
+  - Include what changed and why in commit message
+  - DO NOT leave work uncommitted before moving to next task
+
+  Then proceed to continue:
+  ```sh
   sisyphus task continue
+  ```
 
 This will:
 - Mark current task as completed
 - Move to next pending task
 - Start sisyphus-executor on next task
 
-YOU MUST RUN 'sisyphus task continue' TO PROCEED.
+YOU MUST COMMIT CHANGES BEFORE RUNNING 'sisyphus task continue'.
 
 [MANDATORY REPORTING FORMAT]
 After completing EACH verification, report to user in this format:
@@ -264,12 +307,50 @@ def main() -> int:
         return 0
 
     verify_status_output = run_verify_status(cwd)
+    has_uncommitted_changes = check_git_status(cwd)
 
     message = format_header()
     message += "\n[CURRENT VERIFICATION STATUS]\n"
     message += verify_status_output
     message += "\n"
     message += format_verification_guide()
+
+    if has_uncommitted_changes:
+        message += "\n"
+        message += """
+[CRITICAL WARNING: UNCOMMITTED CHANGES DETECTED]
+
+Git status check shows you have uncommitted changes in your working directory.
+
+BEFORE running 'sisyphus task continue', you MUST commit your changes:
+
+1. Review your changes:
+   git status
+   git diff
+
+2. Stage relevant files:
+   git add <files>
+
+3. Create a meaningful commit:
+   git commit -m "feat: <description of changes>"
+
+   Use conventional commit format:
+   - feat: New feature
+   - fix: Bug fix
+   - refactor: Code refactoring
+   - test: Adding tests
+   - docs: Documentation changes
+
+4. Verify commit:
+   git log -1
+
+COMMIT STRATEGY:
+- Commit logical units of work (feature + tests together)
+- Include what changed and why in commit message
+- DO NOT leave work uncommitted before moving to next task
+
+YOU MUST COMMIT ALL CHANGES BEFORE PROCEEDING.
+"""
 
     print(message, file=sys.stderr)
     return 2

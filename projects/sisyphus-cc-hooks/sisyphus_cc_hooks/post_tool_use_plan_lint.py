@@ -47,19 +47,14 @@ def run_sisyphus_plan_lint(yaml_path: str, cwd: str) -> tuple[bool, str]:
         error_output = result.stderr.strip() if result.stderr.strip() else result.stdout.strip()
 
         message = f"""
-╭─────────────────────────────────────────────────────────────────────╮
-│ ⚠️  SISYPHUS PLAN YAML VALIDATION FAILED                            │
-╰─────────────────────────────────────────────────────────────────────╯
+SISYPHUS PLAN YAML VALIDATION FAILED
 
 File: {yaml_path}
 Exit Code: {result.returncode}
 
 {error_output}
 
-╭─────────────────────────────────────────────────────────────────────╮
-│ 🔧 REQUIRED ACTION                                                  │
-╰─────────────────────────────────────────────────────────────────────╯
-
+REQUIRED ACTION:
 The YAML file you just wrote/edited has validation errors.
 You MUST fix these errors before proceeding.
 

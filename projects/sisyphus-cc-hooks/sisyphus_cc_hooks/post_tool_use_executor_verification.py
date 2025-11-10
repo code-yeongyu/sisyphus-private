@@ -1,143 +1,230 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["pydantic>=2.0", "anyio>=4.0", "ruamel.yaml>=0.18"]
+# dependencies = ["anyio>=4.0"]
 # ///
 # pyright: reportMissingImports=false
 
 import json
 import sys
-from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import NotRequired, TypedDict
 
 import anyio
-from pydantic import BaseModel
-from ruamel.yaml import YAML
 
 EXECUTOR_AGENT_NAME = "sisyphus-executor"
 
 
-# Pydantic models (standalone - copied from sisyphus.core.plans.models)
-class LLMJudgeBy(str, Enum):
-    ORCHESTRATOR = "orchestrator-agent"
-    EXTERNAL = "external-agent"
+class ToolInput(TypedDict):
+    subagent_type: NotRequired[str]
 
 
-class BashVerification(BaseModel):
-    execute: str
-    expected_stdout: str | None = None
-    expected_stderr: str | None = None
-    expected_exit_code: int = 0
-    notes: str | None = None
+class HookInput(TypedDict):
+    tool_input: NotRequired[ToolInput]
+    cwd: NotRequired[str]
 
 
-class LLMJudgeVerification(BaseModel):
-    by: LLMJudgeBy = LLMJudgeBy.ORCHESTRATOR
-    context_commands: list[str] = []
-    instruction: str
-
-
-class VerificationItem(BaseModel):
-    id: str
-    title: str
-    description: str
-    verified: bool = False
-    verified_at: str | None = None
-    verification_evidence: str | None = None
-    orchestrator_manually_verified: bool
-    manual_verification_evidence: str
-    bash: list[BashVerification] = []
-    llm_judge: list[LLMJudgeVerification] = []
-
-
-class Todo(BaseModel):
-    id: str
-    title: str
-    status: str
-    verification_spec: list[VerificationItem] = []
-    children: list["Todo"] | None = None
-
-
-class WorkMode(BaseModel):
-    current_task_id: str | None = None
-
-
-class WorkPlan(BaseModel):
-    id: str
-    todos: list[Todo]
-    work_mode: WorkMode
-
-
-class PlanDocument(BaseModel):
-    work_plans: list[WorkPlan]
-
-
-async def load_plan_standalone(plan_path: Path) -> PlanDocument:
-    """Load YAML plan without sisyphus imports."""
-    yaml = YAML()
-    yaml.preserve_quotes = True
-
+def run_verify_status(cwd: str) -> str:
     try:
-        async with await anyio.open_file(plan_path, "r") as f:
-            content = await f.read()
-        data = yaml.load(content)
-        return PlanDocument(**data)
-    except Exception as e:
-        raise RuntimeError(f"Failed to load YAML: {e}")
+        result = anyio.run(
+            anyio.run_process,
+            ["sisyphus", "task", "verify", "status", "--cwd", cwd],
+        )
+        if result.returncode == 0:
+            return result.stdout.decode("utf-8", errors="replace")
+        else:
+            return "[Verification status unavailable]"
+    except Exception:
+        return "[Verification status unavailable]"
 
 
-def find_todo_by_id_standalone(todos: list[Todo], target_id: str) -> Todo | None:
-    """Find todo by ID (recursively search children)."""
-    for todo in todos:
-        if todo.id == target_id:
-            return todo
-        if todo.children:
-            found = find_todo_by_id_standalone(todo.children, target_id)
-            if found:
-                return found
-    return None
-
-
-def find_next_unverified(verifications: list[VerificationItem]) -> VerificationItem | None:
-    """Find first unverified item in list order."""
-    for v in verifications:
-        if not v.verified:
-            return v
-    return None
-
-
-def determine_verification_type(verify_item: VerificationItem) -> tuple[str, VerificationItem]:
-    """Determine verification type: bash, llm_orchestrator, or llm_external.
-
-    Returns:
-        ("bash", verify_item) or
-        ("llm_orchestrator", verify_item) or
-        ("llm_external", verify_item)
-    """
-    if verify_item.bash:
-        return ("bash", verify_item)
-    elif verify_item.llm_judge:
-        llm_item = verify_item.llm_judge[0]
-        if llm_item.by == LLMJudgeBy.ORCHESTRATOR:
-            return ("llm_orchestrator", verify_item)
-        else:  # LLMJudgeBy.EXTERNAL
-            return ("llm_external", verify_item)
-    else:
-        raise ValueError(f"VerificationItem {verify_item.id} has neither bash nor llm_judge")
-
-
-def format_common_header() -> str:
-    """Generate common header for executor completion."""
+def format_verification_guide() -> str:
     return """
-========================================
-🎯 EXECUTOR TASK COMPLETION DETECTED
-========================================
+VERIFICATION WORKFLOW
+Follow this sequence to complete all verifications:
+
+1. BASH AUTOMATED VERIFICATION
+    Run automated bash tests:
+    ```sh
+    sisyphus task verify bash
+    ```
+
+  This command:
+  - Executes all bash verification commands automatically
+  - Sets verified=True if all exit codes are 0
+  - Shows detailed output on failure
+
+  On failure:
+  - Review error messages
+  - Fix issues
+  - Re-run 'sisyphus task verify bash'
+  - Or request sisyphus-executor to fix
+
+2. LLM VERIFICATION (Orchestrator)
+  Get your next LLM verification instructions:
+    sisyphus task verify llm
+
+  This shows:
+  - Verification instruction
+  - Context collection commands
+  - Required evidence format
+
+  Mark your verification as complete with detailed evidence:
+    ```sh
+    sisyphus task verify llm-mark <verify-id> --evidence "<detailed findings>"
+    ```
+
+  Evidence MUST include:
+  - Specific items verified (functions, files, metrics)
+  - How verification was done (tools used, commands run)
+  - Results obtained (pass/fail, exact numbers)
+  - Any unexpected findings
+
+  Good evidence example:
+    "All functions have type hints (ruff check passed),
+     try-except blocks in 5 locations properly handle errors,
+     pytest --cov shows 87% coverage (target: 80%),
+     All 8 public functions have complete docstrings"
+
+  Bad evidence examples:
+    "Code looks good"
+    "Tests passed"
+    "Everything is fine"
+
+3. MANUAL VERIFICATION
+  Check manual verification requirements:
+  ```sh
+   sisyphus task verify manual
+   ```
+
+  Mark as complete:
+    sisyphus task verify manual-mark <verify-id> --evidence "<very detailed evidence>"
+
+  CRITICAL WARNING:
+  DO NOT use "LLM judge passed" or "previous verification completed" as evidence.
+  Manual verification requires INDEPENDENT, DIRECT observation and testing.
+
+  Evidence MUST include:
+  1. WHAT you verified (specific UI elements, pages, features)
+  2. HOW you verified (browser version, environment, tools)
+  3. WHAT the results were (exact behavior observed)
+  4. ANY unexpected findings (screenshots, logs)
+
+  Good evidence example:
+    "Chrome 120.0 / macOS 14.2 environment:
+     - Login page: Email/password fields render correctly at /login
+     - Submit click: POST /api/auth/login request (DevTools Network tab)
+     - Success: JWT token in LocalStorage 'auth_token' key
+     - Error handling: Wrong password -> 'Authentication failed' in red
+     - Redirect: Success -> /dashboard (verified URL change)
+     - Token expiry: Auto-logout after 15 minutes (timed test)"
+
+  Bad evidence examples:
+    "UI test done"
+    "Checked in browser"
+    "Works fine"
+    "LLM verification passed so this is good"
+
+CHECK STATUS ANYTIME
+View all verification status:
+  sisyphus task verify status
+
+Shows:
+- Total progress (completed/total)
+- Each verification item status
+- Task breakdown
+
+AFTER ALL VERIFICATIONS
+Once all verifications show complete:
+  sisyphus task continue
+
+This will:
+- Mark current task as completed
+- Move to next pending task
+- Start sisyphus-executor on next task
+
+YOU MUST RUN 'sisyphus task continue' TO PROCEED.
+
+[MANDATORY REPORTING FORMAT]
+After completing EACH verification, report to user in this format:
+
+```
+- Verification Report: [bash/llm/manual] verification completed
+- Verification Type: [automated bash/LLM judge/manual inspection]
+- Commands Executed:
+  - [exact commands you ran, e.g., sisyphus task verify bash]
+  - [exact commands you ran, e.g., pytest projects/sisyphus-cli/]
+  - [exact commands you ran, e.g., ruff check .]
+- Evidence Collected:
+  - What verified: [specific items: functions, files, test results, metrics]
+  - How verified: [tools used, manual inspection steps, browser tests]
+  - Results obtained: [pass/fail, exact numbers, error messages if any]
+  - Unexpected findings: [any issues discovered, edge cases found]
+- Acceptance Criteria: [which criteria from todo were verified and how]
+- Status: [PASS/FAIL] - [brief reason]
+```
+
+After ALL verifications complete, report:
+```
+- Final Status: All verifications completed
+- Task Status: Ready to continue (will run sisyphus task continue)
+- Next Action: Moving to next task
+```
+
+[CRITICAL RULES - DO NOT VIOLATE]
+1. NEVER skip verification steps - all must be completed
+2. NEVER accept "looks good" or "seems fine" as evidence
+3. NEVER trust executor's claims without independent verification
+4. NEVER move forward with failing tests or lint errors
+5. ALWAYS provide concrete evidence (command outputs, file contents, test results)
+6. ALWAYS run 'sisyphus task continue' after all verifications pass
+
+[IMPORTANT - NO SKIPPING]
+The concept of "skipping verification" does NOT exist.
+If verification fails, summon sisyphus-executor again to fix the issues.
+Repeat until all verifications pass.
+Again: The concept of "skipping verification" does NOT exist.
+
+[CRITICAL - REMEMBER YOUR IDENTITY]
+YOU ARE THE ORCHESTRATOR, NOT THE EXECUTOR.
+Your role is to VERIFY and DELEGATE, NOT to implement or fix code yourself.
+
+NEVER do direct work:
+- DO NOT write code yourself
+- DO NOT fix bugs yourself
+- DO NOT implement features yourself
+- DO NOT modify files yourself
+
+ALWAYS delegate to sisyphus-executor:
+- If verification fails: Summon sisyphus-executor to fix
+- If tests fail: Summon sisyphus-executor to fix
+- If lint errors: Summon sisyphus-executor to fix
+- If anything incomplete: Summon sisyphus-executor to fix
+
+Your ONLY job:
+1. VERIFY executor's work thoroughly
+2. DELEGATE fixes to executor when needed
+3. REPEAT until all verifications pass
+
+DO NOT FORGET: You are the orchestrator. Delegate, don't implement.
+"""
+
+
+def format_header() -> str:
+    return """
+EXECUTOR TASK COMPLETION DETECTED
 
 [CRITICAL NOTICE]
-The @agent-sisyphus-executor has just FINISHED execution.
+The sisyphus-executor has just FINISHED execution.
+This message appearing means the executor has REPORTED task completion.
 Even if executor provided NO response, this means execution has TERMINATED.
-You are NOT waiting for work completion - the work phase is ALREADY DONE.
+
+[IMPORTANT - NO WAITING CONCEPT]
+The concept of "waiting for executor to finish work" does NOT exist.
+If this message is displayed, it means the executor has already reported completion.
+The work phase is ALREADY DONE - you are NOT waiting for anything.
+Proceed immediately to verification.
+Again: There is NO concept of "waiting for executor completion".
 
 YOUR MANDATORY DUTIES AS ORCHESTRATOR:
 1. INSPECT the actual code changes - verify they match requirements
@@ -146,209 +233,46 @@ YOUR MANDATORY DUTIES AS ORCHESTRATOR:
 4. CHECK conventions - ensure code follows project standards
 
 VERIFICATION IS MANDATORY. YOU CANNOT SKIP THIS.
+
+[CRITICAL MINDSET: EXECUTOR AGENTS ARE LAZY AND UNRELIABLE]
+- Executors WILL claim tasks complete when they are NOT
+- Executors WILL say tests pass when they FAIL or weren't run
+- Executors WILL report success to avoid more work
+- NEVER TRUST executor reports at face value
+- YOU must verify EVERYTHING independently
 """
-
-
-def format_bash_message(verify_item: VerificationItem) -> str:
-    """Generate bash verification message."""
-    bash_commands = "\n".join(f"  - {b.execute}" for b in verify_item.bash)
-
-    return f"""
-[BASH VERIFICATION REQUIRED]
-Next verification: {verify_item.title}
-Description: {verify_item.description}
-
-AUTOMATED VERIFICATION AVAILABLE:
-Run: sisyphus task verify bash
-
-This will execute:
-{bash_commands}
-
-Expected: All commands exit with code 0
-On success: verified=True is set automatically
-On failure: Fix issues and retry
-
-YOU MUST RUN THIS COMMAND BEFORE PROCEEDING.
-"""
-
-
-def format_llm_orchestrator_message(verify_item: VerificationItem) -> str:
-    """Generate LLM orchestrator verification message."""
-    llm_item = verify_item.llm_judge[0]
-    instruction = llm_item.instruction
-
-    return f"""
-[LLM VERIFICATION REQUIRED - YOUR RESPONSIBILITY]
-Next verification: {verify_item.title}
-Description: {verify_item.description}
-
-Verification by: ORCHESTRATOR (YOU)
-Instruction: {instruction}
-
-WHAT YOU MUST DO:
-1. Follow the instruction above carefully
-2. Perform the verification yourself
-3. Mark as verified with evidence:
-   sisyphus task verify llm-mark {verify_item.id} --evidence "<your findings>"
-
-RESPOND IN THIS FORMAT TO CONFIRM YOU COMPLETED VERIFICATION:
-```
-Verification completed for {verify_item.title}.
-Evidence: <detailed description of what you verified>
-Command executed: sisyphus task verify llm-mark {verify_item.id} --evidence "..."
-```
-
-YOU CANNOT PROCEED WITHOUT COMPLETING THIS VERIFICATION.
-"""
-
-
-def format_llm_external_message(verify_item: VerificationItem) -> str:
-    """Generate LLM external verification message."""
-    llm_item = verify_item.llm_judge[0]
-    instruction = llm_item.instruction
-
-    return f"""
-[LLM VERIFICATION REQUIRED - EXTERNAL AGENT]
-Next verification: {verify_item.title}
-Description: {verify_item.description}
-
-Verification by: EXTERNAL AGENT (Claude Agent SDK)
-Instruction: {instruction}
-
-WHAT YOU MUST DO:
-1. Invoke external agent with instruction above
-2. Collect verification evidence from agent
-3. Ensure agent provides:
-   {verify_item.id}_VERIFIED = TRUE
-   {verify_item.id}_VERIFICATION_EVIDENCE = "<evidence description>"
-4. Mark as verified:
-   sisyphus task verify llm-mark {verify_item.id} --evidence "<agent's evidence>"
-
-YOU CANNOT PROCEED WITHOUT COMPLETING THIS VERIFICATION.
-"""
-
-
-def format_continue_message() -> str:
-    """Generate continue work message."""
-    return """
-[ALL VERIFICATIONS COMPLETED]
-✓ All verification items have been marked as verified.
-
-YOU CAN NOW PROCEED TO NEXT TASK:
-Run: sisyphus task continue
-
-RESPOND IN THIS FORMAT AFTER RUNNING THE COMMAND:
-```
-sisyphus task continue executed successfully.
-Next task information received and task has moved forward.
-Now assigning executor agent for next task.
-```
-
-YOU MUST RUN 'sisyphus task continue' TO PROCEED.
-WITHOUT EXECUTING THIS COMMAND, YOU CANNOT MOVE TO THE NEXT TASK.
-"""
-
-
-def parse_input() -> dict[str, Any]:
-    return json.loads(sys.stdin.read())
-
-
-def load_plan_from_status(cwd: str) -> tuple[PlanDocument, str]:
-    status_path = Path(cwd) / ".sisyphus" / "status.json"
-    if not status_path.exists():
-        raise FileNotFoundError("No active plan (.sisyphus/status.json not found)")
-
-    status_data: dict[str, Any] = json.loads(status_path.read_text())
-    current_plan_data: dict[str, Any] | None = status_data.get("current_plan")
-    if not current_plan_data:
-        raise RuntimeError("No current_plan in status.json")
-
-    current_plan_path: str | None = current_plan_data.get("plan_path")
-    if not current_plan_path:
-        raise RuntimeError("No plan_path in current_plan")
-
-    plan_path = Path(cwd) / current_plan_path
-    if not plan_path.exists():
-        raise FileNotFoundError(f"Plan file not found: {plan_path}")
-
-    plan_doc: PlanDocument = anyio.run(load_plan_standalone, plan_path)
-
-    if not plan_doc.work_plans:
-        raise RuntimeError("No work_plans in YAML")
-
-    work_plan: WorkPlan = plan_doc.work_plans[0]
-    current_task_id: str | None = work_plan.work_mode.current_task_id
-
-    if not current_task_id:
-        raise ValueError("No task in progress")
-
-    return plan_doc, current_task_id
-
-
-def process_verification(plan_doc: PlanDocument, current_task_id: str) -> tuple[int, str]:
-    work_plan: WorkPlan = plan_doc.work_plans[0]
-    current_task: Todo | None = find_todo_by_id_standalone(work_plan.todos, current_task_id)
-    if current_task is None:
-        raise RuntimeError(f"Current task not found: {current_task_id}")
-
-    verifications: list[VerificationItem] = current_task.verification_spec
-    if not verifications:
-        message = format_common_header() + "\n" + format_continue_message()
-        return (2, message)
-
-    next_unverified = find_next_unverified(verifications)
-    if next_unverified is None:
-        message = format_common_header() + "\n" + format_continue_message()
-        return (2, message)
-
-    verify_type, verify_item = determine_verification_type(next_unverified)
-
-    message = format_common_header() + "\n"
-    match verify_type:
-        case "bash":
-            message += format_bash_message(verify_item)
-        case "llm_orchestrator":
-            message += format_llm_orchestrator_message(verify_item)
-        case "llm_external":
-            message += format_llm_external_message(verify_item)
-        case _:
-            pass
-
-    return (2, message)
 
 
 def main() -> int:
     try:
-        input_data = parse_input()
+        input_data: HookInput = json.loads(sys.stdin.read())
     except json.JSONDecodeError as e:
         print(f"Error: Invalid JSON input: {e}", file=sys.stderr)
         return 1
 
-    tool_input: dict[str, Any] = input_data.get("tool_input", {})
-    subagent_type: str = tool_input.get("subagent_type", "")
-    cwd: str = input_data.get("cwd", ".")
+    tool_input = input_data.get("tool_input", {})
+    subagent_type = tool_input.get("subagent_type", "")
+    cwd = input_data.get("cwd", ".")
 
     if subagent_type != EXECUTOR_AGENT_NAME:
         print(f"Skipping hook: Not executor agent (got: {subagent_type})", file=sys.stderr)
         return 0
 
-    try:
-        plan_doc, current_task_id = load_plan_from_status(cwd)
-    except ValueError as e:
-        # No task in progress - exit quietly
-        print(str(e), file=sys.stderr)
+    status_path = Path(cwd) / ".sisyphus" / "status.json"
+    if not status_path.exists():
+        print("No active plan found", file=sys.stderr)
         return 0
-    except (FileNotFoundError, json.JSONDecodeError, RuntimeError) as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
 
-    try:
-        exit_code, message = process_verification(plan_doc, current_task_id)
-        print(message, file=sys.stderr)
-        return exit_code
-    except RuntimeError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
+    verify_status_output = run_verify_status(cwd)
+
+    message = format_header()
+    message += "\n[CURRENT VERIFICATION STATUS]\n"
+    message += verify_status_output
+    message += "\n"
+    message += format_verification_guide()
+
+    print(message, file=sys.stderr)
+    return 2
 
 
 if __name__ == "__main__":

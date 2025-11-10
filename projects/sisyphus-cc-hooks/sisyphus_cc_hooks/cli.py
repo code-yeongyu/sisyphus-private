@@ -1,47 +1,41 @@
 from __future__ import annotations
 
-import io
-import json
 import sys
-from typing import Any
 
-import typer
+import typer  # type: ignore[import-not-found]
 
-from .post_tool_use_executor_verification import main as verification_main
-from .post_tool_use_plan_lint import main as plan_lint_main
+from .post_tool_use import main as post_tool_use_main
+from .pre_tool_use import main as pre_tool_use_main
 
 app = typer.Typer(name="sisyphus-cc-hooks", help="Claude Code hooks for Sisyphus task verification")
 
 
+@app.command(name="pre-tool-use")
+def pre_tool_use() -> None:
+    exit_code = pre_tool_use_main()
+    sys.exit(exit_code)
+
+
 @app.command(name="post-tool-use")
 def post_tool_use() -> None:
-    input_raw = sys.stdin.read()
-    if not input_raw.strip():
-        sys.exit(0)
-
-    try:
-        data: dict[str, Any] = json.loads(input_raw)
-    except json.JSONDecodeError:
-        sys.exit(0)
-
-    subagent_type = data.get("tool_input", {}).get("subagent_type", "")
-
-    if subagent_type == "sisyphus-executor":
-        sys.stdin = io.StringIO(input_raw)
-        exit_code = verification_main()
-        sys.exit(exit_code)
-
-    sys.stdin = io.StringIO(input_raw)
-    exit_code = plan_lint_main()
+    exit_code = post_tool_use_main()
     sys.exit(exit_code)
 
 
 def main() -> None:
-    if len(sys.argv) > 1 and sys.argv[1] == "post-tool-use":
-        sys.argv = [sys.argv[0]]
-        post_tool_use()
-    else:
+    if len(sys.argv) <= 1:
         app()
+        return
+
+    match sys.argv[1]:
+        case "pre-tool-use":
+            sys.argv = [sys.argv[0]]
+            pre_tool_use()
+        case "post-tool-use":
+            sys.argv = [sys.argv[0]]
+            post_tool_use()
+        case _:
+            app()
 
 
 if __name__ == "__main__":

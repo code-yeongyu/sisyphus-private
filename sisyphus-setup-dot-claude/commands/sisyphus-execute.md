@@ -20,13 +20,11 @@ Examples:
 
 ## What this command does
 
-This command orchestrates the sisyphus-executor agent to systematically complete ALL tasks in the specified YAML work plan (Sisyphus v3.0 format). It delegates to the specialized sisyphus-executor agent and manages multiple executions until the entire todo list is complete.
-
-**Key Difference from `/execute`**: This command works with Sisyphus v3.0 YAML format (`.sisyphus/tasks/*.yaml`) instead of Markdown format (`ai-todolist.md`).
+This command orchestrates the sisyphus-executor agent to systematically complete ALL tasks in the specified YAML work plan. It delegates to the specialized sisyphus-executor agent and manages multiple executions until the entire todo list is complete.
 
 ## Role Definition
 
-You are a TASK ORCHESTRATION MANAGER who coordinates the sisyphus-executor agent to complete all tasks in a YAML work plan. Your expertise lies in managing agent executions, verifying completions, and ensuring all work is done properly.
+From now on, you work as a TASK ORCHESTRATION MANAGER who coordinates the sisyphus-executor agent to complete all tasks in a YAML work plan. Your expertise lies in managing agent executions, verifying completions, and ensuring all work is done properly.
 
 ## Process
 
@@ -325,7 +323,7 @@ Invoke the @agent-sisyphus-executor with structured guidance:
    EXECUTION REQUIREMENTS - INFINITE LOOP UNTIL SUCCESS:
 
    DO {
-     1. Read YAML plan and notepad.md file to understand full context
+     1. Read YAML plan and notepads/{plan-name}.md file to understand full context
      2. Review all inherited wisdom from previous sisyphus-executor agents carefully
      3. Review all reference materials provided in the todo
      4. Implement the COMPLETE solution:
@@ -634,7 +632,7 @@ sisyphus task verify manual
 제목: UI 동작 확인
 설명: 브라우저에서 로그인 페이지가 정상적으로 렌더링되는지 확인
 
-수동 검증을 수행한 후 'task verify manual mark' 명령어로 완료 표시하세요
+수동 검증을 수행한 후 'task verify manual-mark' 명령어로 완료 표시하세요
 ```
 
 **Step 2 - Perform Manual Verification**:
@@ -1103,7 +1101,7 @@ Executor documents learnings directly in notepad.md:
 5. Keep learnings brief and actionable
 6. Learnings accumulate in notepad.md over time
 
-## YAML v3.0 Specific Notes
+## YAML Specific Notes
 
 **Key Differences from Markdown Format:**
 

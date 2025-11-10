@@ -47,6 +47,16 @@ This means:
    - Include automated verification (bash command or llm_judge)
    - Interleave test tasks with implementation (don't defer all testing to the end)
 
+3. **Commit Planning (MANDATORY - CRITICAL FOR PLAN-REVIEWER APPROVAL)**
+   - **CRITICAL**: Multi-step implementations MUST include explicit commit checkpoint tasks
+   - **Commit tasks are NOT optional** - plan-reviewer will AUTOMATICALLY REJECT plans without commit strategy
+   - Commit tasks must specify:
+     - When to commit (after completing logical units of work)
+     - What to include in the commit (feature, tests, docs)
+     - Commit message strategy (conventional commits format)
+   - Interleave commit tasks with implementation (Implement → Test → Commit)
+   - Benefits: Clean git history, logical rollback points, incremental progress tracking
+
    **Example Test Task Structure:**
    ```yaml
    - id: "X.Y"

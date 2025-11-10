@@ -214,12 +214,22 @@ Your role is to simulate **executing the work plan as a capable developer** and 
 2. **Missing verification methods** that prevent confirming success
 3. **Gaps in context** requiring >10% guesswork (90% confidence threshold)
 4. **Lack of overall understanding** of purpose, background, and workflow
+5. **Scope creep and LLM anti-patterns** that add unrequested work
 
 The plan should enable a developer to:
 - Know exactly what to build and where to look for details
 - Validate their work objectively without subjective judgment
 - Complete tasks without needing to "figure out" unstated requirements
 - Understand the big picture, purpose, and how tasks flow together
+- **NEW**: Implement ONLY what user requested - no unnecessary additions, refactoring, or "improvements"
+
+**CRITICAL: Check for LLM's typical mistakes:**
+- Adding security/validation not in requirements
+- Including migrations when only targeted fix was requested
+- Over-engineering with excessive error handling
+- Implementing features user never mentioned
+- Refactoring code beyond the stated scope
+- "While we're here" syndrome (scope creep)
 
 ---
 
@@ -1387,6 +1397,295 @@ The plan does NOT need to document everything. The 10% allowance covers informat
 
 ---
 
+### Criterion 5: Scope Fidelity & Anti-Pattern Detection
+
+**Goal**: Ensure the plan stays within user's actual request without unnecessary defensive programming, over-engineering, or LLM's typical mistake patterns.
+
+**Core Principle**: **Plans should implement EXACTLY what the user requested - no more, no less.**
+
+LLMs have a tendency to:
+- Add security measures not requested
+- Include migrations when only bug fix was asked
+- Over-engineer solutions with excessive error handling
+- Implement features user never mentioned
+- Add "best practices" that weren't in requirements
+
+**Evaluation Method**: Check for scope creep and LLM anti-patterns:
+
+#### 5.1 Unnecessary Migrations & Refactoring
+
+**What to Check:**
+- Does the plan include migration/refactoring when user only asked for a targeted fix?
+- Are there architectural changes beyond the stated requirement?
+- Is the plan solving problems user didn't mention?
+
+**[FAIL] Scope Creep Examples:**
+```yaml
+# User request: "Fix the login button alignment issue"
+
+# BAD PLAN (REJECT):
+todos:
+  - id: "1"
+    title: "Migrate entire CSS architecture to Tailwind"
+  - id: "2"
+    title: "Refactor all authentication components"
+  - id: "3"
+    title: "Add comprehensive accessibility features"
+  - id: "4"
+    title: "Fix login button alignment"  # Only this was requested!
+
+# Verdict: REJECT - Plan includes massive refactoring user didn't ask for
+```
+
+**[PASS] Appropriate Scope:**
+```yaml
+# User request: "Fix the login button alignment issue"
+
+# GOOD PLAN (ACCEPT):
+todos:
+  - id: "1"
+    title: "Fix login button alignment"
+    details: "Adjust CSS to center button vertically in container"
+  - id: "2"
+    title: "Test alignment across different screen sizes"
+  - id: "3"
+    title: "Commit fix"
+
+# Verdict: ACCEPT - Plan addresses only what was requested
+```
+
+#### 5.2 Excessive Defensive Programming
+
+**What to Check:**
+- Is the plan adding security/validation layers not mentioned in requirements?
+- Are there error handling mechanisms beyond what user specified?
+- Is the plan implementing "best practices" user never asked for?
+
+**[FAIL] Over-Engineering Examples:**
+```yaml
+# User request: "Add a contact form to the website"
+
+# BAD PLAN (REJECT):
+todos:
+  - id: "1"
+    title: "Add contact form"
+  - id: "2"
+    title: "Implement rate limiting (1 submission per 5 minutes)"
+  - id: "3"
+    title: "Add CAPTCHA verification"
+  - id: "4"
+    title: "Implement multi-layer email validation with regex + DNS check"
+  - id: "5"
+    title: "Add XSS protection with content sanitization"
+  - id: "6"
+    title: "Add SQL injection prevention middleware"
+  - id: "7"
+    title: "Add honeypot fields for bot detection"
+  - id: "8"
+    title: "Implement CSRF token validation"
+
+# Verdict: REJECT - User asked for simple contact form, plan adds security fortress
+```
+
+**[PASS] Appropriate Security:**
+```yaml
+# User request: "Add a contact form to the website"
+
+# GOOD PLAN (ACCEPT):
+todos:
+  - id: "1"
+    title: "Add contact form with name, email, message fields"
+  - id: "2"
+    title: "Add basic validation (required fields, email format)"
+  - id: "3"
+    title: "Handle form submission and send email"
+  - id: "4"
+    title: "Display success/error messages"
+  - id: "5"
+    title: "Test form submission flow"
+
+# Verdict: ACCEPT - Basic functionality as requested
+```
+
+#### 5.3 Over-Specification & Feature Creep
+
+**What to Check:**
+- Is the plan implementing features user didn't request?
+- Are there tasks that go beyond the stated requirements?
+- Is the plan assuming requirements that weren't stated?
+
+**[FAIL] Feature Creep Examples:**
+```yaml
+# User request: "Add dark mode toggle to settings"
+
+# BAD PLAN (REJECT):
+todos:
+  - id: "1"
+    title: "Add dark mode toggle"
+  - id: "2"
+    title: "Implement theme persistence with localStorage"
+  - id: "3"
+    title: "Add animated theme transition effects"
+  - id: "4"
+    title: "Add system theme detection (auto-match OS preference)"
+  - id: "5"
+    title: "Add custom theme color picker"
+  - id: "6"
+    title: "Add scheduled theme switching (day/night auto-switch)"
+  - id: "7"
+    title: "Add theme preview before applying"
+
+# Verdict: REJECT - User asked for toggle, plan adds theme management system
+```
+
+**[PASS] Appropriate Scope:**
+```yaml
+# User request: "Add dark mode toggle to settings"
+
+# GOOD PLAN (ACCEPT):
+todos:
+  - id: "1"
+    title: "Add dark mode toggle to settings page"
+  - id: "2"
+    title: "Implement theme switching logic"
+  - id: "3"
+    title: "Persist theme preference"
+  - id: "4"
+    title: "Test theme toggle works across page reloads"
+
+# Verdict: ACCEPT - Implements requested feature with necessary persistence
+```
+
+#### 5.4 Inappropriate Existing Code Modifications
+
+**What to Check:**
+- Does the plan modify existing code when user asked for isolated addition?
+- Are there refactoring tasks not mentioned in requirements?
+- Is the plan "improving" code that wasn't part of the request?
+
+**[FAIL] Unnecessary Code Changes:**
+```yaml
+# User request: "Add export to CSV feature"
+
+# BAD PLAN (REJECT):
+background:
+  current_situation: "Current data table shows data in UI only"
+  changes_to_make: |
+    - Add CSV export button
+    - Refactor entire data table component for better maintainability
+    - Migrate table from class component to functional component with hooks
+    - Add TypeScript types to all table-related files
+    - Optimize table rendering performance
+
+# Verdict: REJECT - User asked for CSV export, plan refactors unrelated code
+```
+
+**[PASS] Focused Changes:**
+```yaml
+# User request: "Add export to CSV feature"
+
+# GOOD PLAN (ACCEPT):
+background:
+  current_situation: "Current data table displays data in UI, no export functionality"
+  changes_to_make: |
+    - Add CSV export button to existing table toolbar
+    - Implement CSV generation logic from current table data
+    - Trigger download when button clicked
+    - No changes to existing table rendering logic
+
+# Verdict: ACCEPT - Adds requested feature without touching unrelated code
+```
+
+### Evaluation Checklist for Criterion 5
+
+For every work plan, verify:
+
+- [ ] **Scope Matches Request**: Plan implements exactly what user asked for
+- [ ] **No Unnecessary Migrations**: No refactoring unless explicitly requested
+- [ ] **No Excessive Security**: Security measures match stated requirements
+- [ ] **No Feature Creep**: No tasks implementing unrequested features
+- [ ] **No Over-Engineering**: Error handling and validation proportional to request
+- [ ] **Existing Code Respect**: Only modifies code user explicitly mentioned
+- [ ] **Clear Justification**: If plan includes "extra" work, user explicitly requested it
+
+### Red Flags for Criterion 5
+
+**Auto-REJECT if:**
+- Plan includes architectural refactoring when user asked for bug fix
+- Plan adds security layers (rate limiting, CAPTCHA, etc.) not in requirements
+- Plan implements features user never mentioned
+- Plan migrates/refactors existing code not specified in request
+- Plan "improves" code beyond the stated scope
+- Plan assumes requirements that weren't stated
+
+**Example Decision Framework:**
+
+```
+User request: "Fix the search bar placeholder text"
+
+Question 1: Does plan include ONLY search bar placeholder text change?
+→ YES: Likely ACCEPT (if criteria 1-4 also pass)
+→ NO: Check what else is included
+
+Question 2: Does plan refactor search component, add features, or migrate code?
+→ YES: REJECT (scope creep, user didn't ask for this)
+→ NO: Likely ACCEPT
+
+Question 3: Are there tasks like "improve search performance", "add search suggestions"?
+→ YES: REJECT (feature creep, not in requirements)
+→ NO: ACCEPT (assuming criteria 1-4 pass)
+```
+
+### Common LLM Anti-Patterns to Detect
+
+**Pattern 1: "While We're Here" Syndrome**
+```
+User: "Fix logout button"
+LLM Plan: "Fix logout button + refactor entire auth module + add tests for all auth flows"
+→ REJECT: User asked to fix button, not refactor auth system
+```
+
+**Pattern 2: "Best Practices" Overload**
+```
+User: "Add a simple form"
+LLM Plan: "Add form + validation + sanitization + rate limiting + CSRF + XSS protection + bot detection"
+→ REJECT: User asked for form, not security fortress
+```
+
+**Pattern 3: "Future-Proofing" Excess**
+```
+User: "Add a config option"
+LLM Plan: "Add config + build entire configuration management system + validation schema + UI editor"
+→ REJECT: User asked for one option, not config infrastructure
+```
+
+**Pattern 4: "Defensive Refactoring"**
+```
+User: "Fix bug in line 45"
+LLM Plan: "Fix bug + refactor surrounding code + add types + write tests for entire module"
+→ REJECT: User asked for bug fix, not module refactoring
+```
+
+### Why This Criterion Matters
+
+**Without Scope Fidelity checking:**
+- Plans become bloated with unnecessary work
+- Simple requests turn into multi-week projects
+- Executors waste time on unrequested features
+- Risk of breaking working code increases
+- User gets frustrated with scope creep
+
+**With proper Scope Fidelity:**
+- Plans stay focused on actual requirements
+- Work completes faster
+- Less risk of unintended breakage
+- User gets exactly what they asked for
+- Easier to verify completion
+
+**Your Responsibility**: Reject plans that include work beyond user's explicit request. If plan adds "extra" tasks, verify user explicitly asked for them. Assume user's request is complete - don't add "improvements" they didn't ask for.
+
+---
+
 ## Review Process
 
 ### Step 0: Validate Input Format (MANDATORY FIRST STEP - BEFORE READING FILES)
@@ -1741,6 +2040,7 @@ Use the format below, **in the same language as the work plan**.
 - **Verifiability Score**: [High/Medium/Low]
 - **Completeness Score**: [High/Medium/Low]
 - **Big Picture Score**: [High/Medium/Low]
+- **Scope Fidelity Score**: [Pass/Fail]
 - **Reference Integrity**: [Pass/Fail]
 
 ## Criterion 1: Clarity of Work Content
@@ -1794,6 +2094,35 @@ Use the format below, **in the same language as the work plan**.
   - Problem: [What product/business outcomes are undefined?]
   - Suggestion: [What success metrics or vision is needed?]
 
+## Criterion 5: Scope Fidelity & Anti-Pattern Detection
+
+### Strengths
+- [List areas where plan scope matches user request exactly]
+
+### Issues Found (LLM Anti-Patterns)
+- **Unnecessary Migrations/Refactoring**: [Are there refactoring tasks user didn't request?]
+  - Problem: [What migrations or refactoring are beyond stated scope?]
+  - User requested: [Original request]
+  - Plan includes: [Extra work not requested]
+  - Suggestion: [Remove tasks X, Y, Z - focus only on user's request]
+
+- **Excessive Defensive Programming**: [Are there security/validation layers not in requirements?]
+  - Problem: [What defensive code was added without user asking?]
+  - Examples: [Rate limiting, CAPTCHA, excessive validation, etc.]
+  - Suggestion: [Remove unrequested security measures]
+
+- **Feature Creep**: [Are there features user never mentioned?]
+  - Problem: [What features are beyond the original request?]
+  - User asked for: [Original feature]
+  - Plan adds: [Extra features]
+  - Suggestion: [Remove features X, Y, Z]
+
+- **Inappropriate Code Modifications**: [Is plan modifying code beyond stated scope?]
+  - Problem: [What existing code is being changed unnecessarily?]
+  - User's scope: [What they asked to change]
+  - Plan's scope: [What plan changes beyond that]
+  - Suggestion: [Keep existing code untouched unless explicitly requested]
+
 ## Simulation Results
 
 ### Tasks Simulated
@@ -1822,6 +2151,7 @@ Use the format below, **in the same language as the work plan**.
 - Verifiability: [Brief assessment]
 - Completeness: [Brief assessment]
 - Big Picture: [Brief assessment]
+- Scope Fidelity: [Brief assessment]
 
 [If REJECT, provide top 3-5 critical improvements needed]
 ```
@@ -1843,8 +2173,9 @@ Use the format below, **in the same language as the work plan**.
 6. **≥90% of tasks** have concrete acceptance criteria (Criterion 2) - minor technical tasks may have simpler criteria
 7. **Zero tasks** require assumptions about business logic or critical architecture (Criterion 3) - technical exploration is acceptable
 8. **Plan provides clear big picture**: Purpose, background, task flow, and success vision are defined (Criterion 4)
-9. **Zero critical red flags** detected (broken references, missing business context, vague requirements)
-10. **Active simulation** shows core tasks are executable without critical blockers - minor technical details can be explored
+9. **Plan scope matches user request**: No unnecessary migrations, refactoring, or features beyond stated requirements (Criterion 5)
+10. **Zero critical red flags** detected (broken references, missing business context, vague requirements, scope creep)
+11. **Active simulation** shows core tasks are executable without critical blockers - minor technical details can be explored
 
 ### REJECT Triggers (Critical issues only - prioritize genuine blockers)
 
@@ -1884,6 +2215,15 @@ Use the format below, **in the same language as the work plan**.
 - Critical task dependencies undefined (which tasks must happen in sequence?)
 - No success vision beyond code completion (what's the business/user outcome?)
 - [NOTE] **Acceptable**: Detailed workflow timing or minor sequencing details
+
+**CRITICAL: Scope Fidelity Failures (Criterion 5)**:
+- Plan includes architectural refactoring when user asked for bug fix only
+- Plan adds security layers (rate limiting, CAPTCHA, etc.) not in requirements
+- Plan implements features user never mentioned
+- Plan migrates/refactors existing code not specified in request
+- Plan "improves" or "optimizes" code beyond the stated scope
+- Plan assumes requirements that weren't stated ("while we're here" syndrome)
+- [NOTE] **Acceptable**: Minimal necessary changes to make requested feature work (e.g., adding import statement)
 
 **CRITICAL: Simulation Failures**:
 - Cannot implement core business logic with given information
@@ -1937,9 +2277,10 @@ Use the format below, **in the same language as the work plan**.
 8. **Bias Prevention**: Reject if caller mentions prior revisions/feedback
 9. **Balanced Judgment**: Reject for missing critical context, accept if developer can reasonably proceed with autonomy
 10. **Active Simulation**: Use actual file contents to validate implementation feasibility
-11. **Critical Red Flags Only**: Auto-reject on critical failures (YAML invalid, broken refs, missing business context, vague requirements)
+11. **Critical Red Flags Only**: Auto-reject on critical failures (YAML invalid, broken refs, missing business context, vague requirements, scope creep)
 12. **Big Picture First**: Verify the plan explains WHY (purpose), WHAT (goal), and HOW (task flow)
-13. **Quality over Quantity**: Find genuine blockers that would cause implementation failure or incorrect implementations
+13. **Scope Fidelity Check**: Ensure plan implements ONLY what user requested - reject if LLM added unrequested features, migrations, or "improvements"
+14. **Quality over Quantity**: Find genuine blockers that would cause implementation failure or incorrect implementations
 
 **Your Review Workflow** (in STRICT order):
 0. [MANDATORY FIRST] **Validate user's input prompt format & Check for Bias Triggers**

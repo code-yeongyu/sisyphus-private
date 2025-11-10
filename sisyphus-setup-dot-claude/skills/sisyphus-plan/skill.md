@@ -471,34 +471,180 @@ required_background:
 4. **Make it optional** - If existing stack works fine, don't force user to make a choice
 5. **Document the decision** - Whatever user chooses MUST be documented in required_background
 
+#### Question 5: Existing Code/Logic Handling (MANDATORY - Ask When Scope is Unclear)
+
+**⚠️ IMPORTANT: This question is CONDITIONAL - only ask when the user's intent about existing code is unclear.**
+
+**DECISION LOGIC - Should I ask this question?**
+
+```
+STEP 1: Analyze the user request
+→ Is this modifying/affecting existing functionality?
+  → YES: Proceed to STEP 2
+  → NO: Skip Question 5 (purely new feature, no existing code affected)
+
+STEP 2: Check if handling approach is clear from request
+→ Did user explicitly state how to handle existing code?
+  → YES (e.g., "replace", "keep and add", "migrate"): Skip Question 5 (intent is clear)
+  → NO or AMBIGUOUS: Proceed to STEP 3
+
+STEP 3: Assess ambiguity level
+→ Is it obvious what to do with existing code from context?
+  → YES (clearly additive, clearly replacement, etc.): Skip Question 5
+  → NO (could go either way, significant impact unclear): ASK Question 5
+```
+
+**Examples of when to ASK:**
+- ✅ "Fix the authentication system" (Refactor existing? Replace? Add alongside?)
+- ✅ "Improve error handling" (Keep current + add new? Replace entirely?)
+- ✅ "Update the payment flow" (Migrate existing users? Parallel systems?)
+- ✅ "Add OAuth login" (Keep password auth? Replace it? Both?)
+
+**Examples of when to SKIP:**
+- ❌ "Add a new settings page" (clearly new, doesn't affect existing)
+- ❌ "Replace Redux with Zustand and migrate all state" (intent explicit)
+- ❌ "Keep existing login, add Google OAuth as alternative" (intent explicit)
+- ❌ "Fix bug in line 45 - wrong condition" (clearly targeted fix)
+
+**Ask the user (ONLY when handling approach is unclear):**
+```
+기존 코드/로직을 어떻게 처리해야 하나요?
+
+예를 들어:
+- 기존 구현을 유지하면서 새 기능 추가 (병행 운영)
+- 기존 구현을 새 방식으로 점진적 마이그레이션
+- 기존 구현을 완전히 제거하고 새로 작성 (교체)
+- 기존 코드는 건드리지 않고 독립적으로 추가
+
+특히:
+- 기존 사용자/데이터에 영향이 있나요?
+- 마이그레이션이 필요한가요?
+- 기존 기능을 유지해야 하나요?
+```
+
+**What to capture:**
+- Handling strategy (keep, migrate, replace, add alongside)
+- Impact on existing users/data
+- Migration requirements (if any)
+- Backward compatibility needs
+- Deprecation timeline (if replacing)
+
+**Where to document in plan:**
+- `user_request.additional[]` - **IF ASKED, add**: "Existing Code Handling: [full answer]"
+- `background.current_situation` - Clearly describe what exists now
+- `background.changes_to_make` - Explicitly state what happens to existing code
+- `todos[]` - Include migration tasks if needed
+- `success_vision.technical_criteria[]` - Backward compatibility verification if needed
+
+**Example documentation:**
+```yaml
+user_request:
+  additional:
+    - "Existing Code Handling: Keep password auth as fallback, add OAuth as primary option. No migration needed - both systems run in parallel. Existing users keep working, new users see OAuth first."
+
+background:
+  current_situation: |
+    Current auth: Email/password only (users table, bcrypt hashing).
+    1,000 active users, all using password auth.
+
+  changes_to_make: |
+    ADD: OAuth (Google, GitHub) login alongside existing password auth
+    KEEP: All existing password auth code (no removal, no migration)
+    IMPACT: Zero - existing users unaffected, new users get more options
+
+todos:
+  - id: "1"
+    title: "Add OAuth routes (new)"
+  - id: "2"
+    title: "Integrate OAuth with existing user table"
+  - id: "3"
+    title: "Add OAuth buttons to login UI (existing password form stays)"
+  - id: "4"
+    title: "Test backward compatibility - verify password login still works"
+```
+
+**CRITICAL REMINDERS:**
+
+1. **Only ask when scope is UNCLEAR** - Don't ask if user already stated intent
+2. **Use AskUserQuestion tool** - Present clear options for handling approach
+3. **Focus on impact** - Emphasize migration needs, user impact, compatibility
+4. **Document explicitly** - Whatever user chooses MUST be clear in background section
+5. **No assumptions** - If unclear and significant, ASK - don't guess
+
 ### Clarification Process (After Essential Questions)
+
+**🚨 CRITICAL PRINCIPLE: NEVER ASSUME - ALWAYS ASK WHEN UNCLEAR 🚨**
+
+**When to Ask (Mandatory Triggers):**
+- User's intent about existing code is ambiguous
+- Migration/refactoring scope is undefined
+- Requirements could be interpreted multiple ways
+- Critical architectural decisions are implied but not stated
+- Edge case handling strategies are unclear
+- User impact or data migration needs are unstated
+
+**When NOT to Ask:**
+- User explicitly stated their intent
+- Context makes the approach obvious
+- Standard framework conventions apply
+- Minor technical details that can be inferred
 
 1. **Identify Implicit Knowledge**
    - What assumptions is the user making?
    - What domain knowledge are they assuming you already have?
    - What context from the project is not explicitly stated?
+   - **NEW**: Is the scope of change to existing code clear or ambiguous?
+   - **NEW**: Are migration requirements stated or assumed?
 
 2. **Attempt Contextual Inference**
    - Can the requirement be clearly inferred from project context?
    - Are there similar features or patterns that suggest the user's intent?
    - Does the codebase structure provide enough clues?
+   - **NEW**: Is the existing code handling approach obvious from context?
 
-3. **Ask Clarifying Questions**
+3. **Ask Clarifying Questions (DO NOT ASSUME)**
    When inference is insufficient, ask targeted questions:
    - "I understand you want [X]. Could you clarify [specific ambiguous point]?"
    - "Should this feature work like [similar existing feature], or differently?"
    - "What should happen when [edge case scenario]?"
    - "Are there any specific constraints or requirements I should know about?"
+   - **NEW**: "How should I handle the existing [code/logic]? (Keep, migrate, replace, or add alongside?)"
+   - **NEW**: "Are there migration concerns for existing users/data?"
+   - **NEW**: "Should I assume backward compatibility, or is breaking change acceptable?"
 
 4. **Iterative Refinement**
    - Present your understanding and ask for confirmation
    - Refine based on user feedback
    - Continue until the requirement is concrete and unambiguous
+   - **NEW**: Explicitly confirm handling approach for existing systems
 
 5. **Document Clarified Requirements**
    - Once clarified, document the final understood requirements
    - Include both explicit user statements and confirmed implicit assumptions
    - **CRITICAL**: Ensure all essential questions are answered and documented
+   - **NEW**: Document existing code handling strategy explicitly in `background.changes_to_make`
+
+**Examples of Proper Clarification:**
+
+**BAD (Assumption):**
+```
+User: "Fix the authentication system"
+Plan Writer: *assumes* this means refactoring existing code
+→ Creates plan to refactor auth system
+→ WRONG: User might have wanted to replace it entirely or add alongside
+```
+
+**GOOD (Clarification):**
+```
+User: "Fix the authentication system"
+Plan Writer: "기존 인증 시스템을 어떻게 처리해야 하나요?
+- 기존 코드를 리팩토링하면서 개선
+- 완전히 새로 교체 (기존 사용자 마이그레이션)
+- 새 시스템 추가 후 점진적 전환"
+User: "기존 사용자는 그대로 두고, 새 사용자만 새 시스템 사용하도록"
+Plan Writer: *documents this explicitly in plan*
+→ CORRECT: Clear intent, no assumptions
+```
 
 **🚨 ABSOLUTE BLOCKING GATE - DO NOT PROCEED 🚨**
 
@@ -521,7 +667,7 @@ required_background:
    - High-risk modules/features are flagged
    - Coordination needs are clarified
 
-### Conditional Requirement (Complete if applicable):
+### Conditional Requirements (Complete if applicable):
 
 ⚠️ **Question 4 (Tech Stack Selection)** - IF APPLICABLE
    - IF creating new features/functionality:
@@ -530,6 +676,17 @@ required_background:
      - ✅ User asked via AskUserQuestion tool
      - ✅ User's selection documented
    - IF modifying existing code with existing tech stack:
+     - ⏭️ SKIP this question (not applicable)
+
+⚠️ **Question 5 (Existing Code Handling)** - IF APPLICABLE
+   - IF modifying/affecting existing functionality AND approach is unclear:
+     - ✅ Analyzed user request for existing code implications
+     - ✅ Determined handling approach is ambiguous (not explicitly stated)
+     - ✅ User asked via AskUserQuestion tool with clear options
+     - ✅ User's handling strategy documented (keep/migrate/replace/add)
+     - ✅ Migration requirements clarified (if any)
+     - ✅ Impact on existing users/data documented
+   - IF purely new feature OR approach is explicit in request:
      - ⏭️ SKIP this question (not applicable)
 
 ### Additional Clarifications:

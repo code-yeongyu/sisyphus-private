@@ -1,0 +1,368 @@
+version: '3.0'
+metadata:
+  created_at: '2025-11-10T04:48:00Z'
+  updated_at: '2025-11-10T04:48:00Z'
+work_plans:
+- id: status-json-single-source-of-truth
+  name: status.json을 Single Source of Truth로 만드는 리팩토링
+  depends_on: []
+  user_request:
+    original: 전체가 작업을 status.json 을 통해서 현재 작업을 가져올 수 있도록 하는 작업계획을 구체적이고 상세하게 step by step 으로 세워줘
+    created_at: '2025-11-10T04:48:00Z'
+    additional:
+    - sisyphus work 와 sisyphus task continue 가 status.json을 통해 동기화되어야 함
+    - ExecutionLoop이 status.json에서 plan_id를 읽어야 함
+    - 'sessions.json 구조를 {agent: {plan_id: {session}}} 형태로 수정'
+    - 하위 호환성 유지 (status_manager=None일 때 fallback)
+  objectives:
+    core: 'status.json을 시스템 전체의 현재 작업 추적을 위한 유일한 진실 공급원으로 만들어, ExecutionLoop가 status.json → YAML 순서로 plan_id를 가져오도록 변경'
+    detailed:
+    - goal: sisyphus work가 status.json을 읽고 쓰도록 수정
+      measurable: work._detect_plan_path()가 status.json 우선 확인 후 선택한 plan을 status.json에 기록
+    - goal: ExecutionLoop.run()이 status.json에서 plan_id를 읽도록 수정
+      measurable: ExecutionLoop.__init__에 status_manager 파라미터 추가, run()에서 status.json 우선 읽기
+    - goal: 'sessions.json 구조를 {agent: {plan_id: {session}}} 형태로 변경'
+      measurable: 마이그레이션 스크립트로 기존 sessions.json 변환, SessionStore 로직 검증
+    - goal: sisyphus work와 sisyphus task continue가 같은 plan을 추적
+      measurable: 통합 테스트로 work → task continue 흐름에서 plan 일치 확인
+  background:
+    current_situation: "현재 상황:\n1. sisyphus task continue: status.json 사용 ✅\n2. sisyphus work: status.json 완전히 무시 ❌\n3. ExecutionLoop: YAML에서 직접 plan_id 추출 ❌\n4. sessions.json: 구조 불일치 ({agent: {session}} vs 설계상 {agent: {plan_id: {session}}}) ❌\n\n실제 시나리오:\n- task continue로 plan-A 선택 → status.json 기록\n- work 실행 → status.json 무시, 다른 plan 실행 가능\n- task continue 재실행 → 여전히 plan-A (불일치!)\n"
+    reason_for_change: "이 불일치는 사용자 경험을 해치는 심각한 문제:\n- 두 명령어가 서로 다른 plan 추적 → 혼란\n- ExecutionLoop이 status.json 무시 → 단일 진실 공급원 원칙 위배\n- sessions.json 구조 불일치 → 다중 plan 세션 관리 불가\n"
+    changes_to_make: "현재: status.json 무시, YAML 직접 로드, 구조 불일치\n→ 미래: status.json 우선 읽기, 일관된 구조, task/work 동기화\n"
+  required_background:
+    description: "Python 3.12+, Typer CLI, Textual TUI, anyio 비동기, YAML v3.0 WorkPlan 형식\n- sisyphus/core/loop.py: ExecutionLoop, run() 메서드\n- sisyphus/cli/work.py: work 명령, _detect_plan_path()\n- sisyphus/core/status/manager.py: StatusManager\n- sisyphus/core/session.py: SessionStore\n"
+    references:
+    - ref_id: ref-loop-py
+      uri: projects/sisyphus-cli/sisyphus/core/loop.py
+    - ref_id: ref-work-py
+      uri: projects/sisyphus-cli/sisyphus/cli/work.py
+    - ref_id: ref-status-manager
+      uri: projects/sisyphus-cli/sisyphus/core/status/manager.py
+    - ref_id: ref-session-py
+      uri: projects/sisyphus-cli/sisyphus/core/session.py
+  workflow:
+    dependency_diagram: "Phase 0: 준비 (마이그레이션 스크립트, 테스트 baseline)\n   ↓\nPhase 1: ExecutionLoop 리팩토링 (status_manager 추가)\n   ↓\nPhase 2: work.py 리팩토링 (_detect_plan_path, StatusManager 전달)\n   ↓\nPhase 3: 테스트 수정 (MockStatusManager, 35개 파일)\n   ↓\nPhase 4: 통합 테스트 (work + task continue 동기화)\n   ↓\nPhase 5: 문서화 (마이그레이션 가이드)\n"
+    critical_path:
+    - 'Phase 1-2: ExecutionLoop과 work.py 수정이 핵심'
+    - 'Phase 3: 테스트 수정이 가장 시간 소요'
+    - 'Phase 2.1: _detect_plan_path() 수정이 work/task 동기화의 핵심'
+  success_vision:
+    user_perspective:
+    - scenario: 사용자가 sisyphus task continue로 plan-A 선택
+      experience: status.json에 plan-A 기록 → sisyphus work 실행 시 자동으로 plan-A 사용 → 일관성 유지
+    - scenario: 사용자가 sisyphus work로 plan-B 선택 (다중 plan 환경)
+      experience: work가 status.json 업데이트 → task continue 실행 시 plan-B 사용 → 동기화됨
+    - scenario: 개발자가 기존 코드 사용 (status_manager 없이 ExecutionLoop 생성)
+      experience: fallback으로 기존 task_validator 방식 동작 → 하위 호환성 유지
+    business_perspective: []
+    technical_criteria:
+    - category: Data Consistency
+      criteria: task continue와 work가 항상 동일한 plan 추적
+      expected: status.json을 유일한 진실 공급원으로 사용
+    - category: Session Management
+      criteria: 'sessions.json이 {agent: {plan_id: {session}}} 구조'
+      expected: 다중 plan 세션 관리 가능
+    - category: Backward Compatibility
+      criteria: status_manager=None일 때 기존 동작 유지
+      expected: 기존 테스트 및 사용자 코드 영향 없음
+  final_verification:
+  - id: final-1
+    title: work._detect_plan_path()가 status.json 읽고 쓰기
+    category: Integration
+    description: work 명령이 status.json을 우선 확인하고, 선택한 plan을 기록
+    verified: false
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash:
+    - execute: grep -n 'status_manager.get()\|status_manager.set_current' projects/sisyphus-cli/sisyphus/cli/work.py
+      expected_exit_code: 0
+      notes: _detect_plan_path()에 status.json 읽기/쓰기 로직 확인
+    llm_judge: []
+  - id: final-2
+    title: ExecutionLoop.run()이 status.json에서 plan_id 읽기
+    category: Integration
+    description: ExecutionLoop이 status_manager를 통해 status.json 우선 읽기
+    verified: false
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash:
+    - execute: grep -n 'self.status_manager' projects/sisyphus-cli/sisyphus/core/loop.py
+      expected_exit_code: 0
+      notes: ExecutionLoop에 status_manager 사용 확인
+    llm_judge: []
+  - id: final-3
+    title: sessions.json 구조 변경 및 마이그레이션
+    category: Integration
+    description: 'sessions.json이 {agent: {plan_id: {session}}} 구조로 변경'
+    verified: false
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash:
+    - execute: test -f scripts/migrate_sessions.py
+      expected_exit_code: 0
+      notes: 마이그레이션 스크립트 존재 확인
+    llm_judge: []
+  - id: final-4
+    title: work와 task continue 동기화 검증
+    category: Integration
+    description: work로 plan 선택 → task continue가 동일한 plan 사용
+    verified: false
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash: []
+    llm_judge:
+    - by: orchestrator-agent
+      context_commands:
+      - cat .sisyphus/status.json
+      instruction: "통합 테스트 시나리오:\n1. sisyphus task continue로 plan-A 선택\n2. status.json에서 plan_path 확인\n3. sisyphus work 실행\n4. status.json에서 동일한 plan_path 확인\n5. sisyphus task continue 재실행\n6. 동일한 plan 사용 확인\n\n성공 조건: 모든 단계에서 동일한 plan_path 유지"
+  todos:
+  - id: phase0-1
+    title: 'Phase 0: 마이그레이션 스크립트 작성'
+    description: scripts/migrate_sessions.py 작성 - sessions.json 구조 변환
+    status: pending
+    references:
+    - ref_id: ref-session-py
+    - inline: "마이그레이션 스크립트 요구사항:\n1. 기존 {agent: {session}} 구조 감지\n2. {agent: {default: {session}}} 구조로 변환\n3. 원본 백업 (.json.pre-migration)\n4. 변환 결과 출력\n\n실행: python scripts/migrate_sessions.py .sisyphus/sessions/sessions.json\n"
+    verification_spec:
+    - id: verify-phase0-1
+      title: 마이그레이션 스크립트 생성 및 테스트
+      description: 스크립트가 올바르게 변환하는지 확인
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: python scripts/migrate_sessions.py --help
+        expected_exit_code: 0
+        notes: 스크립트 실행 가능 확인
+      llm_judge: []
+  - id: phase0-2
+    title: 'Phase 0: 현재 테스트 baseline 확보'
+    description: 변경 전 모든 테스트 실행하여 baseline 확보
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-phase0-2
+      title: 테스트 baseline 확보
+      description: 현재 모든 테스트가 통과하는지 확인
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run pytest projects/sisyphus-cli/sisyphus/core/tests/test_loop*.py -v
+        expected_exit_code: 0
+        notes: loop 테스트 baseline
+      llm_judge: []
+  - id: phase1-1
+    title: 'Phase 1: ExecutionLoop.__init__ status_manager 파라미터 추가'
+    description: loop.py:46-56에 status_manager 파라미터 추가
+    status: pending
+    references:
+    - ref_id: ref-loop-py
+    - inline: "변경 위치: loop.py:46-56\n\n추가할 코드:\n```python\ndef __init__(\n    self,\n    execute_agent: Agent,\n    ui: UIProtocol,\n    session_store: SessionStore,\n    logger_factory: LoggerFactory,\n    verify_agent: Agent | None = None,\n    task_validator: TaskValidatorProtocol | None = None,\n    working_directory: Path | None = None,\n    status_manager: StatusManager | None = None,  # ✅ 추가\n) -> None:\n    # ... existing code ...\n    self.status_manager = status_manager  # ✅ 추가\n```\n"
+    verification_spec:
+    - id: verify-phase1-1
+      title: 파라미터 추가 확인
+      description: ExecutionLoop에 status_manager 파라미터 추가됨
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: python -m py_compile projects/sisyphus-cli/sisyphus/core/loop.py
+        expected_exit_code: 0
+        notes: 구문 오류 없음
+      llm_judge: []
+  - id: phase1-2
+    title: 'Phase 1: ExecutionLoop.run() status.json 우선 읽기 로직 추가'
+    description: loop.py:121-144 수정 - status.json에서 plan_id 우선 읽기
+    status: pending
+    references:
+    - ref_id: ref-loop-py
+    - inline: "변경 위치: loop.py:121-144\n\n핵심 로직:\n1. status_manager가 있으면 status.json에서 current_plan 읽기\n2. current_plan에서 plan_path 가져와 YAML 로드\n3. plan_id 추출\n4. status_manager 없으면 기존 task_validator 방식 fallback\n\n하위 호환성 유지!\n"
+    verification_spec:
+    - id: verify-phase1-2
+      title: run() 로직 수정 확인
+      description: status.json 우선 읽기 로직 구현됨
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: grep -n 'self.status_manager.get()' projects/sisyphus-cli/sisyphus/core/loop.py
+        expected_exit_code: 0
+        notes: status.json 읽기 코드 확인
+      llm_judge: []
+  - id: phase2-1
+    title: 'Phase 2: work._detect_plan_path() status.json 읽기/쓰기 추가'
+    description: work.py:201-295 수정 - status.json 우선 확인 및 선택 후 기록
+    status: pending
+    references:
+    - ref_id: ref-work-py
+    - ref_id: ref-status-manager
+    - inline: "변경 위치: work.py:201-295\n\n핵심 변경:\n1. StatusManager 생성\n2. status.json 먼저 확인 - current_plan 있으면 사용\n3. 없으면 YAML 탐색 (기존 로직)\n4. 선택한 plan을 status.json에 기록\n\n이 변경으로 work와 task continue 동기화!\n"
+    verification_spec:
+    - id: verify-phase2-1
+      title: _detect_plan_path() 수정 확인
+      description: status.json 읽기/쓰기 로직 추가됨
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: grep -n 'StatusManager\|status_manager' projects/sisyphus-cli/sisyphus/cli/work.py | head -20
+        expected_exit_code: 0
+        notes: StatusManager 사용 확인
+      llm_judge: []
+  - id: phase2-2
+    title: 'Phase 2: work._main_cli() StatusManager 전달'
+    description: work.py:296-340 수정 - ExecutionLoop에 status_manager 전달
+    status: pending
+    references:
+    - ref_id: ref-work-py
+    verification_spec:
+    - id: verify-phase2-2
+      title: _main_cli() 수정 확인
+      description: StatusManager가 ExecutionLoop에 전달됨
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: python -m py_compile projects/sisyphus-cli/sisyphus/cli/work.py
+        expected_exit_code: 0
+        notes: 구문 오류 없음
+      llm_judge: []
+  - id: phase2-3
+    title: 'Phase 2: work._main_tui() StatusManager 전달'
+    description: work.py:358-424 수정 - ExecutionLoop에 status_manager 전달
+    status: pending
+    references:
+    - ref_id: ref-work-py
+    verification_spec:
+    - id: verify-phase2-3
+      title: _main_tui() 수정 확인
+      description: TUI 모드에서도 StatusManager 전달됨
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: python -m py_compile projects/sisyphus-cli/sisyphus/cli/work.py
+        expected_exit_code: 0
+        notes: 구문 오류 없음
+      llm_judge: []
+  - id: phase3-1
+    title: 'Phase 3: test_loop.py에 MockStatusManager 추가'
+    description: 테스트용 MockStatusManager 클래스 작성
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-phase3-1
+      title: MockStatusManager 추가 확인
+      description: 테스트에서 사용 가능한 Mock 클래스 생성
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: grep -n 'class MockStatusManager' projects/sisyphus-cli/sisyphus/core/tests/test_loop.py
+        expected_exit_code: 0
+        notes: MockStatusManager 존재 확인
+      llm_judge: []
+  - id: phase3-2
+    title: 'Phase 3: 모든 loop 테스트에 status_manager 파라미터 추가'
+    description: 13개 테스트 파일의 ~35개 ExecutionLoop 생성 지점 수정
+    status: pending
+    references:
+    - inline: "수정 대상 파일:\n1. test_loop.py\n2. test_loop__execute_feedback_injection.py\n3. test_loop__integration_feedback_loop.py\n4. test_loop__non_interactive_flow.py\n5. test_loop__prompt_too_long_session_delete.py\n6. test_loop__sdk_exception.py\n7. test_loop__verify_feedback_history.py\n8. 기타 loop 관련 테스트\n\n각 파일에서 ExecutionLoop(...) 호출마다 status_manager=MockStatusManager() 추가\n"
+    verification_spec:
+    - id: verify-phase3-2
+      title: 모든 테스트 파라미터 추가 확인
+      description: 테스트가 통과하고 status_manager 사용함
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run pytest projects/sisyphus-cli/sisyphus/core/tests/test_loop*.py -v
+        expected_exit_code: 0
+        notes: 모든 loop 테스트 통과
+      llm_judge: []
+  - id: phase4-1
+    title: 'Phase 4: work + task continue 통합 테스트 작성'
+    description: work로 plan 선택 → task continue가 같은 plan 사용하는지 검증
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-phase4-1
+      title: 통합 테스트 통과
+      description: work와 task continue가 status.json 통해 동기화됨
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run pytest projects/sisyphus-cli/sisyphus/cli/tests/test_work_status_integration.py -v
+        expected_exit_code: 0
+        notes: 통합 테스트 통과
+      llm_judge: []
+  - id: phase5-1
+    title: 'Phase 5: MIGRATION_STATUS_JSON.md 문서 작성'
+    description: 마이그레이션 가이드 및 변경사항 문서화
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-phase5-1
+      title: 문서 작성 완료
+      description: 마이그레이션 가이드 문서 존재
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: test -f projects/sisyphus-cli/docs/MIGRATION_STATUS_JSON.md
+        expected_exit_code: 0
+        notes: 문서 파일 존재
+      llm_judge: []
+  - id: phase5-2
+    title: 'Phase 5: 변경사항 커밋'
+    description: 모든 변경사항을 git 커밋
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-phase5-2
+      title: 커밋 생성 확인
+      description: git 히스토리에 커밋 존재
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: git log -1 --oneline
+        expected_exit_code: 0
+        notes: 최근 커밋 확인
+      llm_judge: []
+  references:
+  - ref_id: ref-loop-py
+    uri: projects/sisyphus-cli/sisyphus/core/loop.py
+  - ref_id: ref-work-py
+    uri: projects/sisyphus-cli/sisyphus/cli/work.py
+  - ref_id: ref-status-manager
+    uri: projects/sisyphus-cli/sisyphus/core/status/manager.py
+  - ref_id: ref-session-py
+    uri: projects/sisyphus-cli/sisyphus/core/session.py
+  execution:
+    started: false
+    completed: false
+    started_at: null
+    completed_at: null
+  work_mode:
+    parallel_requested: false
+  progress:
+    total_tasks: 13
+    completed: 0
+    in_progress: 0
+    pending: 13
+  current_work: ''

@@ -1,8 +1,7 @@
 ---
 name: sisyphus-executor
 description: MUST BE USED when executing tasks from YAML work plans. Executes EXACTLY ONE TODO item and meticulously records insights in Notepad section.
-tools: Read, Write, Edit, Bash(*), Grep, Glob, Task
-model: claude-haiku-4-5
+model: claude-sonnet-4-5
 ---
 
 <role>

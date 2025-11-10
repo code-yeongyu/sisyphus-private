@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from sisyphus.core.loop import ExecutionLoop
+from sisyphus.core.tests.test_loop import MockStatusManager
 from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:
@@ -50,8 +51,8 @@ async def test_unified__if_task_incomplete__skips_verify_and_retries_execute() -
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
-    loop._current_plan_id = "default"
 
     # when
     await loop._run_unified_mode("execute prompt", None, "verify prompt", None)
@@ -88,8 +89,8 @@ async def test_unified__if_task_complete_and_fully_done__exits_loop() -> None:
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
-    loop._current_plan_id = "default"
 
     # when
     await loop._run_unified_mode("execute prompt", None, "verify prompt", None)
@@ -133,8 +134,8 @@ async def test_unified__if_task_complete_but_not_fully_done__continues_with_feed
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
-    loop._current_plan_id = "default"
 
     # when
     await loop._run_unified_mode("execute prompt", None, "verify prompt", None)

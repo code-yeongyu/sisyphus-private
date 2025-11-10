@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from sisyphus.core.loop import ExecutionLoop
+from sisyphus.core.tests.test_loop import MockStatusManager
 from sisyphus.utils.errors import RetryRequiredError
 from sisyphus.utils.types import AgentMessage
 
@@ -32,8 +33,8 @@ async def test_execute_phase__if_sdk_exception__deletes_session_and_retries() ->
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
+        status_manager=MockStatusManager("default"),  # type: ignore[arg-type]
     )
-    loop._current_plan_id = "default"
 
     # when
     retry_count = 0
@@ -76,8 +77,8 @@ async def test_execute_phase__if_sdk_exception_3_times__exits_phase() -> None:
         ui=ui,  # type: ignore[arg-type]
         session_store=session_store,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
+        status_manager=MockStatusManager("default"),  # type: ignore[arg-type]
     )
-    loop._current_plan_id = "default"
 
     # when
     retry_count = 0
@@ -125,8 +126,8 @@ async def test_verify_phase__if_sdk_exception__deletes_session_and_retries() -> 
         session_store=session_store,  # type: ignore[arg-type]
         logger_factory=logger_factory,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
+        status_manager=MockStatusManager("default"),  # type: ignore[arg-type]
     )
-    loop._current_plan_id = "default"
 
     # when
     retry_count = 0

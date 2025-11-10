@@ -10,6 +10,7 @@ import anyio
 import pytest
 
 from sisyphus.core.loop import ExecutionLoop
+from sisyphus.core.tests.test_loop import MockStatusManager
 from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:
@@ -35,6 +36,7 @@ async def test_execute_phase__after_resume__continues_phase(
         ui=mock_ui,  # type: ignore[arg-type]
         session_store=mock_session_store,  # type: ignore[arg-type]
         logger_factory=mock_logger_factory,  # type: ignore[arg-type]
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
     async def simulate_interrupt_and_resume() -> None:
@@ -67,6 +69,7 @@ async def test_execute_phase__normal_completion__ends_phase(
         ui=mock_ui,  # type: ignore[arg-type]
         session_store=mock_session_store,  # type: ignore[arg-type]
         logger_factory=mock_logger_factory,  # type: ignore[arg-type]
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
     await loop._execute_phase("test prompt", None)
@@ -92,6 +95,7 @@ async def test_execute_phase__multiple_resumes__continues_each_time(
         ui=mock_ui,  # type: ignore[arg-type]
         session_store=mock_session_store,  # type: ignore[arg-type]
         logger_factory=mock_logger_factory,  # type: ignore[arg-type]
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
     async def simulate_multiple_interrupts() -> None:
@@ -250,13 +254,25 @@ class MockUIWithInput:
 
 class MockSessionStore:
     def __init__(self) -> None:
-        self.sessions: dict[str, str] = {}
+        self.sessions: dict[str, dict[str, str]] = {}
 
-    async def get_session(self, agent_type: str) -> str | None:
-        return self.sessions.get(agent_type)
+    async def get_session(self, agent_type: str, plan_id: str) -> str | None:
+        if agent_type not in self.sessions:
+            return None
+        return self.sessions[agent_type].get(plan_id)
 
-    async def save_session(self, agent_type: str, session_id: str) -> None:
-        self.sessions[agent_type] = session_id
+    async def save_session(self, agent_type: str, session_id: str, plan_id: str) -> None:
+        if agent_type not in self.sessions:
+            self.sessions[agent_type] = {}
+        self.sessions[agent_type][plan_id] = session_id
+
+    async def delete_session(self, agent_type: str, plan_id: str | None = None) -> None:
+        if plan_id is None:
+            if agent_type in self.sessions:
+                del self.sessions[agent_type]
+        else:
+            if agent_type in self.sessions and plan_id in self.sessions[agent_type]:
+                del self.sessions[agent_type][plan_id]
 
 
 class MockLoggerFactory:

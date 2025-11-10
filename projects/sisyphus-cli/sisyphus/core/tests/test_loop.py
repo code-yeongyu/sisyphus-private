@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from sisyphus.core.loop import ExecutionLoop, TaskValidatorProtocol
+from sisyphus.core.status.manager import CurrentPlan, StatusFile
 from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:
@@ -146,6 +147,30 @@ class MockTaskValidator:
         return 8 if not self._all_complete else 10
 
 
+class MockStatusManager:
+    """Mock StatusManager for testing."""
+
+    def __init__(self, plan_id: str = "test-plan") -> None:
+        self.plan_id = plan_id
+
+    async def get(self) -> StatusFile:
+        return StatusFile(
+            current_plan=CurrentPlan(
+                plan_path=".sisyphus/tasks/test-plan.yaml",
+                plan_root=".sisyphus/tasks",
+                updated_at="2025-11-10T00:00:00Z",
+            )
+        )
+
+    async def set_current(self, plan_path: str, plan_root: str) -> None:
+        """No-op for tests."""
+        pass
+
+    async def get_plan_id(self) -> str:
+        """Return plan_id directly without loading YAML."""
+        return self.plan_id
+
+
 async def test_execution_loop_execute_only() -> None:
     # given
     execute_agent = MockAgent()
@@ -161,6 +186,7 @@ async def test_execution_loop_execute_only() -> None:
         ui=ui,  # type: ignore[arg-type]
         session_store=cast("SessionStore", cast(object, session_store)),
         logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
     # when
@@ -203,6 +229,7 @@ async def test_execution_loop_execute_and_verify() -> None:
         session_store=cast("SessionStore", cast(object, session_store)),
         logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
         task_validator=cast(TaskValidatorProtocol, cast(object, task_validator)),
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
     original_execute = loop._execute_phase
@@ -249,6 +276,7 @@ async def test_execution_loop_verify_always_new_session() -> None:
         session_store=cast("SessionStore", cast(object, session_store)),
         logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
         task_validator=cast(TaskValidatorProtocol, cast(object, task_validator)),
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
     # when
@@ -273,6 +301,7 @@ async def test_execution_loop_session_resume() -> None:
         ui=ui,  # type: ignore[arg-type]
         session_store=cast("SessionStore", cast(object, session_store)),
         logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
     # when
@@ -298,6 +327,7 @@ async def test_execution_loop_with_task_validator_complete() -> None:
         session_store=cast("SessionStore", cast(object, session_store)),
         logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
         task_validator=cast(TaskValidatorProtocol, cast(object, task_validator)),
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
     # when
@@ -325,6 +355,7 @@ async def test_execution_loop_with_task_validator_incomplete() -> None:
         session_store=cast("SessionStore", cast(object, session_store)),
         logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
         task_validator=validator,  # type: ignore[arg-type]
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
     iteration_count = 0
@@ -362,6 +393,7 @@ async def test_execution_loop_prompt_with_extra() -> None:
         ui=ui,  # type: ignore[arg-type]
         session_store=cast("SessionStore", cast(object, session_store)),
         logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
     # when
@@ -387,6 +419,7 @@ async def test_execution_loop_ui_status_updates() -> None:
         ui=ui,  # type: ignore[arg-type]
         session_store=cast("SessionStore", cast(object, session_store)),
         logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
     # when
@@ -411,6 +444,7 @@ async def test_execution_loop_session_saved() -> None:
         ui=ui,  # type: ignore[arg-type]
         session_store=cast("SessionStore", cast(object, session_store)),
         logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
     # when

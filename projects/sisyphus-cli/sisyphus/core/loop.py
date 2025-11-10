@@ -18,6 +18,7 @@ from sisyphus.utils.session_limit import sleep_until_next_hour, sleep_until_rese
 if TYPE_CHECKING:
     from sisyphus.agents.base import Agent
     from sisyphus.core.session import SessionStore
+    from sisyphus.core.status.manager import StatusManager
     from sisyphus.ui.base import UIProtocol
     from sisyphus.utils.logging import LoggerFactory
 
@@ -52,6 +53,7 @@ class ExecutionLoop:
         verify_agent: Agent | None = None,
         task_validator: TaskValidatorProtocol | None = None,
         working_directory: Path | None = None,
+        status_manager: StatusManager | None = None,
     ) -> None:
         """Initialize ExecutionLoop.
 
@@ -63,6 +65,7 @@ class ExecutionLoop:
             verify_agent: Optional agent for verify phase
             task_validator: Optional task validator for loop control
             working_directory: Optional execution working directory
+            status_manager: Optional status manager for tracking current plan
         """
         self.execute_agent = execute_agent
         self.verify_agent = verify_agent
@@ -71,6 +74,7 @@ class ExecutionLoop:
         self.logger_factory = logger_factory
         self.task_validator = task_validator
         self.working_directory = working_directory
+        self.status_manager = status_manager
 
         print(f"DEBUG ExecutionLoop.__init__: verify_agent={verify_agent}", file=sys.stderr)
 
@@ -118,7 +122,86 @@ class ExecutionLoop:
         await self.ui.initialize()
 
         execute_prompt = DEFAULT_EXECUTE_PROMPT
-        if self.task_validator and self.task_validator.todolist_path:
+
+        # Priority 1: Try status_manager first (if available)
+        if self.status_manager:
+            try:
+                status_file = await self.status_manager.get()
+                if status_file.current_plan and status_file.current_plan.plan_path:
+                    plan_path = Path(status_file.current_plan.plan_path)
+                    plan_doc = await load_plan(plan_path)
+
+                    if not plan_doc.work_plans:
+                        self._current_plan_id = "default"
+                    else:
+                        self._current_plan_id = plan_doc.work_plans[0].id
+
+                    uncompleted_todos = []
+                    for plan in plan_doc.work_plans:
+                        for todo in plan.todos:
+                            if todo.status != "completed":
+                                uncompleted_todos.append(f"  - [{todo.id}] {todo.title}")
+
+                    todo_summary = "\n".join(uncompleted_todos[:10]) if uncompleted_todos else "All tasks completed"
+                    if len(uncompleted_todos) > 10:
+                        todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
+
+                    execute_prompt = build_execute_prompt(str(plan_path), todo_summary)
+                else:
+                    # status.json exists but no current_plan → fallback to task_validator
+                    if self.task_validator and self.task_validator.todolist_path:
+                        plan_doc = await load_plan(self.task_validator.todolist_path)
+
+                        if not plan_doc.work_plans:
+                            self._current_plan_id = "default"
+                        else:
+                            self._current_plan_id = plan_doc.work_plans[0].id
+
+                        uncompleted_todos = []
+                        for plan in plan_doc.work_plans:
+                            for todo in plan.todos:
+                                if todo.status != "completed":
+                                    uncompleted_todos.append(f"  - [{todo.id}] {todo.title}")
+
+                        todo_summary = (
+                            "\n".join(uncompleted_todos[:10]) if uncompleted_todos else "All tasks completed"
+                        )
+                        if len(uncompleted_todos) > 10:
+                            todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
+
+                        execute_prompt = build_execute_prompt(str(self.task_validator.todolist_path), todo_summary)
+                    else:
+                        self._current_plan_id = "default"
+            except Exception:
+                # If status.json read fails, fallback to task_validator
+                if self.task_validator and self.task_validator.todolist_path:
+                    try:
+                        plan_doc = await load_plan(self.task_validator.todolist_path)
+
+                        if not plan_doc.work_plans:
+                            self._current_plan_id = "default"
+                        else:
+                            self._current_plan_id = plan_doc.work_plans[0].id
+
+                        uncompleted_todos = []
+                        for plan in plan_doc.work_plans:
+                            for todo in plan.todos:
+                                if todo.status != "completed":
+                                    uncompleted_todos.append(f"  - [{todo.id}] {todo.title}")
+
+                        todo_summary = (
+                            "\n".join(uncompleted_todos[:10]) if uncompleted_todos else "All tasks completed"
+                        )
+                        if len(uncompleted_todos) > 10:
+                            todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
+
+                        execute_prompt = build_execute_prompt(str(self.task_validator.todolist_path), todo_summary)
+                    except Exception:
+                        self._current_plan_id = "default"
+                else:
+                    self._current_plan_id = "default"
+        # Priority 2: Fallback to task_validator (backward compatibility)
+        elif self.task_validator and self.task_validator.todolist_path:
             try:
                 plan_doc = await load_plan(self.task_validator.todolist_path)
 
@@ -363,6 +446,16 @@ class ExecutionLoop:
 
         await self.execute_agent.initialize()
 
+        if not self._current_plan_id and self.status_manager:
+            if hasattr(self.status_manager, "get_plan_id"):
+                self._current_plan_id = await self.status_manager.get_plan_id()
+            else:
+                status = await self.status_manager.get()
+                if status.current_plan:
+                    plan_path = Path(status.current_plan.plan_path)
+                    plan = await load_plan(plan_path)
+                    self._current_plan_id = plan.work_plans[0].id
+
         if not self._current_plan_id:
             raise ValueError("plan_id is required for session management")
 
@@ -567,6 +660,16 @@ class ExecutionLoop:
         final_prompt = prompt if extra is None else f"{prompt}\n\n{extra}"
 
         await self.verify_agent.initialize()
+
+        if not self._current_plan_id and self.status_manager:
+            if hasattr(self.status_manager, "get_plan_id"):
+                self._current_plan_id = await self.status_manager.get_plan_id()
+            else:
+                status = await self.status_manager.get()
+                if status.current_plan:
+                    plan_path = Path(status.current_plan.plan_path)
+                    plan = await load_plan(plan_path)
+                    self._current_plan_id = plan.work_plans[0].id
 
         agent_type = type(self.verify_agent).__name__.lower().replace("agent", "")
 

@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from sisyphus.core.loop import ExecutionLoop
+from sisyphus.core.tests.test_loop import MockStatusManager
 from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:
@@ -39,8 +40,8 @@ async def test_verify__if_no_feedback_history__uses_original_prompt() -> None:
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
-    loop._current_plan_id = "default"
 
     original_verify_prompt = "Please verify the work."
 
@@ -83,8 +84,8 @@ async def test_verify__if_feedback_history_exists__prepends_history_section() ->
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
-    loop._current_plan_id = "default"
 
     original_verify_prompt = "Please verify the work."
 
@@ -132,8 +133,8 @@ async def test_verify__if_multiple_feedbacks__includes_all_in_history() -> None:
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
-    loop._current_plan_id = "default"
 
     original_verify_prompt = "Please verify the work."
 

@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from sisyphus.core.loop import ExecutionLoop
+from sisyphus.core.tests.test_loop import MockStatusManager
 from sisyphus.core.session import SessionStore
 from sisyphus.utils.errors import PromptTooLongError
 from sisyphus.utils.types import AgentMessage

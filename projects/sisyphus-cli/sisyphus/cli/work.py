@@ -202,8 +202,10 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
     """Detect YAML plan file with improved UX.
 
     Priority:
-    1. Auto-select if .sisyphus/tasks/**/*.yaml == 1 file (재귀 탐색)
-    2. Error if multiple YAML files (need manual selection)
+    1. status.json에서 current_plan 먼저 확인 (있으면 사용)
+    2. 없으면 auto-select if .sisyphus/tasks/**/*.yaml == 1 file (재귀 탐색)
+    3. 다중 파일이면 사용자 선택 입력
+    4. 선택한 plan을 status.json에 기록
 
     Args:
         ui: UI Protocol implementation
@@ -218,8 +220,22 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
     # 0. 워크트리 루트 먼저 감지 (모든 경로 체크의 기준점)
     worktree_root = await StatusManager.detect_worktree()
 
-    # 1. Markdown 에러 (워크트리 기준으로 체크)
-    # 1. YAML 파일 재귀 탐색 (워크트리 기준 경로)
+    # 1. StatusManager 생성 및 status.json 확인
+    status_path = worktree_root / ".sisyphus" / "status.json"
+    status_manager = StatusManager(status_path)
+
+    try:
+        status_file = await status_manager.get()
+        if status_file.current_plan and status_file.current_plan.plan_path:
+            plan_path = Path(status_file.current_plan.plan_path)
+            if plan_path.exists():
+                # status.json에 기록된 plan이 있고 파일도 존재하면 즉시 반환
+                return plan_path.absolute()
+    except Exception:
+        # status.json 읽기 실패 시 fallback to YAML scanning
+        pass
+
+    # 2. YAML 파일 재귀 탐색 (워크트리 기준 경로)
     tasks_dir = worktree_root / ".sisyphus" / "tasks"
 
     if not tasks_dir.exists():
@@ -252,7 +268,7 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
         )
         return None
     elif len(executable_plans) == 1:
-        return executable_plans[0].absolute()
+        selected_path = executable_plans[0].absolute()
     else:
         # 다중 YAML: 사용자 선택 입력 (사용자 요청 반영)
         rel_paths = [f.relative_to(worktree_root) for f in executable_plans]
@@ -287,10 +303,22 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
             idx = int(selection) - 1
             if idx < 0 or idx >= len(executable_plans):
                 raise ValueError("Index out of range")
-            return executable_plans[idx].absolute()
+            selected_path = executable_plans[idx].absolute()
         except (ValueError, IndexError) as e:
             await ui.show_status(f"[red]Invalid selection: {selection}[/red]")
             raise ValueError(f"Invalid plan selection: {selection}") from e
+
+    # 3. 선택한 plan을 status.json에 기록
+    try:
+        await status_manager.set_current(
+            plan_path=str(selected_path),
+            plan_root=str(worktree_root),
+        )
+    except Exception:
+        # status.json 쓰기 실패해도 plan은 반환 (non-critical)
+        pass
+
+    return selected_path
 
 
 async def _main_cli(
@@ -323,6 +351,11 @@ async def _main_cli(
 
     task_validator = YamlTaskValidator(plan_path) if plan_path else None
 
+    # Create StatusManager for status.json integration
+    worktree_root = await StatusManager.detect_worktree()
+    status_path = worktree_root / ".sisyphus" / "status.json"
+    status_manager = StatusManager(status_path)
+
     loop = ExecutionLoop(
         execute_agent=execute_agent,
         ui=ui,
@@ -331,6 +364,7 @@ async def _main_cli(
         verify_agent=verify_agent,
         task_validator=task_validator,
         working_directory=working_directory,
+        status_manager=status_manager,
     )
 
     await loop.run(
@@ -405,6 +439,11 @@ async def _main_tui(
             if isinstance(ui, TUI):
                 ui.set_task_validator(task_validator)
 
+            # Create StatusManager for status.json integration
+            worktree_root = await StatusManager.detect_worktree()
+            status_path = worktree_root / ".sisyphus" / "status.json"
+            status_manager = StatusManager(status_path)
+
             loop = ExecutionLoop(
                 execute_agent=execute_agent,
                 ui=ui,
@@ -413,6 +452,7 @@ async def _main_tui(
                 verify_agent=verify_agent,
                 task_validator=task_validator,
                 working_directory=working_directory,
+                status_manager=status_manager,
             )
 
             if isinstance(ui, TUI):

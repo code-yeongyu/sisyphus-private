@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from sisyphus.core.loop import ExecutionLoop
+from sisyphus.core.tests.test_loop import MockStatusManager
 from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:

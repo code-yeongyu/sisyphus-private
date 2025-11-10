@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from sisyphus.core.loop import ExecutionLoop
+from sisyphus.core.tests.test_loop import MockStatusManager
 from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:
@@ -39,8 +40,8 @@ async def test_execute__if_no_feedback_history__uses_original_extra() -> None:
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
-    loop._current_plan_id = "default"
 
     # when
     await loop._run_unified_mode(
@@ -80,8 +81,8 @@ async def test_execute__if_feedback_history_exists__appends_feedback_section() -
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
-    loop._current_plan_id = "default"
 
     # when
     await loop._run_unified_mode(
@@ -129,8 +130,8 @@ async def test_execute__if_multiple_feedbacks__includes_all_with_correct_numberi
         logger_factory=logger_factory,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         task_validator=task_validator,  # type: ignore[arg-type]
+        status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
-    loop._current_plan_id = "default"
 
     # when
     await loop._run_unified_mode(

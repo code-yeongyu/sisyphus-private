@@ -226,16 +226,16 @@ Execute **5-10+ tools per message**, never one-by-one!
 
 ### Step 2: Apply Core Criteria
 
-#### 1. Clarity: Is tacit knowledge made explicit?
-**Test**: Can I implement without the author's working memory?
+#### 1. Clarity: Can needed context be discovered?
+**Test**: Can I discover what's needed through reasonable code exploration?
 
-**[FAIL]** - Requires author's context:
-- "Add auth" (no guidance where/how)
-- "Fix the bug" (which bug? what's the fix?)
+**[FAIL]** - Cannot discover critical context:
+- "Add auth" (no reference, no existing auth pattern to follow)
+- "Fix the bug" (bug not described, no reference to error or issue)
 
-**[PASS]** - All knowledge explicit:
-- "Add auth following google.ts:20-45 pattern, use session.ts:10 storage"
-- "Fix timeout bug in api.ts:89 by adding retry logic from retry.ts:15-30"
+**[PASS]** - Can discover through exploration:
+- "Add auth following auth/google.ts pattern" (pattern file shows complete auth flow)
+- "Fix timeout bug in api.ts:89" (line reference + "timeout" gives clear target)
 
 #### 2. Verification: Can I objectively confirm completion?
 **[FAIL]** - Subjective: "Test it works"

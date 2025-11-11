@@ -129,6 +129,48 @@ Follow this sequence to complete all verifications:
   3. WHAT the results were (exact behavior observed)
   4. ANY unexpected findings (screenshots, logs)
 
+  MANDATORY CODE QUALITY CHECKS (MUST BE VERIFIED):
+
+  A. MOCK USAGE VERIFICATION
+     - Identify ALL mocking in tests (unittest.mock, pytest.mock, MagicMock, patch, etc.)
+     - For EACH mock, verify:
+       * Is the mock ACTUALLY tested? (not just declared but never validated)
+       * Can this be tested WITHOUT mocking? (database, file I/O, network calls)
+       * If real testing is possible (no matter how hard), it MUST be done without mocks
+     - Evidence MUST show:
+       * List of all mocked objects/functions
+       * Justification for each mock (why real testing is impossible)
+       * Proof that mocks are actually validated in assertions
+
+     CRITICAL: Prefer real integration tests over mocks whenever possible.
+     Only accept mocks for truly external dependencies (3rd party APIs, slow operations).
+
+  B. HARD-CODED VALUES CHECK
+     - Scan code for hard-coded values:
+       * File paths (e.g., "/tmp/data.json", "~/config.yaml")
+       * URLs (e.g., "http://localhost:3000", "https://api.example.com")
+       * Credentials or tokens (even dummy ones)
+       * Magic numbers without explanation
+       * Environment-specific values
+     - Evidence MUST show:
+       * List of all hard-coded values found
+       * Whether each is acceptable or should be configurable
+       * If configurable: proof that configuration mechanism exists
+
+  C. NAIVE IMPLEMENTATION CHECK
+     - Review implementation for naive/simplistic patterns:
+       * O(n²) loops where O(n) is possible
+       * Missing error handling for edge cases
+       * No input validation
+       * Synchronous code where async is appropriate
+       * Missing transaction handling for database operations
+       * No retry logic for network operations
+       * Missing timeout configurations
+     - Evidence MUST show:
+       * Performance analysis (for algorithmic complexity)
+       * Edge case coverage (empty inputs, null values, large datasets)
+       * Error handling completeness
+
   Good evidence example:
     "Chrome 120.0 / macOS 14.2 environment:
      - Login page: Email/password fields render correctly at /login

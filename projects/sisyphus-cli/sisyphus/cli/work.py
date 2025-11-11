@@ -217,11 +217,11 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
         ValueError: If multiple plans found
     """
 
-    # 0. 워크트리 루트 먼저 감지 (모든 경로 체크의 기준점)
-    worktree_root = await StatusManager.detect_worktree()
+    # 0. 현재 작업 디렉토리 기준 (cwd 기준으로 찾기)
+    cwd = Path.cwd()
 
     # 1. StatusManager 생성 및 status.json 확인
-    status_path = worktree_root / ".sisyphus" / "status.json"
+    status_path = cwd / ".sisyphus" / "status.json"
     status_manager = StatusManager(status_path)
 
     try:
@@ -235,8 +235,8 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
         # status.json 읽기 실패 시 fallback to YAML scanning
         pass
 
-    # 2. YAML 파일 재귀 탐색 (워크트리 기준 경로)
-    tasks_dir = worktree_root / ".sisyphus" / "tasks"
+    # 2. YAML 파일 재귀 탐색 (cwd 기준 경로)
+    tasks_dir = cwd / ".sisyphus" / "tasks"
 
     if not tasks_dir.exists():
         await ui.show_status(
@@ -271,7 +271,7 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
         selected_path = executable_plans[0].absolute()
     else:
         # 다중 YAML: 사용자 선택 입력 (사용자 요청 반영)
-        rel_paths = [f.relative_to(worktree_root) for f in executable_plans]
+        rel_paths = [f.relative_to(cwd) for f in executable_plans]
 
         # CLI 모드: typer.prompt 사용 가능
         # TUI 모드: ui.get_input() 사용 (UIProtocol 메서드)
@@ -312,7 +312,7 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
     try:
         await status_manager.set_current(
             plan_path=str(selected_path),
-            plan_root=str(worktree_root),
+            plan_root=str(cwd),
         )
     except Exception:
         # status.json 쓰기 실패해도 plan은 반환 (non-critical)
@@ -341,15 +341,19 @@ async def _main_cli(
         session_store: SessionStore instance
         working_directory: Execution working directory
     """
+    if not verify_agent:
+        raise ValueError("verify_agent is required but not provided")
+
     start_time = time.time()
 
     logger_factory = LoggerFactory()
 
     plan_path = await _detect_plan_path(ui)
-    if plan_path:
-        await _validate_plan(plan_path, ui)
+    if not plan_path:
+        raise ValueError("No plan file found. Please create a plan file in .sisyphus/tasks/ directory.")
 
-    task_validator = YamlTaskValidator(plan_path) if plan_path else None
+    await _validate_plan(plan_path, ui)
+    task_validator = YamlTaskValidator(plan_path)
 
     # Create StatusManager for status.json integration
     worktree_root = await StatusManager.detect_worktree()
@@ -420,6 +424,9 @@ async def _main_tui(
     async def run_execution_loop() -> None:
         """Run ExecutionLoop (after TUI is ready)."""
 
+        if not verify_agent:
+            raise ValueError("verify_agent is required but not provided")
+
         start_time = time.time()
 
         try:
@@ -431,10 +438,11 @@ async def _main_tui(
 
             logger_factory = LoggerFactory()
             plan_path = await _detect_plan_path(ui)
-            if plan_path:
-                await _validate_plan(plan_path, ui)
+            if not plan_path:
+                raise ValueError("No plan file found. Please create a plan file in .sisyphus/tasks/ directory.")
 
-            task_validator = YamlTaskValidator(plan_path) if plan_path else None
+            await _validate_plan(plan_path, ui)
+            task_validator = YamlTaskValidator(plan_path)
 
             if isinstance(ui, TUI):
                 ui.set_task_validator(task_validator)

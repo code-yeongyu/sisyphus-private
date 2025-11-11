@@ -219,7 +219,7 @@ sisyphus plan lint --file ./ai-todolist.yaml
 **Use PARALLEL tools** (Read + Grep + Glob + Bash simultaneously):
 - Read ALL referenced files
 - Verify line numbers contain claimed patterns
-- Check if patterns provide 90%+ guidance
+- Check if patterns provide sufficient guidance (complete flow, not just fragments)
 - Discover hidden dependencies
 
 Execute **5-10+ tools per message**, never one-by-one!
@@ -463,9 +463,9 @@ Logical checkpoints: [Present/Missing]
    - Tests, verification, checkpoints present
 
 3. **Guesswork → Certainty**
-   - Business logic documented
-   - Architecture decisions specified
-   - 90%+ confidence achievable from plan alone
+   - Business logic documented or discoverable
+   - Architecture decisions specified or evident from referenced patterns
+   - High confidence achievable through plan + reasonable code exploration
 
 4. **Scope creep → Scope fidelity**
    - Plan implements only what user requested

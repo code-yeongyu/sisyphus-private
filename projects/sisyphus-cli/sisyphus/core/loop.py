@@ -11,7 +11,12 @@ import anyio
 
 from sisyphus.core.plans.loader import load_plan, save_plan
 from sisyphus.core.plans.models import Todo, TodoStatus
-from sisyphus.core.prompts import DEFAULT_EXECUTE_PROMPT, DEFAULT_VERIFY_PROMPT, build_execute_prompt
+from sisyphus.core.prompts import (
+    DEFAULT_EXECUTE_PROMPT,
+    build_execute_prompt,
+    build_verification_failure_prompt,
+    build_verify_prompt,
+)
 from sisyphus.utils.errors import PromptTooLongError, RetryRequiredError, SessionLimitError, SessionResumeError
 from sisyphus.utils.session_limit import sleep_until_next_hour, sleep_until_reset
 
@@ -122,6 +127,8 @@ class ExecutionLoop:
         await self.ui.initialize()
 
         execute_prompt = DEFAULT_EXECUTE_PROMPT
+        verify_prompt = ""
+        resolved_plan_path: str | None = None
 
         # Priority 1: Try status_manager first (if available)
         if self.status_manager:
@@ -129,6 +136,7 @@ class ExecutionLoop:
                 status_file = await self.status_manager.get()
                 if status_file.current_plan and status_file.current_plan.plan_path:
                     plan_path = Path(status_file.current_plan.plan_path)
+                    resolved_plan_path = str(plan_path)
                     plan_doc = await load_plan(plan_path)
 
                     if not plan_doc.work_plans:
@@ -146,10 +154,12 @@ class ExecutionLoop:
                     if len(uncompleted_todos) > 10:
                         todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
 
-                    execute_prompt = build_execute_prompt(str(plan_path), todo_summary)
+                    execute_prompt = build_execute_prompt(resolved_plan_path, todo_summary)
+                    verify_prompt = build_verify_prompt(resolved_plan_path)
                 else:
                     # status.json exists but no current_plan → fallback to task_validator
                     if self.task_validator and self.task_validator.todolist_path:
+                        resolved_plan_path = str(self.task_validator.todolist_path)
                         plan_doc = await load_plan(self.task_validator.todolist_path)
 
                         if not plan_doc.work_plans:
@@ -169,13 +179,15 @@ class ExecutionLoop:
                         if len(uncompleted_todos) > 10:
                             todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
 
-                        execute_prompt = build_execute_prompt(str(self.task_validator.todolist_path), todo_summary)
+                        execute_prompt = build_execute_prompt(resolved_plan_path, todo_summary)
+                        verify_prompt = build_verify_prompt(resolved_plan_path)
                     else:
                         self._current_plan_id = "default"
             except Exception:
                 # If status.json read fails, fallback to task_validator
                 if self.task_validator and self.task_validator.todolist_path:
                     try:
+                        resolved_plan_path = str(self.task_validator.todolist_path)
                         plan_doc = await load_plan(self.task_validator.todolist_path)
 
                         if not plan_doc.work_plans:
@@ -195,7 +207,8 @@ class ExecutionLoop:
                         if len(uncompleted_todos) > 10:
                             todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
 
-                        execute_prompt = build_execute_prompt(str(self.task_validator.todolist_path), todo_summary)
+                        execute_prompt = build_execute_prompt(resolved_plan_path, todo_summary)
+                        verify_prompt = build_verify_prompt(resolved_plan_path)
                     except Exception:
                         self._current_plan_id = "default"
                 else:
@@ -203,6 +216,7 @@ class ExecutionLoop:
         # Priority 2: Fallback to task_validator (backward compatibility)
         elif self.task_validator and self.task_validator.todolist_path:
             try:
+                resolved_plan_path = str(self.task_validator.todolist_path)
                 plan_doc = await load_plan(self.task_validator.todolist_path)
 
                 if not plan_doc.work_plans:
@@ -220,19 +234,20 @@ class ExecutionLoop:
                 if len(uncompleted_todos) > 10:
                     todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
 
-                execute_prompt = build_execute_prompt(str(self.task_validator.todolist_path), todo_summary)
+                execute_prompt = build_execute_prompt(resolved_plan_path, todo_summary)
+                verify_prompt = build_verify_prompt(resolved_plan_path)
             except Exception:
                 self._current_plan_id = "default"
         else:
             self._current_plan_id = "default"
 
-        await self._run_unified_mode(execute_prompt, execute_extra, DEFAULT_VERIFY_PROMPT, verify_extra)
+        await self._run_unified_mode(execute_prompt, execute_extra, verify_prompt, verify_extra)
 
     async def _run_unified_mode(
         self,
         execute_prompt: str,
         execute_extra: str | None = None,
-        verify_prompt: str = DEFAULT_VERIFY_PROMPT,
+        verify_prompt: str = "",
         verify_extra: str | None = None,
     ) -> None:
         """Unified mode: Execute -> Task Validator -> Verify phases in one flow.
@@ -257,11 +272,12 @@ class ExecutionLoop:
 
         execute_throttle_max_count = 10
 
-        content = self.task_validator.read_content()
-        goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
-        checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
-        if goals_accomplished and checkboxes_completed:
-            await self.ui.show_status("✅ All tasks already completed. Starting Verify phase...")
+        if self.task_validator:
+            content = self.task_validator.read_content()
+            goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
+            checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
+            if goals_accomplished and checkboxes_completed:
+                await self.ui.show_status("✅ All tasks already completed. Starting Verify phase...")
 
         while True:
             iteration += 1
@@ -277,7 +293,7 @@ class ExecutionLoop:
                 )
 
             skip_execute = False
-            if iteration == 1:
+            if iteration == 1 and self.task_validator:
                 content = self.task_validator.read_content()
                 goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
                 checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
@@ -286,11 +302,43 @@ class ExecutionLoop:
                     await self.ui.show_status("✅ All tasks already completed. Skipping Execute phase...")
 
             should_retry_execute = False
+            skip_count_and_retry = False
             if not skip_execute:
                 await self.ui.show_status(f"[Iteration {iteration}] Starting Execute phase...")
 
+                current_execute_prompt = execute_prompt
                 current_execute_extra = execute_extra
+
                 if verify_feedback_history:
+                    try:
+                        plan_path_for_failure_prompt = None
+                        if self.status_manager:
+                            status_file = await self.status_manager.get()
+                            if status_file.current_plan and status_file.current_plan.plan_path:
+                                plan_path_for_failure_prompt = Path(status_file.current_plan.plan_path)
+                        elif self.task_validator and self.task_validator.todolist_path:
+                            plan_path_for_failure_prompt = self.task_validator.todolist_path
+
+                        if plan_path_for_failure_prompt:
+                            plan_doc = await load_plan(plan_path_for_failure_prompt)
+                            uncompleted_todos = []
+                            for plan in plan_doc.work_plans:
+                                for todo in plan.todos:
+                                    if todo.status != "completed":
+                                        uncompleted_todos.append(f"  - [{todo.id}] {todo.title}")
+
+                            todo_summary = (
+                                "\n".join(uncompleted_todos[:10]) if uncompleted_todos else "All tasks completed"
+                            )
+                            if len(uncompleted_todos) > 10:
+                                todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
+
+                            current_execute_prompt = build_verification_failure_prompt(
+                                str(plan_path_for_failure_prompt), todo_summary
+                            )
+                    except Exception:
+                        pass
+
                     feedback_section = (
                         "\n\n## 🔍 Architect Feedback from Previous Iterations\n\n<architect-feedback-history>\n"
                     )
@@ -306,31 +354,43 @@ class ExecutionLoop:
                     current_execute_extra = (execute_extra or "") + feedback_section
 
                 try:
-                    await self._execute_phase(execute_prompt, current_execute_extra)
+                    await self._execute_phase(current_execute_prompt, current_execute_extra)
                 except* RetryRequiredError as exception_group:
                     error = exception_group.exceptions[0]
-                    await self.ui.show_status(
-                        f"[Iteration {iteration}] Retry required ({error.__class__.__name__}): {error}"
-                    )
 
-                    if isinstance(error, PromptTooLongError):
-                        agent_type = type(self.execute_agent).__name__.lower().replace("agent", "")
-                        await self.session_store.delete_session(agent_type, self._current_plan_id)
+                    if isinstance(error, PromptTooLongError) and verify_feedback_history:
+                        verify_feedback_history.pop(0)
                         await self.ui.show_status(
-                            f"Session '{agent_type}' cleared due to prompt length exceeded. Starting new session."
+                            f"⚠️  Prompt too long. Removing oldest feedback (remaining: {len(verify_feedback_history)})"
+                        )
+                        skip_count_and_retry = True
+                    else:
+                        await self.ui.show_status(
+                            f"[Iteration {iteration}] Retry required ({error.__class__.__name__}): {error}"
                         )
 
-                    should_retry_execute = True
+                        if isinstance(error, PromptTooLongError):
+                            agent_type = type(self.execute_agent).__name__.lower().replace("agent", "")
+                            await self.session_store.delete_session(agent_type, self._current_plan_id)
+                            await self.ui.show_status(
+                                f"Session '{agent_type}' cleared due to prompt length exceeded. Starting new session."
+                            )
+
+                        should_retry_execute = True
+
+            if skip_count_and_retry:
+                self._consecutive_execute_count -= 1
+                continue
 
             if should_retry_execute:
                 continue
 
-            content = self.task_validator.read_content()
-            goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
-            checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
-            should_verify = goals_accomplished and checkboxes_completed
-
-            should_verify = should_verify or force_verify
+            should_verify = force_verify
+            if self.task_validator:
+                content = self.task_validator.read_content()
+                goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
+                checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
+                should_verify = should_verify or (goals_accomplished and checkboxes_completed)
 
             if should_verify:
                 actual_verify_prompt = verify_prompt
@@ -382,28 +442,29 @@ class ExecutionLoop:
                     await self.ui.show_status("✅ Architect confirmed FULLY_DONE. All work verified!")
                     break
 
-                plan_doc = await load_plan(self.task_validator.todolist_path)
+                if self.task_validator:
+                    plan_doc = await load_plan(self.task_validator.todolist_path)
 
-                for work_plan in plan_doc.work_plans:
-                    if work_plan.work_mode.current_task_id:
+                    for work_plan in plan_doc.work_plans:
+                        if work_plan.work_mode.current_task_id:
 
-                        def find_and_reset_task(todos: list[Todo]) -> bool:
-                            for todo in todos:
-                                if todo.id == work_plan.work_mode.current_task_id:
-                                    if todo.status == TodoStatus.completed:
-                                        todo.status = TodoStatus.in_progress
+                            def find_and_reset_task(todos: list[Todo]) -> bool:
+                                for todo in todos:
+                                    if todo.id == work_plan.work_mode.current_task_id:
+                                        if todo.status == TodoStatus.completed:
+                                            todo.status = TodoStatus.in_progress
+                                            return True
+                                    if todo.children and find_and_reset_task(todo.children):
                                         return True
-                                if todo.children and find_and_reset_task(todo.children):
-                                    return True
-                            return False
+                                return False
 
-                        find_and_reset_task(work_plan.todos)
-                        work_plan.execution.completed = False
+                            find_and_reset_task(work_plan.todos)
+                            work_plan.execution.completed = False
 
-                await save_plan(self.task_validator.todolist_path, plan_doc)
-                await self.ui.show_status(
-                    f"[Iteration {iteration}] Verify FALSE. Task reset to in_progress, will re-execute..."
-                )
+                    await save_plan(self.task_validator.todolist_path, plan_doc)
+                    await self.ui.show_status(
+                        f"[Iteration {iteration}] Verify FALSE. Task reset to in_progress, will re-execute..."
+                    )
 
                 if feedback:
                     verify_feedback_history.append(feedback)

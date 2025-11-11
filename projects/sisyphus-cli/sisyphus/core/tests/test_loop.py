@@ -1,21 +1,17 @@
 """Tests for ExecutionLoop."""
+# pyright: reportArgumentType=false, reportMissingImports=false, reportImplicitRelativeImport=false
 
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
 import pytest
 
-from sisyphus.core.loop import ExecutionLoop, TaskValidatorProtocol
+from sisyphus.core.loop import ExecutionLoop
 from sisyphus.core.status.manager import CurrentPlan, StatusFile
 from sisyphus.utils.types import AgentMessage
-
-if TYPE_CHECKING:
-    from sisyphus.core.session import SessionStore
-    from sisyphus.utils.logging import LoggerFactory
 
 pytestmark = [pytest.mark.anyio]
 
@@ -30,6 +26,7 @@ class MockAgent:
         self.sent_messages: list[str] = []
         self.closed = False
         self.messages_to_return: list[AgentMessage] = []
+        self._messages_consumed = False
 
     async def initialize(self) -> None:
         self.initialized = True
@@ -46,8 +43,10 @@ class MockAgent:
 
     def stream(self) -> AsyncIterator[AgentMessage]:
         async def _generator() -> AsyncIterator[AgentMessage]:
-            for msg in self.messages_to_return:
-                yield msg
+            if not self._messages_consumed:
+                for msg in self.messages_to_return:
+                    yield msg
+                self._messages_consumed = True
 
         return _generator()
 
@@ -180,13 +179,18 @@ async def test_execution_loop_execute_only() -> None:
     ui = MockUI()
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
+    verify_agent = MockAgent()
+    verify_agent.messages_to_return = [AgentMessage(role="assistant", content="FULLY_DONE = TRUE")]
+    task_validator = MockTaskValidator(all_complete=False)
 
     loop = ExecutionLoop(
-        execute_agent=execute_agent,  # type: ignore[arg-type]
-        ui=ui,  # type: ignore[arg-type]
-        session_store=cast("SessionStore", cast(object, session_store)),
-        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
-        status_manager=MockStatusManager(),  # type: ignore[arg-type]
+        execute_agent=execute_agent,  # type: ignore
+        verify_agent=verify_agent,  # type: ignore
+        ui=ui,  # type: ignore
+        session_store=session_store,  # type: ignore
+        logger_factory=logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
+        status_manager=MockStatusManager(),  # type: ignore
     )
 
     # when
@@ -200,9 +204,11 @@ async def test_execution_loop_execute_only() -> None:
     assert execute_agent.closed
     assert ui.initialized
     # UI remains initialized after ExecutionLoop completes (no longer closes automatically)
-    assert len(ui.messages) == 1
+    assert len(ui.messages) == 2
     assert ui.messages[0][0].content == "Hello from execute"
     assert ui.messages[0][1] == "execute"
+    assert ui.messages[1][0].content == "FULLY_DONE = TRUE"
+    assert ui.messages[1][1] == "verify"
 
 
 async def test_execution_loop_execute_and_verify() -> None:
@@ -223,13 +229,13 @@ async def test_execution_loop_execute_and_verify() -> None:
     task_validator = MockTaskValidator(all_complete=False)
 
     loop = ExecutionLoop(
-        execute_agent=execute_agent,  # type: ignore[arg-type]
-        verify_agent=verify_agent,  # type: ignore[arg-type]
-        ui=ui,  # type: ignore[arg-type]
-        session_store=cast("SessionStore", cast(object, session_store)),
-        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
-        task_validator=cast(TaskValidatorProtocol, cast(object, task_validator)),
-        status_manager=MockStatusManager(),  # type: ignore[arg-type]
+        execute_agent=execute_agent,  # type: ignore
+        verify_agent=verify_agent,  # type: ignore
+        ui=ui,  # type: ignore
+        session_store=session_store,  # type: ignore
+        logger_factory=logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
+        status_manager=MockStatusManager(),  # type: ignore
     )
 
     original_execute = loop._execute_phase
@@ -270,13 +276,13 @@ async def test_execution_loop_verify_always_new_session() -> None:
     task_validator = MockTaskValidator(all_complete=True)
 
     loop = ExecutionLoop(
-        execute_agent=execute_agent,  # type: ignore[arg-type]
-        verify_agent=verify_agent,  # type: ignore[arg-type]
-        ui=ui,  # type: ignore[arg-type]
-        session_store=cast("SessionStore", cast(object, session_store)),
-        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
-        task_validator=cast(TaskValidatorProtocol, cast(object, task_validator)),
-        status_manager=MockStatusManager(),  # type: ignore[arg-type]
+        execute_agent=execute_agent,  # type: ignore
+        verify_agent=verify_agent,  # type: ignore
+        ui=ui,  # type: ignore
+        session_store=session_store,  # type: ignore
+        logger_factory=logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
+        status_manager=MockStatusManager(),  # type: ignore
     )
 
     # when
@@ -291,17 +297,23 @@ async def test_execution_loop_session_resume() -> None:
     execute_agent = MockAgent()
     execute_agent.messages_to_return = []
 
+    verify_agent = MockAgent()
+    verify_agent.messages_to_return = [AgentMessage(role="assistant", content="FULLY_DONE = TRUE")]
+    task_validator = MockTaskValidator(all_complete=False)
+
     ui = MockUI()
     session_store = MockSessionStore()
-    await session_store.save_session("mock", "existing-session-789", "default")
+    await session_store.save_session("mock", "existing-session-789", "test-plan")
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
-        execute_agent=execute_agent,  # type: ignore[arg-type]
-        ui=ui,  # type: ignore[arg-type]
-        session_store=cast("SessionStore", cast(object, session_store)),
-        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
-        status_manager=MockStatusManager(),  # type: ignore[arg-type]
+        execute_agent=execute_agent,  # type: ignore
+        verify_agent=verify_agent,  # type: ignore
+        ui=ui,  # type: ignore
+        session_store=session_store,  # type: ignore
+        logger_factory=logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
+        status_manager=MockStatusManager(),  # type: ignore
     )
 
     # when
@@ -316,18 +328,22 @@ async def test_execution_loop_with_task_validator_complete() -> None:
     execute_agent = MockAgent()
     execute_agent.messages_to_return = []
 
+    verify_agent = MockAgent()
+    verify_agent.messages_to_return = [AgentMessage(role="assistant", content="FULLY_DONE = TRUE")]
+
     ui = MockUI()
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator(all_complete=True)
 
     loop = ExecutionLoop(
-        execute_agent=execute_agent,  # type: ignore[arg-type]
-        ui=ui,  # type: ignore[arg-type]
-        session_store=cast("SessionStore", cast(object, session_store)),
-        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
-        task_validator=cast(TaskValidatorProtocol, cast(object, task_validator)),
-        status_manager=MockStatusManager(),  # type: ignore[arg-type]
+        execute_agent=execute_agent,  # type: ignore
+        verify_agent=verify_agent,  # type: ignore
+        ui=ui,  # type: ignore
+        session_store=session_store,  # type: ignore
+        logger_factory=logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
+        status_manager=MockStatusManager(),  # type: ignore
     )
 
     # when
@@ -343,6 +359,9 @@ async def test_execution_loop_with_task_validator_incomplete() -> None:
     execute_agent = MockAgent()
     execute_agent.messages_to_return = []
 
+    verify_agent = MockAgent()
+    verify_agent.messages_to_return = [AgentMessage(role="assistant", content="FULLY_DONE = TRUE")]
+
     ui = MockUI()
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
@@ -351,9 +370,10 @@ async def test_execution_loop_with_task_validator_incomplete() -> None:
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
+        verify_agent=verify_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=cast("SessionStore", cast(object, session_store)),
-        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
+        session_store=session_store,  # type: ignore[arg-type]
+        logger_factory=logger_factory,  # type: ignore[arg-type]
         task_validator=validator,  # type: ignore[arg-type]
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
@@ -384,16 +404,22 @@ async def test_execution_loop_prompt_with_extra() -> None:
     execute_agent = MockAgent()
     execute_agent.messages_to_return = []
 
+    verify_agent = MockAgent()
+    verify_agent.messages_to_return = [AgentMessage(role="assistant", content="FULLY_DONE = TRUE")]
+    task_validator = MockTaskValidator(all_complete=False)
+
     ui = MockUI()
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
-        execute_agent=execute_agent,  # type: ignore[arg-type]
-        ui=ui,  # type: ignore[arg-type]
-        session_store=cast("SessionStore", cast(object, session_store)),
-        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
-        status_manager=MockStatusManager(),  # type: ignore[arg-type]
+        execute_agent=execute_agent,  # type: ignore
+        verify_agent=verify_agent,  # type: ignore
+        ui=ui,  # type: ignore
+        session_store=session_store,  # type: ignore
+        logger_factory=logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
+        status_manager=MockStatusManager(),  # type: ignore
     )
 
     # when
@@ -410,16 +436,22 @@ async def test_execution_loop_ui_status_updates() -> None:
     execute_agent = MockAgent()
     execute_agent.messages_to_return = []
 
+    verify_agent = MockAgent()
+    verify_agent.messages_to_return = [AgentMessage(role="assistant", content="FULLY_DONE = TRUE")]
+    task_validator = MockTaskValidator(all_complete=True)
+
     ui = MockUI()
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
-        execute_agent=execute_agent,  # type: ignore[arg-type]
-        ui=ui,  # type: ignore[arg-type]
-        session_store=cast("SessionStore", cast(object, session_store)),
-        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
-        status_manager=MockStatusManager(),  # type: ignore[arg-type]
+        execute_agent=execute_agent,  # type: ignore
+        verify_agent=verify_agent,  # type: ignore
+        ui=ui,  # type: ignore
+        session_store=session_store,  # type: ignore
+        logger_factory=logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
+        status_manager=MockStatusManager(),  # type: ignore
     )
 
     # when
@@ -435,16 +467,22 @@ async def test_execution_loop_session_saved() -> None:
     execute_agent = MockAgent()
     execute_agent.messages_to_return = []
 
+    verify_agent = MockAgent()
+    verify_agent.messages_to_return = [AgentMessage(role="assistant", content="FULLY_DONE = TRUE")]
+    task_validator = MockTaskValidator(all_complete=False)
+
     ui = MockUI()
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
 
     loop = ExecutionLoop(
-        execute_agent=execute_agent,  # type: ignore[arg-type]
-        ui=ui,  # type: ignore[arg-type]
-        session_store=cast("SessionStore", cast(object, session_store)),
-        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
-        status_manager=MockStatusManager(),  # type: ignore[arg-type]
+        execute_agent=execute_agent,  # type: ignore
+        verify_agent=verify_agent,  # type: ignore
+        ui=ui,  # type: ignore
+        session_store=session_store,  # type: ignore
+        logger_factory=logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
+        status_manager=MockStatusManager(),  # type: ignore
     )
 
     # when
@@ -453,8 +491,8 @@ async def test_execution_loop_session_saved() -> None:
     # then
     sessions = await session_store.list_sessions()
     assert "mock" in sessions
-    assert "default" in sessions["mock"]
-    assert sessions["mock"]["default"] == "new-session-123"
+    assert "test-plan" in sessions["mock"]
+    assert sessions["mock"]["test-plan"] == "new-session-123"
 
 
 async def test_verify_phase__if_middle_message_has_true_but_last_has_false__returns_false() -> None:
@@ -465,6 +503,7 @@ async def test_verify_phase__if_middle_message_has_true_but_last_has_false__retu
         AgentMessage(role="assistant", content="Checking... FULLY_DONE = TRUE in thinking", metadata={}),
         AgentMessage(role="assistant", content="Actually, FULLY_DONE = FALSE", metadata={}),
     ]
+    task_validator = MockTaskValidator(all_complete=True)
 
     ui = MockUI()
     session_store = MockSessionStore()
@@ -474,8 +513,9 @@ async def test_verify_phase__if_middle_message_has_true_but_last_has_false__retu
         execute_agent=execute_agent,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=cast("SessionStore", cast(object, session_store)),
-        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
+        session_store=session_store,  # type: ignore[arg-type]
+        logger_factory=logger_factory,  # type: ignore[arg-type]
+        task_validator=task_validator,  # type: ignore[arg-type]
     )
 
     # when
@@ -508,6 +548,7 @@ async def test_verify_phase__if_no_judgment__retries_until_found() -> None:
         return _generator()
 
     verify_agent.stream = stream_generator  # type: ignore[method-assign]
+    task_validator = MockTaskValidator(all_complete=True)
 
     ui = MockUI()
     session_store = MockSessionStore()
@@ -517,8 +558,9 @@ async def test_verify_phase__if_no_judgment__retries_until_found() -> None:
         execute_agent=execute_agent,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=cast("SessionStore", cast(object, session_store)),
-        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
+        session_store=session_store,  # type: ignore[arg-type]
+        logger_factory=logger_factory,  # type: ignore[arg-type]
+        task_validator=task_validator,  # type: ignore[arg-type]
     )
 
     # when
@@ -539,6 +581,7 @@ async def test_verify_phase__if_max_retries_exceeded__defaults_to_false() -> Non
     verify_agent.messages_to_return = [
         AgentMessage(role="assistant", content="Still analyzing...", metadata={}),
     ]
+    task_validator = MockTaskValidator(all_complete=True)
 
     ui = MockUI()
     session_store = MockSessionStore()
@@ -548,8 +591,9 @@ async def test_verify_phase__if_max_retries_exceeded__defaults_to_false() -> Non
         execute_agent=execute_agent,  # type: ignore[arg-type]
         verify_agent=verify_agent,  # type: ignore[arg-type]
         ui=ui,  # type: ignore[arg-type]
-        session_store=cast("SessionStore", cast(object, session_store)),
-        logger_factory=cast("LoggerFactory", cast(object, logger_factory)),
+        session_store=session_store,  # type: ignore[arg-type]
+        logger_factory=logger_factory,  # type: ignore[arg-type]
+        task_validator=task_validator,  # type: ignore[arg-type]
     )
 
     # when

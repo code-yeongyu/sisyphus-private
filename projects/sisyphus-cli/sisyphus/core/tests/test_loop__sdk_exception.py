@@ -1,3 +1,4 @@
+# pyright: reportArgumentType=false, reportMissingImports=false, reportImplicitRelativeImport=false
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
@@ -8,7 +9,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from sisyphus.core.loop import ExecutionLoop
-from sisyphus.core.tests.test_loop import MockStatusManager
+from sisyphus.core.tests.test_loop import MockAgent, MockStatusManager
 from sisyphus.utils.errors import RetryRequiredError
 from sisyphus.utils.types import AgentMessage
 
@@ -28,12 +29,18 @@ async def test_execute_phase__if_sdk_exception__deletes_session_and_retries() ->
     await session_store.save_session("mockwithsdkerror", "invalid-session-id", "default")
     logger_factory = MockLoggerFactory()
 
+    verify_agent = MockAgent()
+    verify_agent.messages_to_return = [AgentMessage(role="assistant", content="FULLY_DONE = TRUE")]
+    task_validator = MockTaskValidator(all_complete=True)
+
     loop = ExecutionLoop(
-        execute_agent=execute_agent,  # type: ignore[arg-type]
-        ui=ui,  # type: ignore[arg-type]
-        session_store=session_store,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
-        status_manager=MockStatusManager("default"),  # type: ignore[arg-type]
+        execute_agent=execute_agent,  # type: ignore
+        verify_agent=verify_agent,  # type: ignore
+        ui=ui,  # type: ignore
+        session_store=session_store,  # type: ignore
+        logger_factory=logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
+        status_manager=MockStatusManager("default"),  # type: ignore
     )
 
     # when
@@ -72,12 +79,18 @@ async def test_execute_phase__if_sdk_exception_3_times__exits_phase() -> None:
     await session_store.save_session("mockwithsdkerror", "invalid-session-id", "default")
     logger_factory = MockLoggerFactory()
 
+    verify_agent = MockAgent()
+    verify_agent.messages_to_return = [AgentMessage(role="assistant", content="FULLY_DONE = TRUE")]
+    task_validator = MockTaskValidator(all_complete=True)
+
     loop = ExecutionLoop(
-        execute_agent=execute_agent,  # type: ignore[arg-type]
-        ui=ui,  # type: ignore[arg-type]
-        session_store=session_store,  # type: ignore[arg-type]
-        logger_factory=logger_factory,  # type: ignore[arg-type]
-        status_manager=MockStatusManager("default"),  # type: ignore[arg-type]
+        execute_agent=execute_agent,  # type: ignore
+        verify_agent=verify_agent,  # type: ignore
+        ui=ui,  # type: ignore
+        session_store=session_store,  # type: ignore
+        logger_factory=logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
+        status_manager=MockStatusManager("default"),  # type: ignore
     )
 
     # when
@@ -255,5 +268,15 @@ class MockLoggerFactory:
 
 
 class MockTaskValidator:
-    async def is_complete(self) -> bool:
-        return False
+    def __init__(self, all_complete: bool = False) -> None:
+        self._all_complete = all_complete
+        self.todolist_path = Path(".sisyphus/tasks/test-plan.yaml")
+
+    def read_content(self) -> str:
+        return "mock content"
+
+    async def check_all_goals_accomplished(self, content: str | None = None) -> bool:
+        return self._all_complete
+
+    async def check_all_checkboxes_completed(self, content: str | None = None) -> bool:
+        return self._all_complete

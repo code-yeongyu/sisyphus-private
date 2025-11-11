@@ -1,3 +1,4 @@
+# pyright: reportArgumentType=false, reportMissingImports=false, reportImplicitRelativeImport=false
 """Integration tests for ExecutionLoop complete feedback loop."""
 
 from __future__ import annotations
@@ -10,7 +11,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from sisyphus.core.loop import ExecutionLoop
-from sisyphus.core.tests.test_loop import MockStatusManager
+from sisyphus.core.tests.test_loop import MockAgent, MockTaskValidator, MockStatusManager
 from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:
@@ -283,7 +284,7 @@ class MockTaskValidator:
         self.all_complete = False
         self.completion_sequence: list[bool] = []
         self.call_count = 0
-        self.todolist_path = None
+        self.todolist_path = Path(".sisyphus/tasks/test-plan.yaml")
 
     def read_content(self) -> str:
         return "mock content"

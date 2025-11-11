@@ -1,3 +1,4 @@
+# pyright: reportArgumentType=false, reportMissingImports=false, reportImplicitRelativeImport=false
 """Tests for ExecutionLoop phase resume behavior."""
 
 from __future__ import annotations
@@ -10,7 +11,7 @@ import anyio
 import pytest
 
 from sisyphus.core.loop import ExecutionLoop
-from sisyphus.core.tests.test_loop import MockStatusManager
+from sisyphus.core.tests.test_loop import MockAgent, MockStatusManager, MockTaskValidator
 from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:
@@ -31,12 +32,18 @@ async def test_execute_phase__after_resume__continues_phase(
     mock_ui.input_queue = ["resumed message"]
     mock_ui.should_interrupt = True
 
+    verify_agent = MockAgent()
+    verify_agent.messages_to_return = [AgentMessage(role="assistant", content="FULLY_DONE = TRUE")]
+    task_validator = MockTaskValidator(all_complete=True)
+
     loop = ExecutionLoop(
-        execute_agent=mock_execute_agent,  # type: ignore[arg-type]
-        ui=mock_ui,  # type: ignore[arg-type]
-        session_store=mock_session_store,  # type: ignore[arg-type]
-        logger_factory=mock_logger_factory,  # type: ignore[arg-type]
-        status_manager=MockStatusManager(),  # type: ignore[arg-type]
+        execute_agent=mock_execute_agent,  # type: ignore
+        verify_agent=verify_agent,  # type: ignore
+        ui=mock_ui,  # type: ignore
+        session_store=mock_session_store,  # type: ignore
+        logger_factory=mock_logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
+        status_manager=MockStatusManager(),  # type: ignore
     )
 
     async def simulate_interrupt_and_resume() -> None:
@@ -64,12 +71,18 @@ async def test_execute_phase__normal_completion__ends_phase(
         AgentMessage(role="assistant", content="Response 2"),
     ]
 
+    verify_agent = MockAgent()
+    verify_agent.messages_to_return = [AgentMessage(role="assistant", content="FULLY_DONE = TRUE")]
+    task_validator = MockTaskValidator(all_complete=True)
+
     loop = ExecutionLoop(
-        execute_agent=mock_execute_agent,  # type: ignore[arg-type]
-        ui=mock_ui,  # type: ignore[arg-type]
-        session_store=mock_session_store,  # type: ignore[arg-type]
-        logger_factory=mock_logger_factory,  # type: ignore[arg-type]
-        status_manager=MockStatusManager(),  # type: ignore[arg-type]
+        execute_agent=mock_execute_agent,  # type: ignore
+        verify_agent=verify_agent,  # type: ignore
+        ui=mock_ui,  # type: ignore
+        session_store=mock_session_store,  # type: ignore
+        logger_factory=mock_logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
+        status_manager=MockStatusManager(),  # type: ignore
     )
 
     await loop._execute_phase("test prompt", None)
@@ -90,12 +103,18 @@ async def test_execute_phase__multiple_resumes__continues_each_time(
     mock_ui.input_queue = ["resume 1", "resume 2"]
     mock_ui.interrupt_count = 2
 
+    verify_agent = MockAgent()
+    verify_agent.messages_to_return = [AgentMessage(role="assistant", content="FULLY_DONE = TRUE")]
+    task_validator = MockTaskValidator(all_complete=True)
+
     loop = ExecutionLoop(
-        execute_agent=mock_execute_agent,  # type: ignore[arg-type]
-        ui=mock_ui,  # type: ignore[arg-type]
-        session_store=mock_session_store,  # type: ignore[arg-type]
-        logger_factory=mock_logger_factory,  # type: ignore[arg-type]
-        status_manager=MockStatusManager(),  # type: ignore[arg-type]
+        execute_agent=mock_execute_agent,  # type: ignore
+        verify_agent=verify_agent,  # type: ignore
+        ui=mock_ui,  # type: ignore
+        session_store=mock_session_store,  # type: ignore
+        logger_factory=mock_logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
+        status_manager=MockStatusManager(),  # type: ignore
     )
 
     async def simulate_multiple_interrupts() -> None:
@@ -129,12 +148,15 @@ async def test_verify_phase__after_resume__continues_phase(
     mock_ui.input_queue = ["resumed message"]
     mock_ui.should_interrupt = True
 
+    task_validator = MockTaskValidator(all_complete=True)
+
     loop = ExecutionLoop(
-        execute_agent=mock_execute_agent,  # type: ignore[arg-type]
-        verify_agent=mock_verify_agent,  # type: ignore[arg-type]
-        ui=mock_ui,  # type: ignore[arg-type]
-        session_store=mock_session_store,  # type: ignore[arg-type]
-        logger_factory=mock_logger_factory,  # type: ignore[arg-type]
+        execute_agent=mock_execute_agent,  # type: ignore
+        verify_agent=mock_verify_agent,  # type: ignore
+        ui=mock_ui,  # type: ignore
+        session_store=mock_session_store,  # type: ignore
+        logger_factory=mock_logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
     )
 
     async def simulate_interrupt_and_resume() -> None:
@@ -163,12 +185,15 @@ async def test_verify_phase__normal_completion__ends_phase(
         AgentMessage(role="assistant", content="Response 2\nFULLY_DONE = TRUE"),
     ]
 
+    task_validator = MockTaskValidator(all_complete=True)
+
     loop = ExecutionLoop(
-        execute_agent=mock_execute_agent,  # type: ignore[arg-type]
-        verify_agent=mock_verify_agent,  # type: ignore[arg-type]
-        ui=mock_ui,  # type: ignore[arg-type]
-        session_store=mock_session_store,  # type: ignore[arg-type]
-        logger_factory=mock_logger_factory,  # type: ignore[arg-type]
+        execute_agent=mock_execute_agent,  # type: ignore
+        verify_agent=mock_verify_agent,  # type: ignore
+        ui=mock_ui,  # type: ignore
+        session_store=mock_session_store,  # type: ignore
+        logger_factory=mock_logger_factory,  # type: ignore
+        task_validator=task_validator,  # type: ignore
     )
 
     feedback, fully_done = await loop._verify_phase("test prompt", None)

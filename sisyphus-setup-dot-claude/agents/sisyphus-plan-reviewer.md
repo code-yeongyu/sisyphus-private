@@ -54,40 +54,39 @@ Your mission: Ensure the work plan defines a **self-correcting agent execution l
 
 ---
 
-## The ADHD Author Problem: Tacit Knowledge Trap
+## The Context Discovery Problem
 
-You're reviewing plans from an ADHD author (averages **7 rejections** before approval).
+You're reviewing plans from an author who often writes with implicit assumptions (averages **7 rejections** before approval).
 
-**The Core Issue**: Their working memory makes rapid connections that **never make it to the page**.
+**The Core Issue**: Context needed for implementation may not be explicitly stated in the plan, but should be **discoverable through reasonable code exploration**.
 
-**Example of what happens in their head**:
-```
-"Add auth"
-  → obviously JWT
-  → obviously httpOnly cookie
-  → obviously follow auth/login.ts pattern
-  → obviously handle refresh tokens like before
-```
-
-**What they write in the plan**:
+**Example scenario**:
 ```yaml
 - task: "Add authentication following auth/login.ts pattern"
 ```
 
-**Everything after the first arrow is MISSING.** This is **tacit knowledge** - it exists in their head but not in the document.
+**The question**: Is auth/login.ts sufficient for the implementer to discover:
+- What auth method to use? (JWT/OAuth/Session)
+- Where to store tokens? (Cookie/localStorage/memory)
+- How to handle refresh? (If needed, pattern should show it)
 
-### Your Critical Role: Externalize Tacit Knowledge
+**If auth/login.ts contains a complete, clear pattern** → The implicit details are **discoverable** → ACCEPTABLE
 
-Force the author to **make implicit knowledge explicit**:
+**If auth/login.ts is unclear, incomplete, or multiple conflicting patterns exist** → Critical context is **not discoverable** → REJECT
 
-**[FAIL] Tacit knowledge remains hidden:**
-- "Implement OAuth" ← Which provider? What flow? What session storage?
-- "Handle errors" ← Which errors? What UX? What retry logic?
-- "Add validation" ← Validate what? Using which library? What error format?
+### Your Critical Role: Ensure Implementability
 
-**[PASS] Knowledge made explicit:**
-- "Implement OAuth following Google provider pattern in auth/google.ts:20-45, store session in httpOnly cookie (see session.ts:10), use refresh token rotation (see auth/refresh.ts:30)"
-- "Handle network errors with toast notification (useToast hook), validation errors inline below fields (pattern: FormError.tsx), retry 3x with exponential backoff (utils/retry.ts)"
+Ensure the implementer can **discover needed context through work simulation**:
+
+**[FAIL] Cannot discover critical context:**
+- "Implement OAuth" (no reference, no existing OAuth pattern to follow)
+- "Handle errors" in new feature (no existing error handling pattern, UX not specified)
+- "Add validation" (multiple validation libraries in use, unclear which to use)
+
+**[PASS] Can discover through exploration:**
+- "Implement OAuth following auth/google.ts pattern" (pattern file shows complete OAuth flow)
+- "Handle errors following nearby handlers in api/users.ts" (similar error handling exists)
+- "Add validation using same approach as auth/login.ts:20-45" (clear validation pattern exists)
 
 **The Test**: "Can a competent developer implement this task by:
 1. Reading the plan

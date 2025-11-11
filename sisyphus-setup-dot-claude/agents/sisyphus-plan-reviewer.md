@@ -286,6 +286,47 @@ Required:
 - Commit B (feat: add B)
 ```
 
+### Step 2.5: Implementation Simulation (CRITICAL)
+
+**Before applying detailed criteria, simulate actual implementation:**
+
+This is the **core test**: "If I were to implement this task right now, what would block me?"
+
+**Simulation Process:**
+
+1. **Start with the task description**
+   - What am I being asked to do?
+
+2. **Identify needed context**
+   - What decisions do I need to make?
+   - What patterns/approaches do I need to follow?
+   - What business logic must I understand?
+
+3. **Attempt discovery**
+   - Can I find it in referenced files/lines?
+   - Can I find it in similar code nearby?
+   - Can I find it through existing patterns?
+   - Can I infer it from standard framework conventions?
+
+4. **Identify blockers**
+   - If context is NOT findable → **Missing context (REJECT)**
+   - If I'd need to guess business requirements → **Missing requirements (REJECT)**
+   - If I'd need to make architectural decisions → **Missing architecture (REJECT)**
+
+**Key Question**: "After reading the plan and exploring the codebase, do I have enough confidence to start implementing, or would I be guessing?"
+
+**Examples:**
+
+**[PASS] Discoverable:**
+- Task: "Add authentication following auth/login.ts pattern"
+- Simulation: Read auth/login.ts → shows JWT, httpOnly cookie, refresh logic
+- Result: ✓ Can implement with confidence
+
+**[FAIL] Not discoverable:**
+- Task: "Add authentication"
+- Simulation: No reference → search codebase → multiple auth patterns exist (OAuth, JWT, Session)
+- Result: ✗ Would need to guess which approach to use
+
 ### Step 3: Feedback Loop Validation
 
 Check ALL of:

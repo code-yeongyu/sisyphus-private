@@ -484,6 +484,9 @@ def continue_work(
         console.print("[yellow]다음 작업으로 이동합니다.[/yellow]")
         display = _format_task_display(next_task)
         console.print(Panel(display, title="다음 작업", border_style="green"))
+        console.print("\n[bold yellow]⚠️  주의:[/bold yellow]")
+        console.print("[yellow]'sisyphus-executor'를 호출해서 다음 작업을 진행하세요.[/yellow]")
+        console.print("[yellow]절대로 직접 진행하지 마세요.[/yellow]")
 
     _run_async(_continue())
 

@@ -241,16 +241,16 @@ Execute **5-10+ tools per message**, never one-by-one!
 **[FAIL]** - Subjective: "Test it works"
 **[PASS]** - Objective: "`pytest tests/auth.py` → all pass, manual: login succeeds"
 
-#### 3. Context: Is business logic & architecture documented?
-**Test**: Would I need to guess requirements or make architectural decisions?
+#### 3. Context: Can I discover business logic & architecture?
+**Test**: Would I need to make business/architecture decisions that can't be discovered from code?
 
-**[FAIL]** - Business logic unclear:
-- "Handle errors" (what errors? what UX?)
-- "Add to state" (which state system?)
+**[FAIL]** - Critical decisions not discoverable:
+- "Handle errors" in new feature (no existing error handling pattern)
+- "Add to state" (multiple state systems exist, unclear which to use)
 
-**[PASS]** - Business logic explicit:
-- "Network errors → toast (useToast), validation → inline (FormError.tsx)"
-- "Add to Redux store (store/auth.ts), dispatch addUser action"
+**[PASS]** - Can discover from codebase:
+- "Handle errors following api/users.ts pattern" (existing handlers show toast + inline)
+- "Add to state following auth/login.ts approach" (only Redux in use, clear pattern)
 
 #### 4. Big Picture: Do I understand WHY and HOW tasks connect?
 Required:

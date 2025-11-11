@@ -365,5 +365,48 @@ def build_verify_prompt(plan_path: str) -> str:
         "→ Say `FULLY_DONE = TRUE`\n\n"
         "If you found ANY issues, incomplete work, or tasks that need fixing:\n"
         "→ Say `FULLY_DONE = FALSE`\n\n"
-        "Your report will be sent directly to the executor who must fix these issues."
+        "Your report will be sent directly to the executor who must fix these issues.\\n\\n"
+        "---\\n\\n"
+        "**FINAL VERIFICATION - YOUR RESPONSIBILITY AS ORCHESTRATOR**:\\n\\n"
+        "After ALL individual todo tasks are completed and their verification_spec items are verified,\\n"
+        "you MUST check the work plan's `final_verification` section.\\n\\n"
+        "The `final_verification` field contains plan-level verification items that validate the\\n"
+        "ENTIRE work as a cohesive whole (integration tests, end-to-end flows, security checks, etc.).\\n\\n"
+        "**CRITICAL**: These are YOUR responsibility as the orchestrator. You must:\\n\\n"
+        "1. **Identify final verification items**: Read the work plan's `final_verification` field\\n"
+        "2. **Perform each verification**: Execute tests, run commands, inspect manually\\n"
+        "3. **Mark each item as verified**: Use the CLI commands below\\n\\n"
+        "**HOW TO MARK FINAL VERIFICATION ITEMS**:\\n\\n"
+        'Each final verification item has an `id` field (e.g., \\"final-verify-001\\").\\n'
+        "Use the SAME CLI commands as for todo-level verifications:\\n\\n"
+        "```bash\\n"
+        "# For bash automated verification\\n"
+        "sisyphus task verify bash\\n\\n"
+        "# For LLM judge verification (after you perform the check)\\n"
+        'sisyphus task verify llm-mark <final-verify-id> --evidence \\"<detailed evidence>\\"\\n\\n'
+        "# For manual verification (after you perform the check)\\n"
+        'sisyphus task verify manual-mark <final-verify-id> --evidence \\"<very detailed evidence 100+ chars>\\"\\n'
+        "```\\n\\n"
+        "**Example**:\\n"
+        "```yaml\\n"
+        "final_verification:\\n"
+        '  - id: \\"final-verify-integration\\"\\n'
+        '    title: \\"End-to-end authentication flow\\"\\n'
+        '    category: \\"integration\\"\\n'
+        "    # ... verification spec ...\\n"
+        "```\\n\\n"
+        "After performing the verification, mark it:\\n"
+        "```bash\\n"
+        'sisyphus task verify manual-mark final-verify-integration --evidence \\"Tested complete auth flow: \\n'
+        "login -> token generation -> protected endpoint access -> logout. All 4 steps working correctly. \\n"
+        'Verified with Playwright in Chrome 120. Screenshots captured for each step.\\"\\n'
+        "```\\n\\n"
+        "**FINAL VERIFICATION IS YOUR JOB**:\\n"
+        "- Executors complete individual todos\\n"
+        "- YOU (orchestrator) verify the integrated whole\\n"
+        "- Final verification items validate system-level correctness\\n"
+        "- DO NOT skip final verification - it's as critical as todo-level verification\\n"
+        "- ALL final verification items must be marked verified before reporting FULLY_DONE = TRUE\\n\\n"
+        "If final verification items exist but are not verified, report FULLY_DONE = FALSE\\n"
+        "and include specific instructions to verify and mark each final verification item."
     )

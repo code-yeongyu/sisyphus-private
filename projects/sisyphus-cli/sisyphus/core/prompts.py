@@ -148,6 +148,8 @@ for YAML v3.0 work plans.**
 
 FORBIDDEN: NEVER CALL 'sisyphus work' COMMAND, THIS IS FOR USER, NOW YOU.
 For now, run 'sisyphus task continue' to continue the task, until you are fully done.
+
+RUN `sisyphus task continue`. NOW.
 """
 
 DEFAULT_VERIFY_PROMPT = (

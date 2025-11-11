@@ -151,7 +151,7 @@ Every work plan MUST have:
 - [ ] **Intermediate checkpoints** (validate each layer before building next)
 - [ ] **Error detection** (linters, type checks, tests specified)
 
-**AUTOMATIC REJECT if**:
+**MUST BE REJECTED if**:
 - Plan implements code but has ZERO test tasks
 - No verification methods for critical functionality
 - All testing deferred to the end

@@ -384,26 +384,26 @@ class ExecutionLoop:
 
                 plan_doc = await load_plan(self.task_validator.todolist_path)
 
-                    for work_plan in plan_doc.work_plans:
-                        if work_plan.work_mode.current_task_id:
+                for work_plan in plan_doc.work_plans:
+                    if work_plan.work_mode.current_task_id:
 
-                            def find_and_reset_task(todos: list[Todo]) -> bool:
-                                for todo in todos:
-                                    if todo.id == work_plan.work_mode.current_task_id:
-                                        if todo.status == TodoStatus.completed:
-                                            todo.status = TodoStatus.in_progress
-                                            return True
-                                    if todo.children and find_and_reset_task(todo.children):
+                        def find_and_reset_task(todos: list[Todo]) -> bool:
+                            for todo in todos:
+                                if todo.id == work_plan.work_mode.current_task_id:
+                                    if todo.status == TodoStatus.completed:
+                                        todo.status = TodoStatus.in_progress
                                         return True
-                                return False
+                                if todo.children and find_and_reset_task(todo.children):
+                                    return True
+                            return False
 
-                            find_and_reset_task(work_plan.todos)
-                            work_plan.execution.completed = False
+                        find_and_reset_task(work_plan.todos)
+                        work_plan.execution.completed = False
 
-                    await save_plan(self.task_validator.todolist_path, plan_doc)
-                    await self.ui.show_status(
-                        f"[Iteration {iteration}] Verify FALSE. Task reset to in_progress, will re-execute..."
-                    )
+                await save_plan(self.task_validator.todolist_path, plan_doc)
+                await self.ui.show_status(
+                    f"[Iteration {iteration}] Verify FALSE. Task reset to in_progress, will re-execute..."
+                )
 
                 if feedback:
                     verify_feedback_history.append(feedback)

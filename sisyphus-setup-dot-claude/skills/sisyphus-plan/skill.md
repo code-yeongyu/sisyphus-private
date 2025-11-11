@@ -1724,97 +1724,523 @@ Ask yourself: "Will this command ALWAYS produce this output?"
 - UNSURE → Default to llm_judge or manual (safer)
 ```
 
-##### LLM Judge Verification (FLEXIBLE APPROACH)
+##### Acceptance Criteria Framework (CRITICAL FOR LLM JUDGE)
+
+**CORE PRINCIPLE: Decompose verification into exhaustive, independent acceptance criteria.**
+
+Every feature/task can be broken down into 5-20 specific, measurable acceptance criteria. LLM judge should verify each criterion independently, like a QA checklist.
+
+**Why Acceptance Criteria:**
+- **Explicitness**: "Button must be visible" is clearer than "button works"
+- **Completeness**: Forces you to think through ALL aspects (UI, behavior, errors, edge cases, accessibility)
+- **Verifiability**: Each criterion = one pass/fail check (no ambiguity)
+- **Feedback loops**: Executor knows exactly what failed and how to fix it
+
+**How to Decompose Features into Acceptance Criteria:**
+
+1. **UI Components** (Buttons, Forms, Pages)
+   - **Existence**: Component exists in correct location
+   - **Visual properties**: Color, size, font, spacing match design
+   - **States**: Default, hover, active, disabled, loading states render correctly
+   - **Behavior**: Click/interaction triggers expected action
+   - **Error handling**: Invalid inputs show proper error messages
+   - **Accessibility**: ARIA labels, keyboard navigation, screen reader support
+   - **Responsiveness**: Works on mobile, tablet, desktop viewports
+
+   **Example - Login Button:**
+   ```
+   CRITERION 1: Button element exists at bottom of login form
+   CRITERION 2: Button text is "Sign In" (not "Login" or other variants)
+   CRITERION 3: Button uses primary brand color (#3B82F6)
+   CRITERION 4: Button is disabled when form is invalid (empty email/password)
+   CRITERION 5: Button shows loading spinner when authentication in progress
+   CRITERION 6: Clicking button triggers login API call
+   CRITERION 7: Successful login redirects to /dashboard
+   CRITERION 8: Failed login displays error message below button
+   CRITERION 9: Button has aria-label="Sign in to your account"
+   CRITERION 10: Button is keyboard accessible (Enter key works)
+   ```
+
+2. **API Endpoints**
+   - **Request handling**: Accepts correct HTTP method and content-type
+   - **Authentication**: Requires valid auth token, rejects unauthorized requests
+   - **Input validation**: Validates required fields, data types, formats
+   - **Success response**: Returns correct status code (200/201/204) and data structure
+   - **Error responses**: Returns appropriate error codes (400/401/404/500) with messages
+   - **Side effects**: Database updates, event triggers, notifications work correctly
+   - **Performance**: Responds within acceptable time (e.g., < 200ms)
+   - **Idempotency**: Repeated requests don't cause duplicate effects (for POST/PUT)
+
+   **Example - POST /api/users (Create User):**
+   ```
+   CRITERION 1: Endpoint accepts POST requests to /api/users
+   CRITERION 2: Requires Content-Type: application/json header
+   CRITERION 3: Requires valid JWT token in Authorization header
+   CRITERION 4: Rejects requests without auth token (returns 401)
+   CRITERION 5: Validates email format (returns 400 if invalid)
+   CRITERION 6: Validates password strength (min 8 chars, returns 400 if weak)
+   CRITERION 7: Returns 409 Conflict if email already exists
+   CRITERION 8: On success, returns 201 with user object { id, email, created_at }
+   CRITERION 9: Hashes password with bcrypt before storing (never stores plaintext)
+   CRITERION 10: Sends welcome email to user after account creation
+   CRITERION 11: Response includes Location header with /api/users/{id}
+   CRITERION 12: Duplicate POST with same email returns existing user (idempotent)
+   ```
+
+3. **Business Logic / Algorithms**
+   - **Core functionality**: Main algorithm produces correct output for valid inputs
+   - **Edge cases**: Handles boundary values (0, negative, MAX_INT, empty, null)
+   - **Error conditions**: Throws/returns appropriate errors for invalid inputs
+   - **State transitions**: Moves through expected states correctly
+   - **Data integrity**: Maintains consistency (no partial updates, no data loss)
+   - **Concurrency**: Handles simultaneous operations correctly (no race conditions)
+
+   **Example - Shopping Cart Discount Calculation:**
+   ```
+   CRITERION 1: 10% discount applies when cart total ≥ $100
+   CRITERION 2: No discount when cart total < $100
+   CRITERION 3: Discount rounds to 2 decimal places (e.g., $10.99 not $10.9876)
+   CRITERION 4: Discount applies BEFORE tax calculation
+   CRITERION 5: Discount code "SAVE20" overrides percentage (20% instead of 10%)
+   CRITERION 6: Invalid discount code is rejected with clear error message
+   CRITERION 7: Expired discount codes are rejected
+   CRITERION 8: Empty cart (total = $0) has discount = $0 (no errors)
+   CRITERION 9: Negative total (refunds) sets discount = $0 (no negative discount)
+   CRITERION 10: Discount persists when items added/removed (recalculated correctly)
+   ```
+
+4. **Code Quality / Implementation**
+   - **No anti-patterns**: No usage of forbidden patterns (e.g., `any` type, MD5 hashing)
+   - **Error handling**: All external calls wrapped in try-catch with proper error messages
+   - **Type safety**: All function parameters and returns properly typed
+   - **Code organization**: Functions are small, single-purpose, well-named
+   - **Documentation**: Complex logic has comments explaining "why" not just "what"
+   - **Testing**: Critical paths covered by unit tests
+   - **Performance**: No obvious inefficiencies (N+1 queries, unnecessary loops)
+
+   **Example - User Authentication Module:**
+   ```
+   CRITERION 1: No usage of TypeScript `any` type (all types explicit)
+   CRITERION 2: Passwords hashed with bcrypt (NOT MD5, SHA1, or plaintext)
+   CRITERION 3: All database queries wrapped in try-catch with error handling
+   CRITERION 4: Functions return typed Result<T, Error> (not mixed types)
+   CRITERION 5: Authentication errors use custom AuthError class (not generic Error)
+   CRITERION 6: Token expiration time configurable via environment variable
+   CRITERION 7: Sensitive data (passwords) never logged or exposed in errors
+   CRITERION 8: All public functions have JSDoc comments
+   CRITERION 9: Login function has unit tests for success/failure cases
+   CRITERION 10: No database queries in loops (uses batch queries instead)
+   ```
+
+**Acceptance Criteria Template for LLM Judge:**
+
+```yaml
+llm_judge:
+  - by: orchestrator-agent
+    instruction: |
+      Verify the following acceptance criteria. Each criterion must PASS independently.
+      Mark each as PASS ✓ or FAIL ✗ with evidence.
+
+      CRITERION 1: [Specific requirement]
+      - What to verify: [Exact thing to check]
+      - Expected: [Expected outcome]
+      - How to verify: [Command/inspection method]
+      - Evidence required: [What to show as proof]
+
+      CRITERION 2: [Specific requirement]
+      - What to verify: [Exact thing to check]
+      - Expected: [Expected outcome]
+      - How to verify: [Command/inspection method]
+      - Evidence required: [What to show as proof]
+
+      [... continue for all criteria ...]
+
+      CRITERION N: [Specific requirement]
+      - What to verify: [Exact thing to check]
+      - Expected: [Expected outcome]
+      - How to verify: [Command/inspection method]
+      - Evidence required: [What to show as proof]
+
+      ---
+
+      FINAL VERDICT:
+      - Total criteria: N
+      - Passed: [count]
+      - Failed: [count]
+      - Overall: PASS (if all passed) or FAIL (if any failed)
+
+      For each FAILED criterion, provide:
+      - What went wrong
+      - How to fix it
+```
+
+##### LLM Judge Verification (ACCEPTANCE CRITERIA APPROACH)
 
 **Use LLM judge when:**
-- Output format varies but meaning is consistent
-- Need human-like assessment (code quality, readability, etc.)
-- Complex multi-step validation
-- Subjective criteria (e.g., "API response is reasonable")
+- Verifying subjective quality criteria (code readability, UX polish, documentation clarity)
+- Checking implementation correctness without deterministic output (UI rendering, user flows)
+- Validating compliance with design specs, architecture patterns, or coding standards
+- **ESPECIALLY when you need to verify 5-20 independent acceptance criteria in one go**
 
-**LLM Judge Best Practices:**
+**LLM Judge Best Practices (ACCEPTANCE CRITERIA APPROACH):**
 
-1. **Provide clear, objective instructions**
+**CRITICAL: Always structure LLM judge instructions as exhaustive acceptance criteria checklists.**
+
+1. **Decompose the feature into 5-20 specific acceptance criteria**
+   - Each criterion = one independently verifiable requirement
+   - Cover ALL aspects: functionality, UI, errors, edge cases, code quality, accessibility
+   - Use the Acceptance Criteria Framework patterns (UI/API/Business Logic/Code Quality)
+
+2. **Format each criterion with 4 components:**
+   - **What to verify**: Exact thing to check (e.g., "Button text content")
+   - **Expected**: Expected outcome (e.g., "Text is 'Sign In'")
+   - **How to verify**: Method to check (e.g., "Inspect button element in rendered HTML")
+   - **Evidence required**: What to show as proof (e.g., "Screenshot or HTML snippet showing button text")
+
+3. **Require PASS/FAIL marking for each criterion independently**
+   - Executor must mark each criterion as ✓ PASS or ✗ FAIL
+   - For FAIL, executor must explain what went wrong and how to fix it
+   - Final verdict: PASS only if ALL criteria passed
+
+4. **Include context commands for gathering evidence**
    ```yaml
-   llm_judge:
-     - by: orchestrator-agent
-       instruction: |
-         Check if API endpoint exists by:
-         1. Run: curl http://localhost:8000/api/users
-         2. Verify: Response status is 200 or 201
-         3. Verify: Response body is valid JSON
-         4. Verify: JSON contains "users" array field
+   context_commands:
+     - "cat src/components/LoginButton.tsx"
+     - "npm run dev"  # Start dev server for UI inspection
+     - "curl http://localhost:3000/api/login"
    ```
 
-2. **Include context commands**
-   ```yaml
-   llm_judge:
-     - by: orchestrator-agent
-       context_commands:
-         - "cat src/api/routes.ts"
-         - "grep -r 'export.*Router' src/api/"
-       instruction: "Verify that user authentication routes are properly registered"
-   ```
+5. **Choose appropriate judge**
+   - `orchestrator-agent`: For quick checks during execution (5-10 criteria)
+   - `external-agent`: For thorough review requiring deep analysis (10-20 criteria)
 
-3. **Choose appropriate judge**
-   - `orchestrator-agent`: For quick checks during execution
-   - `external-agent`: For thorough review requiring deep analysis
+**Example - Login Button Implementation (UI Component):**
+
+```yaml
+llm_judge:
+  - by: orchestrator-agent
+    context_commands:
+      - "cat src/components/LoginButton.tsx"
+      - "cat src/styles/button.css"
+      - "npm run dev"  # Start dev server
+    instruction: |
+      Verify the Login Button implementation against the following acceptance criteria.
+      Mark each criterion as PASS ✓ or FAIL ✗ with evidence.
+
+      CRITERION 1: Button element exists at bottom of login form
+      - What to verify: Button position in DOM structure
+      - Expected: Button is last child element of <form id="login-form">
+      - How to verify: Inspect HTML structure at http://localhost:3000/login
+      - Evidence required: HTML snippet or screenshot showing button position
+
+      CRITERION 2: Button text is "Sign In" (exact match)
+      - What to verify: Button text content
+      - Expected: Text content is exactly "Sign In" (not "Login", "Submit", or other variants)
+      - How to verify: Read button inner text from rendered HTML
+      - Evidence required: Screenshot or code showing button text
+
+      CRITERION 3: Button uses primary brand color (#3B82F6)
+      - What to verify: Button background color
+      - Expected: CSS background-color is #3B82F6 (primary blue)
+      - How to verify: Inspect computed styles in browser DevTools
+      - Evidence required: DevTools screenshot showing background-color value
+
+      CRITERION 4: Button is disabled when form is invalid
+      - What to verify: Button disabled state when email or password is empty
+      - Expected: Button has disabled attribute when either field is empty
+      - How to verify: Test in browser - clear email field, check button state
+      - Evidence required: Screenshot showing disabled button with empty field
+
+      CRITERION 5: Button shows loading spinner during authentication
+      - What to verify: Loading state UI when login API call is in progress
+      - Expected: Button shows spinner icon and text changes to "Signing in..."
+      - How to verify: Click button, observe UI before API response
+      - Evidence required: Screenshot of loading state
+
+      CRITERION 6: Clicking button triggers login API call
+      - What to verify: API call is made when button is clicked
+      - Expected: POST request to /api/login with email and password in body
+      - How to verify: Monitor network tab while clicking button
+      - Evidence required: Network request screenshot or curl command output
+
+      CRITERION 7: Successful login redirects to /dashboard
+      - What to verify: Navigation behavior after successful authentication
+      - Expected: Browser navigates to /dashboard route
+      - How to verify: Complete login flow with valid credentials
+      - Evidence required: URL bar showing /dashboard or router history log
+
+      CRITERION 8: Failed login displays error message below button
+      - What to verify: Error message visibility and position
+      - Expected: Red error text "Invalid email or password" appears below button
+      - How to verify: Login with invalid credentials
+      - Evidence required: Screenshot showing error message position and text
+
+      CRITERION 9: Button has accessible aria-label
+      - What to verify: ARIA label attribute for screen readers
+      - Expected: Button has aria-label="Sign in to your account"
+      - How to verify: Inspect button element attributes
+      - Evidence required: HTML showing aria-label attribute
+
+      CRITERION 10: Button is keyboard accessible
+      - What to verify: Button can be triggered with Enter key
+      - Expected: Pressing Enter while button is focused triggers login
+      - How to verify: Tab to button, press Enter
+      - Evidence required: Confirmation that Enter key works
+
+      ---
+
+      FINAL VERDICT:
+      - Total criteria: 10
+      - Passed: [count]
+      - Failed: [count]
+      - Overall: PASS (if all 10 passed) or FAIL (if any failed)
+
+      For each FAILED criterion, provide:
+      - Criterion number and title
+      - What went wrong (actual vs expected)
+      - How to fix it (specific code changes needed)
+```
+
+**Example - Create User API Endpoint:**
+
+```yaml
+llm_judge:
+  - by: orchestrator-agent
+    context_commands:
+      - "cat src/api/routes/users.ts"
+      - "cat src/middleware/auth.ts"
+      - "cat src/models/user.ts"
+    instruction: |
+      Verify POST /api/users endpoint implementation against acceptance criteria.
+      Mark each as PASS ✓ or FAIL ✗.
+
+      CRITERION 1: Endpoint accepts POST to /api/users
+      - What to verify: HTTP method and route registration
+      - Expected: Server responds to POST /api/users
+      - How to verify: curl -X POST http://localhost:8000/api/users
+      - Evidence: Status code (not 404 Not Found)
+
+      CRITERION 2: Requires Content-Type: application/json
+      - What to verify: Content-Type header validation
+      - Expected: Returns 415 Unsupported Media Type if header missing
+      - How to verify: curl without Content-Type header
+      - Evidence: 415 status code response
+
+      CRITERION 3: Requires valid JWT in Authorization header
+      - What to verify: Authentication middleware
+      - Expected: Returns 401 Unauthorized if token missing/invalid
+      - How to verify: curl without Authorization header
+      - Evidence: 401 status code with error message
+
+      CRITERION 4: Validates email format
+      - What to verify: Email validation logic
+      - Expected: Returns 400 Bad Request for invalid email (e.g., "notanemail")
+      - How to verify: POST with malformed email
+      - Evidence: 400 status with validation error message
+
+      CRITERION 5: Validates password strength
+      - What to verify: Password requirements
+      - Expected: Returns 400 for passwords < 8 characters
+      - How to verify: POST with password "short"
+      - Evidence: 400 status with "Password must be at least 8 characters" error
+
+      CRITERION 6: Returns 409 Conflict for duplicate email
+      - What to verify: Duplicate email handling
+      - Expected: Second POST with same email returns 409
+      - How to verify: POST same email twice
+      - Evidence: 409 status with "Email already exists" error
+
+      CRITERION 7: Returns 201 Created on success
+      - What to verify: Success response status code
+      - Expected: 201 status code (not 200 OK)
+      - How to verify: POST with valid new user data
+      - Evidence: 201 status code
+
+      CRITERION 8: Response includes user object with id, email, created_at
+      - What to verify: Response body structure
+      - Expected: JSON object { "id": "...", "email": "...", "created_at": "..." }
+      - How to verify: Parse successful response body
+      - Evidence: JSON response showing all 3 fields
+
+      CRITERION 9: Password is hashed with bcrypt (not plaintext)
+      - What to verify: Password storage security
+      - Expected: Database stores bcrypt hash (starts with $2b$)
+      - How to verify: Check database after creating user
+      - Evidence: Database query showing hashed password
+
+      CRITERION 10: Password is NOT returned in response
+      - What to verify: Password field excluded from response
+      - Expected: Response object does not contain "password" field
+      - How to verify: Check successful response body
+      - Evidence: JSON response without password field
+
+      CRITERION 11: Sends welcome email after creation
+      - What to verify: Email sending side effect
+      - Expected: Email sent to new user's email address
+      - How to verify: Check email logs or mock email service
+      - Evidence: Email service log showing sent email
+
+      CRITERION 12: Response includes Location header
+      - What to verify: Location header with new resource URL
+      - Expected: Header "Location: /api/users/{id}"
+      - How to verify: Inspect response headers
+      - Evidence: Location header value
+
+      ---
+
+      FINAL VERDICT:
+      - Total criteria: 12
+      - Passed: [count]
+      - Failed: [count]
+      - Overall: PASS/FAIL
+
+      For failures: explain issue and fix.
+```
 
 ##### Combining Bash + LLM Judge
 
-**You can use BOTH for comprehensive verification:**
+**Best practice: Use bash for automated pass/fail, LLM judge for comprehensive acceptance criteria verification.**
+
+**Pattern: Bash = Fast smoke test, LLM Judge = Exhaustive QA checklist**
 
 ```yaml
 verification_spec:
-  - id: "verify-api"
-    title: "API endpoint works correctly"
-    description: "Login API returns valid JWT token"
+  - id: "verify-login-api"
+    title: "Login API implementation complete and correct"
+    description: "POST /api/login endpoint with full acceptance criteria"
     orchestrator_manually_verified: false
     manual_verification_evidence: ""
+
+    # Step 1: Fast automated check (bash)
     bash:
-      - execute: "pytest tests/api/test_login.py"
+      - execute: "pytest tests/api/test_login.py -v"
         expected_exit_code: 0
-        notes: "Fast check: test suite passes"
+        notes: "Quick check: automated tests pass (prerequisite)"
+
+    # Step 2: Comprehensive acceptance criteria verification (llm_judge)
     llm_judge:
       - by: orchestrator-agent
+        context_commands:
+          - "cat src/api/routes/auth.ts"
+          - "cat tests/api/test_login.py"
         instruction: |
-          Manual check:
-          1. Run: curl -X POST http://localhost:8000/api/login -d '{"email":"test@example.com","password":"test"}'
-          2. Verify: Response contains "access_token" field
-          3. Verify: Token format is valid JWT (3 parts separated by dots)
-          4. Verify: Can decode token header and payload
+          Tests passed (bash verification). Now verify acceptance criteria:
+
+          CRITERION 1: Endpoint accepts POST to /api/login
+          - Expected: Returns non-404 status
+          - Verify: curl -X POST http://localhost:8000/api/login
+          - Evidence: Status code
+
+          CRITERION 2: Requires email and password in request body
+          - Expected: Returns 400 if either field missing
+          - Verify: POST without email or password
+          - Evidence: 400 status + error message
+
+          CRITERION 3: Validates email format
+          - Expected: Returns 400 for invalid email
+          - Verify: POST with email="notanemail"
+          - Evidence: 400 + "Invalid email format" error
+
+          CRITERION 4: Returns 401 for invalid credentials
+          - Expected: 401 Unauthorized status
+          - Verify: POST with wrong password
+          - Evidence: 401 status + "Invalid credentials" message
+
+          CRITERION 5: Returns 200 + JWT token on success
+          - Expected: { "access_token": "jwt.token.here" }
+          - Verify: POST with valid credentials
+          - Evidence: 200 status + token in response body
+
+          CRITERION 6: JWT token has correct structure
+          - Expected: Token has 3 parts (header.payload.signature)
+          - Verify: Split token by ".", count parts
+          - Evidence: Token string with 3 dot-separated sections
+
+          CRITERION 7: Token expires in 1 hour
+          - Expected: Decoded token has exp = now + 3600 seconds
+          - Verify: Decode JWT, check exp claim
+          - Evidence: exp timestamp value
+
+          CRITERION 8: Password is NOT returned in response
+          - Expected: Response does not contain password field
+          - Verify: Check response body
+          - Evidence: JSON without password key
+
+          ---
+
+          FINAL VERDICT:
+          - Total: 8 criteria
+          - Passed: [count]
+          - Failed: [count]
+          - Overall: PASS/FAIL
 ```
 
-##### Verification Spec Template
+##### Verification Spec Template (ACCEPTANCE CRITERIA APPROACH)
 
 ```yaml
 verification_spec:
-  - id: "verify-implementation"
-    title: "[What to verify]"
-    description: "[Detailed verification criteria]"
+  - id: "verify-[feature-name]"
+    title: "[Feature] implementation verification"
+    description: "Comprehensive acceptance criteria for [feature]"
     verified: false
     verified_at: null
     verification_evidence: null
     orchestrator_manually_verified: false  # REQUIRED
     manual_verification_evidence: ""       # REQUIRED
 
-    # Option 1: Bash (CONSERVATIVE - use only if deterministic)
+    # OPTION 1: Bash only (for simple, deterministic checks)
     bash:
       - execute: "[command]"
-        expected_stdout: "[exact output]"  # OPTIONAL
-        expected_exit_code: 0              # OPTIONAL (default: 0)
-        notes: "[troubleshooting hints]"   # OPTIONAL
+        expected_exit_code: 0
+        notes: "[troubleshooting hints]"
 
-    # Option 2: LLM Judge (FLEXIBLE - use when output varies)
+    # OPTION 2: LLM Judge only (for comprehensive acceptance criteria)
     llm_judge:
       - by: orchestrator-agent  # or: external-agent
-        context_commands:       # OPTIONAL
+        context_commands:
+          - "cat [relevant-source-file]"
           - "[command to gather context]"
         instruction: |
-          [Clear, step-by-step verification instructions]
-          1. [Step 1]
-          2. [Step 2]
-          3. [Success criteria]
+          Verify the following acceptance criteria. Mark each PASS ✓ or FAIL ✗.
+
+          CRITERION 1: [Specific requirement]
+          - What to verify: [Exact thing to check]
+          - Expected: [Expected outcome]
+          - How to verify: [Command/inspection method]
+          - Evidence required: [What to show]
+
+          CRITERION 2: [Specific requirement]
+          - What to verify: [Exact thing to check]
+          - Expected: [Expected outcome]
+          - How to verify: [Command/inspection method]
+          - Evidence required: [What to show]
+
+          [... 5-20 criteria total ...]
+
+          CRITERION N: [Specific requirement]
+          - What to verify: [Exact thing to check]
+          - Expected: [Expected outcome]
+          - How to verify: [Command/inspection method]
+          - Evidence required: [What to show]
+
+          ---
+
+          FINAL VERDICT:
+          - Total criteria: N
+          - Passed: [count]
+          - Failed: [count]
+          - Overall: PASS (all passed) or FAIL (any failed)
+
+          For each FAILED criterion:
+          - What went wrong (actual vs expected)
+          - How to fix it (specific changes needed)
+
+    # OPTION 3: Both (bash for quick check, llm_judge for comprehensive QA)
+    # bash:
+    #   - execute: "pytest tests/[feature].py"
+    #     expected_exit_code: 0
+    # llm_judge:
+    #   - [acceptance criteria as above]
 ```
 
 #### 2.4 Plan Creation Strategy
@@ -1831,11 +2257,23 @@ The goal is to achieve 99%+ worker confidence at every step. This means:
    - **Implementation patterns via structured references**: File + line numbers + purpose + key points
    - **Edge cases explicitly in plan**
 
-2. **Every Task Must Have Measurable Acceptance Criteria**
+2. **Every Task Must Have Comprehensive Acceptance Criteria**
 
-   - Store in `verification_spec` field using appropriate method (bash/llm_judge)
-   - Follow conservative guidelines for bash verification
-   - Use llm_judge for flexible, human-like assessment
+   **CRITICAL: Use the Acceptance Criteria Framework to decompose each task into 5-20 specific, measurable criteria.**
+
+   - **For LLM Judge**: Break down verification into exhaustive acceptance criteria checklist
+     - Each criterion = one specific, independently verifiable requirement
+     - Cover ALL aspects: functionality, UI, errors, edge cases, code quality, accessibility
+     - Use 4-component format: What to verify + Expected + How to verify + Evidence required
+     - Require PASS ✓ / FAIL ✗ marking for each criterion independently
+   - **For Bash**: Use only for deterministic, automated smoke tests (follow conservative guidelines)
+   - **Best Practice**: Combine both (bash = quick test pass/fail, llm_judge = comprehensive QA)
+
+   **Examples of Acceptance Criteria Decomposition:**
+   - Button implementation → 10 criteria (existence, text, color, states, behavior, errors, a11y, keyboard)
+   - API endpoint → 12 criteria (method, auth, validation, responses, security, performance, side effects)
+   - Business logic → 10 criteria (core function, edge cases, error handling, state transitions, data integrity)
+   - Code quality → 10 criteria (no anti-patterns, error handling, types, organization, docs, tests, performance)
 
 3. **Provide Complete Context (99%+ Explicitness Threshold)**
 
@@ -2032,16 +2470,93 @@ The goal is to achieve 99%+ worker confidence at every step. This means:
              notes: 'All tests must pass, check coverage report'
          llm_judge:
            - by: 'orchestrator-agent'
-             instruction: |
-               Verify test implementation quality:
-               1. All specified scenarios are covered by tests
-               2. Tests follow project testing conventions
-               3. Edge cases and error conditions are tested
-               4. Tests are well-organized and readable
-               5. No flaky or timing-dependent tests
              context_commands:
                - 'cat tests/test_feature.py'
                - 'pytest tests/test_feature.py -v'
+             instruction: |
+               Verify test implementation against acceptance criteria. Mark each PASS ✓ or FAIL ✗.
+
+               CRITERION 1: All unit test scenarios implemented
+               - What to verify: Each unit test from references is implemented
+               - Expected: Test function exists for each specified scenario
+               - How to verify: Read test file, match test names to scenarios
+               - Evidence: List of test functions found
+
+               CRITERION 2: All integration test scenarios implemented
+               - What to verify: Integration tests cover all specified integration points
+               - Expected: Each integration scenario has corresponding test
+               - How to verify: Check test file for integration test functions
+               - Evidence: Integration test names and coverage
+
+               CRITERION 3: All error case scenarios implemented
+               - What to verify: Error handling tests exist
+               - Expected: Tests for invalid inputs, edge cases, failure scenarios
+               - How to verify: Search for error/exception test cases
+               - Evidence: Error test function names
+
+               CRITERION 4: Tests follow project naming conventions
+               - What to verify: Test function names follow project pattern
+               - Expected: Names match existing test style (e.g., test_feature_scenario)
+               - How to verify: Compare with reference test file patterns
+               - Evidence: Consistent naming across test functions
+
+               CRITERION 5: Tests use project's testing framework correctly
+               - What to verify: Proper use of pytest/jest/etc fixtures and assertions
+               - Expected: Framework features used as per project conventions
+               - How to verify: Check imports, fixtures, assertion methods
+               - Evidence: Framework usage matches project patterns
+
+               CRITERION 6: External dependencies are mocked
+               - What to verify: API calls, database queries, file I/O are mocked
+               - Expected: No real external calls in unit tests
+               - How to verify: Check for mock/patch usage
+               - Evidence: Mock setup in test code
+
+               CRITERION 7: Tests are deterministic (no randomness/timing)
+               - What to verify: No time.sleep, random values, or race conditions
+               - Expected: Tests produce same results every run
+               - How to verify: Review test code for non-deterministic patterns
+               - Evidence: No flaky test patterns found
+
+               CRITERION 8: Tests have clear arrange-act-assert structure
+               - What to verify: Test organization is readable
+               - Expected: Setup → action → verification structure visible
+               - How to verify: Read test function bodies
+               - Evidence: Clear test structure
+
+               CRITERION 9: Tests verify expected behavior, not implementation
+               - What to verify: Tests check outcomes, not internal state
+               - Expected: Tests focus on public API/behavior
+               - How to verify: Check what tests assert on
+               - Evidence: Assertions on behavior, not internals
+
+               CRITERION 10: Test coverage includes edge cases
+               - What to verify: Empty inputs, null values, boundaries tested
+               - Expected: Edge case test functions exist
+               - How to verify: Look for edge case test names and inputs
+               - Evidence: Edge case tests identified
+
+               CRITERION 11: Error messages in tests are descriptive
+               - What to verify: Assertion messages explain what failed
+               - Expected: Custom error messages or clear assertion context
+               - How to verify: Check assertion statements
+               - Evidence: Helpful error messages present
+
+               CRITERION 12: Tests are isolated (no shared state)
+               - What to verify: Tests don't depend on execution order
+               - Expected: Each test can run independently
+               - How to verify: Check for shared variables, global state
+               - Evidence: No inter-test dependencies
+
+               ---
+
+               FINAL VERDICT:
+               - Total criteria: 12
+               - Passed: [count]
+               - Failed: [count]
+               - Overall: PASS (all passed) or FAIL (any failed)
+
+               For failures: explain what's wrong and how to fix
    ```
 
    **Best practices for test tasks:**

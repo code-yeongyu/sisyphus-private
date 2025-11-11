@@ -4,6 +4,9 @@ import pytest
 
 from sisyphus.core.plans.models import (
     Background,
+    BashVerification,
+    LLMJudgeBy,
+    LLMJudgeVerification,
     Metadata,
     Objectives,
     PlanDocument,
@@ -12,6 +15,7 @@ from sisyphus.core.plans.models import (
     Todo,
     TodoStatus,
     UserRequest,
+    VerificationItem,
     Workflow,
     WorkPlan,
 )
@@ -31,18 +35,20 @@ async def test_task_manager__if_work_plan_exists__finds_it(
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
-        work_plans=[WorkPlan(
-            id="test-plan",
-            name="Test Plan",
-            user_request=minimal_user_request,
-            objectives=minimal_objectives,
-            background=minimal_background,
-            required_background=minimal_required_background,
-            workflow=minimal_workflow,
-            success_vision=minimal_success_vision,
-            final_verification=[],
-            todos=[],
-        )],
+        work_plans=[
+            WorkPlan(
+                id="test-plan",
+                name="Test Plan",
+                user_request=minimal_user_request,
+                objectives=minimal_objectives,
+                background=minimal_background,
+                required_background=minimal_required_background,
+                workflow=minimal_workflow,
+                success_vision=minimal_success_vision,
+                final_verification=[],
+                todos=[],
+            )
+        ],
     )
 
     manager = TaskManager(plan_doc, "test-plan")
@@ -572,8 +578,7 @@ async def test_check_task_completion__if_manual_verification_incomplete__cannot_
     minimal_workflow: Workflow,
     minimal_success_vision: SuccessVision,
 ) -> None:
-    # given: task with verification that has verified=True but orchestrator_manually_verified=False
-    from sisyphus.core.plans.models import BashVerification, VerificationItem
+    # given: task with manual verification that has verified=True but orchestrator_manually_verified=False
 
     plan_doc = PlanDocument(
         version="3.0",
@@ -598,12 +603,16 @@ async def test_check_task_completion__if_manual_verification_incomplete__cannot_
                         verification_spec=[
                             VerificationItem(
                                 id="v1",
-                                title="Test verification",
-                                description="Test",
+                                title="Manual verification",
+                                description="Manual check without bash",
                                 verified=True,
                                 orchestrator_manually_verified=False,
                                 manual_verification_evidence="",
-                                bash=[BashVerification(execute="echo test", expected_exit_code=0)],
+                                llm_judge=[
+                                    LLMJudgeVerification(
+                                        by=LLMJudgeBy.ORCHESTRATOR, instruction="Manual check instruction"
+                                    )
+                                ],
                             )
                         ],
                     )
@@ -632,8 +641,7 @@ async def test_check_task_completion__if_manual_verification_missing_evidence__c
     minimal_workflow: Workflow,
     minimal_success_vision: SuccessVision,
 ) -> None:
-    # given: task with verification that has verified=True and orchestrator_manually_verified=True but evidence=""
-    from sisyphus.core.plans.models import BashVerification, VerificationItem
+    # given: manual verification with verified=True and orchestrator_manually_verified=True but no evidence
 
     plan_doc = PlanDocument(
         version="3.0",
@@ -658,12 +666,16 @@ async def test_check_task_completion__if_manual_verification_missing_evidence__c
                         verification_spec=[
                             VerificationItem(
                                 id="v1",
-                                title="Test verification",
-                                description="Test",
+                                title="Manual verification",
+                                description="Manual check without bash",
                                 verified=True,
                                 orchestrator_manually_verified=True,
                                 manual_verification_evidence="",
-                                bash=[BashVerification(execute="echo test", expected_exit_code=0)],
+                                llm_judge=[
+                                    LLMJudgeVerification(
+                                        by=LLMJudgeBy.ORCHESTRATOR, instruction="Manual check instruction"
+                                    )
+                                ],
                             )
                         ],
                     )
@@ -693,7 +705,6 @@ async def test_check_task_completion__if_all_manual_verification_complete__can_c
     minimal_success_vision: SuccessVision,
 ) -> None:
     # given: task with all three manual verification conditions met
-    from sisyphus.core.plans.models import BashVerification, VerificationItem
 
     plan_doc = PlanDocument(
         version="3.0",
@@ -718,12 +729,19 @@ async def test_check_task_completion__if_all_manual_verification_complete__can_c
                         verification_spec=[
                             VerificationItem(
                                 id="v1",
-                                title="Test verification",
-                                description="Test",
+                                title="Manual verification",
+                                description="Manual check without bash",
                                 verified=True,
                                 orchestrator_manually_verified=True,
-                                manual_verification_evidence="Complete evidence with more than 100 characters to satisfy the validation requirements for manual verification evidence in the system.",
-                                bash=[BashVerification(execute="echo test", expected_exit_code=0)],
+                                manual_verification_evidence=(
+                                    "Complete evidence with more than 100 characters to satisfy "
+                                    "the validation requirements for manual verification evidence."
+                                ),
+                                llm_judge=[
+                                    LLMJudgeVerification(
+                                        by=LLMJudgeBy.ORCHESTRATOR, instruction="Manual check instruction"
+                                    )
+                                ],
                             )
                         ],
                     )
@@ -753,7 +771,6 @@ async def test_check_task_completion__if_mixed_verification_types_with_manual_in
     minimal_success_vision: SuccessVision,
 ) -> None:
     # given: task with bash verification complete (verified=True only) and manual verification incomplete
-    from sisyphus.core.plans.models import BashVerification, VerificationItem
 
     plan_doc = PlanDocument(
         version="3.0",
@@ -788,11 +805,15 @@ async def test_check_task_completion__if_mixed_verification_types_with_manual_in
                             VerificationItem(
                                 id="v2",
                                 title="Manual verification",
-                                description="Manual check",
+                                description="Manual check without bash",
                                 verified=True,
                                 orchestrator_manually_verified=False,
                                 manual_verification_evidence="",
-                                bash=[BashVerification(execute="echo test2", expected_exit_code=0)],
+                                llm_judge=[
+                                    LLMJudgeVerification(
+                                        by=LLMJudgeBy.ORCHESTRATOR, instruction="Manual check instruction"
+                                    )
+                                ],
                             ),
                         ],
                     )
@@ -809,7 +830,7 @@ async def test_check_task_completion__if_mixed_verification_types_with_manual_in
     assert report.all_verifications_completed is True
     assert report.all_manual_verifications_completed is False
     assert report.manual_verification_summary["completed"] == 0
-    assert report.manual_verification_summary["total"] == 2
+    assert report.manual_verification_summary["total"] == 1
     assert report.can_complete is False
 
 

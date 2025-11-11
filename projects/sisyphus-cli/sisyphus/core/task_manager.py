@@ -263,17 +263,18 @@ class TaskManager:
             verifications
         )
 
+        manual_verifications = [v for v in verifications if not v.bash]
         manual_verification_summary = {
             "completed": sum(
                 1
-                for v in verifications
-                if v.verified and v.orchestrator_manually_verified and v.manual_verification_evidence != ""
+                for v in manual_verifications
+                if v.orchestrator_manually_verified and v.manual_verification_evidence != ""
             ),
-            "total": len(verifications),
+            "total": len(manual_verifications),
         }
-        all_manual_verifications_completed = len(verifications) == 0 or manual_verification_summary[
+        all_manual_verifications_completed = len(manual_verifications) == 0 or manual_verification_summary[
             "completed"
-        ] == len(verifications)
+        ] == len(manual_verifications)
 
         can_complete = all_children_completed and all_verifications_completed and all_manual_verifications_completed
 

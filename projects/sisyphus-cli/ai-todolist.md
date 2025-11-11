@@ -339,11 +339,6 @@ Task 5 (문서 업데이트 - 4 완료 필요)
          work_mode:
            parallel_requested: false
            current_task_id: null
-         progress:
-           total_tasks: 0
-           completed: 0
-           in_progress: 0
-           pending: 0
          current_work: "작업 시작 전"
        workflow:
          dependency_diagram: "Task 1 → Task 2 → Task 3"
@@ -464,7 +459,6 @@ test: v3.0 확장 모델 테스트 추가
       class Status(BaseModel):
           execution: ExecutionStatus
           work_mode: WorkMode
-          progress: Progress
           current_work: str
 
       # 6. Workflow (199-202)

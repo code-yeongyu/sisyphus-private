@@ -30,13 +30,6 @@ class WorkMode(BaseModel):
     current_task_id: str | None = None
 
 
-class Progress(BaseModel):
-    total_tasks: int
-    completed: int
-    in_progress: int
-    pending: int
-
-
 class BashVerification(BaseModel):
     execute: str
     expected_stdout: str | None = None
@@ -198,7 +191,6 @@ class WorkPlan(BaseModel):
         default_factory=lambda: ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None)
     )
     work_mode: WorkMode = Field(default_factory=lambda: WorkMode(parallel_requested=False, current_task_id=None))
-    progress: Progress = Field(default_factory=lambda: Progress(total_tasks=0, completed=0, in_progress=0, pending=0))
     current_work: str = ""
 
 

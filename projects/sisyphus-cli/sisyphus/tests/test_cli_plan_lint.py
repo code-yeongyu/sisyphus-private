@@ -57,11 +57,6 @@ work_plans:
     work_mode:
       parallel_requested: false
       current_task_id: null
-    progress:
-      total_tasks: 1
-      completed: 0
-      in_progress: 0
-      pending: 1
     current_work: ""
 """
     yaml_file.write_text(yaml_content)
@@ -134,11 +129,6 @@ work_plans:
     work_mode:
       parallel_requested: false
       current_task_id: null
-    progress:
-      total_tasks: 0
-      completed: 0
-      in_progress: 0
-      pending: 0
     current_work: ""
 """
     yaml_file.write_text(yaml_content)
@@ -208,11 +198,6 @@ work_plans:
     work_mode:
       parallel_requested: false
       current_task_id: null
-    progress:
-      total_tasks: 0
-      completed: 0
-      in_progress: 0
-      pending: 0
     current_work: ""
 """
     yaml_file.write_text(yaml_content)

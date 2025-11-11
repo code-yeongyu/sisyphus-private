@@ -86,7 +86,6 @@ Complete schema definition for `ai-todolist.yaml` work plan files. This document
 |-------|------|----------|---------|
 | execution | ExecutionStatus | ✓ | - |
 | work_mode | WorkMode | ✓ | - |
-| progress | Progress | ✓ | - |
 | current_work | str | ✓ | - |
 
 ### ExecutionStatus
@@ -104,15 +103,6 @@ Complete schema definition for `ai-todolist.yaml` work plan files. This document
 |-------|------|----------|---------|
 | parallel_requested | bool | ✓ | - |
 | current_task_id | str \| None | - | None |
-
-### Progress
-
-| Field | Type | Required | Default |
-|-------|------|----------|---------|
-| total_tasks | int | ✓ | - |
-| completed | int | ✓ | - |
-| in_progress | int | ✓ | - |
-| pending | int | ✓ | - |
 
 ## Workflow
 

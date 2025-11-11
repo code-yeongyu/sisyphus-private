@@ -153,11 +153,6 @@ status:
   work_mode:
     parallel_requested: false
     current_task_id: "1"
-  progress:
-    total_tasks: 2
-    completed: 0
-    in_progress: 1
-    pending: 1
   current_work: Working on task 1
 workflow:
   dependency_diagram: ""
@@ -260,11 +255,6 @@ status:
   work_mode:
     parallel_requested: false
     current_task_id: "1"
-  progress:
-    total_tasks: 1
-    completed: 0
-    in_progress: 1
-    pending: 0
   current_work: ""
 workflow:
   dependency_diagram: ""

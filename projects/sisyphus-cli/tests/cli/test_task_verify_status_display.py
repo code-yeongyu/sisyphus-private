@@ -10,7 +10,6 @@ from sisyphus.core.plans.models import (
     BashVerification,
     ExecutionStatus,
     Objectives,
-    Progress,
     RequiredBackground,
     SuccessVision,
     Todo,
@@ -96,7 +95,6 @@ async def test_verify_status__collects_all_verifications_from_todos(
         references=[],
         execution=ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None),
         work_mode=WorkMode(parallel_requested=False),
-        progress=Progress(total_tasks=0, completed=0, in_progress=0, pending=0),
         current_work="",
     )
 

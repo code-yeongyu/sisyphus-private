@@ -9,10 +9,11 @@ from sisyphus.core.plans.models import (
     Background,
     BashVerification,
     ExecutionStatus,
+    LLMJudgeBy,
+    LLMJudgeVerification,
     Metadata,
     Objectives,
     PlanDocument,
-    Progress,
     RequiredBackground,
     SuccessVision,
     Todo,
@@ -63,14 +64,18 @@ async def test_continue_work__if_manual_incomplete__error_mentions_manual_verifi
                 verification_spec=[
                     VerificationItem(
                         id="verify-1",
-                        title="Test Verification",
+                        title="Test Manual Verification",
                         description="Test",
                         verified=True,
                         verified_at=None,
-                        orchestrator_manually_verified=False,  # Manual incomplete!
+                        orchestrator_manually_verified=False,
                         manual_verification_evidence="",
-                        bash=[BashVerification(execute="echo test", expected_exit_code=0)],
-                        llm_judge=[],
+                        bash=[],
+                        llm_judge=[
+                            LLMJudgeVerification(
+                                by=LLMJudgeBy.ORCHESTRATOR, context_commands=[], instruction="Test instruction"
+                            )
+                        ],
                     )
                 ],
             )
@@ -78,7 +83,6 @@ async def test_continue_work__if_manual_incomplete__error_mentions_manual_verifi
         references=[],
         execution=ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None),
         work_mode=WorkMode(parallel_requested=False),
-        progress=Progress(total_tasks=0, completed=0, in_progress=0, pending=0),
         current_work="",
     )
     plan_doc = PlanDocument(
@@ -136,7 +140,7 @@ async def test_continue_work__if_all_verifications_incomplete__report_shows_coun
                 verification_spec=[
                     VerificationItem(
                         id="verify-1",
-                        title="Verification 1",
+                        title="Bash Verification",
                         description="Test",
                         verified=False,
                         verified_at=None,
@@ -147,14 +151,16 @@ async def test_continue_work__if_all_verifications_incomplete__report_shows_coun
                     ),
                     VerificationItem(
                         id="verify-2",
-                        title="Verification 2",
+                        title="Manual Verification",
                         description="Test",
                         verified=False,
                         verified_at=None,
                         orchestrator_manually_verified=False,
                         manual_verification_evidence="",
-                        bash=[BashVerification(execute="echo test", expected_exit_code=0)],
-                        llm_judge=[],
+                        bash=[],
+                        llm_judge=[
+                            LLMJudgeVerification(by=LLMJudgeBy.ORCHESTRATOR, context_commands=[], instruction="Test")
+                        ],
                     ),
                 ],
             )
@@ -162,7 +168,6 @@ async def test_continue_work__if_all_verifications_incomplete__report_shows_coun
         references=[],
         execution=ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None),
         work_mode=WorkMode(parallel_requested=False),
-        progress=Progress(total_tasks=0, completed=0, in_progress=0, pending=0),
         current_work="",
     )
     plan_doc = PlanDocument(
@@ -180,7 +185,7 @@ async def test_continue_work__if_all_verifications_incomplete__report_shows_coun
     assert report.verification_summary["completed"] == 0
     assert report.verification_summary["total"] == 2
     assert report.manual_verification_summary["completed"] == 0
-    assert report.manual_verification_summary["total"] == 2
+    assert report.manual_verification_summary["total"] == 1
 
 
 @pytest.mark.anyio()
@@ -235,14 +240,16 @@ async def test_continue_work__if_mixed_state__report_shows_breakdown(
                     ),
                     VerificationItem(
                         id="verify-2",
-                        title="Incomplete Verification",
+                        title="Incomplete Manual Verification",
                         description="Test",
                         verified=False,
                         verified_at=None,
                         orchestrator_manually_verified=False,
                         manual_verification_evidence="",
-                        bash=[BashVerification(execute="echo test", expected_exit_code=0)],
-                        llm_judge=[],
+                        bash=[],
+                        llm_judge=[
+                            LLMJudgeVerification(by=LLMJudgeBy.ORCHESTRATOR, context_commands=[], instruction="Test")
+                        ],
                     ),
                 ],
             )
@@ -250,7 +257,6 @@ async def test_continue_work__if_mixed_state__report_shows_breakdown(
         references=[],
         execution=ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None),
         work_mode=WorkMode(parallel_requested=False),
-        progress=Progress(total_tasks=0, completed=0, in_progress=0, pending=0),
         current_work="",
     )
     plan_doc = PlanDocument(
@@ -267,6 +273,6 @@ async def test_continue_work__if_mixed_state__report_shows_breakdown(
     # Then - Verification breakdown
     assert report.verification_summary["completed"] == 1, "Should have 1 verified"
     assert report.verification_summary["total"] == 2, "Should have 2 total"
-    assert report.manual_verification_summary["completed"] == 1, "Should have 1 manual complete"
-    assert report.manual_verification_summary["total"] == 2, "Should have 2 total"
+    assert report.manual_verification_summary["completed"] == 0, "Should have 0 manual complete"
+    assert report.manual_verification_summary["total"] == 1, "Should have 1 total manual"
     assert report.can_complete is False, "Should not complete with mixed state"

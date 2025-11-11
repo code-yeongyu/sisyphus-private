@@ -124,7 +124,6 @@ class PlanLinter:
             "references",
             "execution",
             "work_mode",
-            "progress",
             "current_work",
         }
         self._check_extra_fields(plan, path, allowed_fields)
@@ -180,8 +179,6 @@ class PlanLinter:
             self._validate_execution_in_plan(plan["execution"], f"{path}.execution")
         if "work_mode" in plan:
             self._validate_work_mode_in_plan(plan["work_mode"], f"{path}.work_mode")
-        if "progress" in plan:
-            self._validate_progress_in_plan(plan["progress"], f"{path}.progress")
         if "current_work" in plan:
             self._check_type(plan["current_work"], f"{path}.current_work", "string")
 
@@ -474,25 +471,6 @@ class PlanLinter:
             self._check_type(work_mode["parallel_requested"], f"{path}.parallel_requested", "boolean")
         if "current_task_id" in work_mode and work_mode["current_task_id"] is not None:
             self._check_type(work_mode["current_task_id"], f"{path}.current_task_id", "string")
-
-    def _validate_progress_in_plan(self, progress: Any, path: str) -> None:
-        """Validate progress field within a work plan (v3.0)."""
-        if not isinstance(progress, dict):
-            self._check_type(progress, path, "dict")
-            return
-
-        allowed_prog_fields = {"total_tasks", "completed", "in_progress", "pending"}
-        self._check_extra_fields(progress, path, allowed_prog_fields)
-        self._validate_nested_required(progress, path, ["total_tasks", "completed", "in_progress", "pending"])
-
-        if "total_tasks" in progress:
-            self._check_type(progress["total_tasks"], f"{path}.total_tasks", "int")
-        if "completed" in progress:
-            self._check_type(progress["completed"], f"{path}.completed", "int")
-        if "in_progress" in progress:
-            self._check_type(progress["in_progress"], f"{path}.in_progress", "int")
-        if "pending" in progress:
-            self._check_type(progress["pending"], f"{path}.pending", "int")
 
     def _validate_nested_required(self, data: dict[str, Any], path: str, required_fields: list[str]) -> None:
         """Validate required fields in nested object."""
@@ -794,10 +772,10 @@ class PlanLinter:
             self._check_type(status, "status", "dict")
             return
 
-        allowed_fields = {"execution", "work_mode", "progress", "current_work"}
+        allowed_fields = {"execution", "work_mode", "current_work"}
         self._check_extra_fields(status, "status", allowed_fields)
 
-        self._validate_nested_required(status, "status", ["execution", "work_mode", "progress", "current_work"])
+        self._validate_nested_required(status, "status", ["execution", "work_mode", "current_work"])
 
         # Validate execution
         if "execution" in status:
@@ -830,26 +808,6 @@ class PlanLinter:
                     self._check_type(work_mode["parallel_requested"], "status.work_mode.parallel_requested", "boolean")
                 if "current_task_id" in work_mode and work_mode["current_task_id"] is not None:
                     self._check_type(work_mode["current_task_id"], "status.work_mode.current_task_id", "string")
-
-        # Validate progress
-        if "progress" in status:
-            progress = status["progress"]
-            if not isinstance(progress, dict):
-                self._check_type(progress, "status.progress", "dict")
-            else:
-                allowed_prog_fields = {"total_tasks", "completed", "in_progress", "pending"}
-                self._check_extra_fields(progress, "status.progress", allowed_prog_fields)
-                self._validate_nested_required(
-                    progress, "status.progress", ["total_tasks", "completed", "in_progress", "pending"]
-                )
-                if "total_tasks" in progress:
-                    self._check_type(progress["total_tasks"], "status.progress.total_tasks", "int")
-                if "completed" in progress:
-                    self._check_type(progress["completed"], "status.progress.completed", "int")
-                if "in_progress" in progress:
-                    self._check_type(progress["in_progress"], "status.progress.in_progress", "int")
-                if "pending" in progress:
-                    self._check_type(progress["pending"], "status.progress.pending", "int")
 
         # Validate current_work
         if "current_work" in status:

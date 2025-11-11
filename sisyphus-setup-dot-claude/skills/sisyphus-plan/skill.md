@@ -1524,12 +1524,6 @@ work_plans:  # REQUIRED, list[WorkPlan] - array of work plans
       parallel_requested: false  # REQUIRED, boolean
       current_task_id: null      # OPTIONAL, string | null
 
-    progress:
-      total_tasks: 0      # REQUIRED, int
-      completed: 0        # REQUIRED, int
-      in_progress: 0      # REQUIRED, int
-      pending: 0          # REQUIRED, int
-
     current_work: ''      # REQUIRED, string
 ```
 
@@ -1565,10 +1559,9 @@ work_plans:  # REQUIRED, list[WorkPlan] - array of work plans
   - `references`: list[ReferenceItem] (default: [])
   - `execution`: ExecutionStatus object
   - `work_mode`: WorkMode object
-  - `progress`: Progress object
   - `current_work`: string (default: "")
 
-##### ExecutionStatus, WorkMode, Progress Fields
+##### ExecutionStatus, WorkMode Fields
 - **ExecutionStatus** (`execution` field in WorkPlan):
   - `started`: boolean (REQUIRED)
   - `completed`: boolean (REQUIRED)
@@ -1578,12 +1571,6 @@ work_plans:  # REQUIRED, list[WorkPlan] - array of work plans
 - **WorkMode** (`work_mode` field in WorkPlan):
   - `parallel_requested`: boolean (REQUIRED)
   - `current_task_id`: string | null (OPTIONAL)
-
-- **Progress** (`progress` field in WorkPlan):
-  - `total_tasks`: int (REQUIRED)
-  - `completed`: int (REQUIRED)
-  - `in_progress`: int (REQUIRED)
-  - `pending`: int (REQUIRED)
 
 ##### Todo ID Pattern (CRITICAL)
 - **Pattern**: `^\d+(\.\d+)*$`

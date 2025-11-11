@@ -548,9 +548,4 @@ work_plans:
   work_mode:
     parallel_requested: false
     current_task_id: '1'
-  progress:
-    total_tasks: 12
-    completed: 0
-    in_progress: 0
-    pending: 12
   current_work: ''

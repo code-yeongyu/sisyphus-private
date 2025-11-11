@@ -55,11 +55,6 @@ work_plans:
       completed: false
     work_mode:
       parallel_requested: false
-    progress:
-      total_tasks: 0
-      completed: 0
-      in_progress: 0
-      pending: 0
     current_work: ""
 """
     yaml_file.write_text(yaml_content)
@@ -126,11 +121,6 @@ work_plans:
       completed: false
     work_mode:
       parallel_requested: false
-    progress:
-      total_tasks: 0
-      completed: 0
-      in_progress: 0
-      pending: 0
     current_work: ""
 """
     yaml_file.write_text(yaml_content)
@@ -228,11 +218,6 @@ work_plans:
       completed: false
     work_mode:
       parallel_requested: false
-    progress:
-      total_tasks: 0
-      completed: 0
-      in_progress: 0
-      pending: 0
     current_work: ""
   - id: plan2
     name: Plan 2
@@ -268,11 +253,6 @@ work_plans:
       completed: false
     work_mode:
       parallel_requested: false
-    progress:
-      total_tasks: 0
-      completed: 0
-      in_progress: 0
-      pending: 0
     current_work: ""
 """
     plan_file.write_text(yaml_content)
@@ -346,11 +326,6 @@ work_plans:
       completed: false
     work_mode:
       parallel_requested: false
-    progress:
-      total_tasks: 0
-      completed: 0
-      in_progress: 0
-      pending: 0
     current_work: ""
 """
     plan_file.write_text(yaml_content)

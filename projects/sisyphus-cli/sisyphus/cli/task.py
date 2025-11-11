@@ -99,6 +99,40 @@ def _format_task_display(
     return "\n".join(lines)
 
 
+def _display_verification_guidance(current_task: Todo) -> None:
+    """Display verification commands based on remaining verification types."""
+    if not current_task.verification_spec:
+        return
+
+    unverified = [v for v in current_task.verification_spec if not v.verified]
+    if not unverified:
+        return
+
+    has_bash = any(v.bash for v in unverified)
+    has_llm = any(v.llm_judge for v in unverified)
+    needs_manual_mark = any(not v.orchestrator_manually_verified for v in unverified)
+
+    console.print("\n[bold yellow]📋 다음 검증 단계:[/bold yellow]")
+
+    if has_bash:
+        console.print("  [cyan]●[/cyan] Bash 자동 검증: [bold]sisyphus task verify bash[/bold]")
+
+    if has_llm:
+        console.print("  [cyan]●[/cyan] LLM 검증 확인: [bold]sisyphus task verify llm[/bold]")
+        console.print(
+            "  [cyan]●[/cyan] LLM 검증 완료: [bold]sisyphus task verify llm-mark <verify-id> --evidence '...'[/bold]"
+        )
+
+    if needs_manual_mark:
+        console.print("  [cyan]●[/cyan] 수동 검증 시작: [bold]sisyphus task verify manual[/bold]")
+        console.print(
+            "  [cyan]●[/cyan] 수동 검증 완료: "
+            "[bold]sisyphus task verify manual-mark <verify-id> --evidence '...'[/bold]"
+        )
+
+    console.print("\n  [cyan]●[/cyan] 전체 검증 상태 확인: [bold]sisyphus task verify status[/bold]")
+
+
 def _display_remaining_verifications(task_manager: TaskManager) -> None:
     current_task = task_manager.get_current_task()
     if current_task is None:
@@ -325,18 +359,10 @@ def continue_work(
                 ver_total = report.verification_summary["total"]
                 console.print(f"  - 검증: {ver_completed}/{ver_total} 완료")
 
-
                 manual_completed = report.manual_verification_summary["completed"]
                 manual_total = report.manual_verification_summary["total"]
                 console.print(f"  - 수동 검증: {manual_completed}/{manual_total} 완료")
 
-                if not report.all_manual_verifications_completed:
-                    console.print("\n[bold yellow]수동 검증 안내:[/bold yellow]")
-                    console.print(
-                        "[yellow]모든 검증 항목은 verified=True AND orchestrator_manually_verified=True AND "
-                        "manual_verification_evidence 입력이 필요합니다.[/yellow]"
-                    )
-                    console.print("[yellow]sisyphus task verify manual-mark 명령어로 수동 검증을 완료하세요.[/yellow]")
                 console.print("\n[bold cyan]미완료 검증 항목:[/bold cyan]")
                 for idx, verify_item in enumerate(current_task.verification_spec, 1):
                     if not verify_item.verified:
@@ -346,6 +372,7 @@ def continue_work(
                             console.print(f"      {verify_item.description}")
 
             console.print("\n[cyan]완료 조건을 만족한 후 다시 시도하세요.[/cyan]")
+            _display_verification_guidance(current_task)
 
             if not report.all_verifications_completed:
                 console.print("\n[bold yellow]🤖 Orchestrator 안내:[/bold yellow]")
@@ -588,8 +615,17 @@ def verify_manual(
         console.print(f"[bold]{verify_item.title}[/bold]")
         console.print(f"{verify_item.description}")
 
-        verify_cmd = f"sisyphus task verify manual-mark {verify_item.id} --evidence '<증거 설명>'"
-        console.print(f"\n[yellow]수동 검증을 완료하려면:[/yellow] {verify_cmd}")
+        console.print("\n[bold yellow]📋 검증 절차:[/bold yellow]")
+        console.print("  [cyan]1.[/cyan] 초기 작업 계획서의 요구사항 확인")
+        console.print("  [cyan]2.[/cyan] 실제 구현 결과 검토")
+        console.print("  [cyan]3.[/cyan] 계획서대로 완료되었는지 증거 수집")
+        console.print("     [dim]- 테스트 실행 결과[/dim]")
+        console.print("     [dim]- 코드 변경 내역 (git diff, 파일 경로)[/dim]")
+        console.print("     [dim]- 기능 동작 확인 (스크린샷, 로그, 실행 결과)[/dim]")
+
+        verify_cmd = f"sisyphus task verify manual-mark {verify_item.id} --evidence '<상세한 검증 증거 100자 이상>'"
+        console.print("\n[bold yellow]검증 완료 표시:[/bold yellow]")
+        console.print(f"  {verify_cmd}")
 
         _display_remaining_verifications(task_manager)
 

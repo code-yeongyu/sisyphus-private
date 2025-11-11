@@ -1,5 +1,5 @@
 ---
-name: plan-writer-yaml
+name: sisyphus-plan-writer
 description: Create YAML format work plans saved as .sisyphus/tasks/{name}.yaml with strict schema validation. Analyze user requirements, gather project context, and generate structured plans with verification specs. ALWAYS includes mandatory plan-reviewer verification. Use when users request YAML-based work planning or Sisyphus-compatible task breakdown.
 ---
 
@@ -19,15 +19,18 @@ Activate when users:
 
 ## Core Principles
 
-### The 90% Confidence Threshold
+### The 99%+ Explicitness Standard
 
-**Every task must enable workers to proceed with ≥90% confidence using ONLY the plan document.**
+**Every task must provide 99%+ implementation confidence using ONLY the plan document and explicitly referenced sections.**
 
 This means:
-- Workers should NOT need external research or guesswork
-- All necessary context, references, and examples are embedded in the plan
-- Ambiguity is minimized to ≤10% uncertainty per task
-- The plan is self-contained and complete
+- Workers should NOT need codebase exploration or guesswork
+- All necessary context, references, and examples are embedded in the plan OR provided via structured references
+- Information is either explicit in plan OR explicitly referenced with file + line numbers + key points
+- Ambiguity is minimized to ≤1% (only standard language syntax and core framework APIs)
+
+**NOT acceptable**: "Worker can discover this through code exploration"
+**ACCEPTABLE**: "See auth/login.ts:20-45 for OAuth flow (key: token exchange at line 28, session storage at line 35)"
 
 ### Planning Standards
 
@@ -92,12 +95,12 @@ This means:
              notes: "All test cases must pass"
    ```
 
-3. **Clarity Through Logical References**
-   - Every task MUST provide clear navigation paths:
-     - File paths with searchable concepts (e.g., `models/User.ts` - search for `@Column` decorator patterns)
-     - URLs with searchable sections (e.g., `https://example.com/docs` - find "JWT token creation" section)
-     - Code snippets when patterns are complex or non-obvious
-   - No vague instructions like "add authentication" without reference sources
+3. **Explicitness Through Structured References**
+   - Every task MUST provide complete information either:
+     - **Explicitly in plan**, OR
+     - **Via structured references** (file + line numbers + purpose + key points)
+   - No vague instructions like "add authentication" without explicit guidance or structured reference
+   - No expectation of codebase exploration to discover patterns
 
 3. **Verifiability Through Measurable Criteria**
    - Every task MUST have objective completion criteria:
@@ -106,75 +109,232 @@ This means:
      - Observable outcomes (e.g., "Dark mode toggle appears in header")
    - NEVER use subjective terms like "properly", "correctly", "good enough"
 
-4. **Completeness Through Explicit Context**
-   - State all implicit assumptions explicitly
+4. **Completeness Through Explicit or Referenced Context**
+   - Make all information explicit OR provide structured references
    - Document data flows, state management, error handling strategies
    - Provide edge case handling guidance
    - Clarify architectural constraints (SSR vs client, sync vs async, etc.)
 
+## Managing Information Density: The Reference System
+
+When information is extensive, use **structured references** instead of expecting exploration.
+
+### Reference Format Standard
+
+**TIER 1: Simple Pattern Reference**
+For straightforward patterns (10-30 lines):
+
+```yaml
+references:
+  - file: "auth/oauth.ts"
+    lines: "20-45"
+    purpose: "Complete OAuth2 token exchange flow"
+    key_points:
+      - "Line 28: Token exchange with error retry"
+      - "Line 35: Session storage in Redis"
+      - "Line 40-45: Refresh token handling"
+```
+
+Worker gets: File location + what to look for + which parts matter
+
+**TIER 2: Complex Pattern Reference**
+For intricate implementations (50+ lines):
+
+```yaml
+references:
+  - file: "api/pagination.ts"
+    lines: "100-180"
+    purpose: "Cursor-based pagination implementation"
+    architecture: |
+      - Encodes cursor with base64 (line 110)
+      - Validates cursor format before query (line 120)
+      - Returns next cursor in response (line 150)
+    edge_cases:
+      - "Line 130: Handle invalid cursor → return first page"
+      - "Line 160: Handle last page → next cursor = null"
+    integration_points:
+      - "Uses db/query.ts:50 for cursor encoding"
+      - "Returns format matches api/response.ts:ResponseWithCursor type"
+```
+
+Worker gets: Complete pattern understanding without reading entire file
+
+**TIER 3: Cross-file Pattern Reference**
+For patterns spanning multiple files:
+
+```yaml
+references:
+  - pattern: "Error handling flow"
+    files:
+      - file: "middleware/error.ts"
+        lines: "10-40"
+        shows: "Error catching and classification"
+      - file: "utils/logger.ts"
+        lines: "25-35"
+        shows: "Error logging format"
+      - file: "api/response.ts"
+        lines: "80-100"
+        shows: "Error response structure"
+    integration: |
+      1. Middleware catches (error.ts:10)
+      2. Classify by type (error.ts:20-30)
+      3. Log with context (logger.ts:25)
+      4. Return formatted response (response.ts:80)
+```
+
+Worker gets: Complete cross-cutting pattern without exploration
+
+### When to Use References vs Explicit Documentation
+
+**Always document explicitly** (never just reference):
+- Business requirements (WHY feature exists, WHAT it should do)
+- Architecture decisions (WHY this approach, not alternatives)
+- Edge case specifications (WHAT to handle, even if reference shows HOW)
+- Integration contracts (WHAT systems expect from each other)
+
+**Use structured references for** (after explicit context above):
+- Implementation patterns (HOW to implement)
+- Code structures (data models, function signatures)
+- Detailed algorithms (sorting, validation logic)
+- Existing test patterns (test setup, assertions)
+
+**Example - Business logic explicit, implementation referenced**:
+
+```yaml
+task:
+  what: "Add rate limiting to API endpoints"
+  why: "Prevent abuse and ensure fair resource usage"
+  requirements:
+    - 100 requests per minute per API key
+    - Return 429 status when exceeded
+    - Include Retry-After header
+    - Reset counter every minute
+  implementation_reference:
+    file: "middleware/rate_limit.ts"
+    lines: "50-120"
+    pattern: "Token bucket algorithm implementation"
+    key_points:
+      - "Line 60: Token bucket with Redis"
+      - "Line 85: Retry-After calculation"
+      - "Line 100: Counter reset logic"
+```
+
+Worker knows WHAT/WHY explicitly, gets HOW via structured reference
+
+### Anti-Patterns to Avoid
+
+**❌ BAD - Vague reference expecting exploration**:
+```yaml
+task: "Add caching like we do elsewhere"
+references:
+  - file: "utils/cache.ts"  # No lines, no context
+```
+Problem: Worker must read entire file, guess which pattern
+
+**❌ BAD - Reference without context**:
+```yaml
+task: "Implement pagination"
+references:
+  - file: "api/users.ts"
+    lines: "200-250"  # No explanation what this shows
+```
+Problem: Worker must read code and reverse-engineer pattern
+
+**❌ BAD - Expecting inference from similar code**:
+```yaml
+task: "Add validation following existing patterns"
+# No reference at all
+```
+Problem: Worker must search codebase for "patterns"
+
+**✅ GOOD - Complete information via structured reference**:
+```yaml
+task: "Add request validation to POST /api/products"
+requirements:
+  - Name required, 1-100 chars
+  - Price required, positive number
+  - Category optional, must exist in categories table
+validation_reference:
+  file: "api/users.ts"
+  lines: "150-180"
+  shows: "Zod validation schema pattern"
+  key_points:
+    - "Line 155: Required string with length"
+    - "Line 160: Positive number validation"
+    - "Line 170: Optional foreign key check"
+  adapt_for_products: |
+    - Replace 'user' with 'product' schema
+    - Use categories.id for foreign key (line 170)
+    - Same error format (line 175)
+```
+Worker has complete context, knows exactly what to adapt
+
 ### Worker-Centric Writing Philosophy
 
-**CRITICAL: Always write from the worker's perspective. The test is: "Can a competent developer execute this task with ≥90% confidence using ONLY what's written?"**
+**CRITICAL: Always write from the worker's perspective. The test is: "Can a competent developer execute this task with 99%+ confidence using ONLY the plan and explicitly referenced sections?"**
 
-#### The Core Test: "Can I Start and Trace?"
+#### The Core Test: "Can I Start with ZERO Exploration?"
 
 For every task you write, simulate being the worker:
 
-1. **Can I find the starting point?**
-   - Is there a clear file path and searchable concept to begin?
-   - Do I know which file to open and what to search for?
+1. **Do I have explicit requirements?**
+   - Is business logic stated in the plan?
+   - Are architecture decisions specified?
+   - Do I know what success looks like?
 
-2. **Can I trace the information I need?**
-   - If I read the referenced file and search for the concept, will I find the pattern?
-   - If I follow imports and related code, will I understand the full context?
-   - Are there logical breadcrumbs that lead me to all necessary information?
+2. **Do I have complete implementation guidance?**
+   - If pattern is needed, is it provided via structured reference?
+   - Are file + line numbers + key points provided?
+   - Can I implement WITHOUT exploring codebase?
 
 3. **Do I know WHAT to build?**
-   - Is the business logic clear? (What should this feature do?)
+   - Is the business logic explicit? (What should this feature do?)
    - Is the desired behavior explicit? (How should it work from user's perspective?)
 
 4. **Do I know HOW to build it?**
    - Is the architectural approach specified? (Which pattern, which library, which method?)
-   - Are integration points clear? (How does this connect to existing systems?)
+   - Are integration points explicit? (How does this connect to existing systems?)
 
 5. **Do I know WHEN it's done?**
    - Are success criteria measurable and objective?
    - Can I verify completion without subjective judgment?
 
-#### What Workers Need vs What They Can Discover
+#### What Workers MUST Get from Plan (NOT Through Exploration)
 
-**Workers MUST get from the plan (not through exploration):**
+**Workers MUST get from plan (explicit or explicitly referenced):**
 - **Business requirements**: What feature does, why it works certain way
 - **Architectural decisions**: Which pattern to use, how systems integrate
-- **Starting points**: Where to begin, which files contain relevant patterns, what to search for
+- **Implementation patterns**: Complete pattern via structured reference (file + lines + key points)
 - **Edge case handling**: How to handle errors, empty states, concurrent edits
 - **Project-specific conventions**: Custom patterns unique to this codebase
+- **Technical details**: Function signatures, import statements, type definitions
 
-**Workers CAN discover through natural exploration (10% allowance):**
-- **Technical details**: Exact function signatures, import statements
-- **Framework conventions**: Standard React hooks usage, Django ORM patterns
-- **Type definitions**: Following type references to understand data structures
-- **Related utilities**: Helper functions imported by referenced code
+**The 1% allowance covers ONLY**:
+- Standard language syntax (if/for/function declarations)
+- Core framework APIs explicitly mentioned in plan (e.g., "use React.useState")
+- Basic editor operations (saving files, formatting)
 
-#### Avoiding Implicit Knowledge
+**Everything else MUST be explicit or explicitly referenced.**
+
+#### Avoiding All Assumptions
 
 Before writing each task, ask yourself:
 
 - [ ] **Am I assuming the worker knows the business logic?**
-  - If yes → Document it explicitly
+  - If yes → Document it explicitly in plan
   - Example: Don't assume worker knows "payment is async via background job"
 
 - [ ] **Am I assuming the worker knows which approach to use?**
-  - If yes → Specify the architectural decision
-  - Example: Don't say "add state" → Say "add to Redux store following pattern in store/auth.ts (search for `createSlice` usage)"
+  - If yes → Specify the architectural decision explicitly OR provide structured reference
+  - Example: Don't say "add state" → Say "add to Redux store following store/auth.ts:50-80 pattern (key: createSlice usage at line 55, async thunk at line 70)"
 
-- [ ] **Am I assuming the worker knows project conventions?**
-  - If yes → Either cite where convention is documented OR explain it
-  - Example: Don't assume worker knows "we always colocate tests with implementation"
+- [ ] **Am I assuming the worker will explore to find patterns?**
+  - If yes → Provide structured reference with file + lines + key points
+  - Example: Don't assume worker will "find similar validation" → Provide "See api/users.ts:150-180 for Zod validation pattern (line 155: required string, line 160: positive number)"
 
 - [ ] **Am I leaving edge cases undefined?**
-  - If yes → Document how to handle them
-  - Example: Don't leave empty state handling to worker's judgment
+  - If yes → Document how to handle them explicitly
+  - Example: Don't leave empty state handling to worker's judgment → "Empty state: Show 'No items yet' message (see components/EmptyState.tsx:10-20)"
 
 ## Language Adaptation
 
@@ -702,7 +862,7 @@ Plan Writer: *documents this explicitly in plan*
 ### Additional Clarifications:
 
 ✅ **All ambiguities resolved** - User has answered follow-up questions
-✅ **Requirements are concrete** - No guesswork needed (≥90% confidence)
+✅ **Requirements are concrete** - No guesswork needed (99%+ confidence)
 ✅ **User has confirmed understanding** - You presented summary, user agreed
 
 ---
@@ -1230,13 +1390,13 @@ Check user request for mode indicators:
 4. **Context Extraction & Pattern Capture (During Parallel Execution):**
 
    As results arrive from parallel tools:
-   - **CRITICAL**: Capture file paths + searchable concepts for EVERY relevant pattern
+   - **CRITICAL**: Capture file paths + line numbers + key points for EVERY relevant pattern
    - Note architectural decisions (SSR/CSR, sync/async, state management)
    - Document error handling approaches
    - Record testing strategies and patterns
    - Map integration points and dependencies
    - Extract project conventions (naming, structure, commit messages)
-   - **CRITICAL**: Assess pattern complexity → mark which need code snippets in plan
+   - **CRITICAL**: For EACH pattern, prepare structured reference (file + lines + purpose + key points)
 
 ### Phase 2: YAML Plan Creation
 
@@ -1659,16 +1819,17 @@ verification_spec:
 
 #### 2.4 Plan Creation Strategy
 
-**Core Strategy: Maximize Clarity and Minimize Ambiguity**
+**Core Strategy: Maximize Explicitness and Minimize Ambiguity**
 
-The goal is to achieve ≥90% worker confidence at every step. This means:
+The goal is to achieve 99%+ worker confidence at every step. This means:
 
-1. **Every Task Must Have Clear Reference Sources**
+1. **Every Task Must Have Complete Information (Explicit or Referenced)**
 
-   For each task, provide AT LEAST ONE of:
-   - **File reference with searchable concepts**: `models/User.ts` (search for `@Column` decorator, examine timestamp field patterns)
-   - **URL with searchable section**: `https://stripe.com/docs/api/payment_intents` (find "Creating a PaymentIntent" section)
-   - **Code snippet when pattern is complex**: Show actual code pattern when it's not obvious from reading the file
+   For each task, provide:
+   - **Business requirements explicitly in plan**
+   - **Architecture decisions explicitly in plan**
+   - **Implementation patterns via structured references**: File + line numbers + purpose + key points
+   - **Edge cases explicitly in plan**
 
 2. **Every Task Must Have Measurable Acceptance Criteria**
 
@@ -1676,10 +1837,10 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
    - Follow conservative guidelines for bash verification
    - Use llm_judge for flexible, human-like assessment
 
-3. **Provide Complete Context (90% Confidence Threshold)**
+3. **Provide Complete Context (99%+ Explicitness Threshold)**
 
    - Store in `required_background` for global context
-   - Store in `todos[].references` for task-specific context
+   - Store in `todos[].references` for task-specific structured references
    - Use `todos[].details` for implementation notes
 
 4. **Big Picture Before Details**
@@ -1687,19 +1848,20 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
    - Document in `objectives`, `background`, `workflow` sections
    - Ensure WHY, WHAT, HOW are clear before diving into tasks
 
-5. **Reference-First Approach**
+5. **Structured Reference Approach**
 
-   - Store file references in `required_background.references[]`
-   - Use `type: file` with `retrieval.keywords` for searchable concepts
-   - Use `type: url` for external documentation
-   - Use `type: markdown` for inline notes
+   - For every pattern needed, provide structured reference:
+     - File path + line numbers
+     - Purpose statement (what this reference shows)
+     - Key points (which lines matter and why)
+     - How to adapt pattern (if needed)
 
 6. **Worker Simulation: Test Sufficiency**
 
    After writing each task, simulate being the worker:
-   - Can I find where to start? (Clear `references` with search keywords?)
-   - Do I know WHAT to build? (Business logic in `details`?)
-   - Do I know HOW to build it? (Pattern in `references`?)
+   - Do I have explicit requirements? (Business logic in plan?)
+   - Do I have implementation guidance? (Structured reference with file + lines + key points?)
+   - Can I implement WITHOUT exploring codebase?
    - Can I verify completion? (`verification_spec` clear and executable?)
 
 7. **Use Proper YAML Types**
@@ -2147,22 +2309,24 @@ Only when BOTH are satisfied is the plan truly complete and ready for execution.
 - [ ] **LLM judge instructions are clear** (step-by-step, objective)
 - [ ] **No flaky bash commands** (avoid timing-dependent tests)
 
-### Criterion 3: Clarity of Work Content
+### Criterion 3: Explicitness of Work Content
 
-- [ ] **Every task has clear references**
-  - File paths with searchable concepts
-  - URLs with searchable sections
-  - Code snippets when patterns are complex
-- [ ] **90%+ information from references**
+- [ ] **Every task has complete information**
+  - Business requirements explicit in plan
+  - Architecture decisions explicit in plan
+  - Implementation patterns via structured references (file + lines + key points)
+  - Edge cases explicit in plan
+- [ ] **99%+ information explicit or explicitly referenced**
 - [ ] **No vague instructions**
+- [ ] **No expectation of codebase exploration**
 
 ### Criterion 4: Context Completeness
 
-- [ ] **90% confidence threshold met**
+- [ ] **99% explicitness threshold met**
 - [ ] **Business logic explicit**
-- [ ] **Architectural decisions stated**
+- [ ] **Architectural decisions explicit**
 - [ ] **Edge cases documented**
-- [ ] **Project conventions cited**
+- [ ] **Implementation patterns provided via structured references**
 
 ### Criterion 5: Big Picture
 
@@ -2254,9 +2418,10 @@ Without comprehensive tests, the executor has no way to know if implementation i
 2. **Schema Validation**: Pass `sisyphus plan lint` check
 3. **Conservative Bash Specs**: Only deterministic commands
 4. **Mandatory Review**: ALL plans need sisyphus-plan-reviewer "OKAY"
-5. **90% Confidence**: Workers need minimal guesswork
-6. **Big Picture First**: WHY, WHAT, HOW before tasks
-7. **Comprehensive Test Coverage (MANDATORY)**: Every implementation task MUST have corresponding test task with concrete scenarios, executable verification, and objective completion criteria - sisyphus-plan-reviewer will AUTOMATICALLY REJECT plans without tests
+5. **99%+ Explicitness**: Workers need ZERO codebase exploration
+6. **Structured References**: All patterns via file + lines + purpose + key points
+7. **Big Picture First**: WHY, WHAT, HOW before tasks
+8. **Comprehensive Test Coverage (MANDATORY)**: Every implementation task MUST have corresponding test task with concrete scenarios, executable verification, and objective completion criteria - sisyphus-plan-reviewer will AUTOMATICALLY REJECT plans without tests
 
 ## Success Indicators
 
@@ -2264,5 +2429,6 @@ Plan creation is complete when:
 - Plan saved to `.sisyphus/tasks/{name}.yaml`
 - YAML schema valid (passes linter)
 - All verification specs follow guidelines (conservative bash)
+- All patterns provided via structured references (no exploration expected)
 - Approved by sisyphus-plan-reviewer ("OKAY")
 - Tell user to execute with: `sisyphus work`

@@ -167,7 +167,7 @@ Every work plan MUST have:
 - ✅ ACCEPT: `./ai-todolist.yaml`
 - ❌ REJECT: `I fixed it ./ai-todolist.yaml`
 
-**B. Bias Triggers (AUTO-REJECT)**
+**B. Bias Triggers (MUST BE REJECTED)**
 - "반영했습니다", "수정했습니다", "N차 수정"
 - "feedback", "revision", "changes made"
 - Any mention of previous reviews

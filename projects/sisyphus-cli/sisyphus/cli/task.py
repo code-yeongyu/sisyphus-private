@@ -133,6 +133,103 @@ def _display_verification_guidance(current_task: Todo) -> None:
     console.print("\n  [cyan]●[/cyan] 전체 검증 상태 확인: [bold]sisyphus task verify status[/bold]")
 
 
+def _display_verification_status_table(
+    work_plan: WorkPlan,
+    task_manager: TaskManager,
+    show_current_task: bool = True,
+) -> None:
+    if show_current_task:
+        current_task = task_manager.get_current_task()
+        if current_task:
+            all_tasks_dfs = []
+
+            def collect_tasks_dfs(todos: list[Any]) -> None:
+                for todo in todos:
+                    all_tasks_dfs.append(todo)
+                    if todo.children:
+                        collect_tasks_dfs(todo.children)
+
+            collect_tasks_dfs(work_plan.todos)
+
+            try:
+                current_index = next(i for i, t in enumerate(all_tasks_dfs) if t.id == current_task.id)
+                task_position = f"{current_index + 1}/{len(all_tasks_dfs)}"
+            except StopIteration:
+                task_position = "?/?"
+
+            console.print(f"[bold green]현재 작업:[/bold green] {task_position} - {current_task.title}")
+            console.print(f"[dim]작업 ID: {current_task.id}[/dim]\n")
+        else:
+            console.print("[yellow]진행 중인 작업이 없습니다.[/yellow]\n")
+
+    all_verifications: list[tuple[str, str, Any]] = []
+
+    def collect_verifications(todos: list[Any], prefix: str = "") -> None:
+        for todo in todos:
+            for verify_item in todo.verification_spec:
+                all_verifications.append((f"{prefix}{todo.title}", verify_item.title, verify_item))
+            if todo.children:
+                collect_verifications(todo.children, prefix=f"{prefix}{todo.title} > ")
+
+    collect_verifications(work_plan.todos)
+
+    if not all_verifications:
+        console.print("[yellow]검증 항목이 없습니다.[/yellow]")
+        return
+
+    verified_count = sum(1 for _, _, item in all_verifications if item.verified)
+    total_count = len(all_verifications)
+    manual_verified_count = sum(1 for _, _, item in all_verifications if item.orchestrator_manually_verified)
+
+    console.print(f"[cyan]검증 상태: {verified_count}/{total_count} 완료[/cyan]")
+    console.print(f"[magenta]수동 검증: {manual_verified_count}/{total_count} 완료[/magenta]\n")
+
+    table = Table(title="검증 목록")
+    table.add_column("작업", style="cyan")
+    table.add_column("검증 항목", style="yellow")
+    table.add_column("타입", style="blue")
+    table.add_column("상태", style="green")
+    table.add_column("Orchestrator 수동검증", style="magenta")
+    table.add_column("증거", style="dim")
+
+    for task_title, verify_title, verify_item in all_verifications:
+        verify_types = []
+        if verify_item.bash:
+            verify_types.append("bash")
+        if verify_item.llm_judge:
+            verify_types.append("llm")
+        if not verify_item.bash and not verify_item.llm_judge:
+            verify_types.append("manual")
+
+        verify_type_str = ", ".join(verify_types) if verify_types else "unknown"
+
+        status_emoji = "✓" if verify_item.verified else "○"
+        status_color = "green" if verify_item.verified else "yellow"
+
+        manual_verified_emoji = "✓" if verify_item.orchestrator_manually_verified else "✗"
+        manual_verified_color = "green" if verify_item.orchestrator_manually_verified else "red"
+
+        evidence_status = "있음" if verify_item.manual_verification_evidence else "없음"
+        evidence_color = "green" if verify_item.manual_verification_evidence else "dim"
+
+        table.add_row(
+            task_title,
+            verify_title,
+            verify_type_str,
+            f"[{status_color}]{status_emoji}[/{status_color}]",
+            f"[{manual_verified_color}]{manual_verified_emoji}[/{manual_verified_color}]",
+            f"[{evidence_color}]{evidence_status}[/{evidence_color}]",
+        )
+
+    console.print(table)
+
+    remaining = total_count - verified_count
+    if remaining > 0:
+        console.print(f"\n[yellow]남은 검증: {remaining}개[/yellow]")
+    else:
+        console.print("\n[green]모든 검증이 완료되었습니다! ✓[/green]")
+
+
 def _display_remaining_verifications(task_manager: TaskManager) -> None:
     current_task = task_manager.get_current_task()
     if current_task is None:
@@ -346,35 +443,18 @@ def continue_work(
 
         report = task_manager.check_task_completion(current_task.id)
         if not report.can_complete:
-            console.print("[red]다음 작업으로 넘어갈 수 없습니다.[/red]")
-            console.print(f"[yellow]현재 작업: {current_task.title}[/yellow]")
+            console.print("[red]다음 작업으로 넘어갈 수 없습니다.[/red]\n")
 
             if not report.all_children_completed:
                 completed = report.children_summary["completed"]
                 total = sum(report.children_summary.values())
-                console.print(f"  - 하위 작업: {completed}/{total} 완료")
+                console.print(f"[yellow]하위 작업: {completed}/{total} 완료[/yellow]\n")
 
             if not report.all_verifications_completed:
-                ver_completed = report.verification_summary["completed"]
-                ver_total = report.verification_summary["total"]
-                console.print(f"  - 검증: {ver_completed}/{ver_total} 완료")
+                _display_verification_status_table(work_plan, task_manager, show_current_task=True)
+                console.print("\n[cyan]완료 조건을 만족한 후 다시 시도하세요.[/cyan]")
+                _display_verification_guidance(current_task)
 
-                manual_completed = report.manual_verification_summary["completed"]
-                manual_total = report.manual_verification_summary["total"]
-                console.print(f"  - 수동 검증: {manual_completed}/{manual_total} 완료")
-
-                console.print("\n[bold cyan]미완료 검증 항목:[/bold cyan]")
-                for idx, verify_item in enumerate(current_task.verification_spec, 1):
-                    if not verify_item.verified:
-                        status_icon = "○"
-                        console.print(f"  {status_icon} [{idx}] {verify_item.title}")
-                        if verify_item.description:
-                            console.print(f"      {verify_item.description}")
-
-            console.print("\n[cyan]완료 조건을 만족한 후 다시 시도하세요.[/cyan]")
-            _display_verification_guidance(current_task)
-
-            if not report.all_verifications_completed:
                 console.print("\n[bold yellow]🤖 Orchestrator 안내:[/bold yellow]")
                 console.print("[yellow]당신이 직접 검증하고, 실패하거나 아쉬운 점이 있다면[/yellow]")
                 console.print("[yellow]sisyphus-executor를 다시 호출하여 시키세요.[/yellow]")
@@ -709,57 +789,6 @@ def verify_status(
         working_dir = resolve_cwd(cwd)
         plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
 
-        all_verifications: list[tuple[str, str, Any]] = []
-
-        def collect_verifications(todos: list[Any], prefix: str = "") -> None:
-            for todo in todos:
-                for verify_item in todo.verification_spec:
-                    all_verifications.append((f"{prefix}{todo.title}", verify_item.title, verify_item))
-                if todo.children:
-                    collect_verifications(todo.children, prefix=f"{prefix}{todo.title} > ")
-
-        collect_verifications(work_plan.todos)
-
-        if not all_verifications:
-            console.print("[yellow]검증 항목이 없습니다.[/yellow]")
-            return
-
-        verified_count = sum(1 for _, _, item in all_verifications if item.verified)
-        total_count = len(all_verifications)
-
-        console.print(f"[cyan]검증 상태: {verified_count}/{total_count} 완료[/cyan]\n")
-
-        table = Table(title="검증 목록")
-        table.add_column("작업", style="cyan")
-        table.add_column("검증 항목", style="yellow")
-        table.add_column("상태", style="green")
-        table.add_column("수동 검증", style="magenta")
-        table.add_column("증거", style="blue")
-
-        for task_title, verify_title, verify_item in all_verifications:
-            status_emoji = "✓" if verify_item.verified else "○"
-            status_color = "green" if verify_item.verified else "yellow"
-
-            manual_verified_emoji = "✓" if verify_item.orchestrator_manually_verified else "✗"
-            manual_verified_color = "green" if verify_item.orchestrator_manually_verified else "red"
-
-            evidence_status = "Present" if verify_item.manual_verification_evidence else "Missing"
-            evidence_color = "green" if verify_item.manual_verification_evidence else "red"
-
-            table.add_row(
-                task_title,
-                verify_title,
-                f"[{status_color}]{status_emoji}[/{status_color}]",
-                f"[{manual_verified_color}]{manual_verified_emoji}[/{manual_verified_color}]",
-                f"[{evidence_color}]{evidence_status}[/{evidence_color}]",
-            )
-
-        console.print(table)
-
-        remaining = total_count - verified_count
-        if remaining > 0:
-            console.print(f"\n[yellow]남은 검증: {remaining}개[/yellow]")
-        else:
-            console.print("\n[green]모든 검증이 완료되었습니다! ✓[/green]")
+        _display_verification_status_table(work_plan, task_manager, show_current_task=True)
 
     _run_async(_status())

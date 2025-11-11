@@ -50,8 +50,8 @@ class ExecutionLoop:
         ui: UIProtocol,
         session_store: SessionStore,
         logger_factory: LoggerFactory,
-        verify_agent: Agent | None = None,
-        task_validator: TaskValidatorProtocol | None = None,
+        verify_agent: Agent,
+        task_validator: TaskValidatorProtocol,
         working_directory: Path | None = None,
         status_manager: StatusManager | None = None,
     ) -> None:
@@ -62,8 +62,8 @@ class ExecutionLoop:
             ui: UI Protocol implementation
             session_store: Session persistence store
             logger_factory: Logger factory
-            verify_agent: Optional agent for verify phase
-            task_validator: Optional task validator for loop control
+            verify_agent: Agent for verify phase
+            task_validator: Task validator for loop control
             working_directory: Optional execution working directory
             status_manager: Optional status manager for tracking current plan
         """
@@ -257,12 +257,11 @@ class ExecutionLoop:
 
         execute_throttle_max_count = 10
 
-        if self.task_validator is not None:
-            content = self.task_validator.read_content()
-            goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
-            checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
-            if goals_accomplished and checkboxes_completed:
-                await self.ui.show_status("✅ All tasks already completed. Starting Verify phase...")
+        content = self.task_validator.read_content()
+        goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
+        checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
+        if goals_accomplished and checkboxes_completed:
+            await self.ui.show_status("✅ All tasks already completed. Starting Verify phase...")
 
         while True:
             iteration += 1
@@ -278,7 +277,7 @@ class ExecutionLoop:
                 )
 
             skip_execute = False
-            if iteration == 1 and self.task_validator is not None:
+            if iteration == 1:
                 content = self.task_validator.read_content()
                 goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
                 checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
@@ -326,22 +325,14 @@ class ExecutionLoop:
             if should_retry_execute:
                 continue
 
-            should_verify = False
-            if self.task_validator is not None:
-                content = self.task_validator.read_content()
-                goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
-                checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
-                should_verify = goals_accomplished and checkboxes_completed
+            content = self.task_validator.read_content()
+            goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
+            checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
+            should_verify = goals_accomplished and checkboxes_completed
 
             should_verify = should_verify or force_verify
 
-            if force_verify and not self.verify_agent:
-                await self.ui.show_status(
-                    "⚠️  Execute loop detected but no Verify agent available. Terminating to prevent infinite loop."
-                )
-                break
-
-            if should_verify and self.verify_agent:
+            if should_verify:
                 actual_verify_prompt = verify_prompt
 
                 if verify_feedback_history:
@@ -391,8 +382,7 @@ class ExecutionLoop:
                     await self.ui.show_status("✅ Architect confirmed FULLY_DONE. All work verified!")
                     break
 
-                if self.task_validator and self.task_validator.todolist_path:
-                    plan_doc = await load_plan(self.task_validator.todolist_path)
+                plan_doc = await load_plan(self.task_validator.todolist_path)
 
                     for work_plan in plan_doc.work_plans:
                         if work_plan.work_mode.current_task_id:
@@ -419,13 +409,6 @@ class ExecutionLoop:
                     verify_feedback_history.append(feedback)
             elif should_verify and not self.verify_agent:
                 await self.ui.show_status("✅ All tasks completed!")
-                break
-
-            if self.task_validator is None:
-                if self.verify_agent:
-                    await self.ui.show_status("Verification complete (no task validator for feedback loop).")
-                else:
-                    await self.ui.show_status("Execution complete.")
                 break
 
     async def _execute_phase(

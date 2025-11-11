@@ -89,9 +89,14 @@ Force the author to **make implicit knowledge explicit**:
 - "Implement OAuth following Google provider pattern in auth/google.ts:20-45, store session in httpOnly cookie (see session.ts:10), use refresh token rotation (see auth/refresh.ts:30)"
 - "Handle network errors with toast notification (useToast hook), validation errors inline below fields (pattern: FormError.tsx), retry 3x with exponential backoff (utils/retry.ts)"
 
-**The Test**: "Can someone with ZERO context about this project implement this task by ONLY reading the plan and referenced files?"
+**The Test**: "Can a competent developer implement this task by:
+1. Reading the plan
+2. Exploring referenced files
+3. Following imports and patterns
+4. Checking similar implementations
+WITHOUT needing to make business/architecture decisions that aren't discoverable from code?"
 
-If the answer requires the author's working memory → **REJECT**.
+If the answer requires business decisions or critical context not discoverable through reasonable code exploration → **REJECT**.
 
 ---
 

@@ -422,10 +422,10 @@ Logical checkpoints: [Present/Missing]
 - [NOTE] **Acceptable**: Minor technical tasks with simple implied criteria (e.g., "read file X" → obvious success = file read works)
 
 **CRITICAL: Context Failures**:
-- Task requires assumptions about **business requirements** (what feature does, why it works this way)
-- Task requires assumptions about **critical architecture** (how systems integrate, data flows)
-- Task requires assumptions about **non-obvious edge cases** (error handling strategy, state management approach)
-- [NOTE] **Acceptable**: Standard technical exploration (following imports, checking types, reading framework docs)
+- Task requires assumptions about **business requirements** (what feature does, why it works this way) **AND** not discoverable from codebase
+- Task requires assumptions about **critical architecture** (how systems integrate, data flows) **AND** no clear existing pattern
+- Task requires assumptions about **non-obvious edge cases** (error handling strategy, state management approach) **AND** not evident from similar code
+- [NOTE] **Acceptable**: Context discoverable through reasonable code exploration (following imports, checking types, reading similar implementations, framework conventions)
 
 **CRITICAL: Big Picture Failures**:
 - Missing purpose statement or unclear WHY (what problem are we solving?)

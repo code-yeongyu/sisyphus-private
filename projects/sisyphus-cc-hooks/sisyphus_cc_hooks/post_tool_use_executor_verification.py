@@ -198,6 +198,32 @@ Shows:
 AFTER ALL VERIFICATIONS
 Once all verifications show complete:
 
+[IMPORTANT NOTE: FINAL VERIFICATION]
+If the work plan has a `final_verification` section (plan-level verification items),
+these are OUTSIDE the scope of task-level verification.
+
+Final verification items validate the ENTIRE work as an integrated whole
+(e.g., end-to-end flows, system integration tests, security audits).
+
+**CRITICAL DECISION POINT**:
+- If ALL individual todos are complete and ALL their verification_spec items are verified,
+  AND the work plan is truly finished according to the original requirements,
+- THEN final_verification items are the USER'S responsibility to verify, NOT yours.
+- You may proceed to complete the work WITHOUT marking final_verification items.
+
+**Why?**
+- Final verification often requires production environment, real user testing, or business approval
+- These are acceptance criteria for the USER/STAKEHOLDER, not executor-level checks
+- Your job as orchestrator is to ensure implementation quality, not business acceptance
+
+**When to mark final_verification yourself**:
+- ONLY if you can genuinely perform the verification (e.g., automated integration tests)
+- ONLY if the verification is technical and within your capability
+
+**Bottom line**:
+If plan todos are complete and verified, you can proceed to step 4 (commit changes).
+Final verification is for user acceptance, not a blocker for task completion.
+
 4. COMMIT YOUR CHANGES (MANDATORY)
   Before proceeding, check for uncommitted changes:
   ```sh

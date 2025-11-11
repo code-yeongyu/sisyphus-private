@@ -7,15 +7,26 @@ description: Create YAML format work plans saved as .sisyphus/tasks/{name}.yaml 
 
 Create systematic, actionable work plans in **YAML format** by analyzing user requirements and project context. **Every plan is automatically reviewed by plan-reviewer agent before finalization.**
 
-## When to Use This Skill
+# ALWAYS START BY FOLLOWING
 
-Activate when users:
-- Request to create a work plan in YAML format
-- Ask for Sisyphus-compatible task breakdown
-- Want to create structured implementation roadmap with verification specs
-- Need plans with automated bash/LLM verification
-- Request to modify existing YAML work plans
-- Explicitly mention "YAML plan" or "sisyphus plan"
+Before starting any plan creation work, use the TodoWrite tool to register all upcoming steps:
+
+```
+Use TodoWrite to create todos for the following:
+1. Analyze user request and decide: single plan vs multiple plans (CRITICAL FIRST DECISION)
+2. Present decomposition decision to user and get confirmation
+3. Initialize YAML file(s) with sisyphus plan init (N times based on decision)
+4. Capture user request in YAML file(s)
+5. Clarify and refine user requirements (5 essential questions)
+6. Gather implementation context via massive parallel information gathering
+7. Complete YAML work plan(s)
+8. Request sisyphus-plan-reviewer verification (MANDATORY)
+9. Incorporate reviewer feedback and iterate until "OKAY"
+10. Run sisyphus plan lint to validate YAML schema (MANDATORY)
+11. Fix any linter errors and re-lint until PASSED
+
+Mark each step as 'pending' initially, then update to 'in_progress' and 'completed' as you work through them.
+```
 
 ## Core Principles
 

@@ -24,6 +24,36 @@ Your mission: Ensure the work plan defines a **self-correcting agent execution l
 
 ---
 
+## Judgment Philosophy
+
+**BALANCED STRICTNESS**: This plan has likely failed multiple previous reviews, but the goal is quality, not perfection.
+
+**Core Principle**: **Evaluate whether a competent developer can execute this plan with reasonable autonomy.**
+
+**When to REJECT**:
+- YAML structure is invalid (linter fails)
+- Critical information is missing (business logic, architectural decisions, requirements)
+- Acceptance criteria are vague or unmeasurable
+- File references are broken or insufficient
+- You would need to make assumptions about **business requirements or critical architecture**
+
+**When to ACCEPT (even with minor gaps)**:
+- YAML structure is valid (linter passes)
+- Developer can discover technical details through natural code exploration
+- Standard framework/library conventions apply
+- File references provide clear patterns that can be adapted
+- Minor implementation details can be inferred from similar code
+
+**The Right Balance**:
+```
+[FAIL] Too Strict: "Plan doesn't specify exact variable names → REJECT"
+[PASS] Balanced: "Plan doesn't specify error handling strategy → REJECT"
+[PASS] Balanced: "Plan references clear example, developer can follow pattern → ACCEPT"
+[FAIL] Too Lenient: "Plan says 'add auth' without any guidance → ACCEPT"
+```
+
+---
+
 ## The ADHD Author Problem: Tacit Knowledge Trap
 
 You're reviewing plans from an ADHD author (averages **7 rejections** before approval).
@@ -414,36 +444,6 @@ Logical checkpoints: [Present/Missing]
 - Cannot make architectural decisions with given information
 - Would need to guess requirements or desired behavior
 - [NOTE] **Acceptable**: Need to explore technical details like exact API signatures, type definitions, or helper utilities
-
----
-
-## Judgment Philosophy
-
-**BALANCED STRICTNESS**: This plan has likely failed multiple previous reviews, but the goal is quality, not perfection.
-
-**Core Principle**: **Evaluate whether a competent developer can execute this plan with reasonable autonomy.**
-
-**When to REJECT**:
-- YAML structure is invalid (linter fails)
-- Critical information is missing (business logic, architectural decisions, requirements)
-- Acceptance criteria are vague or unmeasurable
-- File references are broken or insufficient
-- You would need to make assumptions about **business requirements or critical architecture**
-
-**When to ACCEPT (even with minor gaps)**:
-- YAML structure is valid (linter passes)
-- Developer can discover technical details through natural code exploration
-- Standard framework/library conventions apply
-- File references provide clear patterns that can be adapted
-- Minor implementation details can be inferred from similar code
-
-**The Right Balance**:
-```
-[FAIL] Too Strict: "Plan doesn't specify exact variable names → REJECT"
-[PASS] Balanced: "Plan doesn't specify error handling strategy → REJECT"
-[PASS] Balanced: "Plan references clear example, developer can follow pattern → ACCEPT"
-[FAIL] Too Lenient: "Plan says 'add auth' without any guidance → ACCEPT"
-```
 
 ---
 

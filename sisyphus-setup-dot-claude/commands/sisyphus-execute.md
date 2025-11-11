@@ -1,6 +1,6 @@
 ---
 allowed-tools: Read(*), Write(*), Edit(*), Task(*), Bash(*), Bash(git log:*), Grep(*), Glob(*)
-description: Orchestrates sisyphus-executor agent to complete all tasks in YAML todo list (v3.0) until fully done
+description: Orchestrates sisyphus-executor agent to complete all tasks in YAML todo list until fully done
 argument-hint: [todo-yaml-path] [additional-request]
 ---
 

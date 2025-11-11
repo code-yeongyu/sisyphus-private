@@ -227,7 +227,7 @@ Say: "**2. Current task 검증**"
 - Run `sisyphus task current` to get the ACTUAL current in_progress task from the system
 - Parse the execution_context to extract the REQUESTED task (ID + title) from orchestrator
 - **CRITICAL VALIDATION**: Compare REQUESTED task ID with ACTUAL current task ID
-- If they DON'T MATCH → **IMMEDIATELY REJECT** (see rejection message below)
+- If they DON'T MATCH → LOOK IF THIS IS A FIX FROM THE TASK OR NOT -> IF NOT, **IMMEDIATELY REJECT** (see rejection message below)
 - If they MATCH → Proceed to step 3
 
 **🚨 ABSOLUTE PROHIBITION - SISYPHUS CLI USAGE 🚨**

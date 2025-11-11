@@ -445,6 +445,7 @@ Logical checkpoints: [Present/Missing]
 - Schema violations (incorrect field names, wrong discriminated union types)
 - Circular dependencies detected
 - Referenced dependency files don't exist
+- [NOTE] **No acceptable cases**: YAML must be structurally valid to proceed
 
 **2. CRITICAL: Simulation Failures** (Can I implement?)
 - Cannot implement core business logic with given information
@@ -468,7 +469,7 @@ Logical checkpoints: [Present/Missing]
 - Referenced file doesn't exist or is inaccessible
 - Referenced file/section contains completely different content than claimed
 - Referenced pattern is so unclear that it provides no guidance
-- [NOTE] **Minor drift acceptable**: Line numbers slightly off but pattern is identifiable
+- [NOTE] **Acceptable**: Line numbers slightly off but pattern is identifiable and discoverable
 
 **6. CRITICAL: Scope Fidelity Failures** (Scope creep)
 - Plan includes architectural refactoring when user asked for bug fix only

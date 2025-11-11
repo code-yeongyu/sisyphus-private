@@ -44,12 +44,25 @@ This means:
      - Code snippets when patterns are complex or non-obvious
    - No vague instructions like "add authentication" without reference sources
 
-3. **Verifiability Through LLM Judge**
-   - Every task MUST have LLM-based verification criteria:
+3. **Verifiability Through Comprehensive Acceptance Criteria**
+   - Every task MUST have LLM-based verification with **10-20 specific acceptance criteria**:
      - **context_commands**: List of bash commands to gather context (grep, cat, ls, etc.)
-     - **instruction**: Clear criteria for LLM to evaluate completion
-     - Observable outcomes (e.g., "Dark mode toggle appears in header")
-   - NEVER use subjective terms like "properly", "correctly", "good enough"
+     - **instruction**: Multiple independent acceptance criteria organized by category
+     - Each criterion must be independently verifiable (pass/fail, not subjective)
+
+   - **Acceptance criteria MUST cover all aspects**:
+     - **UI/UX**: Visual elements, layout, positioning, sizing, states (hover, active, disabled)
+     - **Functionality**: Core behavior, data flow, state changes, user interactions
+     - **Error Handling**: Exception scenarios, validation feedback, graceful degradation
+     - **Performance**: Response times, rendering speed, resource usage
+     - **Accessibility**: Keyboard navigation, screen reader support (when applicable)
+     - **Security**: Input validation, authorization checks, data protection (when applicable)
+
+   - **Observable outcomes with precise specifications**:
+     - NOT: "Dark mode toggle works properly"
+     - YES: "Dark mode toggle button appears in header top-right (40x40px), shows moon icon in light mode, switches to sun icon within 100ms on click, persists choice in localStorage"
+
+   - NEVER use subjective terms like "properly", "correctly", "good enough", "works well"
 
 4. **Completeness Through Explicit Context**
    - State all implicit assumptions explicitly
@@ -654,13 +667,18 @@ verification_spec:
 - Use bash commands to **gather context only** (cat, grep, ls, find, etc.)
 - LLM evaluates the gathered context against criteria
 - Commands should be **read-only** (no side effects)
-- Provide enough context for LLM to make informed judgment
+- Provide enough context for LLM to evaluate **ALL acceptance criteria**
+- Include commands for every file/component mentioned in acceptance criteria
 
-**Instruction Guidelines:**
-- Be specific and measurable
-- List clear numbered criteria
-- Define what "success" means
-- Avoid subjective terms ("properly", "correctly", "well")
+**Instruction Guidelines (Summary):**
+- Write 10-20 specific acceptance criteria organized by category
+- Each criterion must be independently verifiable (TRUE/FALSE)
+- Use exact numbers, file names, function names - never vague terms
+- Cover all aspects: UI, functionality, errors, performance, testing, accessibility, security
+- Define success as: "ALL criteria must be TRUE"
+- Think like a QA tester: "What EXACTLY must be true for this to be complete?"
+
+**For detailed acceptance criteria guidelines, see Section 2.3 #2 below.**
 
 #### 2.3 Plan Creation Strategy
 
@@ -678,30 +696,126 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
    [FAIL] **BAD**: "Add OAuth login"
    [PASS] **GOOD**: "Add OAuth login following the pattern in `auth/google.ts` (search for `AuthProvider` interface implementation, examine session storage mechanism usage)"
 
-2. **Every Task Must Have LLM Judge Verification**
+2. **Every Task Must Have Comprehensive Acceptance Criteria (10-20 items)**
+
+   **CRITICAL: Write acceptance criteria like a QA engineer, not a developer.**
+
+   Think: "What EXACTLY must be true for this task to be considered complete?"
+
+   ### Acceptance Criteria Writing Framework
+
+   **For each task, write 10-20 specific acceptance criteria organized by category:**
+
+   #### **Category 1: UI/Visual Criteria (for UI tasks)**
+   - Element positioning: "Button appears in header top-right corner at coordinates (x: calc(100% - 60px), y: 20px)"
+   - Sizing: "Button dimensions are 40x40px with 8px border-radius"
+   - Visual states: "Button shows hover effect (opacity: 0.8) and active state (scale: 0.95)"
+   - Styling: "Moon icon (24x24px) displayed in light mode, sun icon in dark mode"
+   - Responsive behavior: "Button remains visible on mobile (min-width: 320px) with 16px right margin"
+
+   #### **Category 2: Functionality Criteria (always required)**
+   - User interaction: "Clicking button triggers theme toggle within 100ms"
+   - Data flow: "Toggle calls useTheme hook's toggleTheme() function"
+   - State changes: "Theme state updates in React Context immediately"
+   - Side effects: "CSS custom properties (--bg-color, --text-color, --border-color) update atomically"
+   - Persistence: "Theme choice saved to localStorage under 'theme' key"
+   - Initial state: "On mount, reads localStorage and applies saved theme (defaults to 'light')"
+
+   #### **Category 3: Error Handling Criteria**
+   - Invalid state: "If localStorage is corrupted, falls back to 'light' theme without errors"
+   - Missing dependencies: "If useTheme hook unavailable, shows error boundary with fallback UI"
+   - Network failures: "Theme toggle works offline (no API dependencies)"
+   - Edge cases: "Rapid clicking (10+ times/second) doesn't cause state inconsistency"
+
+   #### **Category 4: Performance Criteria**
+   - Response time: "Theme switches within 100ms from click to visual update"
+   - Rendering: "Component re-renders only when theme actually changes (React.memo optimized)"
+   - Resource usage: "No memory leaks after 1000+ theme toggles"
+
+   #### **Category 5: Testing Criteria**
+   - Test existence: "Test file exists at tests/components/ThemeToggle.test.tsx"
+   - Coverage: "Tests cover: rendering, click interaction, localStorage persistence, error states"
+   - Test quality: "All tests pass with 100% pass rate"
+
+   #### **Category 6: Accessibility Criteria (when applicable)**
+   - Keyboard navigation: "Button focusable via Tab key with visible focus ring"
+   - Screen reader: "Button has aria-label='Toggle dark mode' attribute"
+   - Reduced motion: "Respects prefers-reduced-motion media query (no animations)"
+
+   #### **Category 7: Security Criteria (when applicable)**
+   - Input validation: "localStorage read/write sanitized to prevent XSS"
+   - Authorization: "No authentication required (public feature)"
+
+   ### LLM Judge Verification Structure
 
    Provide CLEAR verification with:
    - **context_commands**: Commands to gather relevant files/outputs
-   - **instruction**: Numbered criteria for LLM to evaluate
-   - **Observable outcomes**: "Toggle button appears in header (top-right)"
+   - **instruction**: 10-20 numbered acceptance criteria organized by category
+   - Each criterion must be independently verifiable (true/false, not subjective)
+   - **Success definition**: "ALL criteria must be true. If ANY criterion fails, task is INCOMPLETE."
 
-   [FAIL] **BAD**: "Make sure it works properly"
+   [FAIL] **BAD**: "Make sure theme toggle works properly"
+
    [PASS] **GOOD**:
    ```yaml
    llm_judge:
      - by: "orchestrator-agent"
        context_commands:
-         - "cat src/components/DarkModeToggle.tsx"
-         - "cat tests/components/DarkModeToggle.test.tsx"
-         - "grep 'localStorage' src/components/DarkModeToggle.tsx"
+         - "cat src/components/ThemeToggle.tsx"
+         - "cat src/hooks/useTheme.ts"
+         - "cat tests/components/ThemeToggle.test.tsx"
+         - "grep -n 'localStorage' src/components/ThemeToggle.tsx"
+         - "grep -n 'CSS.*custom.*properties' src/styles/theme.css"
        instruction: |
-         Verify:
-         1. Component exists and renders toggle UI
-         2. Click handler calls theme switch function
-         3. Theme changes within 100ms (check implementation)
-         4. Theme persists (localStorage usage confirmed)
-         5. Tests exist and cover all scenarios
+         Verify ALL of the following acceptance criteria. Task is COMPLETE only if ALL criteria are TRUE.
+
+         **UI/Visual Criteria:**
+         1. ThemeToggle button exists in Header component at top-right position
+         2. Button has fixed dimensions: 40x40px with 8px border-radius
+         3. Button displays moon icon (24x24px) when theme is 'light'
+         4. Button displays sun icon (24x24px) when theme is 'dark'
+         5. Button has hover effect: opacity reduces to 0.8
+         6. Button has active state: scale reduces to 0.95 on click
+
+         **Functionality Criteria:**
+         7. Clicking button calls toggleTheme() function from useTheme hook
+         8. Theme state updates in React Context within 100ms
+         9. CSS custom properties update: --bg-color, --text-color, --border-color
+         10. Theme choice persists: localStorage.setItem('theme', newTheme) is called
+         11. On component mount: reads localStorage.getItem('theme') and applies saved value
+         12. Default theme is 'light' if no saved preference exists
+
+         **Error Handling Criteria:**
+         13. If localStorage.getItem('theme') returns corrupted data, defaults to 'light'
+         14. If useTheme hook throws error, component shows error boundary
+         15. Rapid clicking (10+ toggles) does not cause state inconsistency
+
+         **Performance Criteria:**
+         16. Theme switch completes within 100ms from click to visual update
+         17. Component uses React.memo to prevent unnecessary re-renders
+
+         **Testing Criteria:**
+         18. Test file exists: tests/components/ThemeToggle.test.tsx
+         19. Tests cover: initial render, click interaction, localStorage persistence
+         20. All tests pass (no failures or skipped tests)
+
+         **Accessibility Criteria:**
+         21. Button has aria-label="Toggle dark mode"
+         22. Button is keyboard accessible (focusable via Tab)
+
+         **SUCCESS**: All 22 criteria are TRUE
+         **FAILURE**: Any criterion is FALSE or cannot be verified
    ```
+
+   ### Tips for Writing Acceptance Criteria
+
+   1. **Be specific with numbers**: "within 100ms" not "quickly"
+   2. **Name exact files/functions**: "toggleTheme() function" not "theme function"
+   3. **Specify exact behavior**: "defaults to 'light'" not "has default"
+   4. **Cover all states**: normal, error, edge cases, loading
+   5. **Make each criterion independently testable**: Can answer true/false without ambiguity
+   6. **Avoid subjective terms**: Never use "properly", "correctly", "well", "good"
+   7. **Think like a QA tester**: "What would break? How would I test it?"
 
 3. **Provide Complete Context (90% Confidence Threshold)**
 
@@ -894,22 +1008,45 @@ When modifying existing plan:
   - No "add authentication" without saying where/how
   - No "improve performance" without concrete targets
 
-### Criterion 3: LLM Judge Verification
+### Criterion 3: Comprehensive Acceptance Criteria Verification
 
-- [ ] **Every task has llm_judge verification**
-  - context_commands list bash commands for gathering context
-  - instruction provides clear numbered criteria
+- [ ] **Every task has llm_judge verification with 10-20 acceptance criteria**
+  - Minimum 10 acceptance criteria per task (aim for 15-20)
+  - Criteria organized by categories (UI, Functionality, Error Handling, Performance, Testing, etc.)
+  - Each criterion is independently verifiable (can answer TRUE/FALSE without ambiguity)
   - NO bash execution with expected_exit_code/expected_output
 
-- [ ] **Context commands are read-only**
+- [ ] **Acceptance criteria cover all critical aspects**
+  - **UI/Visual criteria** (for UI tasks): positioning, sizing, states, styling, responsive behavior
+  - **Functionality criteria** (always): user interactions, data flow, state changes, side effects
+  - **Error handling criteria**: invalid inputs, missing dependencies, edge cases
+  - **Performance criteria**: response times, rendering optimization, resource usage
+  - **Testing criteria**: test file existence, coverage, quality (100% pass rate)
+  - **Accessibility criteria** (when applicable): keyboard nav, screen readers
+  - **Security criteria** (when applicable): input validation, authorization
+
+- [ ] **Context commands are read-only and comprehensive**
   - Use cat, grep, ls, find, etc.
   - No commands with side effects
-  - Provide enough context for LLM evaluation
+  - Provide enough context for LLM to evaluate ALL criteria
+  - Commands target all files mentioned in acceptance criteria
 
-- [ ] **Instructions are specific and measurable**
-  - Numbered criteria (1, 2, 3...)
-  - Observable outcomes described
-  - Success defined clearly
+- [ ] **Each criterion is specific and measurable**
+  - Uses exact numbers: "within 100ms" not "quickly"
+  - Names exact files/functions: "toggleTheme() function" not "theme function"
+  - Specifies exact behavior: "defaults to 'light'" not "has default"
+  - No subjective terms: NEVER "properly", "correctly", "well", "good"
+
+- [ ] **Success/Failure boundary is explicitly defined**
+  - Instruction ends with: "SUCCESS: All N criteria are TRUE"
+  - Clear statement: "FAILURE: Any criterion is FALSE or cannot be verified"
+  - No partial completion accepted
+
+- [ ] **Criteria follow QA engineering mindset**
+  - Written from tester perspective, not developer perspective
+  - Asks "What EXACTLY must be true?" not "What should I implement?"
+  - Covers normal operation, error states, edge cases
+  - Thinks adversarially: "How could this break?"
 
 ### Criterion 4: Context Completeness
 

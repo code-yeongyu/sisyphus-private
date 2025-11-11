@@ -768,7 +768,7 @@ Use TodoWrite to create todos for the following:
 5. Clarify and refine user requirements (5 essential questions)
 6. Gather implementation context via massive parallel information gathering
 7. Complete YAML work plan(s)
-8. Request plan-reviewer verification (MANDATORY)
+8. Request sisyphus-plan-reviewer verification (MANDATORY)
 9. Incorporate reviewer feedback and iterate until "OKAY"
 10. Run sisyphus plan lint to validate YAML schema (MANDATORY)
 11. Fix any linter errors and re-lint until PASSED
@@ -1790,9 +1790,9 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
    - Keep commits atomic - one logical change per commit
    - Use llm_judge to verify commit quality and completeness
 
-9. **Include Comprehensive Test Tasks (MANDATORY - CRITICAL FOR PLAN-REVIEWER APPROVAL)**
+9. **Include Comprehensive Test Tasks (MANDATORY - CRITICAL FOR sisyphus-plan-reviewer APPROVAL)**
 
-   **CRITICAL: plan-reviewer will AUTOMATICALLY REJECT plans that implement code changes without corresponding test tasks.**
+   **CRITICAL: sisyphus-plan-reviewer will AUTOMATICALLY REJECT plans that implement code changes without corresponding test tasks.**
 
    This ensures:
    - Code quality is validated through automated testing
@@ -1987,20 +1987,20 @@ The goal is to achieve ≥90% worker confidence at every step. This means:
 
 ### Phase 3: Mandatory Review Processing (ALWAYS EXECUTE)
 
-**CRITICAL: Plan review by plan-reviewer agent is MANDATORY. No plan is finalized without "OKAY" approval.**
+**CRITICAL: Plan review by sisyphus-plan-reviewer agent is MANDATORY. No plan is finalized without "OKAY" approval.**
 
 **Review Protocol:**
 
-1. **The plan-reviewer requires ONLY the file location. DO NOT include:**
+1. **The sisyphus-plan-reviewer requires ONLY the file location. DO NOT include:**
    - "This is my first draft"
    - "I reflected your feedback"
    - "This is the Nth revision"
    - Any other context about iterations or improvements
 
-2. **Request Review from plan-reviewer**
+2. **Request Review from sisyphus-plan-reviewer**
    ```python
    Task(
-       subagent_type="plan-reviewer",
+       subagent_type="sisyphus-plan-reviewer",
        description="Review YAML work plan",
        prompt=".sisyphus/tasks/{name}.yaml"
    )
@@ -2107,7 +2107,7 @@ sisyphus plan lint --file .sisyphus/tasks/{name}.yaml
 📊 Total tasks: N
 ✓ Verification specs: N bash, N llm_judge
 🌐 Language: [Korean/English]
-✓ Review status: ✅ APPROVED by plan-reviewer
+✓ Review status: ✅ APPROVED by sisyphus-plan-reviewer
 ✓ Lint status: ✅ PASSED
 
 Ready for execution:
@@ -2115,14 +2115,14 @@ Ready for execution:
 ```
 
 **Both validations must show ✅:**
-1. ✅ APPROVED by plan-reviewer (Phase 3)
+1. ✅ APPROVED by sisyphus-plan-reviewer (Phase 3)
 2. ✅ PASSED sisyphus plan lint (Phase 5)
 
 Only when BOTH are satisfied is the plan truly complete and ready for execution.
 
 ## Quality Checklist
 
-**Before requesting plan-reviewer, verify ALL criteria:**
+**Before requesting sisyphus-plan-reviewer, verify ALL criteria:**
 
 ### Criterion 1: YAML Schema Compliance
 
@@ -2171,9 +2171,9 @@ Only when BOTH are satisfied is the plan truly complete and ready for execution.
 - [ ] **Task flow (HOW)** in `workflow.dependency_diagram`
 - [ ] **Success vision** in `success_vision`
 
-### Criterion 6: Test Coverage Completeness (MANDATORY - CRITICAL FOR PLAN-REVIEWER)
+### Criterion 6: Test Coverage Completeness (MANDATORY - CRITICAL FOR sisyphus-plan-reviewer)
 
-**CRITICAL: plan-reviewer will AUTOMATICALLY REJECT plans without comprehensive test coverage.**
+**CRITICAL: sisyphus-plan-reviewer will AUTOMATICALLY REJECT plans without comprehensive test coverage.**
 
 **This criterion ensures that tests rigorously verify work completion, forming proper feedback loops for self-correcting execution.**
 
@@ -2253,10 +2253,10 @@ Without comprehensive tests, the executor has no way to know if implementation i
 1. **YAML Format**: ONLY use Sisyphus YAML structure
 2. **Schema Validation**: Pass `sisyphus plan lint` check
 3. **Conservative Bash Specs**: Only deterministic commands
-4. **Mandatory Review**: ALL plans need plan-reviewer "OKAY"
+4. **Mandatory Review**: ALL plans need sisyphus-plan-reviewer "OKAY"
 5. **90% Confidence**: Workers need minimal guesswork
 6. **Big Picture First**: WHY, WHAT, HOW before tasks
-7. **Comprehensive Test Coverage (MANDATORY)**: Every implementation task MUST have corresponding test task with concrete scenarios, executable verification, and objective completion criteria - plan-reviewer will AUTOMATICALLY REJECT plans without tests
+7. **Comprehensive Test Coverage (MANDATORY)**: Every implementation task MUST have corresponding test task with concrete scenarios, executable verification, and objective completion criteria - sisyphus-plan-reviewer will AUTOMATICALLY REJECT plans without tests
 
 ## Success Indicators
 
@@ -2264,5 +2264,5 @@ Plan creation is complete when:
 - Plan saved to `.sisyphus/tasks/{name}.yaml`
 - YAML schema valid (passes linter)
 - All verification specs follow guidelines (conservative bash)
-- Approved by plan-reviewer ("OKAY")
+- Approved by sisyphus-plan-reviewer ("OKAY")
 - Tell user to execute with: `sisyphus work`

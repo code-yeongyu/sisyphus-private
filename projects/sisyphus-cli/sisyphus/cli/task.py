@@ -443,21 +443,111 @@ def continue_work(
 
         report = task_manager.check_task_completion(current_task.id)
         if not report.can_complete:
-            console.print("[red]다음 작업으로 넘어갈 수 없습니다.[/red]\n")
+            console.print("[bold red]❌ 다음 작업으로 넘어갈 수 없습니다.[/bold red]\n")
+
+            has_issues = False
 
             if not report.all_children_completed:
+                has_issues = True
                 completed = report.children_summary["completed"]
                 total = sum(report.children_summary.values())
-                console.print(f"[yellow]하위 작업: {completed}/{total} 완료[/yellow]\n")
+                console.print("[bold yellow]📋 하위 작업 미완료:[/bold yellow]")
+                console.print(f"  완료: {completed}/{total}")
+                console.print("\n[cyan]💡 해결 방법:[/cyan]")
+                console.print("  하위 작업을 모두 완료한 후 다시 시도하세요.\n")
 
             if not report.all_verifications_completed:
-                _display_verification_status_table(work_plan, task_manager, show_current_task=True)
-                console.print("\n[cyan]완료 조건을 만족한 후 다시 시도하세요.[/cyan]")
-                _display_verification_guidance(current_task)
+                has_issues = True
+                completed_count = report.verification_summary["completed"]
+                total_count = report.verification_summary["total"]
+                console.print("[bold yellow]🔍 검증 항목 미완료:[/bold yellow]")
+                console.print(f"  완료: {completed_count}/{total_count}\n")
 
-                console.print("\n[bold yellow]🤖 Orchestrator 안내:[/bold yellow]")
-                console.print("[yellow]당신이 직접 검증하고, 실패하거나 아쉬운 점이 있다면[/yellow]")
-                console.print("[yellow]sisyphus-executor를 다시 호출하여 시키세요.[/yellow]")
+                unverified_items = [v for v in current_task.verification_spec if not v.verified]
+                if unverified_items:
+                    console.print("[cyan]미완료 검증 항목:[/cyan]")
+                    for idx, item in enumerate(unverified_items[:3], 1):
+                        console.print(f"  {idx}. [{item.id}] {item.title}")
+                    if len(unverified_items) > 3:
+                        console.print(f"  ... 외 {len(unverified_items) - 3}개")
+
+                console.print("\n[cyan]💡 해결 방법:[/cyan]")
+                if any(v.bash for v in unverified_items):
+                    console.print("  [bold]sisyphus task verify bash[/bold]  # Bash 자동 검증 실행")
+                if any(v.llm_judge for v in unverified_items):
+                    first_llm = next(v for v in unverified_items if v.llm_judge)
+                    console.print("  [bold]sisyphus task verify llm[/bold]  # LLM 검증 확인")
+                    console.print(
+                        f"  [bold]sisyphus task verify llm-mark {first_llm.id} --evidence '검증 완료 증거'[/bold]"
+                    )
+                if any(not v.bash and not v.llm_judge for v in unverified_items):
+                    first_manual = next(v for v in unverified_items if not v.bash and not v.llm_judge)
+                    console.print("  [bold]sisyphus task verify manual[/bold]  # 수동 검증 안내")
+                    console.print(
+                        f"  [bold]sisyphus task verify manual-mark {first_manual.id} "
+                        f"--evidence '상세한 검증 증거 100자 이상'[/bold]"
+                    )
+                console.print("  [bold]sisyphus task verify status[/bold]  # 전체 검증 상태 확인\n")
+
+            if not report.all_manual_verifications_completed and report.all_verifications_completed:
+                has_issues = True
+                completed_count = report.manual_verification_summary["completed"]
+                total_count = report.manual_verification_summary["total"]
+                console.print("[bold yellow]👤 Orchestrator 수동 검증 필요:[/bold yellow]")
+                console.print(f"  완료: {completed_count}/{total_count}\n")
+
+                unverified_items = [
+                    v
+                    for v in current_task.verification_spec
+                    if not (v.orchestrator_manually_verified and v.manual_verification_evidence)
+                ]
+                if unverified_items:
+                    console.print("[cyan]Orchestrator 검증 필요 항목:[/cyan]")
+                    for idx, item in enumerate(unverified_items[:5], 1):
+                        verify_type = []
+                        if item.bash:
+                            verify_type.append("bash")
+                        if item.llm_judge:
+                            verify_type.append("llm")
+                        if not item.bash and not item.llm_judge:
+                            verify_type.append("manual")
+                        type_str = ", ".join(verify_type)
+                        console.print(f"  {idx}. [{item.id}] {item.title} ({type_str})")
+                    if len(unverified_items) > 5:
+                        console.print(f"  ... 외 {len(unverified_items) - 5}개")
+
+                console.print("\n[cyan]💡 해결 방법:[/cyan]")
+                console.print(
+                    "  [bold yellow]Orchestrator가 직접 검증을 확인하고 evidence를 작성해야 합니다.[/bold yellow]\n"
+                )
+
+                first_item = unverified_items[0]
+                if first_item.bash:
+                    console.print("  [dim]# Bash 검증의 경우:[/dim]")
+                    console.print("  [bold]sisyphus task verify bash[/bold]  # 자동 실행 후 결과 확인")
+                    console.print(
+                        f"  [bold]sisyphus task verify manual-mark {first_item.id} "
+                        f"--evidence '테스트 실행 결과: ... (자동 검증 통과 확인)'[/bold]\n"
+                    )
+                elif first_item.llm_judge:
+                    console.print("  [dim]# LLM 검증의 경우:[/dim]")
+                    console.print("  [bold]sisyphus task verify llm[/bold]  # LLM 검증 내용 확인")
+                    console.print(
+                        f"  [bold]sisyphus task verify llm-mark {first_item.id} "
+                        f"--evidence 'LLM 검증 결과 확인 완료'[/bold]\n"
+                    )
+                else:
+                    console.print("  [dim]# 수동 검증의 경우:[/dim]")
+                    console.print("  [bold]sisyphus task verify manual[/bold]  # 검증 절차 확인")
+                    console.print(
+                        f"  [bold]sisyphus task verify manual-mark {first_item.id} "
+                        f"--evidence '실제 동작 확인 완료. 테스트 결과: ...'[/bold]\n"
+                    )
+
+            if has_issues:
+                console.print("[bold yellow]🤖 Orchestrator 안내:[/bold yellow]")
+                console.print("[yellow]검증을 직접 수행하고, 실패하거나 아쉬운 점이 있다면[/yellow]")
+                console.print("[yellow]sisyphus-executor를 다시 호출하여 작업을 재수행하세요.[/yellow]")
 
             raise typer.Exit(1)
 
@@ -539,6 +629,7 @@ def verify_bash(
             return
 
         all_passed = True
+        bash_results = []
         for bash_item in verify_item.bash:
             console.print(f"\n[cyan]실행:[/cyan] {bash_item.execute}")
 
@@ -548,25 +639,41 @@ def verify_bash(
                 cwd=str(working_dir),
             )
 
+            result_text = f"명령: {bash_item.execute}\n"
             if result.returncode == bash_item.expected_exit_code:
                 console.print(f"[green]✓ 성공[/green] (exit code: {result.returncode})")
+                result_text += f"결과: 성공 (exit code: {result.returncode})"
             else:
                 expected_code = bash_item.expected_exit_code
                 got_code = result.returncode
                 console.print(f"[red]✗ 실패[/red] (expected: {expected_code}, got: {got_code})")
+                result_text += f"결과: 실패 (expected: {expected_code}, got: {got_code})"
                 all_passed = False
 
             if result.stdout:
                 stdout_decoded = result.stdout.decode("utf-8", errors="replace")
                 console.print(f"[dim]출력:[/dim]\n{stdout_decoded}")
+                if stdout_decoded.strip():
+                    result_text += f"\n출력: {stdout_decoded[:200]}"
 
             if result.stderr:
                 stderr_decoded = result.stderr.decode("utf-8", errors="replace")
                 console.print(f"[dim]오류:[/dim]\n{stderr_decoded}")
+                if stderr_decoded.strip():
+                    result_text += f"\n오류: {stderr_decoded[:200]}"
+
+            bash_results.append(result_text)
 
         if all_passed:
+            evidence = f"Bash 자동 검증 통과 ({len(verify_item.bash)}개 테스트)\n\n"
+            evidence += "\n\n".join(bash_results)
+            if len(evidence) < 100:
+                evidence += "\n\n모든 bash 테스트가 예상 exit code와 일치하여 자동 검증을 통과했습니다."
+
             verify_item.verified = True
             verify_item.verified_at = datetime.now(UTC).isoformat()
+            verify_item.orchestrator_manually_verified = True
+            verify_item.manual_verification_evidence = evidence
             await save_plan(plan_path, plan_doc)
             console.print("\n[green]검증 완료! ✓[/green]")
             _display_remaining_verifications(task_manager)

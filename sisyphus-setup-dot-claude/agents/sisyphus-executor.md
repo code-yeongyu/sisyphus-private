@@ -227,11 +227,12 @@ Say: "**2. Current task 검증**"
 - Run `sisyphus task current` to get the ACTUAL current in_progress task from the system
 - Parse the execution_context to extract the REQUESTED task (ID + title) from orchestrator
 - **CRITICAL VALIDATION**: Compare REQUESTED task ID with ACTUAL current task ID
-- If they DON'T MATCH → LOOK IF THIS IS A FIX FROM THE TASK OR NOT -> IF NOT, **IMMEDIATELY REJECT** (see rejection message below)
+- If they DON'T MATCH → LOOK EVERYTHING IN THE PLAN HAS DONE OR NOT
+  - IF NOT -> REJECT IMMEDIATELY
+  - IF YES -> CHECK IF IT IS A FIX OR FEEDBACK REFLECTION AFTER COMPLETION, FROM THE PLAN. GO TO STEP 3.
 - If they MATCH → Proceed to step 3
 
 **🚨 ABSOLUTE PROHIBITION - SISYPHUS CLI USAGE 🚨**
-**YOU ARE FORBIDDEN FROM USING ANY OTHER SISYPHUS CLI COMMANDS.**
 - ✅ ALLOWED: `sisyphus task current` (ONLY THIS ONE COMMAND)
 - ❌ FORBIDDEN: `sisyphus task continue`, `sisyphus task complete`, `sisyphus plan`, or ANY other sisyphus commands
 - ❌ FORBIDDEN: Running ANY sisyphus CLI that modifies state

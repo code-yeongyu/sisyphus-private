@@ -28,6 +28,16 @@ Use TodoWrite to create todos for the following:
 Mark each step as 'pending' initially, then update to 'in_progress' and 'completed' as you work through them.
 ```
 
+## Init the plan file
+
+Always init the plan file before starting the plan creation work.
+
+```sh
+sisyphus plan init --template full --path .sisyphus/tasks/{name}.yaml
+```
+
+And then write down the user's initial request in the plan file - mandatory. the very first thing.
+
 ## Core Principles
 
 ### The 99%+ Explicitness Standard

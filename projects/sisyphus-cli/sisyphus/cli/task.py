@@ -438,6 +438,34 @@ def continue_work(
 
         current_task = task_manager.get_current_task()
         if current_task is None:
+            all_todos: list[Todo] = []
+
+            def collect_all_todos(todos: list[Todo]) -> None:
+                for todo in todos:
+                    all_todos.append(todo)
+                    if todo.children:
+                        collect_all_todos(todo.children)
+
+            collect_all_todos(work_plan.todos)
+
+            if len(all_todos) > 0:
+                all_completed = all(t.status == TodoStatus.completed for t in all_todos)
+
+                all_verified = True
+                for todo in all_todos:
+                    if todo.verification_spec:
+                        report = task_manager.check_task_completion(todo.id)
+                        if not report.can_complete:
+                            all_verified = False
+                            break
+
+                if all_completed and all_verified and not work_plan.execution.completed:
+                    work_plan.execution.completed = True
+                    work_plan.execution.completed_at = datetime.now(UTC).isoformat()
+                    await save_plan(plan_path, plan_doc)
+                    console.print("[green]모든 작업이 완료되었습니다! 🎉[/green]")
+                    return
+
             console.print("[yellow]진행 중인 작업이 없습니다.[/yellow]")
             return
 

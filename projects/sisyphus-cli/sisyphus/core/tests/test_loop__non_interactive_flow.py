@@ -3,15 +3,13 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
 
 import pytest
 
 from sisyphus.core.loop import ExecutionLoop
-from sisyphus.core.tests.test_loop import MockAgent, MockTaskValidator, MockStatusManager
+from sisyphus.core.tests.test_loop import MockAgent, MockLoggerFactory, MockSessionStore, MockStatusManager, MockUI
 from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:
@@ -20,7 +18,47 @@ if TYPE_CHECKING:
 pytestmark = [pytest.mark.anyio]
 
 
-async def test_unified__if_task_incomplete__skips_verify_and_retries_execute() -> None:
+@pytest.fixture()
+async def test_plan_file(tmp_path: Path) -> Path:
+    plan_dir = tmp_path / ".sisyphus" / "tasks"
+    plan_dir.mkdir(parents=True, exist_ok=True)
+    plan_file = plan_dir / "test-plan.yaml"
+    plan_file.write_text("""version: "3.0"
+metadata:
+  created_at: "2025-11-12T00:00:00Z"
+work_plans:
+  - id: test-plan
+    name: Test Plan
+    depends_on: []
+    user_request:
+      original: Test
+      created_at: "2025-11-12T00:00:00Z"
+      additional: []
+    objectives:
+      core: Test
+      detailed: []
+    background:
+      current_situation: Test
+      reason_for_change: Test
+      changes_to_make: Test
+    required_background:
+      description: Test
+      references: []
+    workflow:
+      dependency_diagram: ""
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
+    todos: []
+    references: []
+""")
+    return plan_file
+
+
+async def test_unified__if_task_incomplete__skips_verify_and_retries_execute(test_plan_file: Path) -> None:
     # given
     execute_agent = MockAgent()
     execute_agent.messages_to_return = [
@@ -37,7 +75,7 @@ async def test_unified__if_task_incomplete__skips_verify_and_retries_execute() -
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
 
-    task_validator = MockTaskValidator()
+    task_validator = MockTaskValidator(todolist_path=test_plan_file)
     task_validator.check_results = [
         (False, False),  # Initial check
         (False, False),  # Skip_execute check (iteration==1)
@@ -64,7 +102,7 @@ async def test_unified__if_task_incomplete__skips_verify_and_retries_execute() -
     assert len(verify_agent.sent_messages) == 1
 
 
-async def test_unified__if_task_complete_and_fully_done__exits_loop() -> None:
+async def test_unified__if_task_complete_and_fully_done__exits_loop(test_plan_file: Path) -> None:
     # given
     execute_agent = MockAgent()
     execute_agent.messages_to_return = [
@@ -80,7 +118,7 @@ async def test_unified__if_task_complete_and_fully_done__exits_loop() -> None:
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
 
-    task_validator = MockTaskValidator()
+    task_validator = MockTaskValidator(todolist_path=test_plan_file)
     task_validator.check_results = [(True, True)]
 
     loop = ExecutionLoop(
@@ -102,7 +140,7 @@ async def test_unified__if_task_complete_and_fully_done__exits_loop() -> None:
     assert any("FULLY_DONE" in status for status in ui.statuses)
 
 
-async def test_unified__if_task_complete_but_not_fully_done__continues_with_feedback() -> None:
+async def test_unified__if_task_complete_but_not_fully_done__continues_with_feedback(test_plan_file: Path) -> None:
     # given
     execute_agent = MockAgent()
     execute_agent.messages_to_return = [
@@ -120,7 +158,7 @@ async def test_unified__if_task_complete_but_not_fully_done__continues_with_feed
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
 
-    task_validator = MockTaskValidator()
+    task_validator = MockTaskValidator(todolist_path=test_plan_file)
     task_validator.check_results = [
         (False, False),  # Initial check
         (False, False),  # Skip_execute check (iteration==1)
@@ -147,115 +185,13 @@ async def test_unified__if_task_complete_but_not_fully_done__continues_with_feed
     assert len(verify_agent.sent_messages) == 2
 
 
-class MockAgent:
-    """Mock agent for testing."""
-
-    def __init__(self) -> None:
-        self.supports_interactive = False
-        self.initialized = False
-        self.session_id: str | None = None
-        self.sent_messages: list[str] = []
-        self.closed = False
-        self.messages_to_return: list[AgentMessage] = []
-        self.response_sequence: list[list[AgentMessage]] = []
-        self.message_index = 0
-        self.session_count = 0
-
-    async def initialize(self) -> None:
-        self.initialized = True
-
-    async def start_session(self, session_id: str | None = None) -> str:
-        if session_id is not None:
-            self.session_id = session_id
-        else:
-            self.session_id = f"session-{self.session_count}"
-            self.session_count += 1
-        return self.session_id
-
-    async def send(self, message: str) -> None:
-        self.sent_messages.append(message)
-
-    def stream(self) -> AsyncIterator[AgentMessage]:
-        async def _generator() -> AsyncIterator[AgentMessage]:
-            if self.response_sequence:
-                session_idx = self.session_count - 1
-                if 0 <= session_idx < len(self.response_sequence):
-                    for msg in self.response_sequence[session_idx]:
-                        yield msg
-            elif self.message_index < len(self.messages_to_return):
-                yield self.messages_to_return[self.message_index]
-                self.message_index += 1
-
-        return _generator()
-
-    async def close(self) -> None:
-        self.closed = True
-
-
-class MockUI:
-    """Mock UI for testing."""
-
-    def __init__(self) -> None:
-        self.initialized = False
-        self.messages: list[tuple[AgentMessage, str]] = []
-        self.statuses: list[str] = []
-        self.closed = False
-
-    async def initialize(self) -> None:
-        self.initialized = True
-
-    async def show_message(self, message: AgentMessage, source: str) -> None:
-        self.messages.append((message, source))
-
-    async def show_status(self, status: str) -> None:
-        self.statuses.append(status)
-
-    async def get_input(self) -> str | None:
-        return None
-
-    async def close(self) -> None:
-        self.closed = True
-
-
-class MockSessionStore:
-    """Mock session store for testing."""
-
-    def __init__(self) -> None:
-        self.sessions: dict[str, str] = {}
-
-    async def get_session(self, agent_type: str, plan_id: str) -> str | None:
-        return self.sessions.get(agent_type)
-
-    async def save_session(self, agent_type: str, session_id: str, plan_id: str) -> None:
-        self.sessions[agent_type] = session_id
-
-    async def delete_session(self, agent_type: str, plan_id: str | None = None) -> None:
-        if agent_type in self.sessions:
-            del self.sessions[agent_type]
-
-    async def list_sessions(self) -> dict[str, dict[str, str]]:
-        return {k: {"session_id": v} for k, v in self.sessions.items()}
-
-
-class MockLoggerFactory:
-    """Mock logger factory for testing."""
-
-    @staticmethod
-    def create_logger(agent_type: str, session_id: str | None = None, log_dir: Path = Path("./logs")) -> MagicMock:
-        logger = MagicMock()
-        logger.info = MagicMock()
-        logger.debug = MagicMock()
-        logger.warning = MagicMock()
-        return logger
-
-
 class MockTaskValidator:
     """Mock task validator for testing."""
 
-    def __init__(self) -> None:
+    def __init__(self, todolist_path: Path | None = None) -> None:
         self.check_results: list[tuple[bool, bool]] = []
         self.check_call_count = 0
-        self.todolist_path = Path(".sisyphus/tasks/test-plan.yaml")
+        self.todolist_path = todolist_path or Path(".sisyphus/tasks/test-plan.yaml")
 
     def read_content(self) -> str:
         return "mock content"

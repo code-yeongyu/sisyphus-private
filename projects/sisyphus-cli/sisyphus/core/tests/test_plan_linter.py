@@ -44,7 +44,6 @@ async def test_lint_valid_yaml__when_all_fields_present__returns_no_errors() -> 
                 "final_verification": [],
                 "execution": {"started": False, "completed": False},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "None",
             }
         ],
@@ -83,7 +82,6 @@ async def test_lint_missing_required_field__when_metadata_missing__returns_error
                 "todos": [],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -129,7 +127,6 @@ async def test_lint_type_mismatch__when_boolean_is_string__returns_error() -> No
                     "completed_at": None,
                 },
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -169,7 +166,6 @@ async def test_lint_extra_field__when_unknown_field_at_root__returns_error() -> 
                 "todos": [],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -218,7 +214,6 @@ async def test_lint_invalid_enum__when_todo_status_invalid__returns_error() -> N
                 ],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -272,7 +267,6 @@ async def test_lint_ref_integrity__when_ref_id_not_found__returns_error() -> Non
                 "references": [],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -321,7 +315,6 @@ async def test_lint_multiple_errors__when_multiple_issues__returns_all_errors() 
                 ],
                 "execution": {"started": "true", "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -381,7 +374,6 @@ async def test_lint_recursive_children__when_child_has_error__returns_error() ->
                 ],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -474,7 +466,6 @@ async def test_lint_verification_item_v2_1__when_bash_only__returns_no_errors() 
                 ],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -530,7 +521,6 @@ async def test_lint_verification_item_v2_1__when_llm_judge_only__returns_no_erro
                 ],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -587,7 +577,6 @@ async def test_lint_verification_item_v2_1__when_both_bash_and_llm__returns_no_e
                 ],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -642,7 +631,6 @@ async def test_lint_verification_item_v2_1__when_neither_bash_nor_llm__returns_e
                 ],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -694,7 +682,6 @@ async def test_lint_reference_pointer_v2_1__when_type_field_present__returns_no_
                 ],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -751,7 +738,6 @@ async def test_lint_final_verification_v2_1__when_category_field_present__return
                 ],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -790,7 +776,6 @@ async def test_validate_todos__if_empty__returns_error() -> None:
                 "todos": [],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -841,7 +826,6 @@ async def test_validate_all_success__when_all_checks_pass__returns_empty_list() 
                 "references": [],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -884,7 +868,6 @@ async def test_validate_all_with_dependency_errors__when_missing_plan__returns_d
                 "references": [],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -929,7 +912,6 @@ async def test_validate_all_with_cycle_errors__when_circular_dependency__returns
                 "references": [],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             },
             {
@@ -953,7 +935,6 @@ async def test_validate_all_with_cycle_errors__when_circular_dependency__returns
                 "references": [],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             },
         ],
@@ -999,7 +980,6 @@ async def test_validate_all_with_reference_errors__when_inline_too_long__returns
                 "references": [{"id": "long-ref", "inline": long_inline}],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],
@@ -1044,7 +1024,6 @@ async def test_validate_all_returns_list_of_lint_errors__when_called__returns_co
                 "references": [],
                 "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
                 "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "progress": {"total_tasks": 0, "completed": 0, "in_progress": 0, "pending": 0},
                 "current_work": "",
             }
         ],

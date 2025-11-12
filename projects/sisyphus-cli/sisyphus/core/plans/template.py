@@ -26,10 +26,7 @@ class PlanTemplateGenerator:
     @staticmethod
     def _get_reference_example() -> Path:
         """Get path to example-work-plan.yaml reference."""
-        return (
-            Path(__file__).parent.parent.parent.parent.parent.parent
-            / ".github/workflows/.claude.agent/skills/plan-writer/references/example-work-plan.yaml"
-        )
+        return Path(__file__).parent.parent.parent.parent / "examples/multi-file/backend.yaml"
 
     @staticmethod
     def full_example() -> PlanDocument:
@@ -85,10 +82,7 @@ class PlanTemplateGenerator:
                         created_at=now,
                         additional=[],
                     ),
-                    objectives=Objectives(
-                        core="TODO: Write core objective here",
-                        detailed=[]
-                    ),
+                    objectives=Objectives(core="TODO: Write core objective here", detailed=[]),
                     background=Background(
                         current_situation="TODO: Describe current state",
                         reason_for_change="TODO: Why this work is needed",
@@ -99,10 +93,7 @@ class PlanTemplateGenerator:
                         file_structure=None,
                         references=[],
                     ),
-                    workflow=Workflow(
-                        dependency_diagram="TODO: Add task dependency diagram",
-                        critical_path=[]
-                    ),
+                    workflow=Workflow(dependency_diagram="TODO: Add task dependency diagram", critical_path=[]),
                     success_vision=SuccessVision(
                         user_perspective=[],
                         business_perspective=[],

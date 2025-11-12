@@ -18,6 +18,46 @@ from sisyphus.utils.types import AgentMessage
 pytestmark = [pytest.mark.anyio]
 
 
+@pytest.fixture()
+async def test_plan_file(tmp_path: Path) -> Path:
+    plan_dir = tmp_path / ".sisyphus" / "tasks"
+    plan_dir.mkdir(parents=True, exist_ok=True)
+    plan_file = plan_dir / "test-plan.yaml"
+    plan_file.write_text("""version: "3.0"
+metadata:
+  created_at: "2025-11-12T00:00:00Z"
+work_plans:
+  - id: test-plan
+    name: Test Plan
+    depends_on: []
+    user_request:
+      original: Test
+      created_at: "2025-11-12T00:00:00Z"
+      additional: []
+    objectives:
+      core: Test
+      detailed: []
+    background:
+      current_situation: Test
+      reason_for_change: Test
+      changes_to_make: Test
+    required_background:
+      description: Test
+      references: []
+    workflow:
+      dependency_diagram: ""
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
+    todos: []
+    references: []
+""")
+    return plan_file
+
+
 class MockAgentWithPromptError:
     """Mock agent that raises PromptTooLongError."""
 
@@ -76,10 +116,10 @@ class MockUI:
 
 
 class MockTaskValidator:
-    def __init__(self, all_complete: bool = False) -> None:
+    def __init__(self, all_complete: bool = False, todolist_path: Path | None = None) -> None:
         self._all_complete = all_complete
         self.call_count = 0
-        self.todolist_path = Path(".sisyphus/tasks/test-plan.yaml")
+        self.todolist_path = todolist_path or Path(".sisyphus/tasks/test-plan.yaml")
 
     def read_content(self) -> str:
         return "mock content"
@@ -104,7 +144,7 @@ class MockTaskValidator:
         return 1 if self._all_complete else 0
 
 
-async def test_execution_loop__if_prompt_too_long_error__deletes_session(tmp_path: Path) -> None:
+async def test_execution_loop__if_prompt_too_long_error__deletes_session(tmp_path: Path, test_plan_file: Path) -> None:
     """Test that PromptTooLongError triggers session deletion."""
     # given
     session_dir = tmp_path / "sessions"
@@ -126,7 +166,7 @@ async def test_execution_loop__if_prompt_too_long_error__deletes_session(tmp_pat
         ui=ui,
         session_store=session_store,
         logger_factory=logger_factory,
-        task_validator=MockTaskValidator(all_complete=False),
+        task_validator=MockTaskValidator(all_complete=False, todolist_path=test_plan_file),
     )
 
     # when
@@ -141,7 +181,9 @@ async def test_execution_loop__if_prompt_too_long_error__deletes_session(tmp_pat
     assert any("prompt length exceeded" in msg for msg in ui.status_messages)
 
 
-async def test_execution_loop__if_prompt_too_long_error__starts_new_session(tmp_path: Path) -> None:
+async def test_execution_loop__if_prompt_too_long_error__starts_new_session(
+    tmp_path: Path, test_plan_file: Path
+) -> None:
     """Test that after session deletion, new session is started."""
     # given
     session_dir = tmp_path / "sessions"
@@ -163,7 +205,7 @@ async def test_execution_loop__if_prompt_too_long_error__starts_new_session(tmp_
         ui=ui,
         session_store=session_store,
         logger_factory=logger_factory,
-        task_validator=MockTaskValidator(all_complete=False),
+        task_validator=MockTaskValidator(all_complete=False, todolist_path=test_plan_file),
     )
 
     # when

@@ -437,16 +437,13 @@ class ExecutionLoop:
                             # RetryRequiredError handling (sleep_until_reset) already done in error class
                             # Loop will continue to retry verify phase
 
-                if fully_done:
-                    self._consecutive_execute_count = 0
-                    await self.ui.show_status("✅ Verify agent confirmed FULLY_DONE. All work verified!")
-                    break
-
                 if self.task_validator:
                     plan_doc = await load_plan(self.task_validator.todolist_path)
 
                     for work_plan in plan_doc.work_plans:
-                        if work_plan.work_mode.current_task_id:
+                        work_plan.execution.completed = fully_done
+
+                        if not fully_done and work_plan.work_mode.current_task_id:
 
                             def find_and_reset_task(todos: list[Todo]) -> bool:
                                 for todo in todos:
@@ -459,9 +456,14 @@ class ExecutionLoop:
                                 return False
 
                             find_and_reset_task(work_plan.todos)
-                            work_plan.execution.completed = False
 
                     await save_plan(self.task_validator.todolist_path, plan_doc)
+
+                if fully_done:
+                    self._consecutive_execute_count = 0
+                    await self.ui.show_status("✅ Verify agent confirmed FULLY_DONE. All work verified!")
+                    break
+                else:
                     await self.ui.show_status(
                         f"[Iteration {iteration}] Verify FALSE. Task reset to in_progress, will re-execute..."
                     )

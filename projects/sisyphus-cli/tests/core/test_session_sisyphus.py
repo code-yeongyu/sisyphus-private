@@ -117,20 +117,20 @@ async def test_session_store__if_corrupted_file__recovers_from_backup(
     assert loaded_session == "backup-session"
 
 
-async def test_session_store__if_default_init__detects_worktree_and_creates_sisyphus_dir(
+async def test_session_store__if_default_init__uses_cwd_and_creates_sisyphus_dir(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # given
-    worktree_root = tmp_path / "git-repo"
-    worktree_root.mkdir()
-    monkeypatch.chdir(worktree_root)
+    cwd_root = tmp_path / "project-dir"
+    cwd_root.mkdir()
+    monkeypatch.chdir(cwd_root)
 
     # when
     store = SessionStore()
 
     # then
-    expected_dir = worktree_root / ".sisyphus" / "sessions"
+    expected_dir = cwd_root / ".sisyphus" / "sessions"
     assert store.base_dir == expected_dir
     assert expected_dir.exists()
 

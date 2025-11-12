@@ -156,11 +156,11 @@ VERIFICATION_FAILURE_EXECUTE_PROMPT = """/sisyphus-execute
 
 ⚠️ **VERIFICATION FAILED** ⚠️
 
-The Architect has reviewed your previous work and found it INCOMPLETE or INCORRECT.
+The Verify agent has reviewed your previous work and found it INCOMPLETE or INCORRECT.
 
 ## What Happened
 
-Your previous execution was verified by the Architect and **FAILED** verification.
+Your previous execution was verified by the Verify agent and **FAILED** verification.
 This means the work you claimed was complete either:
 - Was not actually completed
 - Had bugs or errors
@@ -169,7 +169,7 @@ This means the work you claimed was complete either:
 
 ## Your Task Now
 
-1. **Read the Architect's feedback below carefully**
+1. **Read the Verify agent's feedback below carefully**
 2. **Fix ALL issues mentioned** in the feedback
 3. **Use sisyphus-executor agents** to properly complete the work
 4. **Verify your fixes** before marking tasks as completed
@@ -197,7 +197,7 @@ Fix the issues properly, and once you are done, run `sisyphus task continue` to 
 def build_verification_failure_prompt(plan_path: str, current_todo_summary: str) -> str:
     """Build execute prompt for verification failure case.
 
-    This prompt is used when the Architect has rejected the previous work.
+    This prompt is used when the Verify agent has rejected the previous work.
     It's shorter and emphasizes fixing issues from feedback.
 
     Args:
@@ -211,7 +211,7 @@ def build_verification_failure_prompt(plan_path: str, current_todo_summary: str)
 
 ⚠️ **VERIFICATION FAILED** ⚠️
 
-The Architect has reviewed your previous work and found it INCOMPLETE or INCORRECT.
+The Verify agent has reviewed your previous work and found it INCOMPLETE or INCORRECT.
 
 ## Current Work Items
 
@@ -230,8 +230,7 @@ def build_verify_prompt(plan_path: str) -> str:
     return (
         f"/architect "
         f"Please verify the work for plan: {plan_path}. "
-        "I've been lied to multiple times about completion, "
-        "so I need you to review this critically, aggressively, and meticulously.\n\n"
+        "As the Verify agent, you must review this critically, aggressively, and meticulously.\n\n"
         f"**TARGET PLAN**: {plan_path}\n\n"
         "**YOUR GOAL**: Find as many issues as possible. Think like an actual end-user and "
         "acceptance tester. Your mission is to discover problems, not to confirm completion.\n\n"
@@ -249,7 +248,8 @@ def build_verify_prompt(plan_path: str) -> str:
         "   - **CRITICAL**: 'SKIPPED' is NOT acceptable. If any task says 'SKIPPED', it's NOT done.\n"
         "   - Tasks marked as 'SKIPPED', 'Optional', or 'Production build needed' must STILL be completed.\n"
         "   - There is NO valid reason to skip a task. Everything must be implemented.\n\n"
-        f"3. **GET EXPERT AGENT'S REVIEW**: Launch specialized agents in parallel for comprehensive analysis.\n\n"
+        f"3. **AS VERIFY AGENT, LAUNCH EXPERT AGENTS**: You are the Verify agent. "
+        f"Launch specialized agents in parallel for comprehensive analysis.\n\n"
         f"   **HOW TO LAUNCH AGENTS**:\n"
         f"   You MUST use the Task tool to spawn both agents IN PARALLEL.\n"
         f"   Send a single message with TWO Task tool calls:\n"
@@ -367,26 +367,51 @@ def build_verify_prompt(plan_path: str) -> str:
         "→ Say `FULLY_DONE = FALSE`\n\n"
         "Your report will be sent directly to the executor who must fix these issues.\\n\\n"
         "---\\n\\n"
-        "**FINAL VERIFICATION - YOUR RESPONSIBILITY AS ORCHESTRATOR**:\\n\\n"
+        "**FINAL VERIFICATION - YOUR RESPONSIBILITY AS VERIFY AGENT**:\\n\\n"
         "After ALL individual todo tasks are completed and their verification_spec items are verified,\\n"
         "you MUST check the work plan's `final_verification` section.\\n\\n"
         "The `final_verification` field contains plan-level verification items that validate the\\n"
         "ENTIRE work as a cohesive whole (integration tests, end-to-end flows, security checks, etc.).\\n\\n"
-        "**CRITICAL**: These are YOUR responsibility as the orchestrator. You must:\\n\\n"
+        "**CRITICAL**: These are YOUR responsibility as the verify agent. You must:\\n\\n"
         "1. **Identify final verification items**: Read the work plan's `final_verification` field\\n"
         "2. **Perform each verification**: Execute tests, run commands, inspect manually\\n"
         "3. **Mark each item as verified**: Use the CLI commands below\\n\\n"
-        "**HOW TO MARK FINAL VERIFICATION ITEMS**:\\n\\n"
+        "**HOW TO VERIFY AND MARK FINAL VERIFICATION ITEMS**:\\n\\n"
         'Each final verification item has an `id` field (e.g., \\"final-verify-001\\").\\n'
-        "Use the SAME CLI commands as for todo-level verifications:\\n\\n"
-        "```bash\\n"
-        "# For bash automated verification\\n"
-        "sisyphus task verify bash\\n\\n"
-        "# For LLM judge verification (after you perform the check)\\n"
-        'sisyphus task verify llm-mark <final-verify-id> --evidence \\"<detailed evidence>\\"\\n\\n'
-        "# For manual verification (after you perform the check)\\n"
-        'sisyphus task verify manual-mark <final-verify-id> --evidence \\"<very detailed evidence 100+ chars>\\"\\n'
-        "```\\n\\n"
+        "Use the SAME CLI commands as for todo-level verifications.\\n\\n"
+        "**Available Commands**:\\n\\n"
+        "1. **Bash Verification** (automated):\\n"
+        "   ```bash\\n"
+        "   sisyphus task verify bash\\n"
+        "   ```\\n"
+        "   - Runs the next bash verification test automatically\\n"
+        "   - Shows: command executed, exit code, pass/fail result\\n"
+        "   - If exit code matches expected: automatically marked verified\\n\\n"
+        "2. **LLM Verification** (you judge):\\n"
+        "   ```bash\\n"
+        "   # Step 1: View what to verify\\n"
+        "   sisyphus task verify llm\\n"
+        "   \\n"
+        "   # Step 2: After performing verification, mark it\\n"
+        '   sisyphus task verify llm-mark <final-verify-id> --evidence \\"<detailed evidence>\\"\\n'
+        "   ```\\n"
+        "   - Evidence must describe: what you tested, how you tested, results\\n"
+        "   - Example: Tested operations, verified error propagation, no race conditions\\n\\n"
+        "3. **Manual Verification** (human-verifiable):\\n"
+        "   ```bash\\n"
+        "   # Step 1: View what to verify\\n"
+        "   sisyphus task verify manual\\n"
+        "   \\n"
+        "   # Step 2: After performing verification, mark it\\n"
+        '   sisyphus task verify manual-mark <final-verify-id> --evidence \\"<detailed evidence>\\"\\n'
+        "   ```\\n"
+        "   - Evidence must be 100+ characters\\n"
+        "   - Example: Chrome browser test complete, login form renders correctly, submit works\\n\\n"
+        "4. **Check Status**:\\n"
+        "   ```bash\\n"
+        "   sisyphus task verify status\\n"
+        "   ```\\n"
+        "   - Shows all verification items (todo-level + final-level) with completion status\\n\\n"
         "**Example**:\\n"
         "```yaml\\n"
         "final_verification:\\n"
@@ -403,7 +428,7 @@ def build_verify_prompt(plan_path: str) -> str:
         "```\\n\\n"
         "**FINAL VERIFICATION IS YOUR JOB**:\\n"
         "- Executors complete individual todos\\n"
-        "- YOU (orchestrator) verify the integrated whole\\n"
+        "- YOU (verify agent) verify the integrated whole\\n"
         "- Final verification items validate system-level correctness\\n"
         "- DO NOT skip final verification - it's as critical as todo-level verification\\n"
         "- ALL final verification items must be marked verified before reporting FULLY_DONE = TRUE\\n\\n"

@@ -340,13 +340,13 @@ class ExecutionLoop:
                         pass
 
                     feedback_section = (
-                        "\n\n## 🔍 Architect Feedback from Previous Iterations\n\n<architect-feedback-history>\n"
+                        "\n\n## 🔍 Verify Feedback from Previous Iterations\n\n<verify-feedback-history>\n"
                     )
 
                     for i, feedback in enumerate(verify_feedback_history, 1):
                         feedback_section += f'<feedback iteration="{i}">\n{feedback}\n</feedback>\n\n'
 
-                    feedback_section += "</architect-feedback-history>\n\n"
+                    feedback_section += "</verify-feedback-history>\n\n"
                     feedback_section += (
                         "**CRITICAL**: Address ALL issues mentioned in the feedback history above before proceeding.\n"
                     )
@@ -396,10 +396,10 @@ class ExecutionLoop:
                 actual_verify_prompt = verify_prompt
 
                 if verify_feedback_history:
-                    history_section = "<previous_architect_reviews>\n"
+                    history_section = "<previous_verify_reviews>\n"
                     for i, feedback in enumerate(verify_feedback_history, 1):
                         history_section += f'<review iteration="{i}">\n{feedback}\n</review>\n\n'
-                    history_section += "</previous_architect_reviews>\n\n"
+                    history_section += "</previous_verify_reviews>\n\n"
                     actual_verify_prompt = history_section + actual_verify_prompt
 
                 await self.ui.show_status(f"[Iteration {iteration}] Starting Verify phase...")
@@ -439,7 +439,7 @@ class ExecutionLoop:
 
                 if fully_done:
                     self._consecutive_execute_count = 0
-                    await self.ui.show_status("✅ Architect confirmed FULLY_DONE. All work verified!")
+                    await self.ui.show_status("✅ Verify agent confirmed FULLY_DONE. All work verified!")
                     break
 
                 if self.task_validator:

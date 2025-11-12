@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import tempfile
 from collections.abc import AsyncIterator
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -26,6 +27,9 @@ class MockAgent:
         self.sent_messages: list[str] = []
         self.closed = False
         self.messages_to_return: list[AgentMessage] = []
+        self.response_sequence: list[list[AgentMessage]] = []
+        self.message_index = 0
+        self.session_count = 0
         self._messages_consumed = False
 
     async def initialize(self) -> None:
@@ -35,7 +39,9 @@ class MockAgent:
         if session_id is not None:
             self.session_id = session_id
         else:
-            self.session_id = "new-session-123"
+            self.session_id = f"session-{self.session_count}"
+            self.session_count += 1
+        self._messages_consumed = False
         return self.session_id
 
     async def send(self, message: str) -> None:
@@ -43,7 +49,13 @@ class MockAgent:
 
     def stream(self) -> AsyncIterator[AgentMessage]:
         async def _generator() -> AsyncIterator[AgentMessage]:
-            if not self._messages_consumed:
+            if self.response_sequence and not self._messages_consumed:
+                session_idx = self.session_count - 1
+                if 0 <= session_idx < len(self.response_sequence):
+                    for msg in self.response_sequence[session_idx]:
+                        yield msg
+                    self._messages_consumed = True
+            elif not self._messages_consumed:
                 for msg in self.messages_to_return:
                     yield msg
                 self._messages_consumed = True
@@ -121,17 +133,70 @@ class MockTaskValidator:
 
     def __init__(self, all_complete: bool = False) -> None:
         self._all_complete = all_complete
+        self.completion_sequence: list[bool] = []
+        self.call_count = 0
         self.read_count = 0
-        self.todolist_path = Path(".sisyphus/tasks/test-plan.yaml")
+        self._isolated_temp_dir = tempfile.mkdtemp()
+        self.todolist_path = Path(self._isolated_temp_dir) / "test-plan.yaml"
+        self._create_test_plan_file()
+
+    def _create_test_plan_file(self) -> None:
+        content = """version: '3.0'
+metadata:
+  created_at: '2025-11-12T00:00:00Z'
+work_plans:
+- id: test-plan
+  name: Test Plan
+  user_request:
+    original: Test request
+    created_at: '2025-11-12T00:00:00Z'
+  objectives:
+    core: Test objective
+    detailed: []
+  background:
+    current_situation: Test situation
+    reason_for_change: Test reason
+    changes_to_make: Test changes
+  required_background:
+    description: Test background
+    references: []
+  workflow:
+    dependency_diagram: Test diagram
+    critical_path: []
+  success_vision:
+    user_perspective: []
+    business_perspective: []
+    technical_criteria: []
+  final_verification: []
+  todos: []
+  work_mode:
+    mode: sequential
+    current_task_id: null
+    parallel_requested: false
+  execution:
+    started: false
+    completed: false
+"""
+        self.todolist_path.parent.mkdir(parents=True, exist_ok=True)
+        self.todolist_path.write_text(content)
 
     def read_content(self) -> str:
         self.read_count += 1
         return "mock content"
 
     async def check_all_goals_accomplished(self, content: str | None = None) -> bool:
+        if self.completion_sequence:
+            idx = min(self.call_count, len(self.completion_sequence) - 1)
+            result = self.completion_sequence[idx]
+            self.call_count += 1
+            return result
         return self._all_complete
 
     async def check_all_checkboxes_completed(self, content: str | None = None) -> bool:
+        if self.completion_sequence:
+            current_check_index = max(0, self.call_count - 1)
+            sequence_index = min(current_check_index, len(self.completion_sequence) - 1)
+            return self.completion_sequence[sequence_index]
         return self._all_complete
 
     def extract_uncompleted_checkboxes(self, content: str | None = None) -> list[str]:
@@ -182,6 +247,7 @@ async def test_execution_loop_execute_only() -> None:
     verify_agent = MockAgent()
     verify_agent.messages_to_return = [AgentMessage(role="assistant", content="FULLY_DONE = TRUE")]
     task_validator = MockTaskValidator(all_complete=False)
+    task_validator.completion_sequence = [False, False, True]
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore
@@ -198,7 +264,7 @@ async def test_execution_loop_execute_only() -> None:
 
     # then
     assert execute_agent.initialized
-    assert execute_agent.session_id == "new-session-123"
+    assert execute_agent.session_id == "session-0"
     assert len(execute_agent.sent_messages) > 0
     assert "sisyphus" in execute_agent.sent_messages[0].lower()
     assert execute_agent.closed
@@ -289,7 +355,7 @@ async def test_execution_loop_verify_always_new_session() -> None:
     await loop.run()
 
     # then
-    assert verify_agent.session_id == "new-session-123"
+    assert verify_agent.session_id == "session-0"
 
 
 async def test_execution_loop_session_resume() -> None:
@@ -492,7 +558,7 @@ async def test_execution_loop_session_saved() -> None:
     sessions = await session_store.list_sessions()
     assert "mock" in sessions
     assert "test-plan" in sessions["mock"]
-    assert sessions["mock"]["test-plan"] == "new-session-123"
+    assert sessions["mock"]["test-plan"] == "session-0"
 
 
 async def test_verify_phase__if_middle_message_has_true_but_last_has_false__returns_false() -> None:

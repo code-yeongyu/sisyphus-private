@@ -48,7 +48,31 @@ work_plans:
           criteria: "All CRUD endpoints operational"
           expected: "HTTP 200 responses for valid requests"
 
-    final_verification: []
+    final_verification:
+      - id: "final-api-test"
+        title: "API endpoints fully functional"
+        category: "Functionality"
+        description: "Verify all CRUD endpoints work correctly"
+        verified: false
+        orchestrator_manually_verified: false
+        manual_verification_evidence: ""
+        bash:
+          - execute: "curl http://localhost:8000/api/health"
+            expected_exit_code: 0
+            notes: "Health check endpoint should respond"
+        llm_judge:
+          - by: "orchestrator-agent"
+            context_commands:
+              - "cat src/api/routes.py"
+              - "curl http://localhost:8000/docs"
+            instruction: |
+              Verify the following criteria:
+              1. All CRUD endpoints are implemented
+              2. Pydantic validation is in place
+              3. Error handling is comprehensive
+
+              Success: All criteria met
+              Failure: Any criterion fails
 
     todos:
       - id: "1"

@@ -141,6 +141,9 @@ Every work plan MUST have:
 - "Test the feature"
 - "Make sure it works"
 
+**[FAIL]** - Impossible verification:
+- "Test with real iOS Device": LLM cannot verify this
+
 **[PASS]** - Executable verification:
 - "Run `pytest tests/auth.py` → all pass"
 - "curl -X POST /api/login → returns 200 + JWT token"

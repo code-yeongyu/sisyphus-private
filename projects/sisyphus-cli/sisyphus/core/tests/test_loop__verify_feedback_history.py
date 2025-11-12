@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
@@ -11,7 +10,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from sisyphus.core.loop import ExecutionLoop
-from sisyphus.core.tests.test_loop import MockAgent, MockTaskValidator, MockStatusManager
+from sisyphus.core.tests.test_loop import MockAgent, MockStatusManager, MockTaskValidator
 from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:
@@ -59,12 +58,15 @@ async def test_verify__if_no_feedback_history__uses_original_prompt() -> None:
     sent_prompt = verify_agent.sent_messages[0]
 
     assert sent_prompt == original_verify_prompt
-    assert "<previous_architect_reviews>" not in sent_prompt
+    assert "<previous_verify_reviews>" not in sent_prompt
 
 
 async def test_verify__if_feedback_history_exists__prepends_history_section() -> None:
     # given
     execute_agent = MockAgent()
+    execute_agent.messages_to_return = [
+        AgentMessage(role="assistant", content="Work done", metadata={}),
+    ]
     verify_agent = MockAgent()
 
     verify_agent.response_sequence = [
@@ -103,16 +105,19 @@ async def test_verify__if_feedback_history_exists__prepends_history_section() ->
 
     second_verify_prompt = verify_agent.sent_messages[1]
 
-    assert "<previous_architect_reviews>" in second_verify_prompt
+    assert "<previous_verify_reviews>" in second_verify_prompt
     assert '<review iteration="1">' in second_verify_prompt
     assert "First feedback: needs improvement" in second_verify_prompt
-    assert "</previous_architect_reviews>" in second_verify_prompt
+    assert "</previous_verify_reviews>" in second_verify_prompt
     assert second_verify_prompt.endswith(original_verify_prompt)
 
 
 async def test_verify__if_multiple_feedbacks__includes_all_in_history() -> None:
     # given
     execute_agent = MockAgent()
+    execute_agent.messages_to_return = [
+        AgentMessage(role="assistant", content="Work done", metadata={}),
+    ]
     verify_agent = MockAgent()
 
     verify_agent.response_sequence = [
@@ -156,59 +161,14 @@ async def test_verify__if_multiple_feedbacks__includes_all_in_history() -> None:
     assert "First feedback" in third_verify_prompt
     assert '<review iteration="2">' in third_verify_prompt
     assert "Second feedback" in third_verify_prompt
-    assert "</previous_architect_reviews>" in third_verify_prompt
+    assert "</previous_verify_reviews>" in third_verify_prompt
 
-    history_start = third_verify_prompt.index("<previous_architect_reviews>")
-    history_end = third_verify_prompt.index("</previous_architect_reviews>")
+    history_start = third_verify_prompt.index("<previous_verify_reviews>")
+    history_end = third_verify_prompt.index("</previous_verify_reviews>")
     first_feedback_pos = third_verify_prompt.index("First feedback")
     second_feedback_pos = third_verify_prompt.index("Second feedback")
 
     assert history_start < first_feedback_pos < second_feedback_pos < history_end
-
-
-class MockAgent:
-    """Mock agent for testing."""
-
-    def __init__(self) -> None:
-        self.supports_interactive = False
-        self.initialized = False
-        self.session_id: str | None = None
-        self.sent_messages: list[str] = []
-        self.closed = False
-        self.messages_to_return: list[AgentMessage] = []
-        self.response_sequence: list[list[AgentMessage]] = []
-        self.message_index = 0
-        self.session_count = 0
-
-    async def initialize(self) -> None:
-        self.initialized = True
-
-    async def start_session(self, session_id: str | None = None) -> str:
-        if session_id is not None:
-            self.session_id = session_id
-        else:
-            self.session_id = f"session-{self.session_count}"
-            self.session_count += 1
-        return self.session_id
-
-    async def send(self, message: str) -> None:
-        self.sent_messages.append(message)
-
-    def stream(self) -> AsyncIterator[AgentMessage]:
-        async def _generator() -> AsyncIterator[AgentMessage]:
-            if self.response_sequence:
-                session_idx = self.session_count - 1
-                if 0 <= session_idx < len(self.response_sequence):
-                    for msg in self.response_sequence[session_idx]:
-                        yield msg
-            elif self.message_index < len(self.messages_to_return):
-                yield self.messages_to_return[self.message_index]
-                self.message_index += 1
-
-        return _generator()
-
-    async def close(self) -> None:
-        self.closed = True
 
 
 class MockUI:
@@ -266,36 +226,3 @@ class MockLoggerFactory:
         logger.debug = MagicMock()
         logger.warning = MagicMock()
         return logger
-
-
-class MockTaskValidator:
-    """Mock task validator for testing."""
-
-    def __init__(self) -> None:
-        self.all_complete = False
-        self.completion_sequence: list[bool] = []
-        self.call_count = 0
-        self.todolist_path = Path(".sisyphus/tasks/test-plan.yaml")
-
-    def read_content(self) -> str:
-        return "mock content"
-
-    async def check_all_goals_accomplished(self, content: str) -> bool:
-        if self.completion_sequence:
-            result = self.completion_sequence[min(self.call_count, len(self.completion_sequence) - 1)]
-            return result
-        return self.all_complete
-
-    async def check_all_checkboxes_completed(self, content: str) -> bool:
-        result = await self.check_all_goals_accomplished(content)
-        self.call_count += 1
-        return result
-
-    def extract_uncompleted_checkboxes(self, content: str) -> list[str]:
-        return []
-
-    def count_total_checkboxes(self, content: str) -> int:
-        return 1
-
-    def count_completed_checkboxes(self, content: str) -> int:
-        return 1 if self.all_complete else 0

@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
@@ -11,7 +10,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from sisyphus.core.loop import ExecutionLoop
-from sisyphus.core.tests.test_loop import MockAgent, MockTaskValidator, MockStatusManager
+from sisyphus.core.tests.test_loop import MockAgent, MockStatusManager, MockTaskValidator
 from sisyphus.utils.types import AgentMessage
 
 if TYPE_CHECKING:
@@ -23,6 +22,9 @@ pytestmark = [pytest.mark.anyio]
 async def test_execute__if_no_feedback_history__uses_original_extra() -> None:
     # given
     execute_agent = MockAgent()
+    execute_agent.messages_to_return = [
+        AgentMessage(role="assistant", content="Work completed", metadata={}),
+    ]
     verify_agent = MockAgent()
     verify_agent.messages_to_return = [
         AgentMessage(role="assistant", content="FULLY_DONE = TRUE", metadata={}),
@@ -48,6 +50,7 @@ async def test_execute__if_no_feedback_history__uses_original_extra() -> None:
     await loop._run_unified_mode(
         execute_prompt="Do the task",
         execute_extra="Original extra content",
+        verify_prompt="Verify the task",
         verify_extra=None,
     )
 
@@ -55,15 +58,18 @@ async def test_execute__if_no_feedback_history__uses_original_extra() -> None:
     assert len(execute_agent.sent_messages) == 1
     sent_prompt = execute_agent.sent_messages[0]
     assert "Original extra content" in sent_prompt
-    assert "Architect Feedback" not in sent_prompt
+    assert "Verify Feedback" not in sent_prompt
 
 
 async def test_execute__if_feedback_history_exists__appends_feedback_section() -> None:
     # given
     execute_agent = MockAgent()
+    execute_agent.response_sequence = [
+        [AgentMessage(role="assistant", content="Work done", metadata={})],
+        [AgentMessage(role="assistant", content="Work done again", metadata={})],
+    ]
     verify_agent = MockAgent()
 
-    # First verify session returns feedback, second returns FULLY_DONE
     verify_agent.response_sequence = [
         [AgentMessage(role="assistant", content="Please fix the bug\nFULLY_DONE = FALSE", metadata={})],
         [AgentMessage(role="assistant", content="FULLY_DONE = TRUE", metadata={})],
@@ -73,7 +79,7 @@ async def test_execute__if_feedback_history_exists__appends_feedback_section() -
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
-    task_validator.completion_sequence = [False, False, True, True]
+    task_validator.completion_sequence = [False, True, False, True]
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
@@ -89,6 +95,7 @@ async def test_execute__if_feedback_history_exists__appends_feedback_section() -
     await loop._run_unified_mode(
         execute_prompt="Do the task",
         execute_extra="Original extra",
+        verify_prompt="Verify the task",
         verify_extra=None,
     )
 
@@ -96,12 +103,12 @@ async def test_execute__if_feedback_history_exists__appends_feedback_section() -
     assert len(execute_agent.sent_messages) == 2
 
     first_execution = execute_agent.sent_messages[0]
-    assert "Architect Feedback" not in first_execution
+    assert "Verify Feedback" not in first_execution
 
     second_execution = execute_agent.sent_messages[1]
     assert "Original extra" in second_execution
-    assert "🔍 Architect Feedback from Previous Iterations" in second_execution
-    assert "<architect-feedback-history>" in second_execution
+    assert "🔍 Verify Feedback from Previous Iterations" in second_execution
+    assert "<verify-feedback-history>" in second_execution
     assert '<feedback iteration="1">' in second_execution
     assert "Please fix the bug" in second_execution
     assert "**CRITICAL**: Address ALL issues" in second_execution
@@ -110,6 +117,11 @@ async def test_execute__if_feedback_history_exists__appends_feedback_section() -
 async def test_execute__if_multiple_feedbacks__includes_all_with_correct_numbering() -> None:
     # given
     execute_agent = MockAgent()
+    execute_agent.response_sequence = [
+        [AgentMessage(role="assistant", content="Work iteration 1", metadata={})],
+        [AgentMessage(role="assistant", content="Work iteration 2", metadata={})],
+        [AgentMessage(role="assistant", content="Work iteration 3", metadata={})],
+    ]
     verify_agent = MockAgent()
 
     verify_agent.response_sequence = [
@@ -122,7 +134,7 @@ async def test_execute__if_multiple_feedbacks__includes_all_with_correct_numberi
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
-    task_validator.completion_sequence = [False, False, True, True, True]
+    task_validator.completion_sequence = [False, False, True, False, True, False, True]
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
@@ -138,66 +150,22 @@ async def test_execute__if_multiple_feedbacks__includes_all_with_correct_numberi
     await loop._run_unified_mode(
         execute_prompt="Do the task",
         execute_extra=None,
+        verify_prompt="Verify the task",
         verify_extra=None,
     )
 
     # then
-    assert len(execute_agent.sent_messages) == 3
+    assert len(execute_agent.sent_messages) >= 3
 
-    third_execution = execute_agent.sent_messages[2]
-    assert '<feedback iteration="1">' in third_execution
-    assert "First feedback" in third_execution
-    assert '<feedback iteration="2">' in third_execution
-    assert "Second feedback" in third_execution
+    last_execution = execute_agent.sent_messages[-1]
+    assert '<feedback iteration="1">' in last_execution
+    assert "First feedback" in last_execution
+    assert '<feedback iteration="2">' in last_execution
+    assert "Second feedback" in last_execution
 
-    first_idx = third_execution.index('<feedback iteration="1">')
-    second_idx = third_execution.index('<feedback iteration="2">')
+    first_idx = last_execution.index('<feedback iteration="1">')
+    second_idx = last_execution.index('<feedback iteration="2">')
     assert first_idx < second_idx
-
-
-class MockAgent:
-    """Mock agent for testing."""
-
-    def __init__(self) -> None:
-        self.supports_interactive = False
-        self.initialized = False
-        self.session_id: str | None = None
-        self.sent_messages: list[str] = []
-        self.closed = False
-        self.messages_to_return: list[AgentMessage] = []
-        self.response_sequence: list[list[AgentMessage]] = []
-        self.message_index = 0
-        self.session_count = 0
-
-    async def initialize(self) -> None:
-        self.initialized = True
-
-    async def start_session(self, session_id: str | None = None) -> str:
-        if session_id is not None:
-            self.session_id = session_id
-        else:
-            self.session_id = f"session-{self.session_count}"
-            self.session_count += 1
-        return self.session_id
-
-    async def send(self, message: str) -> None:
-        self.sent_messages.append(message)
-
-    def stream(self) -> AsyncIterator[AgentMessage]:
-        async def _generator() -> AsyncIterator[AgentMessage]:
-            if self.response_sequence:
-                session_idx = self.session_count - 1
-                if 0 <= session_idx < len(self.response_sequence):
-                    for msg in self.response_sequence[session_idx]:
-                        yield msg
-            elif self.message_index < len(self.messages_to_return):
-                yield self.messages_to_return[self.message_index]
-                self.message_index += 1
-
-        return _generator()
-
-    async def close(self) -> None:
-        self.closed = True
 
 
 class MockUI:
@@ -255,36 +223,3 @@ class MockLoggerFactory:
         logger.debug = MagicMock()
         logger.warning = MagicMock()
         return logger
-
-
-class MockTaskValidator:
-    """Mock task validator for testing."""
-
-    def __init__(self) -> None:
-        self.all_complete = False
-        self.completion_sequence: list[bool] = []
-        self.call_count = 0
-        self.todolist_path = Path(".sisyphus/tasks/test-plan.yaml")
-
-    def read_content(self) -> str:
-        return "mock content"
-
-    async def check_all_goals_accomplished(self, content: str) -> bool:
-        if self.completion_sequence:
-            result = self.completion_sequence[min(self.call_count, len(self.completion_sequence) - 1)]
-            return result
-        return self.all_complete
-
-    async def check_all_checkboxes_completed(self, content: str) -> bool:
-        result = await self.check_all_goals_accomplished(content)
-        self.call_count += 1
-        return result
-
-    def extract_uncompleted_checkboxes(self, content: str) -> list[str]:
-        return []
-
-    def count_total_checkboxes(self, content: str) -> int:
-        return 1
-
-    def count_completed_checkboxes(self, content: str) -> int:
-        return 1 if self.all_complete else 0

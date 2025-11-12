@@ -8,7 +8,11 @@ dependencies = [
     "pydantic>=2.12.3",
     "ruamel-yaml>=0.18.16",
     "typer>=0.15.0",
+    "sisyphus-ai",
 ]
+
+[tool.uv.sources]
+sisyphus-ai = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

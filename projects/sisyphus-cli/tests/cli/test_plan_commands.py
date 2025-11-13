@@ -207,6 +207,23 @@ def test_init__with_minimal_template__creates_minimal(tmp_path: Path) -> None:
     assert "TODO:" in content
 
 
+def test_init__with_empty_initial_request__sets_empty_string(tmp_path: Path) -> None:
+    # given
+    output_file = tmp_path / "empty-request.yaml"
+
+    # when
+    result = runner.invoke(plan_app, ["init", "--path", str(output_file), "--initial-request", ""])
+
+    # then
+    assert result.exit_code == 0
+    assert output_file.exists()
+    content = output_file.read_text()
+    # Must check for EXACT empty string, not template default
+    assert "original: ''" in content or 'original: ""' in content
+    # Must NOT contain template defaults (from full template)
+    assert "Implement backend REST API with FastAPI" not in content
+
+
 def test_graph__with_v3_plan__displays_graph(tmp_path: Path) -> None:
     # given
     tasks_dir = tmp_path / ".sisyphus" / "tasks"

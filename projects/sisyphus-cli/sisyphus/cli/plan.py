@@ -147,7 +147,7 @@ def init_plan(
         raise typer.Exit(1)
 
     # Populate initial request if provided
-    if initial_request:
+    if initial_request is not None:
         doc.work_plans[0].user_request.original = initial_request
 
     # YAML 저장

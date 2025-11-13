@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from sisyphus.cli import app
-from sisyphus.cli.common import resolve_cwd
+from sisyphus_speckit.cli import app
+from sisyphus_speckit.plan import resolve_cwd
 
 pytestmark = [
     pytest.mark.anyio,

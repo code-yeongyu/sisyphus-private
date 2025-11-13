@@ -175,6 +175,22 @@ def test_init__with_cwd_option__creates_in_cwd(tmp_path: Path) -> None:
     assert (work_dir / ".sisyphus" / "tasks" / "plan.yaml").exists()
 
 
+def test_init__with_initial_request__populates_user_request(tmp_path: Path) -> None:
+    # given
+    output_file = tmp_path / "plan-with-request.yaml"
+    request_text = "Implement user authentication system"
+
+    # when
+    result = runner.invoke(plan_app, ["init", "--path", str(output_file), "--initial-request", request_text])
+
+    # then
+    assert result.exit_code == 0
+    assert output_file.exists()
+    content = output_file.read_text()
+    assert request_text in content
+    assert "user_request:" in content
+
+
 def test_graph__with_v3_plan__displays_graph(tmp_path: Path) -> None:
     # given
     tasks_dir = tmp_path / ".sisyphus" / "tasks"

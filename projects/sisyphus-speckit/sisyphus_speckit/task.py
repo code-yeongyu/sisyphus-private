@@ -24,7 +24,7 @@ from sisyphus_core.core.plans.loader import (
 from sisyphus_core.core.plans.models import PlanDocument, Todo, TodoStatus, WorkPlan
 from sisyphus_core.core.status.manager import StatusManager
 from sisyphus_core.core.task_manager import TaskManager
-from sisyphus_core.utils.cli_helpers import resolve_cwd
+from sisyphus_core.utils.common import resolve_cwd
 
 task_app = typer.Typer(name="task", help="Task navigation and verification commands")
 console = Console()

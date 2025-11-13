@@ -15,7 +15,7 @@ from sisyphus_core.core.plan_linter import LintError, PlanLinter
 from sisyphus_core.core.plans.loader import load_plan
 from sisyphus_core.core.plans.models import PlanDocument
 from sisyphus_core.core.plans.template import PlanTemplateGenerator
-from sisyphus_core.utils.cli_helpers import resolve_cwd
+from sisyphus_core.utils.common import resolve_cwd
 
 plan_app = typer.Typer(name="plan", help="Plan management commands")
 console = Console()

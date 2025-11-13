@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from sisyphus_core.cli.work import _is_dependency_satisfied, _is_plan_executable
+from sisyphus.cli.work import _is_dependency_satisfied, _is_plan_executable
 
 pytestmark = [pytest.mark.anyio]
 

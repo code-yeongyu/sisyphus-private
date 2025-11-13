@@ -46,12 +46,12 @@ Commands:
 
 ## Plan 관리
 
-### `sisyphus plan`
+### `sisyphus-speckit plan`
 
 Plan 관리를 위한 하위 커맨드 그룹입니다.
 
 ```
-Usage: sisyphus plan [OPTIONS] COMMAND [ARGS]...
+Usage: sisyphus-speckit plan [OPTIONS] COMMAND [ARGS]...
 
  Plan management commands
 
@@ -64,14 +64,14 @@ Commands:
 
 ---
 
-### `sisyphus plan init`
+### `sisyphus-speckit plan init`
 
 새 YAML plan 템플릿을 생성합니다.
 
 #### 사용법
 
 ```bash
-sisyphus plan init [OPTIONS]
+sisyphus-speckit plan init [OPTIONS]
 ```
 
 #### 옵션
@@ -115,14 +115,14 @@ work_plans:
 
 ---
 
-### `sisyphus plan lint`
+### `sisyphus-speckit plan lint`
 
 YAML plan의 구조를 검증합니다 (순환 의존성, 누락된 참조 등).
 
 #### 사용법
 
 ```bash
-sisyphus plan lint [OPTIONS]
+sisyphus-speckit plan lint [OPTIONS]
 ```
 
 #### 옵션
@@ -151,14 +151,14 @@ REFERENCE ERRORS:
 
 ---
 
-### `sisyphus plan graph`
+### `sisyphus-speckit plan graph`
 
 Plan 간 의존성 그래프를 시각화합니다.
 
 #### 사용법
 
 ```bash
-sisyphus plan graph [OPTIONS]
+sisyphus-speckit plan graph [OPTIONS]
 ```
 
 #### 옵션
@@ -205,19 +205,19 @@ How to fix:
   1. Open the file(s) listed above
   2. Find the 'depends_on' field for each plan
   3. Remove one dependency to break the cycle
-  4. Run 'sisyphus plan graph' again to verify
+  4. Run 'sisyphus-speckit plan graph' again to verify
 ```
 
 ---
 
-### `sisyphus plan export`
+### `sisyphus-speckit plan export`
 
 YAML plan을 Markdown 포맷으로 변환합니다.
 
 #### 사용법
 
 ```bash
-sisyphus plan export YAML_PATH [OPTIONS]
+sisyphus-speckit plan export YAML_PATH [OPTIONS]
 ```
 
 #### 인자
@@ -232,7 +232,7 @@ sisyphus plan export YAML_PATH [OPTIONS]
 #### 출력 예시
 
 ```bash
-sisyphus plan export .sisyphus/tasks/feature.yaml -o feature.md
+sisyphus-speckit plan export .sisyphus/tasks/feature.yaml -o feature.md
 ```
 
 ```
@@ -263,12 +263,12 @@ sisyphus plan export .sisyphus/tasks/feature.yaml -o feature.md
 
 ## Task 탐색 및 실행
 
-### `sisyphus task`
+### `sisyphus-speckit task`
 
 Task 탐색 및 검증 명령 그룹입니다.
 
 ```
-Usage: sisyphus task [OPTIONS] COMMAND [ARGS]...
+Usage: sisyphus-speckit task [OPTIONS] COMMAND [ARGS]...
 
  Task navigation and verification commands
 
@@ -283,14 +283,14 @@ Commands:
 
 ---
 
-### `sisyphus task show`
+### `sisyphus-speckit task show`
 
 특정 task ID로 task 정보를 표시합니다.
 
 #### 사용법
 
 ```bash
-sisyphus task show TASK_ID [OPTIONS]
+sisyphus-speckit task show TASK_ID [OPTIONS]
 ```
 
 #### 인자
@@ -325,14 +325,14 @@ sisyphus task show TASK_ID [OPTIONS]
 
 ---
 
-### `sisyphus task current`
+### `sisyphus-speckit task current`
 
 현재 진행 중인 task를 표시합니다.
 
 #### 사용법
 
 ```bash
-sisyphus task current [OPTIONS]
+sisyphus-speckit task current [OPTIONS]
 ```
 
 #### 옵션
@@ -357,19 +357,19 @@ sisyphus task current [OPTIONS]
 **작업 시작 전:**
 ```
 작업이 시작되지 않았습니다.
-다음 명령으로 작업을 시작하세요: sisyphus task continue
+다음 명령으로 작업을 시작하세요: sisyphus-speckit task continue
 ```
 
 ---
 
-### `sisyphus task next`
+### `sisyphus-speckit task next`
 
 다음 pending task를 표시합니다.
 
 #### 사용법
 
 ```bash
-sisyphus task next [OPTIONS]
+sisyphus-speckit task next [OPTIONS]
 ```
 
 #### 옵션
@@ -396,14 +396,14 @@ sisyphus task next [OPTIONS]
 
 ---
 
-### `sisyphus task previous`
+### `sisyphus-speckit task previous`
 
 DFS 순서로 이전 task를 표시합니다.
 
 #### 사용법
 
 ```bash
-sisyphus task previous [OPTIONS]
+sisyphus-speckit task previous [OPTIONS]
 ```
 
 #### 옵션
@@ -428,14 +428,14 @@ sisyphus task previous [OPTIONS]
 
 ---
 
-### `sisyphus task continue`
+### `sisyphus-speckit task continue`
 
 현재 task를 완료하고 다음 task로 이동하거나, 첫 task를 시작합니다.
 
 #### 사용법
 
 ```bash
-sisyphus task continue [OPTIONS]
+sisyphus-speckit task continue [OPTIONS]
 ```
 
 #### 옵션
@@ -508,19 +508,19 @@ sisyphus-executor를 다시 호출하여 시키세요.
   - .sisyphus/tasks/plan-a.yaml
   - .sisyphus/tasks/plan-b.yaml
 
-  sisyphus plan init <plan-file>
+  sisyphus-speckit plan init <plan-file>
 ```
 
 ---
 
 ## Verification 관리
 
-### `sisyphus task verify`
+### `sisyphus-speckit task verify`
 
 Task 검증 명령 그룹입니다.
 
 ```
-Usage: sisyphus task verify [OPTIONS] COMMAND [ARGS]...
+Usage: sisyphus-speckit task verify [OPTIONS] COMMAND [ARGS]...
 
  Verification management commands
 
@@ -535,14 +535,14 @@ Commands:
 
 ---
 
-### `sisyphus task verify bash`
+### `sisyphus-speckit task verify bash`
 
 자동화된 bash 검증을 실행합니다.
 
 #### 사용법
 
 ```bash
-sisyphus task verify bash [OPTIONS]
+sisyphus-speckit task verify bash [OPTIONS]
 ```
 
 #### 옵션
@@ -617,14 +617,14 @@ tests/test_jwt.py:25: AssertionError
 
 ---
 
-### `sisyphus task verify llm`
+### `sisyphus-speckit task verify llm`
 
 LLM 검증 항목을 표시합니다 (수동 리뷰용).
 
 #### 사용법
 
 ```bash
-sisyphus task verify llm [OPTIONS]
+sisyphus-speckit task verify llm [OPTIONS]
 ```
 
 #### 옵션
@@ -650,7 +650,7 @@ sisyphus task verify llm [OPTIONS]
   - pytest --cov=src/auth tests/
   - ruff check src/auth/
 
-검증을 완료하려면: sisyphus task verify llm-mark verify-code-quality-001 --evidence '<증거 설명>'
+검증을 완료하려면: sisyphus-speckit task verify llm-mark verify-code-quality-001 --evidence '<증거 설명>'
 
 검증 진행 상황: 1/3 완료
 남은 검증: 2개
@@ -658,14 +658,14 @@ sisyphus task verify llm [OPTIONS]
 
 ---
 
-### `sisyphus task verify llm-mark`
+### `sisyphus-speckit task verify llm-mark`
 
 LLM 검증을 증거와 함께 완료 표시합니다.
 
 #### 사용법
 
 ```bash
-sisyphus task verify llm-mark VERIFY_ID [OPTIONS]
+sisyphus-speckit task verify llm-mark VERIFY_ID [OPTIONS]
 ```
 
 #### 인자
@@ -680,7 +680,7 @@ sisyphus task verify llm-mark VERIFY_ID [OPTIONS]
 #### 출력 예시
 
 ```bash
-sisyphus task verify llm-mark verify-code-quality-001 --evidence "모든 함수에 타입 힌트 존재, try-except 블록 적절히 사용, 커버리지 85% (pytest-cov 확인), docstring 완성"
+sisyphus-speckit task verify llm-mark verify-code-quality-001 --evidence "모든 함수에 타입 힌트 존재, try-except 블록 적절히 사용, 커버리지 85% (pytest-cov 확인), docstring 완성"
 ```
 
 ```
@@ -697,14 +697,14 @@ LLM 검증이 완료 표시되었습니다.
 
 ---
 
-### `sisyphus task verify manual`
+### `sisyphus-speckit task verify manual`
 
 수동 검증 항목을 표시합니다.
 
 #### 사용법
 
 ```bash
-sisyphus task verify manual [OPTIONS]
+sisyphus-speckit task verify manual [OPTIONS]
 ```
 
 #### 옵션
@@ -718,7 +718,7 @@ sisyphus task verify manual [OPTIONS]
 UI 동작 확인
 브라우저에서 로그인 페이지가 정상적으로 렌더링되는지 확인
 
-수동 검증을 완료하려면: sisyphus task verify manual-mark verify-ui-manual-001 --evidence '<증거 설명>'
+수동 검증을 완료하려면: sisyphus-speckit task verify manual-mark verify-ui-manual-001 --evidence '<증거 설명>'
 
 검증 진행 상황: 2/3 완료
 남은 검증: 1개
@@ -726,14 +726,14 @@ UI 동작 확인
 
 ---
 
-### `sisyphus task verify manual-mark`
+### `sisyphus-speckit task verify manual-mark`
 
 수동 검증을 증거와 함께 완료 표시합니다.
 
 #### 사용법
 
 ```bash
-sisyphus task verify manual-mark VERIFY_ID [OPTIONS]
+sisyphus-speckit task verify manual-mark VERIFY_ID [OPTIONS]
 ```
 
 #### 인자
@@ -748,7 +748,7 @@ sisyphus task verify manual-mark VERIFY_ID [OPTIONS]
 #### 출력 예시
 
 ```bash
-sisyphus task verify manual-mark verify-ui-manual-001 --evidence "Chrome 브라우저 테스트 완료: 로그인 폼 렌더링 정상, submit 동작 확인, 에러 메시지 표시 정상, JWT 토큰 LocalStorage 저장 확인"
+sisyphus-speckit task verify manual-mark verify-ui-manual-001 --evidence "Chrome 브라우저 테스트 완료: 로그인 폼 렌더링 정상, submit 동작 확인, 에러 메시지 표시 정상, JWT 토큰 LocalStorage 저장 확인"
 ```
 
 ```
@@ -759,19 +759,19 @@ sisyphus task verify manual-mark verify-ui-manual-001 --evidence "Chrome 브라�
 ✓ 모든 검증이 완료되었습니다!
 
 다음 명령으로 작업을 계속하세요:
-  sisyphus task continue
+  sisyphus-speckit task continue
 ```
 
 ---
 
-### `sisyphus task verify status`
+### `sisyphus-speckit task verify status`
 
 모든 task의 검증 상태를 표시합니다.
 
 #### 사용법
 
 ```bash
-sisyphus task verify status [OPTIONS]
+sisyphus-speckit task verify status [OPTIONS]
 ```
 
 #### 옵션
@@ -1128,7 +1128,7 @@ Moving to next task...
 
 #### 주의사항
 
-- v3.0에서는 `sisyphus task continue` 사용을 권장합니다
+- v3.0에서는 `sisyphus-speckit task continue` 사용을 권장합니다
 - `work` 커맨드는 v2.x 호환성을 위해 유지되고 있습니다
 
 ---
@@ -1139,41 +1139,41 @@ Moving to next task...
 
 ```bash
 # 1. Plan 템플릿 생성
-sisyphus plan init
+sisyphus-speckit plan init
 
 # 2. YAML 파일 편집 (todos 추가)
 vim .sisyphus/tasks/ai-todolist.yaml
 
 # 3. Plan 검증
-sisyphus plan lint
+sisyphus-speckit plan lint
 
 # 4. 의존성 그래프 확인
-sisyphus plan graph
+sisyphus-speckit plan graph
 
 # 5. 첫 작업 시작
-sisyphus task continue
+sisyphus-speckit task continue
 ```
 
 ### 2. Task 실행 및 검증
 
 ```bash
 # 현재 작업 확인
-sisyphus task current
+sisyphus-speckit task current
 
 # Bash 검증 실행
-sisyphus task verify bash
+sisyphus-speckit task verify bash
 
 # LLM 검증 확인
-sisyphus task verify llm
+sisyphus-speckit task verify llm
 
 # LLM 검증 완료 표시
-sisyphus task verify llm-mark verify-id-123 --evidence "타입 힌트 완성, 커버리지 85%"
+sisyphus-speckit task verify llm-mark verify-id-123 --evidence "타입 힌트 완성, 커버리지 85%"
 
 # 전체 검증 상태 확인
-sisyphus task verify status
+sisyphus-speckit task verify status
 
 # 모든 검증 완료 후 다음 작업으로 이동
-sisyphus task continue
+sisyphus-speckit task continue
 ```
 
 ### 3. Multi-Plan 프로젝트
@@ -1187,9 +1187,9 @@ sisyphus task continue
 # plan-frontend (UI 구현)
 
 # 각 plan 생성
-sisyphus plan init -p .sisyphus/tasks/foundation.yaml
-sisyphus plan init -p .sisyphus/tasks/backend.yaml
-sisyphus plan init -p .sisyphus/tasks/frontend.yaml
+sisyphus-speckit plan init -p .sisyphus/tasks/foundation.yaml
+sisyphus-speckit plan init -p .sisyphus/tasks/backend.yaml
+sisyphus-speckit plan init -p .sisyphus/tasks/frontend.yaml
 
 # backend.yaml에 의존성 설정
 # depends_on: ["plan-foundation"]
@@ -1198,10 +1198,10 @@ sisyphus plan init -p .sisyphus/tasks/frontend.yaml
 # depends_on: ["plan-backend"]
 
 # 순환 의존성 체크
-sisyphus plan graph
+sisyphus-speckit plan graph
 
 # 그래프 시각화 (Mermaid)
-sisyphus plan graph --format mermaid > dependency-graph.md
+sisyphus-speckit plan graph --format mermaid > dependency-graph.md
 ```
 
 ### 4. Git 통합
@@ -1228,7 +1228,7 @@ sisyphus reset
 sisyphus reset --include-task-specs
 
 # 새 plan으로 재시작
-sisyphus plan init -p .sisyphus/tasks/new-plan.yaml
+sisyphus-speckit plan init -p .sisyphus/tasks/new-plan.yaml
 ```
 
 ---
@@ -1325,9 +1325,9 @@ export SISYPHUS_LOG_LEVEL="INFO"  # DEBUG, INFO, WARNING, ERROR
 
 **해결:**
 ```bash
-sisyphus plan init
+sisyphus-speckit plan init
 # 또는
-sisyphus task continue  # 자동으로 plan 선택 시도
+sisyphus-speckit task continue  # 자동으로 plan 선택 시도
 ```
 
 ### `Circular dependency detected`
@@ -1337,13 +1337,13 @@ sisyphus task continue  # 자동으로 plan 선택 시도
 **해결:**
 ```bash
 # 의존성 그래프 확인
-sisyphus plan graph
+sisyphus-speckit plan graph
 
 # YAML 파일에서 depends_on 수정하여 순환 제거
 vim .sisyphus/tasks/plan-a.yaml
 
 # 재검증
-sisyphus plan graph
+sisyphus-speckit plan graph
 ```
 
 ### `다음 작업으로 넘어갈 수 없습니다`
@@ -1353,14 +1353,14 @@ sisyphus plan graph
 **해결:**
 ```bash
 # 검증 상태 확인
-sisyphus task verify status
+sisyphus-speckit task verify status
 
 # 각 검증 실행
-sisyphus task verify bash
-sisyphus task verify llm
+sisyphus-speckit task verify bash
+sisyphus-speckit task verify llm
 
 # 완료 후 재시도
-sisyphus task continue
+sisyphus-speckit task continue
 ```
 
 ### `Schema validation failed`
@@ -1370,7 +1370,7 @@ sisyphus task continue
 **해결:**
 ```bash
 # Lint로 상세 에러 확인
-sisyphus plan lint -f .sisyphus/tasks/plan.yaml
+sisyphus-speckit plan lint -f .sisyphus/tasks/plan.yaml
 
 # 에러 메시지 참고하여 YAML 수정
 ```
@@ -1413,7 +1413,7 @@ verification_spec:
 
 ```bash
 # Markdown으로 변환
-sisyphus plan export .sisyphus/tasks/feature.yaml -o feature-plan.md
+sisyphus-speckit plan export .sisyphus/tasks/feature.yaml -o feature-plan.md
 
 # Git에 커밋 (팀과 공유)
 git add feature-plan.md
@@ -1427,11 +1427,11 @@ git commit -m "Add feature implementation plan"
 ```bash
 # Main worktree
 cd /project/main
-sisyphus task continue  # plan-a.yaml
+sisyphus-speckit task continue  # plan-a.yaml
 
 # Feature worktree
 cd /project/worktrees/feature-branch
-sisyphus task continue  # plan-b.yaml (독립적으로 추적)
+sisyphus-speckit task continue  # plan-b.yaml (독립적으로 추적)
 ```
 
 ---
@@ -1452,7 +1452,7 @@ sisyphus work --no-tui
 **해결:**
 ```bash
 # 특정 파일만 검증
-sisyphus plan lint -f .sisyphus/tasks/specific-plan.yaml
+sisyphus-speckit plan lint -f .sisyphus/tasks/specific-plan.yaml
 ```
 
 ### Verification이 자동으로 표시되지 않음
@@ -1462,7 +1462,7 @@ sisyphus plan lint -f .sisyphus/tasks/specific-plan.yaml
 **확인:**
 ```bash
 # Task 상세 확인
-sisyphus task show task-id
+sisyphus-speckit task show task-id
 
 # YAML 파일에서 verification_spec 확인
 cat .sisyphus/tasks/plan.yaml | grep -A 10 "verification_spec"

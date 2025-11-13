@@ -6,7 +6,7 @@
 
 ## Overview
 
-This refactoring makes `status.json` the **Single Source of Truth** for current plan tracking across all Sisyphus entry points. Previously, `sisyphus task continue` used status.json while `sisyphus work` completely ignored it, causing synchronization issues between CLI and TUI modes.
+This refactoring makes `status.json` the **Single Source of Truth** for current plan tracking across all Sisyphus entry points. Previously, `sisyphus-speckit task continue` used status.json while `sisyphus work` completely ignored it, causing synchronization issues between CLI and TUI modes.
 
 **Key Changes:**
 - ExecutionLoop now reads plan_id from status.json (not just YAML)
@@ -21,7 +21,7 @@ This refactoring makes `status.json` the **Single Source of Truth** for current 
 **Before this refactoring:**
 ```mermaid
 graph TB
-    TC[sisyphus task continue] --> STATUS[status.json ✅]
+    TC[sisyphus-speckit task continue] --> STATUS[status.json ✅]
     WORK[sisyphus work] -.ignores.-> STATUS
     WORK --> YAML[YAML scan only ❌]
 
@@ -31,7 +31,7 @@ graph TB
 ```
 
 **Issues:**
-1. `sisyphus task continue` used status.json ✅
+1. `sisyphus-speckit task continue` used status.json ✅
 2. `sisyphus work` completely ignored status.json ❌
 3. ExecutionLoop loaded plan_id from YAML only ❌
 4. Users had to select the same plan twice (once in each mode)
@@ -40,13 +40,13 @@ graph TB
 **Real-world scenario:**
 ```bash
 # User selects plan-A
-sisyphus task continue  # → Writes to status.json: plan-A
+sisyphus-speckit task continue  # → Writes to status.json: plan-A
 
 # User runs work command
 sisyphus work           # → Ignores status.json, scans YAML → might pick plan-B
 
 # User returns to task continue
-sisyphus task continue  # → Reads status.json: still plan-A (out of sync!)
+sisyphus-speckit task continue  # → Reads status.json: still plan-A (out of sync!)
 ```
 
 ### Why This Refactoring Was Needed
@@ -200,7 +200,7 @@ async def run(self) -> None:
 graph TB
     USER[User runs command]
 
-    USER -->|sisyphus task continue| TC[task.py]
+    USER -->|sisyphus-speckit task continue| TC[task.py]
     USER -->|sisyphus work| WORK[work.py]
 
     TC --> SM1[StatusManager.set_current]
@@ -224,7 +224,7 @@ graph TB
 ```
 
 **Synchronization Flow:**
-1. User runs `sisyphus task continue` → StatusManager.set_current() → status.json updated
+1. User runs `sisyphus-speckit task continue` → StatusManager.set_current() → status.json updated
 2. User runs `sisyphus work` → _detect_plan_path() reads status.json → auto-uses same plan
 3. ExecutionLoop.run() reads status.json → consistent plan_id across all modes
 
@@ -244,14 +244,14 @@ graph TB
 
 **Before (broken):**
 ```bash
-sisyphus task continue     # Select plan-A → status.json = plan-A
+sisyphus-speckit task continue     # Select plan-A → status.json = plan-A
 sisyphus work              # Scan YAML → might pick plan-B (ignored status.json)
 # Result: Out of sync! ❌
 ```
 
 **After (fixed):**
 ```bash
-sisyphus task continue     # Select plan-A → status.json = plan-A
+sisyphus-speckit task continue     # Select plan-A → status.json = plan-A
 sisyphus work              # Read status.json → auto-use plan-A ✅
 # Result: Synchronized! 🎉
 ```
@@ -359,7 +359,7 @@ uv run pytest projects/sisyphus-cli/sisyphus/cli/tests/test_work_status_integrat
 **3. Manual end-to-end test:**
 ```bash
 # Step 1: Use task continue to select plan
-sisyphus task continue  # → Select a plan
+sisyphus-speckit task continue  # → Select a plan
 
 # Step 2: Check status.json
 cat .sisyphus/status.json
@@ -554,7 +554,7 @@ python scripts/migrate_sessions.py .sisyphus/sessions/sessions.json --dry-run
 A: No. This is a backend-only change with full backward compatibility. Existing code continues to work.
 
 **Q: Do I need to update my status.json manually?**
-A: No. status.json is auto-updated when you run `sisyphus task continue` or `sisyphus work`.
+A: No. status.json is auto-updated when you run `sisyphus-speckit task continue` or `sisyphus work`.
 
 **Q: What if I don't use status.json?**
 A: ExecutionLoop falls back to the old task_validator method. No impact.
@@ -588,4 +588,4 @@ This refactoring achieves the architectural goal of making status.json the **Sin
 
 ---
 
-**Migration completed successfully?** Run `sisyphus task continue` to verify synchronization! 🚀
+**Migration completed successfully?** Run `sisyphus-speckit task continue` to verify synchronization! 🚀

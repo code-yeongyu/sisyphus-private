@@ -251,7 +251,7 @@ from sisyphus.core.plans.loader import load_plan
    - 이 기능은 의존성 완료 여부 확인
    - 두 기능은 독립적
 
-2. **`sisyphus task continue`와의 차이**:
+2. **`sisyphus-speckit task continue`와의 차이**:
    - `task continue`는 DFS로 자동 순서 결정
    - `work`는 사용자가 직접 선택 (필터링만 제공)
 

@@ -1,4 +1,4 @@
-# sisyphus plan lint
+# sisyphus-speckit plan lint
 
 YAML 작업계획서 (`ai-todolist.yaml`)의 스키마 유효성을 검증하는 명령어입니다.
 
@@ -6,11 +6,11 @@ YAML 작업계획서 (`ai-todolist.yaml`)의 스키마 유효성을 검증하는
 
 ```bash
 # 기본 (./ai-todolist.yaml 검증)
-sisyphus plan lint
+sisyphus-speckit plan lint
 
 # 특정 파일 검증
-sisyphus plan lint --file path/to/plan.yaml
-sisyphus plan lint -f ai-todolist-draft.yaml
+sisyphus-speckit plan lint --file path/to/plan.yaml
+sisyphus-speckit plan lint -f ai-todolist-draft.yaml
 ```
 
 ## 검증 항목
@@ -134,7 +134,7 @@ jobs:
         run: uv sync
 
       - name: Validate work plan
-        run: sisyphus plan lint --file ai-todolist.yaml
+        run: sisyphus-speckit plan lint --file ai-todolist.yaml
 ```
 
 ### Pre-commit Hook 예시
@@ -145,7 +145,7 @@ jobs:
 set -e
 
 echo "Validating work plan..."
-sisyphus plan lint --file ai-todolist.yaml
+sisyphus-speckit plan lint --file ai-todolist.yaml
 
 if [ $? -ne 0 ]; then
   echo "Work plan validation failed. Commit aborted."
@@ -171,14 +171,14 @@ echo "Work plan validation passed."
 ### Valid YAML (검증 성공)
 
 ```bash
-$ sisyphus plan lint --file ai-todolist.yaml
+$ sisyphus-speckit plan lint --file ai-todolist.yaml
 ✓ YAML validation passed. 0 errors.
 ```
 
 ### Invalid YAML (검증 실패)
 
 ```bash
-$ sisyphus plan lint --file broken-plan.yaml
+$ sisyphus-speckit plan lint --file broken-plan.yaml
 ✗ Validation failed: 5 error(s)
 
   • Error: unknown_field - Unknown field (not in schema). Expected: one of ['background', 'final_verification', 'metadata', 'objectives', 'required_background', 'status', 'success_vision', 'todos', 'user_request', 'workflow']. Actual: unknown_field. Suggestion: Remove 'unknown_field' or check spelling
@@ -191,6 +191,6 @@ $ sisyphus plan lint --file broken-plan.yaml
 ### File Not Found
 
 ```bash
-$ sisyphus plan lint --file nonexistent.yaml
+$ sisyphus-speckit plan lint --file nonexistent.yaml
 Error: File not found: nonexistent.yaml
 ```

@@ -16,10 +16,10 @@ A basic single-plan project with:
 **Try it:**
 ```bash
 # Validate the plan
-sisyphus plan lint examples/simple-project.yaml
+sisyphus-speckit plan lint examples/simple-project.yaml
 
 # Export to Markdown
-sisyphus plan export examples/simple-project.yaml
+sisyphus-speckit plan export examples/simple-project.yaml
 ```
 
 ### 2. `multi-plan-dependencies.yaml`
@@ -34,7 +34,7 @@ Multi-plan project demonstrating:
 **Try it:**
 ```bash
 # Visualize dependency graph
-sisyphus plan graph examples/multi-plan-dependencies.yaml --format ascii
+sisyphus-speckit plan graph examples/multi-plan-dependencies.yaml --format ascii
 
 # Expected output:
 # plan-foundation
@@ -42,14 +42,14 @@ sisyphus plan graph examples/multi-plan-dependencies.yaml --format ascii
 #       └─> plan-testing
 
 # Check for circular dependencies
-sisyphus plan lint examples/multi-plan-dependencies.yaml
+sisyphus-speckit plan lint examples/multi-plan-dependencies.yaml
 ```
 
 ## Creating Your Own Plans
 
 1. **Start from a template:**
    ```bash
-   sisyphus plan init --destination my-project.yaml
+   sisyphus-speckit plan init --destination my-project.yaml
    ```
 
 2. **Customize the YAML:**
@@ -60,7 +60,7 @@ sisyphus plan lint examples/multi-plan-dependencies.yaml
 
 3. **Validate:**
    ```bash
-   sisyphus plan lint my-project.yaml
+   sisyphus-speckit plan lint my-project.yaml
    ```
 
 4. **Execute:**
@@ -70,7 +70,7 @@ sisyphus plan lint examples/multi-plan-dependencies.yaml
    cp my-project.yaml .sisyphus/tasks/
 
    # Start execution
-   sisyphus task continue --execute claude:sonnet
+   sisyphus-speckit task continue --execute claude:sonnet
    ```
 
 ## Key v3.0 Features
@@ -122,12 +122,12 @@ If you have an old `ai-todolist.md` file:
 
 1. **Convert to v3.0:**
    ```bash
-   sisyphus plan convert-legacy ai-todolist.md --output .sisyphus/tasks/main.yaml
+   sisyphus-speckit plan convert-legacy ai-todolist.md --output .sisyphus/tasks/main.yaml
    ```
 
 2. **Verify conversion:**
    ```bash
-   sisyphus plan lint .sisyphus/tasks/main.yaml
+   sisyphus-speckit plan lint .sisyphus/tasks/main.yaml
    ```
 
 See `docs/migration-v2-to-v3.md` for detailed migration guide.

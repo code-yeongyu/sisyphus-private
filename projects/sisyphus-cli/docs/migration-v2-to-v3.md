@@ -147,8 +147,8 @@ sisyphus verify-phase <subcommand>
 
 **Before (v2.1):**
 ```bash
-sisyphus plan lint --file ai-todolist.yaml
-sisyphus plan get task --current
+sisyphus-speckit plan lint --file ai-todolist.yaml
+sisyphus-speckit plan get task --current
 sisyphus execute-phase continue
 sisyphus execute-phase bash-verify
 ```
@@ -156,23 +156,23 @@ sisyphus execute-phase bash-verify
 **After (v3.0):**
 ```bash
 # Plan management
-sisyphus plan lint --file .sisyphus/tasks/main.yaml
-sisyphus plan overview
-sisyphus plan graph --format mermaid
-sisyphus plan init --destination .sisyphus/tasks/new.yaml
-sisyphus plan export .sisyphus/tasks/main.yaml  # New: YAML → Markdown
+sisyphus-speckit plan lint --file .sisyphus/tasks/main.yaml
+sisyphus-speckit plan overview
+sisyphus-speckit plan graph --format mermaid
+sisyphus-speckit plan init --destination .sisyphus/tasks/new.yaml
+sisyphus-speckit plan export .sisyphus/tasks/main.yaml  # New: YAML → Markdown
 
 # Task execution
-sisyphus task show --id 1
-sisyphus task current
-sisyphus task next
-sisyphus task continue
+sisyphus-speckit task show --id 1
+sisyphus-speckit task current
+sisyphus-speckit task next
+sisyphus-speckit task continue
 
 # Verification
-sisyphus task verify bash
-sisyphus task verify llm mark --evidence "..."
-sisyphus task verify manual mark --evidence "..."
-sisyphus task verify status
+sisyphus-speckit task verify bash
+sisyphus-speckit task verify llm mark --evidence "..."
+sisyphus-speckit task verify manual mark --evidence "..."
+sisyphus-speckit task verify status
 ```
 
 #### Command Mapping Table
@@ -270,14 +270,14 @@ EOF
 
 ```bash
 # Planned for future release
-sisyphus plan convert-legacy ai-todolist.yaml --output .sisyphus/tasks/main.yaml
+sisyphus-speckit plan convert-legacy ai-todolist.yaml --output .sisyphus/tasks/main.yaml
 ```
 
 ### Step 4: Validate Migration
 
 ```bash
 # Lint the new v3.0 file
-sisyphus plan lint --file .sisyphus/tasks/main.yaml
+sisyphus-speckit plan lint --file .sisyphus/tasks/main.yaml
 
 # Check for errors
 # Expected: "✓ YAML validation passed. 0 errors."
@@ -289,12 +289,12 @@ Update any scripts or documentation that reference old paths:
 
 ```bash
 # Old
-sisyphus plan lint --file ai-todolist.yaml
+sisyphus-speckit plan lint --file ai-todolist.yaml
 sisyphus execute-phase continue
 
 # New
-sisyphus plan lint --file .sisyphus/tasks/main.yaml
-sisyphus task continue
+sisyphus-speckit plan lint --file .sisyphus/tasks/main.yaml
+sisyphus-speckit task continue
 ```
 
 ### Step 6: Set Active Plan (Optional)
@@ -345,7 +345,7 @@ work_plans:
 
 Visualize dependencies:
 ```bash
-sisyphus plan graph --format mermaid
+sisyphus-speckit plan graph --format mermaid
 ```
 
 ### 2. Task Children (1-Level Nesting)
@@ -383,7 +383,7 @@ todos:
 
 ```bash
 # Automatically detects circular dependencies
-sisyphus plan lint --file .sisyphus/tasks/
+sisyphus-speckit plan lint --file .sisyphus/tasks/
 
 # Output:
 # ✗ Circular dependency detected: plan-a → plan-b → plan-a
@@ -396,11 +396,11 @@ Different git worktrees can work on different plans simultaneously:
 ```bash
 # Worktree 1
 cd ~/project/main-worktree
-sisyphus task continue  # Works on plan-main
+sisyphus-speckit task continue  # Works on plan-main
 
 # Worktree 2
 cd ~/project/feature-worktree
-sisyphus task continue  # Can work on plan-feature
+sisyphus-speckit task continue  # Can work on plan-feature
 ```
 
 Status tracked independently per worktree via `status.json`.
@@ -417,8 +417,8 @@ Status tracked independently per worktree via `status.json`.
 - [ ] Add `children: []` to todos (if missing)
 - [ ] Update references: remove `type`, add `ref_id`/`uri`/`inline`
 - [ ] Update CLI commands: `execute-phase` → `task`
-- [ ] Validate with `sisyphus plan lint`
-- [ ] Test with `sisyphus task current`
+- [ ] Validate with `sisyphus-speckit plan lint`
+- [ ] Test with `sisyphus-speckit task current`
 - [ ] Update CI/CD scripts to use new commands
 - [ ] Add `.sisyphus/status.json` to `.gitignore` (if team doesn't share state)
 
@@ -429,7 +429,7 @@ Status tracked independently per worktree via `status.json`.
 **Error:**
 ```
 UnsupportedPlanVersionError: Plan version 2.1 is not supported.
-Please use 'sisyphus plan convert-legacy' to migrate to v3.0
+Please use 'sisyphus-speckit plan convert-legacy' to migrate to v3.0
 ```
 
 **Solution:**
@@ -505,13 +505,13 @@ FileNotFoundError: ai-todolist.yaml
 - Specify full path:
 
 ```bash
-sisyphus plan lint --file .sisyphus/tasks/main.yaml
+sisyphus-speckit plan lint --file .sisyphus/tasks/main.yaml
 ```
 
 Or use `task` commands which auto-resolve from `status.json`:
 
 ```bash
-sisyphus task current  # No path needed
+sisyphus-speckit task current  # No path needed
 ```
 
 ## Example: Complete Before/After
@@ -643,11 +643,11 @@ A: Yes! Create multiple YAML files in `.sisyphus/tasks/` with different plan IDs
 After migration:
 
 1. **Explore multi-plan**: Split large plans into smaller dependent plans
-2. **Visualize dependencies**: `sisyphus plan graph --format mermaid`
+2. **Visualize dependencies**: `sisyphus-speckit plan graph --format mermaid`
 3. **Use inline references**: No need to define every reference globally
 4. **Leverage task children**: Break down complex tasks into subtasks
 5. **Try worktree workflows**: Work on multiple plans in parallel
 
 ---
 
-**Migration completed?** Run `sisyphus task continue` to verify everything works! 🚀
+**Migration completed?** Run `sisyphus-speckit task continue` to verify everything works! 🚀

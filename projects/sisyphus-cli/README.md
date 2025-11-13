@@ -119,7 +119,7 @@ Sisyphus v3.0 uses **WorkPlan YAML files** for structured task management.
 
 ```sh
 # Create a new plan template
-sisyphus plan init --destination .sisyphus/tasks/my-project.yaml
+sisyphus-speckit plan init --destination .sisyphus/tasks/my-project.yaml
 ```
 
 This creates a v3.0 YAML file with the following structure:
@@ -157,10 +157,10 @@ Open `.sisyphus/tasks/my-project.yaml` and customize:
 
 ```sh
 # Check for errors, cycles, missing dependencies
-sisyphus plan lint .sisyphus/tasks/
+sisyphus-speckit plan lint .sisyphus/tasks/
 
 # Visualize dependency graph
-sisyphus plan graph .sisyphus/tasks/ --format ascii
+sisyphus-speckit plan graph .sisyphus/tasks/ --format ascii
 ```
 
 Example graph output:
@@ -174,7 +174,7 @@ plan-foundation
 
 ```sh
 # Start working on tasks with Claude agent
-sisyphus task continue --execute claude:sonnet
+sisyphus-speckit task continue --execute claude:sonnet
 ```
 
 The TUI appears showing agent progress:
@@ -186,43 +186,43 @@ The TUI appears showing agent progress:
 
 ```sh
 # Show current task
-sisyphus task current
+sisyphus-speckit task current
 
 # Show next task
-sisyphus task next
+sisyphus-speckit task next
 
 # Export YAML to Markdown for review
-sisyphus plan export .sisyphus/tasks/my-project.yaml
+sisyphus-speckit plan export .sisyphus/tasks/my-project.yaml
 ```
 
 ---
 
 ## Commands
 
-### Plan Management (`sisyphus plan`)
+### Plan Management (`sisyphus-speckit plan`)
 
-#### `sisyphus plan init`
+#### `sisyphus-speckit plan init`
 
 Create a new v3.0 WorkPlan template.
 
 ```sh
 # Create in default location (.sisyphus/tasks/)
-sisyphus plan init
+sisyphus-speckit plan init
 
 # Specify custom path
-sisyphus plan init --destination .sisyphus/tasks/feature-auth.yaml
+sisyphus-speckit plan init --destination .sisyphus/tasks/feature-auth.yaml
 ```
 
-#### `sisyphus plan lint`
+#### `sisyphus-speckit plan lint`
 
 Validate YAML structure, dependencies, and references.
 
 ```sh
 # Lint all plans in directory
-sisyphus plan lint .sisyphus/tasks/
+sisyphus-speckit plan lint .sisyphus/tasks/
 
 # Lint specific file
-sisyphus plan lint .sisyphus/tasks/my-plan.yaml
+sisyphus-speckit plan lint .sisyphus/tasks/my-plan.yaml
 ```
 
 Checks for:
@@ -231,89 +231,89 @@ Checks for:
 - Invalid reference IDs
 - Malformed YAML structure
 
-#### `sisyphus plan graph`
+#### `sisyphus-speckit plan graph`
 
 Visualize plan dependencies.
 
 ```sh
 # ASCII format (terminal-friendly)
-sisyphus plan graph .sisyphus/tasks/ --format ascii
+sisyphus-speckit plan graph .sisyphus/tasks/ --format ascii
 
 # Mermaid format (for documentation)
-sisyphus plan graph .sisyphus/tasks/ --format mermaid
+sisyphus-speckit plan graph .sisyphus/tasks/ --format mermaid
 
 # PNG format (requires graphviz)
-sisyphus plan graph .sisyphus/tasks/ --format png --output graph.png
+sisyphus-speckit plan graph .sisyphus/tasks/ --format png --output graph.png
 ```
 
-#### `sisyphus plan export`
+#### `sisyphus-speckit plan export`
 
 Convert YAML to Markdown format (ai-todolist.md style).
 
 ```sh
 # Output to stdout
-sisyphus plan export .sisyphus/tasks/my-plan.yaml
+sisyphus-speckit plan export .sisyphus/tasks/my-plan.yaml
 
 # Save to file
-sisyphus plan export .sisyphus/tasks/my-plan.yaml --output ai-todolist.md
+sisyphus-speckit plan export .sisyphus/tasks/my-plan.yaml --output ai-todolist.md
 ```
 
-#### `sisyphus plan overview`
+#### `sisyphus-speckit plan overview`
 
 Show summary of all plans and current status.
 
 ```sh
-sisyphus plan overview
+sisyphus-speckit plan overview
 ```
 
-### Task Execution (`sisyphus task`)
+### Task Execution (`sisyphus-speckit task`)
 
-#### `sisyphus task continue`
+#### `sisyphus-speckit task continue`
 
 Resume or start task execution with agents.
 
 ```sh
 # Use Claude agent with TUI
-sisyphus task continue --execute claude:sonnet
+sisyphus-speckit task continue --execute claude:sonnet
 
 # CLI mode (no TUI)
-sisyphus task continue --execute claude:sonnet --no-tui
+sisyphus-speckit task continue --execute claude:sonnet --no-tui
 ```
 
-#### `sisyphus task current`
+#### `sisyphus-speckit task current`
 
 Show the currently active task.
 
 ```sh
-sisyphus task current
+sisyphus-speckit task current
 ```
 
-#### `sisyphus task next`
+#### `sisyphus-speckit task next`
 
 Show the next pending task.
 
 ```sh
-sisyphus task next
+sisyphus-speckit task next
 ```
 
-#### `sisyphus task show`
+#### `sisyphus-speckit task show`
 
 Display details of a specific task.
 
 ```sh
-sisyphus task show --id 1
+sisyphus-speckit task show --id 1
 ```
 
-#### `sisyphus task verify`
+#### `sisyphus-speckit task verify`
 
 Run verification checks for tasks.
 
 ```sh
 # Run bash verification commands
-sisyphus task verify bash
+sisyphus-speckit task verify bash
 
 # Manual verification status
-sisyphus task verify status
+sisyphus-speckit task verify status
 ```
 
 ### Legacy Support (`sisyphus work`)
@@ -600,8 +600,8 @@ See the `examples/` directory for complete examples:
 cat examples/simple-project.yaml
 
 # Try the examples
-sisyphus plan lint examples/simple-project.yaml
-sisyphus plan graph examples/multi-plan-dependencies.yaml --format ascii
+sisyphus-speckit plan lint examples/simple-project.yaml
+sisyphus-speckit plan graph examples/multi-plan-dependencies.yaml --format ascii
 ```
 
 ### Migration from v2.1 (ai-todolist.md)
@@ -609,7 +609,7 @@ sisyphus plan graph examples/multi-plan-dependencies.yaml --format ascii
 If you have an old Markdown-based plan, use the converter:
 
 ```bash
-sisyphus plan convert-legacy ai-todolist.md --output .sisyphus/tasks/main.yaml
+sisyphus-speckit plan convert-legacy ai-todolist.md --output .sisyphus/tasks/main.yaml
 ```
 
 See `docs/migration-v2-to-v3.md` for detailed migration guide.
@@ -692,14 +692,14 @@ work_plans:
 
 #### Validation
 
-Run `sisyphus plan lint` to validate cross-file dependencies:
+Run `sisyphus-speckit plan lint` to validate cross-file dependencies:
 
 ```bash
 # Lint all plans in directory (auto-detects external references)
-sisyphus plan lint .sisyphus/tasks/
+sisyphus-speckit plan lint .sisyphus/tasks/
 
 # Lint specific file
-sisyphus plan lint .sisyphus/tasks/frontend.yaml
+sisyphus-speckit plan lint .sisyphus/tasks/frontend.yaml
 ```
 
 PlanLinter automatically:
@@ -714,17 +714,17 @@ Visualize cross-file dependency graphs:
 
 ```bash
 # ASCII format (terminal-friendly)
-sisyphus plan graph .sisyphus/tasks/ --format ascii
+sisyphus-speckit plan graph .sisyphus/tasks/ --format ascii
 
 # Example output:
 # backend-api (backend.yaml)
 #   └─> frontend-app (frontend.yaml)
 
 # Mermaid format
-sisyphus plan graph .sisyphus/tasks/ --format mermaid
+sisyphus-speckit plan graph .sisyphus/tasks/ --format mermaid
 
 # PNG format (requires graphviz)
-sisyphus plan graph .sisyphus/tasks/ --format png --output graph.png
+sisyphus-speckit plan graph .sisyphus/tasks/ --format png --output graph.png
 ```
 
 #### Complete Example
@@ -736,10 +736,10 @@ See `examples/multi-file/` for a working example:
 cd examples/multi-file/
 
 # Validate plans
-sisyphus plan lint .
+sisyphus-speckit plan lint .
 
 # Visualize dependencies
-sisyphus plan graph . --format ascii
+sisyphus-speckit plan graph . --format ascii
 
 # Expected output:
 # backend-api
@@ -824,16 +824,16 @@ For large projects, split work into multiple interdependent plans:
 
 ```bash
 # Create foundation plan
-sisyphus plan init --destination .sisyphus/tasks/foundation.yaml
+sisyphus-speckit plan init --destination .sisyphus/tasks/foundation.yaml
 
 # Create main plan (depends on foundation)
-sisyphus plan init --destination .sisyphus/tasks/main.yaml
+sisyphus-speckit plan init --destination .sisyphus/tasks/main.yaml
 
 # Edit main.yaml to add dependency:
 # depends_on: ["plan-foundation"]
 
 # Visualize the full graph
-sisyphus plan graph .sisyphus/tasks/ --format ascii
+sisyphus-speckit plan graph .sisyphus/tasks/ --format ascii
 ```
 
 Output:
@@ -857,10 +857,10 @@ git worktree add ../sisyphus-feature feature/auth
 
 # Each worktree has independent status
 cd ../sisyphus-feature
-sisyphus task continue  # Works on feature/auth tasks
+sisyphus-speckit task continue  # Works on feature/auth tasks
 
 cd ../sisyphus
-sisyphus task continue  # Works on main branch tasks
+sisyphus-speckit task continue  # Works on main branch tasks
 ```
 
 The `.sisyphus/status.json` file tracks the current plan per worktree.
@@ -871,10 +871,10 @@ Use `--cwd` to run Sisyphus from a different directory:
 
 ```bash
 # Manage tasks in a subdirectory
-sisyphus plan lint --cwd ./temp/
+sisyphus-speckit plan lint --cwd ./temp/
 
 # Execute tasks in experimental directory
-sisyphus task continue --cwd ./experiments/ --execute claude:sonnet
+sisyphus-speckit task continue --cwd ./experiments/ --execute claude:sonnet
 ```
 
 ---

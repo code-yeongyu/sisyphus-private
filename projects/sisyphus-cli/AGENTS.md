@@ -32,8 +32,8 @@ graph TB
     CLI[cli.py<br/>Typer] --> CMD{Command Router}
 
     CMD -->|sisyphus work| WORK[work.py<br/>Work command]
-    CMD -->|sisyphus task| TASK[task.py<br/>Task navigation]
-    CMD -->|sisyphus plan| PLAN[plan.py<br/>Plan management]
+    CMD -->|sisyphus-speckit task| TASK[task.py<br/>Task navigation]
+    CMD -->|sisyphus-speckit plan| PLAN[plan.py<br/>Plan management]
 
     TASK --> TM[TaskManager<br/>DFS navigation]
     TASK --> STATUS[StatusManager<br/>Current plan]
@@ -198,23 +198,23 @@ uv run ruff format       # Format
 **Run (various modes):**
 ```bash
 # v3.0 YAML workflow
-sisyphus plan init
-sisyphus plan lint .sisyphus/tasks/
-sisyphus task continue
+sisyphus-speckit plan init
+sisyphus-speckit plan lint .sisyphus/tasks/
+sisyphus-speckit task continue
 
 # Task navigation
-sisyphus task current
-sisyphus task next
-sisyphus task show <task-id>
+sisyphus-speckit task current
+sisyphus-speckit task next
+sisyphus-speckit task show <task-id>
 
 # Verification
-sisyphus task verify bash
-sisyphus task verify status
+sisyphus-speckit task verify bash
+sisyphus-speckit task verify status
 
 # Plan visualization
-sisyphus plan graph .sisyphus/tasks/ --format ascii
-sisyphus plan graph .sisyphus/tasks/ --format mermaid
-sisyphus plan graph .sisyphus/tasks/ --format png --output graph.png
+sisyphus-speckit plan graph .sisyphus/tasks/ --format ascii
+sisyphus-speckit plan graph .sisyphus/tasks/ --format mermaid
+sisyphus-speckit plan graph .sisyphus/tasks/ --format png --output graph.png
 ```
 
 **Git Management:**
@@ -291,7 +291,7 @@ def my_fixture(): ...
 
 7. **Graph rendering requires graphviz**: PNG format needs `graphviz` library (dev dependency). ASCII/Mermaid work without.
 
-8. **Legacy converter available**: `sisyphus plan convert-legacy ai-todolist.md` migrates v2.1 Markdown → v3.0 YAML.
+8. **Legacy converter available**: `sisyphus-speckit plan convert-legacy ai-todolist.md` migrates v2.1 Markdown → v3.0 YAML.
 
 9. **No session persistence in v3.0**: Unlike v2.1 `work` command (session resume), v3.0 `task continue` does NOT persist agent session between runs. Each execution starts fresh.
 

@@ -598,7 +598,7 @@ def check_resource_conflicts(batch, task_resources):
 #### 핵심 인사이트
 
 1. **의존성 그래프 = 병렬성 지도**
-   - `sisyphus plan graph`로 시각화
+   - `sisyphus-speckit plan graph`로 시각화
    - 토폴로지 정렬로 실행 순서 결정
    - In-degree 0인 노드들 = 병렬 실행 가능
 

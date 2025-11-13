@@ -73,11 +73,11 @@ plans:
 
 ```bash
 # Lint individual files
-sisyphus plan lint backend.yaml
-sisyphus plan lint frontend.yaml
+sisyphus-speckit plan lint backend.yaml
+sisyphus-speckit plan lint frontend.yaml
 
 # Lint all plans in directory
-sisyphus plan lint .
+sisyphus-speckit plan lint .
 ```
 
 PlanLinter automatically:
@@ -90,17 +90,17 @@ PlanLinter automatically:
 
 ```bash
 # ASCII format (terminal-friendly)
-sisyphus plan graph . --format ascii
+sisyphus-speckit plan graph . --format ascii
 
 # Expected output:
 # backend-api
 #   └─> frontend-app
 
 # Mermaid format (for documentation)
-sisyphus plan graph . --format mermaid
+sisyphus-speckit plan graph . --format mermaid
 
 # PNG format (requires graphviz)
-sisyphus plan graph . --format png --output dependency-graph.png
+sisyphus-speckit plan graph . --format png --output dependency-graph.png
 ```
 
 ### Execute Tasks
@@ -112,7 +112,7 @@ cp backend.yaml frontend.yaml .sisyphus/tasks/
 cp -r .sisyphus/registry.yaml .sisyphus/
 
 # Start execution (backend runs first automatically)
-sisyphus task continue --execute claude:sonnet
+sisyphus-speckit task continue --execute claude:sonnet
 ```
 
 Sisyphus will execute plans in dependency order:

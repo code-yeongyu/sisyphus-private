@@ -399,11 +399,11 @@ Path("ai-todolist.md").write_text(markdown)
 
 ## CLI Commands
 
-### `sisyphus plan`
+### `sisyphus-speckit plan`
 
 Plan management commands.
 
-#### `sisyphus plan lint [--file FILE] [--cwd DIR]`
+#### `sisyphus-speckit plan lint [--file FILE] [--cwd DIR]`
 Validate YAML file.
 
 **Options:**
@@ -412,17 +412,17 @@ Validate YAML file.
 
 **Example:**
 ```bash
-sisyphus plan lint --file .sisyphus/tasks/main.yaml
+sisyphus-speckit plan lint --file .sisyphus/tasks/main.yaml
 ```
 
-#### `sisyphus plan overview [--rich] [--cwd DIR]`
+#### `sisyphus-speckit plan overview [--rich] [--cwd DIR]`
 Show work plan summary.
 
 **Options:**
 - `--rich`: Use Rich table format
 - `--cwd`: Working directory
 
-#### `sisyphus plan init [--path FILE] [--cwd DIR]`
+#### `sisyphus-speckit plan init [--path FILE] [--cwd DIR]`
 Initialize new plan YAML template.
 
 **Options:**
@@ -431,10 +431,10 @@ Initialize new plan YAML template.
 
 **Example:**
 ```bash
-sisyphus plan init --path .sisyphus/tasks/foundation.yaml
+sisyphus-speckit plan init --path .sisyphus/tasks/foundation.yaml
 ```
 
-#### `sisyphus plan graph [--format FORMAT] [--cwd DIR]`
+#### `sisyphus-speckit plan graph [--format FORMAT] [--cwd DIR]`
 Display plan dependency graph.
 
 **Options:**
@@ -443,10 +443,10 @@ Display plan dependency graph.
 
 **Example:**
 ```bash
-sisyphus plan graph --format mermaid
+sisyphus-speckit plan graph --format mermaid
 ```
 
-#### `sisyphus plan export YAML_PATH [--output FILE] [--cwd DIR]`
+#### `sisyphus-speckit plan export YAML_PATH [--output FILE] [--cwd DIR]`
 Export WorkPlan YAML to Markdown.
 
 **Arguments:**
@@ -458,16 +458,16 @@ Export WorkPlan YAML to Markdown.
 
 **Example:**
 ```bash
-sisyphus plan export .sisyphus/tasks/main.yaml --output ai-todolist.md
+sisyphus-speckit plan export .sisyphus/tasks/main.yaml --output ai-todolist.md
 ```
 
 ---
 
-### `sisyphus task`
+### `sisyphus-speckit task`
 
 Task execution commands.
 
-#### `sisyphus task show TASK_ID [--rich] [--cwd DIR]`
+#### `sisyphus-speckit task show TASK_ID [--rich] [--cwd DIR]`
 Display specific task details.
 
 **Arguments:**
@@ -477,21 +477,21 @@ Display specific task details.
 - `--rich`: Use Rich table format
 - `--cwd`: Working directory
 
-#### `sisyphus task current [--rich] [--cwd DIR]`
+#### `sisyphus-speckit task current [--rich] [--cwd DIR]`
 Show current in-progress task.
 
 **Options:**
 - `--rich`: Use Rich table format
 - `--cwd`: Working directory
 
-#### `sisyphus task next [--rich] [--cwd DIR]`
+#### `sisyphus-speckit task next [--rich] [--cwd DIR]`
 Show next pending task.
 
 **Options:**
 - `--rich`: Use Rich table format
 - `--cwd`: Working directory
 
-#### `sisyphus task continue [--cwd DIR]`
+#### `sisyphus-speckit task continue [--cwd DIR]`
 Resume work on current task (integrates with ExecutionLoop).
 
 **Options:**
@@ -501,11 +501,11 @@ Resume work on current task (integrates with ExecutionLoop).
 
 ---
 
-### `sisyphus task verify`
+### `sisyphus-speckit task verify`
 
 Verification commands (sequential processing).
 
-#### `sisyphus task verify bash [--evidence TEXT] [--cwd DIR]`
+#### `sisyphus-speckit task verify bash [--evidence TEXT] [--cwd DIR]`
 Execute next bash verification.
 
 **Options:**
@@ -520,10 +520,10 @@ Execute next bash verification.
 
 **Example:**
 ```bash
-sisyphus task verify bash --evidence "All tests passed"
+sisyphus-speckit task verify bash --evidence "All tests passed"
 ```
 
-#### `sisyphus task verify llm [--cwd DIR]`
+#### `sisyphus-speckit task verify llm [--cwd DIR]`
 Display next LLM verification instructions.
 
 **Options:**
@@ -534,7 +534,7 @@ Display next LLM verification instructions.
 2. Perform manual LLM review
 3. Run `task verify llm-mark` to mark complete
 
-#### `sisyphus task verify llm-mark VERIFY_ID --evidence TEXT [--cwd DIR]`
+#### `sisyphus-speckit task verify llm-mark VERIFY_ID --evidence TEXT [--cwd DIR]`
 Mark LLM verification as complete.
 
 **Arguments:**
@@ -546,16 +546,16 @@ Mark LLM verification as complete.
 
 **Example:**
 ```bash
-sisyphus task verify llm-mark verify-001 --evidence "Claude reviewed and approved"
+sisyphus-speckit task verify llm-mark verify-001 --evidence "Claude reviewed and approved"
 ```
 
-#### `sisyphus task verify manual [--cwd DIR]`
+#### `sisyphus-speckit task verify manual [--cwd DIR]`
 Display next manual verification instructions.
 
 **Options:**
 - `--cwd`: Working directory
 
-#### `sisyphus task verify manual-mark VERIFY_ID --evidence TEXT [--cwd DIR]`
+#### `sisyphus-speckit task verify manual-mark VERIFY_ID --evidence TEXT [--cwd DIR]`
 Mark manual verification as complete.
 
 **Arguments:**
@@ -565,7 +565,7 @@ Mark manual verification as complete.
 - `--evidence`: Verification evidence (required)
 - `--cwd`: Working directory
 
-#### `sisyphus task verify status [--cwd DIR]`
+#### `sisyphus-speckit task verify status [--cwd DIR]`
 Show verification progress.
 
 **Options:**

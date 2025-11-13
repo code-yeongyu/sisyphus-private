@@ -144,9 +144,11 @@ def test_init__creates_template_file(tmp_path: Path) -> None:
     assert output_file.exists()
     assert "✓ Plan template created" in result.stdout
     content = output_file.read_text()
-    assert "metadata:" in content
-    assert "user_request:" in content
-    assert "todos:" in content
+    # Verify full template content (not TODO placeholders)
+    assert "Backend API Implementation" in content
+    assert "Implement backend REST API with FastAPI" in content
+    assert "Database schema design" in content
+    assert "REST API endpoints" in content
 
 
 def test_init__with_existing_file__fails(tmp_path: Path) -> None:
@@ -189,6 +191,20 @@ def test_init__with_initial_request__populates_user_request(tmp_path: Path) -> N
     content = output_file.read_text()
     assert request_text in content
     assert "user_request:" in content
+
+
+def test_init__with_minimal_template__creates_minimal(tmp_path: Path) -> None:
+    # given
+    output_file = tmp_path / "minimal-plan.yaml"
+
+    # when
+    result = runner.invoke(plan_app, ["init", "--path", str(output_file), "--template", "minimal"])
+
+    # then
+    assert result.exit_code == 0
+    assert output_file.exists()
+    content = output_file.read_text()
+    assert "TODO:" in content
 
 
 def test_graph__with_v3_plan__displays_graph(tmp_path: Path) -> None:

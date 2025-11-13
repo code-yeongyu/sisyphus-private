@@ -98,6 +98,12 @@ def init_plan(
         "-t",
         help="Template type: 'minimal' (TODO placeholders) or 'full' (complete example)",
     ),
+    initial_request: str | None = typer.Option(
+        None,
+        "--initial-request",
+        "-r",
+        help="Initial user request to populate user_request.original field",
+    ),
     cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
     """Initialize new plan YAML template.
@@ -139,6 +145,10 @@ def init_plan(
     except Exception as e:
         console.print(f"[red]Template generation failed:[/red] {e}")
         raise typer.Exit(1)
+
+    # Populate initial request if provided
+    if initial_request:
+        doc.work_plans[0].user_request.original = initial_request
 
     # YAML 저장
     yaml = YAML()

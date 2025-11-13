@@ -1,0 +1,106 @@
+[project]
+name = "sisyphus-speckit"
+version = "0.1.0"
+description = "Plan and task specification tools for the Sisyphus multi-agent orchestration system"
+authors = [{ name = "YeonGyu-Kim", email = "public.kim.yeon.gyu@gmail.com" }]
+requires-python = ">=3.12"
+readme = "README.md"
+license = { text = "Sustainable Use License 1.0" }
+keywords = [
+    "llm",
+    "ai",
+    "agent",
+    "orchestration",
+    "plan",
+    "specification",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Typing :: Typed",
+]
+dependencies = [
+    "sisyphus-core>=0.1.0",
+    "typer>=0.15.0",
+    "rich>=13.0.0",
+]
+
+[project.scripts]
+sisyphus-speckit = "sisyphus_speckit.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/code-yeongyu/sisyphus"
+Repository = "https://github.com/code-yeongyu/sisyphus"
+Issues = "https://github.com/code-yeongyu/sisyphus/issues"
+Documentation = "https://github.com/code-yeongyu/sisyphus#readme"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["sisyphus_speckit"]
+
+[tool.pytest.ini_options]
+python_files = ["tests.py", "test_*.py", "*_tests.py", "*_test.py"]
+testpaths = ["tests"]
+addopts = """\
+    --disable-warnings \
+"""
+log_level = "ERROR"
+
+[tool.basedpyright]
+pythonVersion = "3.12"
+venvPath = "../.."
+venv = ".venv"
+typeCheckingMode = "standard"
+analyzeUnannotatedFunctions = true
+enableTypeIgnoreComments = true
+reportMissingImports = false
+reportMissingTypeStubs = false
+reportAttributeAccessIssue = "warning"
+reportGeneralTypeIssues = "error"
+reportIncompatibleMethodOverride = "warning"
+reportIncompatibleVariableOverride = "warning"
+reportAssignmentType = "error"
+reportMissingTypeArgument = "error"
+reportCallIssue = "warning"
+
+[tool.ruff]
+line-length = 119
+target-version = "py312"
+lint.select = [
+    "PLE",
+    "PLW",
+    "E",
+    "W",
+    "F",
+    "I",
+    "Q",
+    "UP",
+    "C4",
+    "PT",
+    "ANN001",
+    "ASYNC",
+]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+docstring-quotes = "double"
+multiline-quotes = "double"
+
+[tool.ruff.lint.flake8-pytest-style]
+mark-parentheses = true
+fixture-parentheses = true
+
+[dependency-groups]
+dev = [
+    "graphviz>=0.21",
+]

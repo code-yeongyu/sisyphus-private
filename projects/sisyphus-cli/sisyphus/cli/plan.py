@@ -93,7 +93,7 @@ def init_plan(
         help="Path where plan YAML will be created",
     ),
     template: str = typer.Option(
-        "minimal",
+        "full",
         "--template",
         "-t",
         help="Template type: 'minimal' (TODO placeholders) or 'full' (complete example)",

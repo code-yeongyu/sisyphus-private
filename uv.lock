@@ -8,6 +8,7 @@ members = [
     "sisyphus-ai",
     "sisyphus-cc-hooks",
     "sisyphus-core",
+    "sisyphus-speckit",
     "sisyphus-workspace",
 ]
 
@@ -941,6 +942,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "rich" },
     { name = "ruamel-yaml" },
+    { name = "sisyphus-core" },
     { name = "textual" },
     { name = "trio" },
     { name = "typer" },
@@ -962,6 +964,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.0" },
     { name = "rich", specifier = ">=13.0.0" },
     { name = "ruamel-yaml", specifier = ">=0.18" },
+    { name = "sisyphus-core", editable = "projects/sisyphus-core" },
     { name = "textual", specifier = ">=1.0.0" },
     { name = "trio", specifier = ">=0.31.0" },
     { name = "typer", specifier = ">=0.15.0" },
@@ -1038,6 +1041,31 @@ requires-dist = [
     { name = "trio", specifier = ">=0.31.0" },
     { name = "typer", specifier = ">=0.15.0" },
     { name = "uvloop", specifier = ">=0.21.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [{ name = "graphviz", specifier = ">=0.21" }]
+
+[[package]]
+name = "sisyphus-speckit"
+version = "0.1.0"
+source = { editable = "projects/sisyphus-speckit" }
+dependencies = [
+    { name = "rich" },
+    { name = "sisyphus-core" },
+    { name = "typer" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "graphviz" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "rich", specifier = ">=13.0.0" },
+    { name = "sisyphus-core", editable = "projects/sisyphus-core" },
+    { name = "typer", specifier = ">=0.15.0" },
 ]
 
 [package.metadata.requires-dev]

@@ -7,6 +7,9 @@ description = "Sisyphus monorepo workspace"
 [tool.uv.workspace]
 members = ["projects/*"]
 
+[tool.uv.sources]
+sisyphus-core = { workspace = true }
+
 [dependency-groups]
 dev = [
     "basedpyright>=1.31.6",

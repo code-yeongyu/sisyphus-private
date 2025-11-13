@@ -2,7 +2,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from sisyphus_core.cli import app
+from sisyphus_speckit.cli import app
 
 runner = CliRunner()
 

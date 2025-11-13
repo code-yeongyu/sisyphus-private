@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from sisyphus.core.exporters.markdown import MarkdownExporter
-from sisyphus.core.plans.models import (
+from sisyphus_core.core.exporters.markdown import MarkdownExporter
+from sisyphus_core.core.plans.models import (
     Background,
     Metadata,
     Objectives,

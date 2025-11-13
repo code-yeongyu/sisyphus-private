@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from sisyphus.core.status.manager import StatusManager
+from sisyphus_core.core.status.manager import StatusManager
 
 pytestmark = [pytest.mark.anyio]
 

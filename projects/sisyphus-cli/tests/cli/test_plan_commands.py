@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from sisyphus.cli.plan import plan_app
+from sisyphus_core.cli.plan import plan_app
 
 pytestmark = [
     pytest.mark.anyio,

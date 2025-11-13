@@ -69,7 +69,7 @@ sisyphus/
 **v3.0 Pydantic Models**
 
 ```python
-from sisyphus.core.plans.models import (
+from sisyphus_core.core.plans.models import (
     PlanDocument,
     WorkPlan,
     Todo,
@@ -138,7 +138,7 @@ ReferenceItem(inline="Use Python 3.12+ with anyio for async support")
 **Multi-Plan Loading and Version Detection**
 
 ```python
-from sisyphus.core.plans.loader import load_plan, load_multiple_plans
+from sisyphus_core.core.plans.loader import load_plan, load_multiple_plans
 ```
 
 #### `async load_plan(path: Path) -> PlanDocument`
@@ -158,7 +158,7 @@ Load and validate a single v3.0 plan file.
 **Example:**
 ```python
 from pathlib import Path
-from sisyphus.core.plans.loader import load_plan
+from sisyphus_core.core.plans.loader import load_plan
 
 plan_doc = await load_plan(Path(".sisyphus/tasks/main.yaml"))
 print(f"Loaded {len(plan_doc.work_plans)} plan(s)")
@@ -180,7 +180,7 @@ Discover and load all plans in `.sisyphus/tasks/`.
 **Status File and Worktree Management**
 
 ```python
-from sisyphus.core.status.manager import StatusManager, StatusFile, CurrentPlan
+from sisyphus_core.core.status.manager import StatusManager, StatusFile, CurrentPlan
 ```
 
 #### `StatusManager`
@@ -224,7 +224,7 @@ Detect current git worktree with 60s cache.
 **Example:**
 ```python
 from pathlib import Path
-from sisyphus.core.status.manager import StatusManager
+from sisyphus_core.core.status.manager import StatusManager
 
 manager = StatusManager(Path(".sisyphus/status.json"))
 
@@ -247,7 +247,7 @@ await manager.set_current(
 **Dependency Graph Operations**
 
 ```python
-from sisyphus.core.graph.dependencies import (
+from sisyphus_core.core.graph.dependencies import (
     build_plan_graph,
     detect_cycles,
     topo_sort,
@@ -316,7 +316,7 @@ Find all YAML files in `.sisyphus/tasks/`.
 **Graph Visualization**
 
 ```python
-from sisyphus.core.graph.renderer import AsciiRenderer, MermaidRenderer, PngRenderer
+from sisyphus_core.core.graph.renderer import AsciiRenderer, MermaidRenderer, PngRenderer
 ```
 
 #### `AsciiRenderer`
@@ -368,7 +368,7 @@ Path("graph.png").write_bytes(png_bytes)
 **YAML to Markdown Conversion**
 
 ```python
-from sisyphus.core.exporters.markdown import MarkdownExporter
+from sisyphus_core.core.exporters.markdown import MarkdownExporter
 ```
 
 #### `MarkdownExporter.export(plan_document: PlanDocument) -> str`
@@ -387,8 +387,8 @@ Convert v3.0 YAML to ai-todolist.md format.
 
 **Example:**
 ```python
-from sisyphus.core.plans.loader import load_plan
-from sisyphus.core.exporters.markdown import MarkdownExporter
+from sisyphus_core.core.plans.loader import load_plan
+from sisyphus_core.core.exporters.markdown import MarkdownExporter
 
 plan_doc = await load_plan(Path("plan.yaml"))
 markdown = MarkdownExporter.export(plan_doc)
@@ -685,8 +685,8 @@ work_plans:
 ```python
 import anyio
 from pathlib import Path
-from sisyphus.core.plans.loader import load_plan
-from sisyphus.core.graph.dependencies import build_plan_graph, detect_cycles
+from sisyphus_core.core.plans.loader import load_plan
+from sisyphus_core.core.graph.dependencies import build_plan_graph, detect_cycles
 
 async def main():
     # Load plan
@@ -711,9 +711,9 @@ anyio.run(main)
 ```python
 import anyio
 from pathlib import Path
-from sisyphus.core.plans.loader import load_multiple_plans
-from sisyphus.core.graph.dependencies import build_plan_graph
-from sisyphus.core.graph.renderer import AsciiRenderer
+from sisyphus_core.core.plans.loader import load_multiple_plans
+from sisyphus_core.core.graph.dependencies import build_plan_graph
+from sisyphus_core.core.graph.renderer import AsciiRenderer
 
 async def main():
     # Load all plans
@@ -732,7 +732,7 @@ anyio.run(main)
 ```python
 import anyio
 from pathlib import Path
-from sisyphus.core.status.manager import StatusManager
+from sisyphus_core.core.status.manager import StatusManager
 
 async def main():
     manager = StatusManager(Path(".sisyphus/status.json"))
@@ -757,8 +757,8 @@ anyio.run(main)
 ```python
 import anyio
 from pathlib import Path
-from sisyphus.core.plans.loader import load_plan
-from sisyphus.core.exporters.markdown import MarkdownExporter
+from sisyphus_core.core.plans.loader import load_plan
+from sisyphus_core.core.exporters.markdown import MarkdownExporter
 
 async def main():
     plan_doc = await load_plan(Path(".sisyphus/tasks/main.yaml"))

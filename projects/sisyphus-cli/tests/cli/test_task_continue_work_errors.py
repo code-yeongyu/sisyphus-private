@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from sisyphus.core.plans.models import (
+from sisyphus_core.core.plans.models import (
     Background,
     BashVerification,
     ExecutionStatus,
@@ -24,7 +24,7 @@ from sisyphus.core.plans.models import (
     WorkMode,
     WorkPlan,
 )
-from sisyphus.core.task_manager import TaskManager
+from sisyphus_core.core.task_manager import TaskManager
 
 
 @pytest.mark.anyio()

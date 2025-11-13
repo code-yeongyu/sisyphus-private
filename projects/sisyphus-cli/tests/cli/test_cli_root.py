@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from typer.testing import CliRunner
 
-from sisyphus.cli import app
+from sisyphus_core.cli import app
 
 pytestmark = [pytest.mark.anyio]
 

@@ -250,7 +250,7 @@ from __future__ import annotations  # Always first
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from sisyphus.core.plans.models import WorkPlan  # Avoid circular imports
+    from sisyphus_core.core.plans.models import WorkPlan  # Avoid circular imports
 ```
 
 **Test structure:**

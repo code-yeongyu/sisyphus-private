@@ -2,7 +2,7 @@
 
 import pytest
 
-from sisyphus.core.plans.models import (
+from sisyphus_core.core.plans.models import (
     Background,
     Objectives,
     RequiredBackground,

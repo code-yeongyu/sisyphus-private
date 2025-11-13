@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from sisyphus.core.plans.models import ReferenceItem
+from sisyphus_core.core.plans.models import ReferenceItem
 
 pytestmark = [pytest.mark.anyio]
 

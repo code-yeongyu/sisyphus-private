@@ -68,7 +68,7 @@ Instead of making TaskValidator responsible for status.json (violates single res
 
 **Before:**
 ```python
-from sisyphus.core.loop import ExecutionLoop
+from sisyphus_core.core.loop import ExecutionLoop
 
 loop = ExecutionLoop(
     execute_agent=agent,
@@ -80,8 +80,8 @@ loop = ExecutionLoop(
 
 **After:**
 ```python
-from sisyphus.core.loop import ExecutionLoop
-from sisyphus.core.status.manager import StatusManager
+from sisyphus_core.core.loop import ExecutionLoop
+from sisyphus_core.core.status.manager import StatusManager
 
 status_manager = StatusManager(worktree_root / ".sisyphus" / "status.json")
 
@@ -273,7 +273,7 @@ await loop.run()
 
 **New code (recommended):**
 ```python
-from sisyphus.core.status.manager import StatusManager
+from sisyphus_core.core.status.manager import StatusManager
 
 # Create StatusManager
 worktree_root = StatusManager.detect_worktree(Path.cwd())
@@ -296,7 +296,7 @@ await loop.run()
 Use `MockStatusManager` from `sisyphus.core.tests.test_loop`:
 
 ```python
-from sisyphus.core.tests.test_loop import MockStatusManager
+from sisyphus_core.core.tests.test_loop import MockStatusManager
 
 # In your test
 loop = ExecutionLoop(

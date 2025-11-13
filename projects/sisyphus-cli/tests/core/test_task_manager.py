@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from sisyphus.core.plans.models import (
+from sisyphus_core.core.plans.models import (
     Background,
     BashVerification,
     LLMJudgeBy,
@@ -19,7 +19,7 @@ from sisyphus.core.plans.models import (
     Workflow,
     WorkPlan,
 )
-from sisyphus.core.task_manager import TaskManager
+from sisyphus_core.core.task_manager import TaskManager
 
 pytestmark = [pytest.mark.anyio]
 

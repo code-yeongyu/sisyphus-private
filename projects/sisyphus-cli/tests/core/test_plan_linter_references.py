@@ -1,7 +1,7 @@
 import pytest
 
-from sisyphus.core.plan_linter import PlanLinter
-from sisyphus.core.plans.models import (
+from sisyphus_core.core.plan_linter import PlanLinter
+from sisyphus_core.core.plans.models import (
     Background,
     Metadata,
     Objectives,

@@ -2,13 +2,13 @@ from pathlib import Path
 
 import pytest
 
-from sisyphus.core.graph.dependencies import (
+from sisyphus_core.core.graph.dependencies import (
     build_plan_graph,
     detect_cycles,
     discover_plan_files,
     topo_sort,
 )
-from sisyphus.core.plans.models import (
+from sisyphus_core.core.plans.models import (
     Background,
     Objectives,
     RequiredBackground,

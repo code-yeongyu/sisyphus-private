@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 from ruamel.yaml import YAML
 
-from sisyphus.core.plans.loader import load_plan, save_plan
-from sisyphus.core.plans.models import (
+from sisyphus_core.core.plans.loader import load_plan, save_plan
+from sisyphus_core.core.plans.models import (
     Background,
     Metadata,
     Objectives,
@@ -21,7 +21,7 @@ from sisyphus.core.plans.models import (
     Workflow,
     WorkPlan,
 )
-from sisyphus.core.task_manager import TaskManager
+from sisyphus_core.core.task_manager import TaskManager
 
 pytestmark = [pytest.mark.anyio]
 

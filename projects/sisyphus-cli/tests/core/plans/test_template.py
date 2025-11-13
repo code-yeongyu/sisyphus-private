@@ -8,8 +8,8 @@ from unittest.mock import patch
 
 import pytest
 
-from sisyphus.core.plans.models import PlanDocument
-from sisyphus.core.plans.template import PlanTemplateGenerator
+from sisyphus_core.core.plans.models import PlanDocument
+from sisyphus_core.core.plans.template import PlanTemplateGenerator
 
 pytestmark = [pytest.mark.anyio]
 

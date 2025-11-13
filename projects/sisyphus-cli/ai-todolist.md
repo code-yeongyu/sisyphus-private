@@ -199,12 +199,12 @@ status.json (.sisyphus/status.json):
 **7. `sisyphus/utils/formatting.py` (수정 필요)**
 - **역할**: 출력 포맷팅 유틸리티
 - **문제**: v2.1 plan_types import 사용
-- **검색 키워드**: `from sisyphus.utils.plan_types import`
+- **검색 키워드**: `from sisyphus_core.utils.plan_types import`
 
 **8. `sisyphus/core/plan_linter.py` (수정 필요)**
 - **역할**: YAML 플랜 검증
 - **문제**: v2.1 plan_types import 사용
-- **검색 키워드**: `from sisyphus.utils.plan_types import`
+- **검색 키워드**: `from sisyphus_core.utils.plan_types import`
 
 ### 참조 파일 (패턴 이해용)
 
@@ -365,7 +365,7 @@ Task 5 (문서 업데이트 - 4 완료 필요)
 # 변환 후 로드 테스트
 uv run python -c "
 import anyio
-from sisyphus.core.plans.loader import load_plan
+from sisyphus_core.core.plans.loader import load_plan
 from pathlib import Path
 
 async def test():
@@ -755,13 +755,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
       **검색 명령어**:
       ```bash
       # plan_types.py 사용처
-      uv run rg "from sisyphus.utils.plan_types import" --type py
+      uv run rg "from sisyphus_core.utils.plan_types import" --type py
 
       # plan_loader.py 사용처
-      uv run rg "from sisyphus.core.plan_loader import" --type py
+      uv run rg "from sisyphus_core.core.plan_loader import" --type py
 
       # plan_navigator.py 사용처
-      uv run rg "from sisyphus.core.plan_navigator import" --type py
+      uv run rg "from sisyphus_core.core.plan_navigator import" --type py
       ```
 
       **예상 결과**: `cli/task.py`, `cli/plan.py`, `formatting.py`, `plan_linter.py`, 테스트 파일들
@@ -785,14 +785,14 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
       **각 파일 수정 패턴**:
       ```python
       # 현재 (제거)
-      from sisyphus.core.plan_loader import PlanLoader
-      from sisyphus.core.plan_navigator import PlanNavigator
-      from sisyphus.utils.plan_types import Todo, TodoStatus
+      from sisyphus_core.core.plan_loader import PlanLoader
+      from sisyphus_core.core.plan_navigator import PlanNavigator
+      from sisyphus_core.utils.plan_types import Todo, TodoStatus
 
       # 변경 후 (v3.0 사용)
-      from sisyphus.core.plans.loader import load_plan
-      from sisyphus.core.plans.navigator import PlanNavigator  # v3.0 재작성 버전
-      from sisyphus.core.plans.models import Todo, TodoStatus
+      from sisyphus_core.core.plans.loader import load_plan
+      from sisyphus_core.core.plans.navigator import PlanNavigator  # v3.0 재작성 버전
+      from sisyphus_core.core.plans.models import Todo, TodoStatus
       ```
 
       **formatting.py 재작성 상세**:
@@ -964,7 +964,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
       from pathlib import Path
 
-      from sisyphus.core.status.manager import StatusManager
+      from sisyphus_core.core.status.manager import StatusManager
 
 
       async def detect_plan_path(working_dir: Path) -> Path:
@@ -1188,7 +1188,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
       **검색 명령어**:
       ```bash
       # plan_types 사용 테스트
-      uv run rg "from sisyphus.utils.plan_types" tests/
+      uv run rg "from sisyphus_core.utils.plan_types" tests/
 
       # PlanLoader 사용 테스트
       uv run rg "PlanLoader" tests/
@@ -1281,7 +1281,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
       ```
 
    - [ ] **작업 완료 검증 체크리스트**
-      - [ ] `tests/` 디렉토리에 v2.1 import가 0개인가? (`rg "from sisyphus.utils.plan_types" tests/`)
+      - [ ] `tests/` 디렉토리에 v2.1 import가 0개인가? (`rg "from sisyphus_core.utils.plan_types" tests/`)
       - [ ] v2.1 전용 테스트 파일이 삭제되었는가?
         - [ ] `tests/utils/test_plan_types.py` 삭제됨?
         - [ ] `tests/core/test_plan_loader.py` 삭제됨?
@@ -1496,7 +1496,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
      # 로드 테스트
      python -c "
      import anyio
-     from sisyphus.core.plans.loader import load_plan
+     from sisyphus_core.core.plans.loader import load_plan
      from pathlib import Path
      plan = anyio.run(load_plan, Path('.sisyphus/tasks/test.yaml'))
      assert plan.work_plans[0].user_request.original == 'Test feature'
@@ -1507,8 +1507,8 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
    - [ ] PlanNavigator v3.0이 정상 동작
      ```bash
      python -c "
-     from sisyphus.core.plans.navigator import PlanNavigator
-     from sisyphus.core.plans.models import WorkPlan, Todo, TodoStatus
+     from sisyphus_core.core.plans.navigator import PlanNavigator
+     from sisyphus_core.core.plans.models import WorkPlan, Todo, TodoStatus
 
      work_plan = WorkPlan(
          id='test',

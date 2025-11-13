@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from sisyphus.core.plans.models import (
+from sisyphus_core.core.plans.models import (
     Background,
     Objectives,
     ReferenceItem,
@@ -14,7 +14,7 @@ from sisyphus.core.plans.models import (
     Workflow,
     WorkPlan,
 )
-from sisyphus.core.plans.references import ReferenceResolver
+from sisyphus_core.core.plans.references import ReferenceResolver
 
 pytestmark = [pytest.mark.anyio]
 

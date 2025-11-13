@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from sisyphus.core.plans.loader import load_multiple_plans, resolve_current_plan_from_status
-from sisyphus.core.plans.models import PlanDocument
+from sisyphus_core.core.plans.loader import load_multiple_plans, resolve_current_plan_from_status
+from sisyphus_core.core.plans.models import PlanDocument
 
 pytestmark = [pytest.mark.anyio]
 

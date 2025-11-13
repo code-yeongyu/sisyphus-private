@@ -14,10 +14,10 @@ from pathlib import Path
 import pytest
 import ruamel.yaml
 
-from sisyphus.core.graph.dependencies import build_plan_graph, topo_sort
-from sisyphus.core.plan_linter import PlanLinter
-from sisyphus.core.plans.loader import load_plan
-from sisyphus.core.plans.models import (
+from sisyphus_core.core.graph.dependencies import build_plan_graph, topo_sort
+from sisyphus_core.core.plan_linter import PlanLinter
+from sisyphus_core.core.plans.loader import load_plan
+from sisyphus_core.core.plans.models import (
     Background,
     Metadata,
     Objectives,

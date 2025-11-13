@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 import ruamel.yaml
 
-from sisyphus.core.plans.loader import load_plan
-from sisyphus.core.plans.models import (
+from sisyphus_core.core.plans.loader import load_plan
+from sisyphus_core.core.plans.models import (
     Background,
     Metadata,
     Objectives,

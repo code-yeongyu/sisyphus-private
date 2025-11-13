@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from importlib.resources import files
 from pathlib import Path
 
 from ruamel.yaml import YAML
@@ -25,8 +26,20 @@ class PlanTemplateGenerator:
 
     @staticmethod
     def _get_reference_example() -> Path:
-        """Get path to example-work-plan.yaml reference."""
-        return Path(__file__).parent.parent.parent.parent / "examples/multi-file/backend.yaml"
+        """Get path to example backend.yaml reference.
+
+        Uses importlib.resources to locate the file within the sisyphus package.
+        """
+        try:
+            examples_dir = files("sisyphus") / "examples" / "multi-file"
+            backend_yaml = examples_dir / "backend.yaml"
+            path = Path(str(backend_yaml))
+            if path.exists():
+                return path
+        except Exception:
+            pass
+
+        raise FileNotFoundError("Example file not found: sisyphus/examples/multi-file/backend.yaml")
 
     @staticmethod
     def full_example() -> PlanDocument:
@@ -40,14 +53,12 @@ class PlanTemplateGenerator:
         yaml.preserve_quotes = True
 
         example_path = PlanTemplateGenerator._get_reference_example()
-        if not example_path.exists():
-            raise FileNotFoundError(
-                f"Example file not found: {example_path}\n"
-                f"Expected at: .github/workflows/.claude.agent/skills/plan-writer/references/"
-            )
 
-        with example_path.open("r", encoding="utf-8") as f:
-            data = yaml.load(f)
+        try:
+            with example_path.open("r", encoding="utf-8") as f:
+                data = yaml.load(f)
+        except FileNotFoundError as e:
+            raise FileNotFoundError(f"Example file not found: {example_path}") from e
 
         # Update timestamps to current time
         now = datetime.now(UTC).isoformat()

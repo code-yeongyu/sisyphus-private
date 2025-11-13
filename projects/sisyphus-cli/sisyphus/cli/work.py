@@ -10,24 +10,28 @@ from typing import TYPE_CHECKING
 import anyio
 import typer
 from rich.console import Console
-
-from sisyphus.core.loop import ExecutionLoop
-from sisyphus.core.plan_linter import LintError, PlanLinter
-from sisyphus.core.plans.loader import load_plan
-from sisyphus.core.plans.models import TodoStatus
-from sisyphus.core.session import SessionStore
-from sisyphus.core.status.manager import StatusManager
-from sisyphus.core.task_validator import YamlTaskValidator
-from sisyphus.ui.base import create_ui
-from sisyphus.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
-from sisyphus.utils.cli_helpers import ThemeOption, create_agent, resolve_binary, resolve_theme, validate_url
-from sisyphus.utils.git import detect_base_branch, find_commits_with_files, generate_rebase_guide, is_on_main_branch
-from sisyphus.utils.ignore import add_patterns_to_file
-from sisyphus.utils.logging import LoggerFactory
+from sisyphus_core.core.loop import ExecutionLoop
+from sisyphus_core.core.plan_linter import LintError, PlanLinter
+from sisyphus_core.core.plans.loader import load_plan
+from sisyphus_core.core.plans.models import TodoStatus
+from sisyphus_core.core.session import SessionStore
+from sisyphus_core.core.status.manager import StatusManager
+from sisyphus_core.core.task_validator import YamlTaskValidator
+from sisyphus_core.ui.base import create_ui
+from sisyphus_core.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
+from sisyphus_core.utils.cli_helpers import ThemeOption, create_agent, resolve_binary, resolve_theme, validate_url
+from sisyphus_core.utils.git import (
+    detect_base_branch,
+    find_commits_with_files,
+    generate_rebase_guide,
+    is_on_main_branch,
+)
+from sisyphus_core.utils.ignore import add_patterns_to_file
+from sisyphus_core.utils.logging import LoggerFactory
 
 if TYPE_CHECKING:
-    from sisyphus.agents.base import Agent
-    from sisyphus.ui.base import UIProtocol
+    from sisyphus_core.agents.base import Agent
+    from sisyphus_core.ui.base import UIProtocol
 
 work_app = typer.Typer(name="work", help="Work commands", no_args_is_help=False)
 console = Console()

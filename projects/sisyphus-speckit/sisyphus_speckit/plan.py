@@ -8,15 +8,14 @@ import typer
 from pydantic import ValidationError
 from rich.console import Console
 from ruamel.yaml import YAML, YAMLError
-
-from sisyphus.cli.common import resolve_cwd
-from sisyphus.core.exporters.markdown import MarkdownExporter
-from sisyphus.core.graph.dependencies import build_plan_graph, detect_cycles, discover_plan_files
-from sisyphus.core.graph.renderer import AsciiRenderer, MermaidRenderer
-from sisyphus.core.plan_linter import LintError, PlanLinter
-from sisyphus.core.plans.loader import load_plan
-from sisyphus.core.plans.models import PlanDocument
-from sisyphus.core.plans.template import PlanTemplateGenerator
+from sisyphus_core.core.exporters.markdown import MarkdownExporter
+from sisyphus_core.core.graph.dependencies import build_plan_graph, detect_cycles, discover_plan_files
+from sisyphus_core.core.graph.renderer import AsciiRenderer, MermaidRenderer
+from sisyphus_core.core.plan_linter import LintError, PlanLinter
+from sisyphus_core.core.plans.loader import load_plan
+from sisyphus_core.core.plans.models import PlanDocument
+from sisyphus_core.core.plans.template import PlanTemplateGenerator
+from sisyphus_core.utils.cli_helpers import resolve_cwd
 
 plan_app = typer.Typer(name="plan", help="Plan management commands")
 console = Console()

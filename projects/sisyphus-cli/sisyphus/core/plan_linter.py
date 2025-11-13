@@ -1523,11 +1523,4 @@ class PlanLinter:
             ref_errors = ReferenceResolver.validate_references(work_plan)
             errors.extend(ref_errors)
 
-            for ref_item in work_plan.references:
-                if ref_item.inline and len(ref_item.inline) > 500:
-                    errors.append(
-                        f"WorkPlan '{work_plan.name}': inline reference too long "
-                        f"({len(ref_item.inline)} chars, recommend < 500)"
-                    )
-
         return errors

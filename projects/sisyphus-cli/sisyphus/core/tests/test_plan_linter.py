@@ -951,51 +951,6 @@ async def test_validate_all_with_cycle_errors__when_circular_dependency__returns
     assert any("Circular dependency" in e.message for e in errors)
 
 
-async def test_validate_all_with_reference_errors__when_inline_too_long__returns_reference_error() -> None:
-    # given
-    linter = PlanLinter({})
-    long_inline = "x" * 600
-    data = {
-        "version": "3.0",
-        "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
-        "work_plans": [
-            {
-                "id": "plan-1",
-                "name": "Plan with long inline reference",
-                "depends_on": [],
-                "user_request": {"original": "Test", "created_at": "2025-01-01", "additional": []},
-                "objectives": {"core": "Test", "detailed": []},
-                "background": {
-                    "current_situation": "A",
-                    "reason_for_change": "B",
-                    "changes_to_make": "C",
-                },
-                "required_background": {"description": "Test", "file_structure": None, "references": []},
-                "workflow": {"dependency_diagram": "Test", "critical_path": []},
-                "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
-                "final_verification": [],
-                "todos": [
-                    {"id": "1", "title": "Test", "status": "pending", "references": [], "verification_spec": []}
-                ],
-                "references": [{"id": "long-ref", "inline": long_inline}],
-                "execution": {"started": False, "completed": False, "started_at": None, "completed_at": None},
-                "work_mode": {"parallel_requested": False, "current_task_id": None},
-                "current_work": "",
-            }
-        ],
-    }
-    plan_doc = PlanDocument(**data)  # pyright: ignore[reportArgumentType]
-    plan_path = Path("/tmp/test.yaml")
-
-    # when
-    errors = linter.validate_all(plan_doc, plan_path)
-
-    # then
-    assert len(errors) > 0
-    assert any(e.category == "reference" for e in errors)
-    assert any("inline reference too long" in e.message for e in errors)
-
-
 async def test_validate_all_returns_list_of_lint_errors__when_called__returns_correct_type() -> None:
     # given
     linter = PlanLinter({})

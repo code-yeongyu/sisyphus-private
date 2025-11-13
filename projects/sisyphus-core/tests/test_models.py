@@ -85,6 +85,8 @@ async def test_verification_item__if_valid_bash__creates_successfully() -> None:
         "id": "v1",
         "title": "Test verification",
         "description": "Run tests",
+        "orchestrator_manually_verified": False,
+        "manual_verification_evidence": "",
         "bash": [{"execute": "pytest", "expected_exit_code": 0}],
     }
 

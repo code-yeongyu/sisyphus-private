@@ -481,34 +481,53 @@ def continue_work(
                 console.print(f"[yellow]❌ 하위 작업 미완료: {completed}/{total} 완료[/yellow]")
                 console.print("[dim]   → 모든 하위 작업을 완료한 후 다시 시도하세요[/dim]\n")
 
-            # 2. 검증 완료 체크
-            if not report.all_verifications_completed:
-                verified = report.verification_summary["completed"]
-                total_verifications = report.verification_summary["total"]
-                console.print(f"[yellow]❌ 검증 미완료: {verified}/{total_verifications} 완료[/yellow]")
-                console.print("[dim]   → 다음 명령어로 검증을 진행하세요:[/dim]")
-                console.print("[cyan]   • sisyphus task verify status[/cyan] - 검증 상태 확인")
-                console.print("[cyan]   • sisyphus task verify bash[/cyan] - bash 자동 검증 실행")
-                console.print("[cyan]   • sisyphus task verify manual[/cyan] - 수동 검증 시작\n")
+            if current_task.verification_spec:
+                console.print("[bold yellow]📋 검증 순서 (반드시 순차적으로 진행):[/bold yellow]")
+                console.print("  [cyan]1단계:[/cyan] 수동 검증 (Manual Evidence) - 100자 이상 증거 필수")
+                console.print("  [cyan]2단계:[/cyan] Bash 자동 검증")
+                console.print("  [cyan]3단계:[/cyan] LLM Judge 검증\n")
 
-            # 3. 수동 검증(Orchestrator) 완료 체크
-            if not report.all_manual_verifications_completed:
-                manual_verified = report.manual_verification_summary["completed"]
-                total_verifications = report.manual_verification_summary["total"]
-                console.print(
-                    f"[yellow]❌ Orchestrator 수동 검증 미완료: {manual_verified}/{total_verifications} 완료[/yellow]"
-                )
-                console.print("[dim]   → Orchestrator가 직접 검증하고 증거를 남겨야 합니다:[/dim]")
-                console.print("[cyan]   • sisyphus task verify status[/cyan] - 검증 상태 확인")
-                console.print(
-                    "[cyan]   • sisyphus task verify manual-mark <verify-id> --evidence '증거 100자 이상'[/cyan]"
-                )
-                console.print("[dim]   → 검증 실패 시 sisyphus-executor를 다시 호출하여 수정하세요[/dim]\n")
+                for verify_item in current_task.verification_spec:
+                    if not verify_item.verified:
+                        if (
+                            not verify_item.orchestrator_manually_verified
+                            or not verify_item.manual_verification_evidence
+                        ):
+                            console.print(f"[red]❌ [{verify_item.id}] {verify_item.title}[/red]")
+                            console.print(
+                                f"[yellow]   → 1단계: 수동 검증 미완료[/yellow] "
+                                f"(orchestrator_manually_verified={verify_item.orchestrator_manually_verified}, "
+                                f"evidence={'있음' if verify_item.manual_verification_evidence else '없음'})"
+                            )
+                            console.print(
+                                f"[cyan]   sisyphus task verify manual-mark {verify_item.id} "
+                                f"--evidence '<상세한 검증 증거 100자 이상>'[/cyan]\n"
+                            )
+                            continue
 
-            # 전체 검증 상태 표시
-            if not report.all_verifications_completed:
-                _display_verification_status_table(work_plan, task_manager, show_current_task=True)
-                _display_verification_guidance(current_task)
+                        if verify_item.bash:
+                            console.print(f"[yellow]⚠️  [{verify_item.id}] {verify_item.title}[/yellow]")
+                            console.print("[green]   ✓ 1단계: 수동 검증 완료[/green]")
+                            console.print("[yellow]   → 2단계: Bash 자동 검증 미완료[/yellow]")
+                            console.print("[cyan]   sisyphus task verify bash[/cyan]\n")
+                            continue
+
+                        if verify_item.llm_judge:
+                            console.print(f"[yellow]⚠️  [{verify_item.id}] {verify_item.title}[/yellow]")
+                            console.print("[green]   ✓ 1단계: 수동 검증 완료[/green]")
+                            if verify_item.bash:
+                                console.print("[green]   ✓ 2단계: Bash 자동 검증 완료[/green]")
+                            console.print("[yellow]   → 3단계: LLM Judge 검증 미완료[/yellow]")
+                            console.print("[cyan]   sisyphus task verify llm[/cyan]")
+                            console.print(
+                                f"[cyan]   sisyphus task verify llm-mark {verify_item.id} "
+                                f"--evidence '<증거 설명>'[/cyan]\n"
+                            )
+                            continue
+
+            if not report.all_verifications_completed or not report.all_manual_verifications_completed:
+                console.print("\n[bold cyan]━━━ 전체 검증 상태 ━━━[/bold cyan]")
+                _display_verification_status_table(work_plan, task_manager, show_current_task=False)
 
             raise typer.Exit(1)
 

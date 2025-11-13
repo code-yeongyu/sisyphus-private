@@ -185,7 +185,7 @@ async def test_continue_work__if_all_verifications_incomplete__report_shows_coun
     assert report.verification_summary["completed"] == 0
     assert report.verification_summary["total"] == 2
     assert report.manual_verification_summary["completed"] == 0
-    assert report.manual_verification_summary["total"] == 1
+    assert report.manual_verification_summary["total"] == 2
 
 
 @pytest.mark.anyio()
@@ -273,6 +273,6 @@ async def test_continue_work__if_mixed_state__report_shows_breakdown(
     # Then - Verification breakdown
     assert report.verification_summary["completed"] == 1, "Should have 1 verified"
     assert report.verification_summary["total"] == 2, "Should have 2 total"
-    assert report.manual_verification_summary["completed"] == 0, "Should have 0 manual complete"
-    assert report.manual_verification_summary["total"] == 1, "Should have 1 total manual"
+    assert report.manual_verification_summary["completed"] == 1, "Should have 1 manual complete"
+    assert report.manual_verification_summary["total"] == 2, "Should have 2 total manual"
     assert report.can_complete is False, "Should not complete with mixed state"

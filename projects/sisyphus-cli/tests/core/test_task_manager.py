@@ -830,7 +830,7 @@ async def test_check_task_completion__if_mixed_verification_types_with_manual_in
     assert report.all_verifications_completed is True
     assert report.all_manual_verifications_completed is False
     assert report.manual_verification_summary["completed"] == 0
-    assert report.manual_verification_summary["total"] == 1
+    assert report.manual_verification_summary["total"] == 2
     assert report.can_complete is False
 
 

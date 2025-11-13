@@ -44,8 +44,8 @@ sisyphus/
 uv pip install -e projects/sisyphus-cli/
 
 # Create YAML plan → Execute tasks
-sisyphus plan init .sisyphus/tasks/my-project.yaml
-sisyphus task continue
+sisyphus-speckit plan init .sisyphus/tasks/my-project.yaml
+sisyphus-speckit task continue
 
 # Test/Lint all
 uv run pytest

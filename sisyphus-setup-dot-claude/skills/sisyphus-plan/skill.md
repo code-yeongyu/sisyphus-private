@@ -15,14 +15,14 @@ Before starting any plan creation work, use the TodoWrite tool to register all u
 Use TodoWrite to create todos for the following:
 1. Analyze user request and decide: single plan vs multiple plans (CRITICAL FIRST DECISION)
 2. Present decomposition decision to user and get confirmation
-3. Initialize YAML file(s) with sisyphus plan init (N times based on decision)
+3. Initialize YAML file(s) with sisyphus-speckit plan init (N times based on decision)
 4. Capture user request in YAML file(s)
 5. Clarify and refine user requirements (5 essential questions)
 6. Gather implementation context via massive parallel information gathering
 7. Complete YAML work plan(s)
 8. Request sisyphus-plan-reviewer verification (MANDATORY)
 9. Incorporate reviewer feedback and iterate until "OKAY"
-10. Run sisyphus plan lint to validate YAML schema (MANDATORY)
+10. Run sisyphus-speckit plan lint to validate YAML schema (MANDATORY)
 11. Fix any linter errors and re-lint until PASSED
 
 Mark each step as 'pending' initially, then update to 'in_progress' and 'completed' as you work through them.
@@ -33,7 +33,7 @@ Mark each step as 'pending' initially, then update to 'in_progress' and 'complet
 Always init the plan file before starting the plan creation work.
 
 ```sh
-sisyphus plan init --template full --path .sisyphus/tasks/{name}.yaml
+sisyphus-speckit plan init --template full --path .sisyphus/tasks/{name}.yaml
 ```
 
 And then write down the user's initial request in the plan file - mandatory. the very first thing.
@@ -944,14 +944,14 @@ Before starting any plan creation work, use the TodoWrite tool to register all u
 Use TodoWrite to create todos for the following:
 1. Analyze user request and decide: single plan vs multiple plans (CRITICAL FIRST DECISION)
 2. Present decomposition decision to user and get confirmation
-3. Initialize YAML file(s) with sisyphus plan init (N times based on decision)
+3. Initialize YAML file(s) with sisyphus-speckit plan init (N times based on decision)
 4. Capture user request in YAML file(s)
 5. Clarify and refine user requirements (5 essential questions)
 6. Gather implementation context via massive parallel information gathering
 7. Complete YAML work plan(s)
 8. Request sisyphus-plan-reviewer verification (MANDATORY)
 9. Incorporate reviewer feedback and iterate until "OKAY"
-10. Run sisyphus plan lint to validate YAML schema (MANDATORY)
+10. Run sisyphus-speckit plan lint to validate YAML schema (MANDATORY)
 11. Fix any linter errors and re-lint until PASSED
 
 Mark each step as 'pending' initially, then update to 'in_progress' and 'completed' as you work through them.
@@ -1122,15 +1122,15 @@ Based on Phase 0.5 decomposition decision, initialize the appropriate number of 
    - For multiple plans in one file: use umbrella name (e.g., `ecommerce-platform`)
    - For separate files: use specific names (e.g., `backend-api`, `frontend-app`)
 
-2. **Run sisyphus plan init (N times if needed)**
+2. **Run sisyphus-speckit plan init (N times if needed)**
    ```bash
    # Single plan or multiple plans in one file:
-   sisyphus plan init --path .sisyphus/tasks/{plan-name}.yaml
+   sisyphus-speckit plan init --path .sisyphus/tasks/{plan-name}.yaml
 
    # Multiple plans in separate files:
-   sisyphus plan init --path .sisyphus/tasks/{plan-1-name}.yaml
-   sisyphus plan init --path .sisyphus/tasks/{plan-2-name}.yaml
-   sisyphus plan init --path .sisyphus/tasks/{plan-N-name}.yaml
+   sisyphus-speckit plan init --path .sisyphus/tasks/{plan-1-name}.yaml
+   sisyphus-speckit plan init --path .sisyphus/tasks/{plan-2-name}.yaml
+   sisyphus-speckit plan init --path .sisyphus/tasks/{plan-N-name}.yaml
    ```
 
 3. **Read Generated File(s)**
@@ -1196,14 +1196,14 @@ Based on Phase 0.5 decomposition decision, initialize the appropriate number of 
 
    **🚨 CRITICAL: After setting up depends_on relationships, IMMEDIATELY run linter to validate.**
 
-   Run `sisyphus plan lint` on each created file:
+   Run `sisyphus-speckit plan lint` on each created file:
    ```bash
    # For single file or multiple plans in one file:
-   sisyphus plan lint --file .sisyphus/tasks/{plan-name}.yaml
+   sisyphus-speckit plan lint --file .sisyphus/tasks/{plan-name}.yaml
 
    # For multiple separate files:
-   sisyphus plan lint --file .sisyphus/tasks/{plan-1}.yaml
-   sisyphus plan lint --file .sisyphus/tasks/{plan-2}.yaml
+   sisyphus-speckit plan lint --file .sisyphus/tasks/{plan-1}.yaml
+   sisyphus-speckit plan lint --file .sisyphus/tasks/{plan-2}.yaml
    ...
    ```
 
@@ -1239,7 +1239,7 @@ Based on Phase 0.5 decomposition decision, initialize the appropriate number of 
    - .sisyphus/tasks/{plan-2}.yaml
    ...
 
-   ✅ Dependency validation complete (sisyphus plan lint PASSED)
+   ✅ Dependency validation complete (sisyphus-speckit plan lint PASSED)
 
    Now I will ask the essential questions."
    ```
@@ -1255,7 +1255,7 @@ User: "Implement user authentication system"
 Phase 0.5 Decision: Single plan (focused feature)
 
 Phase 0.6 Execution:
-1. [Run: sisyphus plan init --path .sisyphus/tasks/auth-system.yaml]
+1. [Run: sisyphus-speckit plan init --path .sisyphus/tasks/auth-system.yaml]
 2. [Read and update with user request]
 3. [Save]
 4. "Work plan file has been created: auth-system.yaml"
@@ -1267,7 +1267,7 @@ User: "Build e-commerce platform (auth + products + payment)"
 Phase 0.5 Decision: 3 plans in one file
 
 Phase 0.6 Execution:
-1. [Run: sisyphus plan init --path .sisyphus/tasks/ecommerce-platform.yaml]
+1. [Run: sisyphus-speckit plan init --path .sisyphus/tasks/ecommerce-platform.yaml]
 2. [Read and add 3 work_plan items with depends_on relationships]
 3. [Save]
 4. "Work plan file has been created: ecommerce-platform.yaml (includes 3 plans)"
@@ -1279,8 +1279,8 @@ User: "Build full-stack app (backend API + frontend)"
 Phase 0.5 Decision: 2 separate plans (frontend depends on backend)
 
 Phase 0.6 Execution:
-1. [Run: sisyphus plan init --path .sisyphus/tasks/backend-api.yaml]
-2. [Run: sisyphus plan init --path .sisyphus/tasks/frontend-app.yaml]
+1. [Run: sisyphus-speckit plan init --path .sisyphus/tasks/backend-api.yaml]
+2. [Run: sisyphus-speckit plan init --path .sisyphus/tasks/frontend-app.yaml]
 3. [Update backend-api.yaml: depends_on: []]
 4. [Update frontend-app.yaml: depends_on: ['file:backend-api.yaml#backend-api']]
 5. [Save both]
@@ -1550,7 +1550,7 @@ work_plans:  # REQUIRED, list[WorkPlan] - array of work plans
 
 #### 2.2 YAML Schema Constraints (STRICT VALIDATION)
 
-**CRITICAL: Linter (`sisyphus plan lint`) will REJECT plans that violate these rules.**
+**CRITICAL: Linter (`sisyphus-speckit plan lint`) will REJECT plans that violate these rules.**
 
 ##### Root Level Rules (PlanDocument)
 - **ONLY** these 3 fields allowed at root:
@@ -2746,7 +2746,7 @@ When modifying existing plan:
 **⚠️ CRITICAL: ALWAYS run the linter after saving the plan. This is NOT optional.**
 
 ```bash
-sisyphus plan lint --file .sisyphus/tasks/{name}.yaml
+sisyphus-speckit plan lint --file .sisyphus/tasks/{name}.yaml
 ```
 
 **Linter validates:**
@@ -2796,12 +2796,12 @@ sisyphus plan lint --file .sisyphus/tasks/{name}.yaml
 ✓ Lint status: ✅ PASSED
 
 Ready for execution:
-  sisyphus task continue --execute claude:sonnet
+  sisyphus-speckit task continue --execute claude:sonnet
 ```
 
 **Both validations must show ✅:**
 1. ✅ APPROVED by sisyphus-plan-reviewer (Phase 3)
-2. ✅ PASSED sisyphus plan lint (Phase 5)
+2. ✅ PASSED sisyphus-speckit plan lint (Phase 5)
 
 Only when BOTH are satisfied is the plan truly complete and ready for execution.
 
@@ -2938,7 +2938,7 @@ Without comprehensive tests, the executor has no way to know if implementation i
 ## Core Constraints
 
 1. **YAML Format**: ONLY use Sisyphus YAML structure
-2. **Schema Validation**: Pass `sisyphus plan lint` check
+2. **Schema Validation**: Pass `sisyphus-speckit plan lint` check
 3. **Conservative Bash Specs**: Only deterministic commands
 4. **Mandatory Review**: ALL plans need sisyphus-plan-reviewer "OKAY"
 5. **99%+ Explicitness**: Workers need ZERO codebase exploration

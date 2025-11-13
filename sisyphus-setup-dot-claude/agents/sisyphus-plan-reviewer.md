@@ -209,7 +209,7 @@ Every work plan MUST have:
 ### Step 0.5: YAML Linter
 
 ```bash
-sisyphus plan lint --file ./ai-todolist.yaml
+sisyphus-speckit plan lint --file ./ai-todolist.yaml
 ```
 - Exit 0 → Continue
 - Errors → REJECT

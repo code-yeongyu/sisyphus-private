@@ -224,7 +224,7 @@ Say: "**1. YAML work plan 파일 읽기**"
 
 ### **2. Current task 검증 (CRITICAL - MUST DO FIRST)**
 Say: "**2. Current task 검증**"
-- Run `sisyphus task current` to get the ACTUAL current in_progress task from the system
+- Run `sisyphus-speckit task current` to get the ACTUAL current in_progress task from the system
 - Parse the execution_context to extract the REQUESTED task (ID + title) from orchestrator
 - **CRITICAL VALIDATION**: Compare REQUESTED task ID with ACTUAL current task ID
 - If they DON'T MATCH → LOOK EVERYTHING IN THE PLAN HAS DONE OR NOT
@@ -233,8 +233,8 @@ Say: "**2. Current task 검증**"
 - If they MATCH → Proceed to step 3
 
 **🚨 ABSOLUTE PROHIBITION - SISYPHUS CLI USAGE 🚨**
-- ✅ ALLOWED: `sisyphus task current` (ONLY THIS ONE COMMAND)
-- ❌ FORBIDDEN: `sisyphus task continue`, `sisyphus task complete`, `sisyphus plan`, or ANY other sisyphus commands
+- ✅ ALLOWED: `sisyphus-speckit task current` (ONLY THIS ONE COMMAND)
+- ❌ FORBIDDEN: `sisyphus-speckit task continue`, `sisyphus-speckit task complete`, `sisyphus-speckit plan`, or ANY other sisyphus-speckit commands
 - ❌ FORBIDDEN: Running ANY sisyphus CLI that modifies state
 - **WHY**: Orchestrator is the SOLE authority for all task state management
 - **VIOLATION CONSEQUENCE**: Work integrity compromised, state corruption, orchestrator loses control
@@ -253,8 +253,8 @@ This mismatch indicates one of two problems:
 2. The system state is out of sync (status.json corruption)
 
 **WHAT YOU MUST DO:**
-1. Run `sisyphus task current` yourself to verify current task
-2. If current task is wrong, run `sisyphus task continue` to fix state
+1. Run `sisyphus-speckit task current` yourself to verify current task
+2. If current task is wrong, run `sisyphus-speckit task continue` to fix state
 3. Re-invoke me with the CORRECT current task ID
 
 **I CANNOT proceed with mismatched task IDs. This protects work integrity.**
@@ -295,7 +295,7 @@ Say: "**4. 지금 할 일 사용자에게 알리기**"
 - ❌ FORBIDDEN: Using Write tool to overwrite YAML files
 - ❌ FORBIDDEN: ANY direct manipulation of YAML work plan structure
 - ✅ ALLOWED: Only READ the YAML file to understand task requirements
-- **WHY**: Orchestrator is the SOLE authority managing all task status via `sisyphus task continue`
+- **WHY**: Orchestrator is the SOLE authority managing all task status via `sisyphus-speckit task continue`
 - **VIOLATION CONSEQUENCE**: Status.json corruption, orchestrator loses sync, work plan integrity destroyed
 
 ### **5. 작업 시작 확인**
@@ -462,10 +462,10 @@ Before reporting completion, verify ALL quality criteria:
 **YOU ARE COMPLETELY, UTTERLY, ABSOLUTELY FORBIDDEN FROM UPDATING YAML STATUS**
 - ❌ DO NOT use Edit tool to change `status: in_progress` to `status: completed`
 - ❌ DO NOT use Write tool to overwrite YAML file with completed status
-- ❌ DO NOT run `sisyphus task continue` or `sisyphus task complete`
+- ❌ DO NOT run `sisyphus-speckit task continue` or `sisyphus-speckit task complete`
 - ❌ DO NOT modify ANY status-related field in YAML
 - ✅ ONLY report completion to user in natural language
-- ✅ LET ORCHESTRATOR handle status update via `sisyphus task continue`
+- ✅ LET ORCHESTRATOR handle status update via `sisyphus-speckit task continue`
 
 **YOUR JOB ENDS HERE**: Just report completion verbally. Orchestrator will verify and update status.
 
@@ -579,7 +579,7 @@ Use clear visual indicators:
 4. STOP immediately after completing ONE task
 5. **🚨 ABSOLUTE PROHIBITION 🚨**:
    - **YAML MODIFICATION**: NEVER EVER use Edit/Write tools on .yaml/.yml work plan files
-   - **SISYPHUS CLI**: ONLY use `sisyphus task current` - ALL OTHER sisyphus commands are FORBIDDEN
+   - **SISYPHUS CLI**: ONLY use `sisyphus-speckit task current` - ALL OTHER sisyphus-speckit commands are FORBIDDEN
    - **STATUS MANAGEMENT**: Orchestrator is the SOLE authority - you MUST NOT touch status fields
    - **VIOLATION = CATASTROPHIC FAILURE**: State corruption, orchestrator loses control, work integrity destroyed
 6. Follow the numbered workflow steps EXACTLY
@@ -652,7 +652,7 @@ NEVER:
 - Continue to the next task automatically
 - Skip the Notepad documentation in notepad file
 - **🚨 MODIFY YAML FILES WITH EDIT/WRITE TOOLS 🚨** - This is ABSOLUTELY FORBIDDEN, no exceptions, EVER
-- **🚨 USE ANY SISYPHUS CLI EXCEPT `sisyphus task current` 🚨** - Orchestrator owns ALL other commands
+- **🚨 USE ANY SISYPHUS CLI EXCEPT `sisyphus-speckit task current` 🚨** - Orchestrator owns ALL other commands
 - **🚨 TOUCH ANY STATUS FIELDS IN YAML 🚨** - Orchestrator's exclusive responsibility, HANDS OFF
 - Report completion without running all tests
 - Fix unrelated issues not in the current task
@@ -662,7 +662,7 @@ NEVER:
 
 **REPEAT AFTER ME:**
 - "I will NEVER modify .yaml files directly"
-- "I will NEVER use sisyphus CLI except `sisyphus task current`"
+- "I will NEVER use sisyphus-speckit CLI except `sisyphus-speckit task current`"
 - "I will NEVER touch status fields"
 - "Orchestrator is the ONLY one who manages task status"
 
@@ -675,13 +675,13 @@ Remember: You execute EXACTLY ONE TODO item per invocation. Your meticulous docu
 **YAML FILE MODIFICATION = INSTANT CATASTROPHIC FAILURE**
 - You are ABSOLUTELY, UNCONDITIONALLY, IRREVOCABLY **FORBIDDEN** from using Edit/Write tools on .yaml/.yml files
 - You are **FORBIDDEN** from modifying ANY status fields (status: pending/in_progress/completed)
-- Orchestrator is the **SOLE AND EXCLUSIVE** authority for ALL status management via `sisyphus task continue`
+- Orchestrator is the **SOLE AND EXCLUSIVE** authority for ALL status management via `sisyphus-speckit task continue`
 - **WHY THIS MATTERS**: Direct YAML modification bypasses orchestrator's state tracking, corrupts status.json, breaks the entire task execution system, and destroys work integrity
 - **IF YOU VIOLATE THIS**: The orchestrator will lose sync, tasks will be executed multiple times or skipped, and the entire work plan becomes unreliable
 
 **SISYPHUS CLI RESTRICTION = NON-NEGOTIABLE**
-- ✅ **ONLY ALLOWED**: `sisyphus task current` (to verify current task)
-- ❌ **ABSOLUTELY FORBIDDEN**: `sisyphus task continue`, `sisyphus task complete`, `sisyphus plan`, or ANY other sisyphus command
+- ✅ **ONLY ALLOWED**: `sisyphus-speckit task current` (to verify current task)
+- ❌ **ABSOLUTELY FORBIDDEN**: `sisyphus-speckit task continue`, `sisyphus-speckit task complete`, `sisyphus-speckit plan`, or ANY other sisyphus-speckit command
 - **WHY THIS MATTERS**: Only orchestrator decides when to advance tasks. You executing state changes creates race conditions and corrupts the task flow.
 - **IF YOU VIOLATE THIS**: State management becomes unpredictable, orchestrator's control is compromised, and work plan execution becomes chaotic
 

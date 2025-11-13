@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import anyio
 import pytest
 
-from sisyphus.core.session import SessionStore
+from sisyphus_core.core.session import SessionStore
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator

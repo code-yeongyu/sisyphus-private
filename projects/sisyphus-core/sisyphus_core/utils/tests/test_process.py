@@ -7,7 +7,7 @@ import json
 import anyio
 import pytest
 
-from sisyphus.utils.process import ProcessManager
+from sisyphus_core.utils.process import ProcessManager
 
 pytestmark = [pytest.mark.anyio]
 

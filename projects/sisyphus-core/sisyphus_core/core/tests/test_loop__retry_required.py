@@ -5,7 +5,7 @@ from __future__ import annotations
 import anyio
 import pytest
 
-from sisyphus.utils.errors import PromptTooLongError, RetryRequiredError
+from sisyphus_core.utils.errors import PromptTooLongError, RetryRequiredError
 
 pytestmark = [pytest.mark.anyio]
 

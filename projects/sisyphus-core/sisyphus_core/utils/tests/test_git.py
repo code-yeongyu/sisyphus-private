@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sisyphus.utils.git import (
+from sisyphus_core.utils.git import (
     _matches_pattern,
     detect_base_branch,
     find_commits_with_files,

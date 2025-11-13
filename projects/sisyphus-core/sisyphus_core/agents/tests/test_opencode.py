@@ -10,9 +10,9 @@ import anyio
 import httpx
 import pytest
 
-from sisyphus.agents.base import Agent
-from sisyphus.agents.opencode import OpenCodeAgent
-from sisyphus.utils.errors import AgentNotFoundError, HealthCheckError, ServerStartError
+from sisyphus_core.agents.base import Agent
+from sisyphus_core.agents.opencode import OpenCodeAgent
+from sisyphus_core.utils.errors import AgentNotFoundError, HealthCheckError, ServerStartError
 
 pytestmark = [pytest.mark.anyio]
 

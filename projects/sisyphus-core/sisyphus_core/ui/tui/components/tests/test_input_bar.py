@@ -5,7 +5,7 @@ from unittest.mock import Mock
 import pytest
 from textual.app import App, ComposeResult
 
-from sisyphus.ui.tui.components.input_bar import InputBar
+from sisyphus_core.ui.tui.components.input_bar import InputBar
 
 pytestmark = [pytest.mark.anyio]
 

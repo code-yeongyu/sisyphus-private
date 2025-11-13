@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 import anyio
 import pytest
 
-from sisyphus.utils.errors import SessionLimitError
+from sisyphus_core.utils.errors import SessionLimitError
 
 pytestmark = [pytest.mark.anyio]
 

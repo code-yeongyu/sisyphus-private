@@ -10,12 +10,12 @@ from urllib.parse import urlparse
 
 import typer
 
-from sisyphus.agents.claude import ClaudeAgent
-from sisyphus.agents.opencode import OpenCodeAgent
-from sisyphus.utils.theme import ThemeName, detect_system_theme
+from sisyphus_core.agents.claude import ClaudeAgent
+from sisyphus_core.agents.opencode import OpenCodeAgent
+from sisyphus_core.utils.theme import ThemeName, detect_system_theme
 
 if TYPE_CHECKING:
-    from sisyphus.agents.base import Agent
+    from sisyphus_core.agents.base import Agent
 
 
 class ThemeOption(str, Enum):

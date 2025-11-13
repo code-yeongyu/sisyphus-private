@@ -16,9 +16,9 @@ from claude_agent_sdk import (
     ToolUseBlock,
 )
 
-from sisyphus.utils.errors import PromptTooLongError, SessionLimitError, SessionResumeError
-from sisyphus.utils.session_limit import parse_reset_time
-from sisyphus.utils.types import AgentMessage
+from sisyphus_core.utils.errors import PromptTooLongError, SessionLimitError, SessionResumeError
+from sisyphus_core.utils.session_limit import parse_reset_time
+from sisyphus_core.utils.types import AgentMessage
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator

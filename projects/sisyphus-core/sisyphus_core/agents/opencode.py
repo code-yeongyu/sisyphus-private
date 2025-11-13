@@ -11,9 +11,9 @@ from typing import TYPE_CHECKING
 import anyio
 import httpx
 
-from sisyphus.utils.errors import AgentNotFoundError, HealthCheckError, ServerStartError
-from sisyphus.utils.process import ProcessManager
-from sisyphus.utils.types import AgentMessage
+from sisyphus_core.utils.errors import AgentNotFoundError, HealthCheckError, ServerStartError
+from sisyphus_core.utils.process import ProcessManager
+from sisyphus_core.utils.types import AgentMessage
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator

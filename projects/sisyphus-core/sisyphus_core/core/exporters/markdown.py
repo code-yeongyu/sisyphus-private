@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sisyphus.core.plans.models import PlanDocument, Todo, TodoStatus
+from sisyphus_core.core.plans.models import PlanDocument, Todo, TodoStatus
 
 
 class MarkdownExporter:

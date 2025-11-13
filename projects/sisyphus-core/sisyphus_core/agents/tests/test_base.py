@@ -6,8 +6,8 @@ from collections.abc import AsyncIterator
 
 import pytest
 
-from sisyphus.agents.base import Agent
-from sisyphus.utils.types import AgentMessage
+from sisyphus_core.agents.base import Agent
+from sisyphus_core.utils.types import AgentMessage
 
 pytestmark = [pytest.mark.anyio]
 

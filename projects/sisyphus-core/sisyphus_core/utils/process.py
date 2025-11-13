@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 import anyio
 
-from sisyphus.utils.errors import ProcessTimeoutError
+from sisyphus_core.utils.errors import ProcessTimeoutError
 
 if TYPE_CHECKING:
     import anyio.abc

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
-from sisyphus.core.plans.models import (
+from sisyphus_core.core.plans.models import (
     Background,
     FinalVerificationItem,
     LLMJudgeVerification,

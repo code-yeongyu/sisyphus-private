@@ -4,7 +4,7 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
-from sisyphus.core.plans.models import PlanRegistry
+from sisyphus_core.core.plans.models import PlanRegistry
 
 
 def load_registry(registry_path: Path) -> PlanRegistry:

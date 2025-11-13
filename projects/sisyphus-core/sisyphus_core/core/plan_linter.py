@@ -11,10 +11,10 @@ from typing import Any
 
 from ruamel.yaml import YAML
 
-from sisyphus.core.graph.dependencies import build_plan_graph, detect_cycles
-from sisyphus.core.plans.models import PlanDocument, RetrievalType, TodoStatus
-from sisyphus.core.plans.references import ReferenceResolver
-from sisyphus.core.plans.registry import load_registry, resolve_registry_plan
+from sisyphus_core.core.graph.dependencies import build_plan_graph, detect_cycles
+from sisyphus_core.core.plans.models import PlanDocument, RetrievalType, TodoStatus
+from sisyphus_core.core.plans.references import ReferenceResolver
+from sisyphus_core.core.plans.registry import load_registry, resolve_registry_plan
 
 
 @dataclass

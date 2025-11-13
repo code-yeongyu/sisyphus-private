@@ -6,9 +6,9 @@ import pytest
 from rich.console import Console
 from rich.markdown import Markdown
 
-from sisyphus.ui.base import UIProtocol
-from sisyphus.ui.cli import CLI
-from sisyphus.utils.types import AgentMessage
+from sisyphus_core.ui.base import UIProtocol
+from sisyphus_core.ui.cli import CLI
+from sisyphus_core.utils.types import AgentMessage
 
 pytestmark = [pytest.mark.anyio]
 

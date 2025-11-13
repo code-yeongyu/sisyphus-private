@@ -9,23 +9,23 @@ from typing import TYPE_CHECKING, Protocol
 
 import anyio
 
-from sisyphus.core.plans.loader import load_plan, save_plan
-from sisyphus.core.plans.models import Todo, TodoStatus
-from sisyphus.core.prompts import (
+from sisyphus_core.core.plans.loader import load_plan, save_plan
+from sisyphus_core.core.plans.models import Todo, TodoStatus
+from sisyphus_core.core.prompts import (
     DEFAULT_EXECUTE_PROMPT,
     build_execute_prompt,
     build_verification_failure_prompt,
     build_verify_prompt,
 )
-from sisyphus.utils.errors import PromptTooLongError, RetryRequiredError, SessionLimitError, SessionResumeError
-from sisyphus.utils.session_limit import sleep_until_next_hour, sleep_until_reset
+from sisyphus_core.utils.errors import PromptTooLongError, RetryRequiredError, SessionLimitError, SessionResumeError
+from sisyphus_core.utils.session_limit import sleep_until_next_hour, sleep_until_reset
 
 if TYPE_CHECKING:
-    from sisyphus.agents.base import Agent
-    from sisyphus.core.session import SessionStore
-    from sisyphus.core.status.manager import StatusManager
-    from sisyphus.ui.base import UIProtocol
-    from sisyphus.utils.logging import LoggerFactory
+    from sisyphus_core.agents.base import Agent
+    from sisyphus_core.core.session import SessionStore
+    from sisyphus_core.core.status.manager import StatusManager
+    from sisyphus_core.ui.base import UIProtocol
+    from sisyphus_core.utils.logging import LoggerFactory
 
 
 class TaskValidatorProtocol(Protocol):

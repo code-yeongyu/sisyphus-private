@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from sisyphus.core.plans.models import WorkPlan
+from sisyphus_core.core.plans.models import WorkPlan
 
 
 def discover_plan_files(root: Path) -> list[Path]:

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from sisyphus.utils.types import AgentConfig, AgentMessage
+from sisyphus_core.utils.types import AgentConfig, AgentMessage
 
 pytestmark = [pytest.mark.anyio()]
 

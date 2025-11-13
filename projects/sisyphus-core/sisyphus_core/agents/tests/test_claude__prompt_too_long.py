@@ -9,9 +9,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock
 
-from sisyphus.agents.claude import ClaudeAgent
-from sisyphus.utils.errors import PromptTooLongError
-from sisyphus.utils.types import AgentMessage
+from sisyphus_core.agents.claude import ClaudeAgent
+from sisyphus_core.utils.errors import PromptTooLongError
+from sisyphus_core.utils.types import AgentMessage
 
 if TYPE_CHECKING:
     pass

@@ -1,3 +1,3 @@
-from sisyphus.ui.tui.app import TUI
+from sisyphus_core.ui.tui.app import TUI
 
 __all__ = ["TUI"]

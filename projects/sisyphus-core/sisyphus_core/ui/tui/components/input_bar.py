@@ -3,8 +3,8 @@
 from textual.events import Key
 from textual.widgets import TextArea
 
-from sisyphus.ui.tui.components.chat_log import ChatLog
-from sisyphus.ui.tui.events import AgentInterruptEvent, InputReadyEvent
+from sisyphus_core.ui.tui.components.chat_log import ChatLog
+from sisyphus_core.ui.tui.events import AgentInterruptEvent, InputReadyEvent
 
 
 class InputBar(TextArea):

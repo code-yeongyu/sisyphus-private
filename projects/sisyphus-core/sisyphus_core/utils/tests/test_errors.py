@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from sisyphus.utils.errors import PromptTooLongError, RetryRequiredError, SessionLimitError, SisyphusError
+from sisyphus_core.utils.errors import PromptTooLongError, RetryRequiredError, SessionLimitError, SisyphusError
 
 pytestmark = [pytest.mark.anyio]
 

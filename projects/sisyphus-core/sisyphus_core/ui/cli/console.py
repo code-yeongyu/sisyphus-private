@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 if TYPE_CHECKING:
-    from sisyphus.utils.types import AgentMessage
+    from sisyphus_core.utils.types import AgentMessage
 
 
 class CLI:

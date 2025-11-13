@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from sisyphus.core.plan_linter import LintError, PlanLinter
-from sisyphus.core.plans.models import PlanDocument
+from sisyphus_core.core.plan_linter import LintError, PlanLinter
+from sisyphus_core.core.plans.models import PlanDocument
 
 pytestmark = [pytest.mark.anyio]
 

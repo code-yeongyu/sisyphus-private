@@ -5,7 +5,7 @@ from __future__ import annotations
 from catppuccin import PALETTE
 from textual.theme import Theme
 
-from sisyphus.utils.theme import ThemeName
+from sisyphus_core.utils.theme import ThemeName
 
 
 def create_mocha_theme() -> Theme:

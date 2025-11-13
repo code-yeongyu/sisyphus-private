@@ -10,17 +10,17 @@ from textual.app import App, ComposeResult
 from textual.events import Key
 from textual.message import Message
 
-from sisyphus.ui.themes import THEMES
-from sisyphus.ui.tui.components.chat_log import ChatLog
-from sisyphus.ui.tui.components.input_bar import InputBar
-from sisyphus.ui.tui.components.status_panel import StatusPanel
-from sisyphus.ui.tui.events import AgentInterruptEvent, InputReadyEvent
-from sisyphus.ui.tui.layouts.main import compose_main_layout
-from sisyphus.utils.theme import ThemeName
+from sisyphus_core.ui.themes import THEMES
+from sisyphus_core.ui.tui.components.chat_log import ChatLog
+from sisyphus_core.ui.tui.components.input_bar import InputBar
+from sisyphus_core.ui.tui.components.status_panel import StatusPanel
+from sisyphus_core.ui.tui.events import AgentInterruptEvent, InputReadyEvent
+from sisyphus_core.ui.tui.layouts.main import compose_main_layout
+from sisyphus_core.utils.theme import ThemeName
 
 if TYPE_CHECKING:
-    from sisyphus.core.loop import ExecutionLoop, TaskValidatorProtocol
-    from sisyphus.utils.types import AgentMessage
+    from sisyphus_core.core.loop import ExecutionLoop, TaskValidatorProtocol
+    from sisyphus_core.utils.types import AgentMessage
 
 
 class UpdateStatusMessage(Message):

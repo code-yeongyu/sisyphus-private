@@ -15,7 +15,7 @@ from unittest.mock import MagicMock
 import anyio
 import pytest
 
-from sisyphus.utils.types import AgentMessage
+from sisyphus_core.utils.types import AgentMessage
 
 if TYPE_CHECKING:
     pass

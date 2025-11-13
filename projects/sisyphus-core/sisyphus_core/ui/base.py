@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from sisyphus.utils.theme import ThemeName
+from sisyphus_core.utils.theme import ThemeName
 
 if TYPE_CHECKING:
-    from sisyphus.utils.types import AgentMessage
+    from sisyphus_core.utils.types import AgentMessage
 
 
 @runtime_checkable
@@ -46,10 +46,10 @@ def create_ui(mode: str, theme: ThemeName | None = None) -> UIProtocol:
         UI instance implementing UIProtocol
     """
     if mode == "tui":
-        from sisyphus.ui.tui import TUI
+        from sisyphus_core.ui.tui import TUI
 
         return TUI(theme=theme or "mocha")
     else:
-        from sisyphus.ui.cli import CLI
+        from sisyphus_core.ui.cli import CLI
 
         return CLI()

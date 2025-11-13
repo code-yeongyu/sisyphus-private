@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from sisyphus.ui.base import UIProtocol, create_ui
-from sisyphus.utils.types import AgentMessage
+from sisyphus_core.ui.base import UIProtocol, create_ui
+from sisyphus_core.utils.types import AgentMessage
 
 pytestmark = [pytest.mark.anyio]
 

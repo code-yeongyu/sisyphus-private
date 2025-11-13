@@ -9,11 +9,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from sisyphus.core.loop import ExecutionLoop
-from sisyphus.core.session import SessionStore
-from sisyphus.core.tests.test_loop import MockAgent
-from sisyphus.utils.errors import PromptTooLongError
-from sisyphus.utils.types import AgentMessage
+from sisyphus_core.core.loop import ExecutionLoop
+from sisyphus_core.core.session import SessionStore
+from sisyphus_core.core.tests.test_loop import MockAgent
+from sisyphus_core.utils.errors import PromptTooLongError
+from sisyphus_core.utils.types import AgentMessage
 
 pytestmark = [pytest.mark.anyio]
 

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from sisyphus.core.plans.loader import load_plan
-from sisyphus.core.plans.models import Todo, TodoStatus
+from sisyphus_core.core.plans.loader import load_plan
+from sisyphus_core.core.plans.models import Todo, TodoStatus
 
 
 class YamlTaskValidator:

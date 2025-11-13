@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import anyio
 
 if TYPE_CHECKING:
-    from sisyphus.ui.base import UIProtocol
+    from sisyphus_core.ui.base import UIProtocol
 
 
 def parse_reset_time(message: str) -> datetime | None:

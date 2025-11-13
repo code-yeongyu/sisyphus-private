@@ -4,8 +4,8 @@ from pathlib import Path
 import anyio
 from ruamel.yaml import YAML
 
-from sisyphus.core.plans.models import PlanDocument
-from sisyphus.core.status.manager import StatusManager
+from sisyphus_core.core.plans.models import PlanDocument
+from sisyphus_core.core.status.manager import StatusManager
 
 
 async def load_plan(path: Path) -> PlanDocument:

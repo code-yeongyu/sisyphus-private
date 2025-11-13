@@ -10,9 +10,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from sisyphus.core.loop import ExecutionLoop
-from sisyphus.core.status.manager import CurrentPlan, StatusFile
-from sisyphus.utils.types import AgentMessage
+from sisyphus_core.core.loop import ExecutionLoop
+from sisyphus_core.core.status.manager import CurrentPlan, StatusFile
+from sisyphus_core.utils.types import AgentMessage
 
 pytestmark = [pytest.mark.anyio]
 

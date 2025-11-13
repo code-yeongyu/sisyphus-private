@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from textual.app import App, ComposeResult
 
-from sisyphus.ui.tui.components.chat_log import ChatLog
+from sisyphus_core.ui.tui.components.chat_log import ChatLog
 
 pytestmark = [pytest.mark.anyio]
 

@@ -6,7 +6,7 @@ from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from sisyphus.utils.types import AgentMessage
+    from sisyphus_core.utils.types import AgentMessage
 
 
 @runtime_checkable

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from sisyphus.core.plans.models import PlanDocument, ReferenceItem, Todo, TodoStatus, VerificationItem, WorkPlan
+from sisyphus_core.core.plans.models import PlanDocument, ReferenceItem, Todo, TodoStatus, VerificationItem, WorkPlan
 
 
 @dataclass

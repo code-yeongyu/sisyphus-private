@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from sisyphus.utils.logging import LoggerFactory
+from sisyphus_core.utils.logging import LoggerFactory
 
 
 def test_create_logger_basic(tmp_path: Path) -> None:

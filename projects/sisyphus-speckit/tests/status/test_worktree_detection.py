@@ -15,7 +15,7 @@ async def test_detect_worktree__if_git_repo__returns_toplevel() -> None:
     mock_result.stdout = b"/Users/test/repo\n"
 
     # when
-    with patch("sisyphus.core.status.manager.anyio.run_process", return_value=mock_result):
+    with patch("sisyphus_core.core.status.manager.anyio.run_process", return_value=mock_result):
         result = await StatusManager.detect_worktree()
 
     # then
@@ -28,7 +28,7 @@ async def test_detect_worktree__if_not_git_repo__returns_cwd() -> None:
     mock_result.returncode = 128
 
     # when
-    with patch("sisyphus.core.status.manager.anyio.run_process", return_value=mock_result):
+    with patch("sisyphus_core.core.status.manager.anyio.run_process", return_value=mock_result):
         result = await StatusManager.detect_worktree()
 
     # then
@@ -50,7 +50,7 @@ branch refs/heads/feature-branch
 """
 
     # when
-    with patch("sisyphus.core.status.manager.anyio.run_process", return_value=mock_result):
+    with patch("sisyphus_core.core.status.manager.anyio.run_process", return_value=mock_result):
         result = await StatusManager.list_all()
 
     # then
@@ -69,7 +69,7 @@ async def test_list_all__if_not_git_repo__returns_empty() -> None:
     mock_result.stdout = b""
 
     # when
-    with patch("sisyphus.core.status.manager.anyio.run_process", return_value=mock_result):
+    with patch("sisyphus_core.core.status.manager.anyio.run_process", return_value=mock_result):
         result = await StatusManager.list_all()
 
     # then
@@ -86,7 +86,7 @@ async def test_worktree_cache__if_called_twice__uses_cache() -> None:
     mock_result.stdout = b"worktree /Users/test/main\n"
 
     # when
-    with patch("sisyphus.core.status.manager.anyio.run_process", return_value=mock_result) as mock_run:
+    with patch("sisyphus_core.core.status.manager.anyio.run_process", return_value=mock_result) as mock_run:
         await StatusManager.list_all()
         await StatusManager.list_all()
 
@@ -104,7 +104,7 @@ async def test_worktree_cache__if_expired__refreshes() -> None:
     mock_result.stdout = b"worktree /Users/test/new\n"
 
     # when
-    with patch("sisyphus.core.status.manager.anyio.run_process", return_value=mock_result):
+    with patch("sisyphus_core.core.status.manager.anyio.run_process", return_value=mock_result):
         with patch("time.time", return_value=100.0):
             result = await StatusManager.list_all()
 
@@ -160,7 +160,7 @@ branch refs/heads/master
 """
 
     # when
-    with patch("sisyphus.core.status.manager.anyio.run_process", return_value=mock_result):
+    with patch("sisyphus_core.core.status.manager.anyio.run_process", return_value=mock_result):
         with patch("time.time", return_value=100.0):
             await StatusManager._refresh_worktree_cache()
 
@@ -180,7 +180,7 @@ async def test_refresh_worktree_cache__if_git_fails__sets_empty_cache() -> None:
     mock_result.stdout = b""
 
     # when
-    with patch("sisyphus.core.status.manager.anyio.run_process", return_value=mock_result):
+    with patch("sisyphus_core.core.status.manager.anyio.run_process", return_value=mock_result):
         with patch("time.time", return_value=100.0):
             await StatusManager._refresh_worktree_cache()
 

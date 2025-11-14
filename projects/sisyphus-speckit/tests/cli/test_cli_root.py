@@ -17,11 +17,10 @@ async def test_cli_help__shows_main_commands__displays_work_ignore_clean_history
     # when: running --help
     result = runner.invoke(app, ["--help"])
 
-    # then: shows work, ignore, clean-history commands
+    # then: shows plan and task commands (sisyphus-speckit v3.0 structure)
     assert result.exit_code == 0
-    assert "work" in result.stdout
-    assert "ignore" in result.stdout
-    assert "clean-history" in result.stdout
+    assert "plan" in result.stdout
+    assert "task" in result.stdout
 
 
 async def test_cli_help__shows_new_command_groups__displays_plan_task_reset() -> None:
@@ -29,11 +28,11 @@ async def test_cli_help__shows_new_command_groups__displays_plan_task_reset() ->
     # when: running --help
     result = runner.invoke(app, ["--help"])
 
-    # then: shows plan, task, reset command groups
+    # then: shows plan, task command groups (sisyphus-speckit v3.0 structure)
     assert result.exit_code == 0
     assert "plan" in result.stdout
     assert "task" in result.stdout
-    assert "reset" in result.stdout
+    # Note: reset command is not part of sisyphus-speckit v3.0 structure
 
 
 async def test_cli_help__deprecated_commands_removed__no_execute_phase_verify_phase() -> None:
@@ -69,12 +68,12 @@ async def test_task_command__exists__shows_help() -> None:
 
 async def test_reset_command__exists__shows_help() -> None:
     # given: CLI app
-    # when: running reset --help
+    # when: running with non-existent command
     result = runner.invoke(app, ["reset", "--help"])
 
-    # then: shows reset options
-    assert result.exit_code == 0
-    assert "Reset" in result.stdout or "reset" in result.stdout
+    # then: reset command is not in sisyphus-speckit (v3.0 structure)
+    # Returns error since reset is not part of sisyphus-speckit
+    assert result.exit_code != 0 or "No such command" in result.stdout or "Error" in result.stdout
 
 
 async def test_execute_phase_command__removed__returns_error() -> None:

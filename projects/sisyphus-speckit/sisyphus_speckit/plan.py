@@ -109,13 +109,13 @@ def init_plan(
 
     Examples:
         # Create minimal template with TODO placeholders
-        sisyphus plan init
+        sisyphus-speckit plan init
 
         # Create full example with all fields populated
-        sisyphus plan init --template full
+        sisyphus-speckit plan init --template full
 
         # Custom path
-        sisyphus plan init --path .sisyphus/tasks/my-plan.yaml
+        sisyphus-speckit plan init --path .sisyphus/tasks/my-plan.yaml
     """
     working_dir = resolve_cwd(cwd)
     resolved_path = working_dir / path if not path.is_absolute() else path
@@ -205,7 +205,7 @@ def show_graph(
             console.print(
                 f"[red]Error: No plan files found.[/red]\n"
                 f"Expected: {tasks_dir}/*.yaml (v3.0 format)\n"
-                f"Run: sisyphus plan init .sisyphus/tasks/plan.yaml"
+                f"Run: sisyphus-speckit plan init .sisyphus/tasks/plan.yaml"
             )
             raise typer.Exit(1)
 
@@ -233,7 +233,7 @@ def show_graph(
                 "  1. Open the file(s) listed above\n"
                 "  2. Find the 'depends_on' field for each plan\n"
                 "  3. Remove one dependency to break the cycle\n"
-                "  4. Run 'sisyphus plan graph' again to verify\n"
+                "  4. Run 'sisyphus-speckit plan graph' again to verify\n"
             )
             raise typer.Exit(1)
 

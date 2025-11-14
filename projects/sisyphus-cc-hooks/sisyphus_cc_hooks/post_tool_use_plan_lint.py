@@ -49,7 +49,7 @@ def run_sisyphus_plan_lint(yaml_path: str, cwd: str) -> tuple[bool, str]:
         )
 
         message = f"""
-SISYPHUS PLAN YAML VALIDATION FAILED
+sisyphus-speckit plan YAML VALIDATION FAILED
 
 File: {yaml_path}
 Exit Code: {result.returncode}
@@ -68,7 +68,7 @@ DO NOT proceed to the next task until validation passes.
         return False, message
 
     except subprocess.TimeoutExpired:
-        return False, f"Sisyphus plan lint timed out after 10s for {yaml_path}"
+        return False, f"sisyphus-speckit plan lint timed out after 10s for {yaml_path}"
     except FileNotFoundError:
         return True, ""
     except Exception:

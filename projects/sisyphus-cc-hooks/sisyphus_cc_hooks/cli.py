@@ -7,7 +7,10 @@ import typer  # type: ignore[import-not-found]
 from .post_tool_use import main as post_tool_use_main
 from .pre_tool_use import main as pre_tool_use_main
 
-app = typer.Typer(name="sisyphus-cc-hooks", help="Claude Code hooks for Sisyphus task verification")
+app = typer.Typer(
+    name="sisyphus-cc-hooks",
+    help="Claude Code hooks for sisyphus-speckit task verification",
+)
 
 
 @app.command(name="pre-tool-use")

@@ -50,7 +50,7 @@ async def _load_current_plan(
     if plan_doc is None:
         console.print("[red]현재 활성화된 작업 계획이 없습니다.[/red]")
         console.print("[yellow]다음 명령으로 계획을 활성화하세요:[/yellow]")
-        console.print("  sisyphus plan init")
+        console.print("  sisyphus-speckit plan init")
         raise typer.Exit(1)
 
     if not plan_doc.work_plans:
@@ -114,22 +114,22 @@ def _display_verification_guidance(current_task: Todo) -> None:
     console.print("\n[bold yellow]📋 다음 검증 단계:[/bold yellow]")
 
     if has_bash:
-        console.print("  [cyan]●[/cyan] Bash 자동 검증: [bold]sisyphus task verify bash[/bold]")
+        console.print("  [cyan]●[/cyan] Bash 자동 검증: [bold]sisyphus-speckit task verify bash[/bold]")
 
     if has_llm:
-        console.print("  [cyan]●[/cyan] LLM 검증 확인: [bold]sisyphus task verify llm[/bold]")
+        console.print("  [cyan]●[/cyan] LLM 검증 확인: [bold]sisyphus-speckit task verify llm[/bold]")
         console.print(
-            "  [cyan]●[/cyan] LLM 검증 완료: [bold]sisyphus task verify llm-mark <verify-id> --evidence '...'[/bold]"
+            "  [cyan]●[/cyan] LLM 검증 완료: [bold]sisyphus-speckit task verify llm-mark <verify-id> --evidence '...'[/bold]"
         )
 
     if needs_manual_mark:
-        console.print("  [cyan]●[/cyan] 수동 검증 시작: [bold]sisyphus task verify manual[/bold]")
+        console.print("  [cyan]●[/cyan] 수동 검증 시작: [bold]sisyphus-speckit task verify manual[/bold]")
         console.print(
             "  [cyan]●[/cyan] 수동 검증 완료: "
-            "[bold]sisyphus task verify manual-mark <verify-id> --evidence '...'[/bold]"
+            "[bold]sisyphus-speckit task verify manual-mark <verify-id> --evidence '...'[/bold]"
         )
 
-    console.print("\n  [cyan]●[/cyan] 전체 검증 상태 확인: [bold]sisyphus task verify status[/bold]")
+    console.print("\n  [cyan]●[/cyan] 전체 검증 상태 확인: [bold]sisyphus-speckit task verify status[/bold]")
 
 
 def _display_verification_status_table(
@@ -248,7 +248,7 @@ def _display_remaining_verifications(task_manager: TaskManager) -> None:
     if remaining_count == 0:
         console.print("[green]✓ 모든 검증이 완료되었습니다![/green]")
         console.print("[yellow]다음 명령으로 작업을 계속하세요:[/yellow]")
-        console.print("  [bold cyan]sisyphus task continue[/bold cyan]")
+        console.print("  [bold cyan]sisyphus-speckit task continue[/bold cyan]")
     else:
         console.print(f"[yellow]남은 검증: {remaining_count}개[/yellow]\n")
         console.print("[bold cyan]미완료 검증 항목:[/bold cyan]")
@@ -303,7 +303,7 @@ def show_current(
         current_task = task_manager.get_current_task()
         if current_task is None:
             console.print("[yellow]작업이 시작되지 않았습니다.[/yellow]")
-            console.print("다음 명령으로 작업을 시작하세요: [cyan]sisyphus task continue[/cyan]")
+            console.print("다음 명령으로 작업을 시작하세요: [cyan]sisyphus-speckit task continue[/cyan]")
             return
 
         display = _format_task_display(current_task)
@@ -397,14 +397,14 @@ def continue_work(
             elif len(yaml_files) == 0:
                 console.print("[red]현재 활성화된 작업 계획이 없습니다.[/red]")
                 console.print("[yellow]다음 명령으로 계획을 활성화하세요:[/yellow]")
-                console.print("  sisyphus plan init")
+                console.print("  sisyphus-speckit plan init")
                 raise typer.Exit(1)
             else:
                 console.print("[red]현재 활성화된 작업 계획이 없습니다.[/red]")
                 console.print("[yellow]여러 작업 계획이 있습니다. 다음 명령으로 하나를 선택하세요:[/yellow]")
                 for yaml_file in yaml_files:
                     console.print(f"  - {yaml_file.relative_to(working_dir)}")
-                console.print("\n  sisyphus plan init <plan-file>")
+                console.print("\n  sisyphus-speckit plan init <plan-file>")
                 raise typer.Exit(1)
         else:
             plan_path = working_dir / status.current_plan.plan_path
@@ -499,7 +499,7 @@ def continue_work(
                                 f"evidence={'있음' if verify_item.manual_verification_evidence else '없음'})"
                             )
                             console.print(
-                                f"[cyan]   sisyphus task verify manual-mark {verify_item.id} "
+                                f"[cyan]   sisyphus-speckit task verify manual-mark {verify_item.id} "
                                 f"--evidence '<상세한 검증 증거 100자 이상>'[/cyan]\n"
                             )
                             continue
@@ -508,7 +508,7 @@ def continue_work(
                             console.print(f"[yellow]⚠️  [{verify_item.id}] {verify_item.title}[/yellow]")
                             console.print("[green]   ✓ 1단계: 수동 검증 완료[/green]")
                             console.print("[yellow]   → 2단계: Bash 자동 검증 미완료[/yellow]")
-                            console.print("[cyan]   sisyphus task verify bash[/cyan]\n")
+                            console.print("[cyan]   sisyphus-speckit task verify bash[/cyan]\n")
                             continue
 
                         if verify_item.llm_judge:
@@ -517,9 +517,9 @@ def continue_work(
                             if verify_item.bash:
                                 console.print("[green]   ✓ 2단계: Bash 자동 검증 완료[/green]")
                             console.print("[yellow]   → 3단계: LLM Judge 검증 미완료[/yellow]")
-                            console.print("[cyan]   sisyphus task verify llm[/cyan]")
+                            console.print("[cyan]   sisyphus-speckit task verify llm[/cyan]")
                             console.print(
-                                f"[cyan]   sisyphus task verify llm-mark {verify_item.id} "
+                                f"[cyan]   sisyphus-speckit task verify llm-mark {verify_item.id} "
                                 f"--evidence '<증거 설명>'[/cyan]\n"
                             )
                             continue
@@ -681,7 +681,7 @@ def verify_llm(
                 for cmd in llm_item.context_commands:
                     console.print(f"  - {cmd}")
 
-        verify_cmd = f"sisyphus task verify llm-mark {verify_item.id} --evidence '<증거 설명>'"
+        verify_cmd = f"sisyphus-speckit task verify llm-mark {verify_item.id} --evidence '<증거 설명>'"
         console.print(f"\n[yellow]검증을 완료하려면:[/yellow] {verify_cmd}")
 
         _display_remaining_verifications(task_manager)
@@ -775,7 +775,9 @@ def verify_manual(
         console.print("     [dim]- 코드 변경 내역 (git diff, 파일 경로)[/dim]")
         console.print("     [dim]- 기능 동작 확인 (스크린샷, 로그, 실행 결과)[/dim]")
 
-        verify_cmd = f"sisyphus task verify manual-mark {verify_item.id} --evidence '<상세한 검증 증거 100자 이상>'"
+        verify_cmd = (
+            f"sisyphus-speckit task verify manual-mark {verify_item.id} --evidence '<상세한 검증 증거 100자 이상>'"
+        )
         console.print("\n[bold yellow]검증 완료 표시:[/bold yellow]")
         console.print(f"  {verify_cmd}")
 

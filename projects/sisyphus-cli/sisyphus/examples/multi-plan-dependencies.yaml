@@ -65,4 +65,4 @@ work_plans:
 #   └─> plan-main
 #       └─> plan-testing
 #
-# Run: sisyphus plan graph examples/ --format ascii
+# Run: sisyphus-speckit plan graph examples/ --format ascii

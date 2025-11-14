@@ -102,7 +102,7 @@ async def test_parse_jsonl_stream_valid_input() -> None:
     results = []
     async with anyio.create_task_group() as tg:
         tg.start_soon(send_data)
-        async for obj in ProcessManager.parse_jsonl_stream(receive_stream):
+        async for obj in ProcessManager.parse_jsonl_stream(receive_stream):  # pyright: ignore[reportArgumentType]
             results.append(obj)
 
     # then
@@ -126,7 +126,7 @@ async def test_parse_jsonl_stream_invalid_json() -> None:
     results = []
     async with anyio.create_task_group() as tg:
         tg.start_soon(send_data)
-        async for obj in ProcessManager.parse_jsonl_stream(receive_stream):
+        async for obj in ProcessManager.parse_jsonl_stream(receive_stream):  # pyright: ignore[reportArgumentType]
             results.append(obj)
 
     # then
@@ -152,7 +152,7 @@ async def test_parse_jsonl_stream_oversized_line() -> None:
     results = []
     async with anyio.create_task_group() as tg:
         tg.start_soon(send_data)
-        async for obj in ProcessManager.parse_jsonl_stream(receive_stream, max_line_size=50):
+        async for obj in ProcessManager.parse_jsonl_stream(receive_stream, max_line_size=50):  # pyright: ignore[reportArgumentType]
             results.append(obj)
 
     # then
@@ -175,7 +175,7 @@ async def test_parse_jsonl_stream_empty_lines() -> None:
     results = []
     async with anyio.create_task_group() as tg:
         tg.start_soon(send_data)
-        async for obj in ProcessManager.parse_jsonl_stream(receive_stream):
+        async for obj in ProcessManager.parse_jsonl_stream(receive_stream):  # pyright: ignore[reportArgumentType]
             results.append(obj)
 
     # then
@@ -198,7 +198,7 @@ async def test_parse_jsonl_stream_incomplete_line() -> None:
     results = []
     async with anyio.create_task_group() as tg:
         tg.start_soon(send_data)
-        async for obj in ProcessManager.parse_jsonl_stream(receive_stream):
+        async for obj in ProcessManager.parse_jsonl_stream(receive_stream):  # pyright: ignore[reportArgumentType]
             results.append(obj)
 
     # then
@@ -221,7 +221,7 @@ async def test_parse_jsonl_stream_non_dict_objects() -> None:
     results = []
     async with anyio.create_task_group() as tg:
         tg.start_soon(send_data)
-        async for obj in ProcessManager.parse_jsonl_stream(receive_stream):
+        async for obj in ProcessManager.parse_jsonl_stream(receive_stream):  # pyright: ignore[reportArgumentType]
             results.append(obj)
 
     # then

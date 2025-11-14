@@ -101,6 +101,8 @@ class TestPlanTemplateGenerator:
         created_at = datetime.fromisoformat(doc.metadata.created_at.replace("Z", "+00:00"))
         assert before <= created_at <= after
 
+        assert doc.metadata.updated_at is not None
+        assert doc.metadata.updated_at is not None
         updated_at = datetime.fromisoformat(doc.metadata.updated_at.replace("Z", "+00:00"))
         assert before <= updated_at <= after
 

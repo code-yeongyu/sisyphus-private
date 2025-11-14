@@ -1,3 +1,4 @@
+# pyright: reportImportCycles=false
 """ExecutionLoop for two-phase agent execution (Execute + Verify)."""
 
 from __future__ import annotations

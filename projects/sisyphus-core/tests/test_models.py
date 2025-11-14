@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from sisyphus_core.core.plans.models import (
+    BashVerification,
     ReferenceItem,
     Todo,
     TodoStatus,
@@ -14,11 +15,8 @@ pytestmark = [pytest.mark.anyio]
 
 
 async def test_todo__if_valid_data__creates_successfully() -> None:
-    # given
-    data = {"id": "1", "title": "Test Task", "status": TodoStatus.pending}
-
-    # when
-    todo = Todo(**data)
+    # given & when
+    todo = Todo(id="1", title="Test Task", status=TodoStatus.pending)
 
     # then
     assert todo.id == "1"
@@ -27,11 +25,8 @@ async def test_todo__if_valid_data__creates_successfully() -> None:
 
 
 async def test_todo__if_with_description__stores_description() -> None:
-    # given
-    data = {"id": "1", "title": "Task", "description": "Detailed description", "status": TodoStatus.pending}
-
-    # when
-    todo = Todo(**data)
+    # given & when
+    todo = Todo(id="1", title="Task", description="Detailed description", status=TodoStatus.pending)
 
     # then
     assert todo.description == "Detailed description"
@@ -81,17 +76,21 @@ async def test_reference_item__if_uri_and_inline__raises_error() -> None:
 
 async def test_verification_item__if_valid_bash__creates_successfully() -> None:
     # given
-    data = {
-        "id": "v1",
-        "title": "Test verification",
-        "description": "Run tests",
-        "orchestrator_manually_verified": False,
-        "manual_verification_evidence": "",
-        "bash": [{"execute": "pytest", "expected_exit_code": 0}],
-    }
-
+    bash_verification = BashVerification(execute="pytest", expected_exit_code=0)
+    
     # when
-    ver = VerificationItem(**data)
+    ver = VerificationItem(
+        id="v1",
+        title="Test verification",
+        description="Run tests",
+        verified=False,
+        verified_at=None,
+        verification_evidence=None,
+        orchestrator_manually_verified=False,
+        manual_verification_evidence="",
+        bash=[bash_verification],
+        llm_judge=[],
+    )
 
     # then
     assert ver.id == "v1"

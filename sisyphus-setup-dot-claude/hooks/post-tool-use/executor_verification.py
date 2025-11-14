@@ -159,7 +159,7 @@ Next verification: {verify_item.title}
 Description: {verify_item.description}
 
 AUTOMATED VERIFICATION AVAILABLE:
-Run: sisyphus task verify bash
+Run: sisyphus-speckit task verify bash
 
 This will execute:
 {bash_commands}
@@ -189,13 +189,13 @@ WHAT YOU MUST DO:
 1. Follow the instruction above carefully
 2. Perform the verification yourself
 3. Mark as verified with evidence:
-   sisyphus task verify llm-mark {verify_item.id} --evidence "<your findings>"
+   sisyphus-speckit task verify llm-mark {verify_item.id} --evidence "<your findings>"
 
 RESPOND IN THIS FORMAT TO CONFIRM YOU COMPLETED VERIFICATION:
 ```
 Verification completed for {verify_item.title}.
 Evidence: <detailed description of what you verified>
-Command executed: sisyphus task verify llm-mark {verify_item.id} --evidence "..."
+Command executed: sisyphus-speckit task verify llm-mark {verify_item.id} --evidence "..."
 ```
 
 YOU CANNOT PROCEED WITHOUT COMPLETING THIS VERIFICATION.
@@ -222,7 +222,7 @@ WHAT YOU MUST DO:
    {verify_item.id}_VERIFIED = TRUE
    {verify_item.id}_VERIFICATION_EVIDENCE = "<evidence description>"
 4. Mark as verified:
-   sisyphus task verify llm-mark {verify_item.id} --evidence "<agent's evidence>"
+   sisyphus-speckit task verify llm-mark {verify_item.id} --evidence "<agent's evidence>"
 
 YOU CANNOT PROCEED WITHOUT COMPLETING THIS VERIFICATION.
 """
@@ -235,16 +235,16 @@ def format_continue_message() -> str:
 ✓ All verification items have been marked as verified.
 
 YOU CAN NOW PROCEED TO NEXT TASK:
-Run: sisyphus task continue
+Run: sisyphus-speckit task continue
 
 RESPOND IN THIS FORMAT AFTER RUNNING THE COMMAND:
 ```
-sisyphus task continue executed successfully.
+sisyphus-speckit task continue executed successfully.
 Next task information received and task has moved forward.
 Now assigning executor agent for next task.
 ```
 
-YOU MUST RUN 'sisyphus task continue' TO PROCEED.
+YOU MUST RUN 'sisyphus-speckit task continue' TO PROCEED.
 WITHOUT EXECUTING THIS COMMAND, YOU CANNOT MOVE TO THE NEXT TASK.
 """
 

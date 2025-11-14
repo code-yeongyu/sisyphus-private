@@ -137,7 +137,7 @@ async def test_work_plan__if_depends_on_provided__stores_dependency_list(
     }
 
     # when
-    plan = WorkPlan(**data)
+    plan = WorkPlan.model_validate(data)
 
     # then
     assert plan.depends_on == ["plan-foundation", "plan-setup"]
@@ -166,7 +166,7 @@ async def test_work_plan__if_depends_on_not_provided__defaults_to_empty_list(
     }
 
     # when
-    plan = WorkPlan(**data)
+    plan = WorkPlan.model_validate(data)
 
     # then
     assert plan.depends_on == []
@@ -189,7 +189,7 @@ async def test_todo__if_description_provided__stores_description(
     }
 
     # when
-    todo = Todo(**data)
+    todo = Todo.model_validate(data)
 
     # then
     assert todo.description == "Detailed task description"
@@ -207,7 +207,7 @@ async def test_todo__if_description_not_provided__defaults_to_none(
     data = {"id": "1", "title": "Test Task", "status": TodoStatus.pending}
 
     # when
-    todo = Todo(**data)
+    todo = Todo.model_validate(data)
 
     # then
     assert todo.description is None
@@ -232,7 +232,7 @@ async def test_todo__if_children_provided__stores_nested_todos(
     }
 
     # when
-    parent = Todo(**parent_data)
+    parent = Todo.model_validate(parent_data)
 
     # then
     assert parent.children is not None
@@ -253,7 +253,7 @@ async def test_todo__if_children_not_provided__defaults_to_none(
     data = {"id": "1", "title": "Task", "status": TodoStatus.pending}
 
     # when
-    todo = Todo(**data)
+    todo = Todo.model_validate(data)
 
     # then
     assert todo.children is None
@@ -312,7 +312,7 @@ async def test_plan_document__if_valid_structure__creates_successfully(
     }
 
     # when
-    doc = PlanDocument(**data)
+    doc = PlanDocument.model_validate(data)
 
     # then
     assert doc.version == "3.0"
@@ -355,7 +355,7 @@ async def test_verification_item__if_all_fields_provided__creates_successfully(
     }
 
     # when
-    ver = VerificationItem(**data)
+    ver = VerificationItem.model_validate(data)
 
     # then
     assert ver.id == "ver_001"
@@ -428,7 +428,7 @@ async def test_todo__if_one_level_children__creates_successfully(
     }
 
     # when
-    parent = Todo(**parent_data)
+    parent = Todo.model_validate(parent_data)
 
     # then
     assert parent.children is not None

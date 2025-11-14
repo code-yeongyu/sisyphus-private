@@ -65,7 +65,7 @@ Follow this sequence to complete all verifications:
 1. BASH AUTOMATED VERIFICATION
     Run automated bash tests:
     ```sh
-    sisyphus task verify bash
+    sisyphus-speckit task verify bash
     ```
 
   This command:
@@ -76,12 +76,12 @@ Follow this sequence to complete all verifications:
   On failure:
   - Review error messages
   - Fix issues
-  - Re-run 'sisyphus task verify bash'
+  - Re-run 'sisyphus-speckit task verify bash'
   - Or request sisyphus-executor to fix
 
 2. LLM VERIFICATION (Orchestrator)
   Get your next LLM verification instructions:
-    sisyphus task verify llm
+    sisyphus-speckit task verify llm
 
   This shows:
   - Verification instruction
@@ -90,7 +90,7 @@ Follow this sequence to complete all verifications:
 
   Mark your verification as complete with detailed evidence:
     ```sh
-    sisyphus task verify llm-mark <verify-id> --evidence "<detailed findings>"
+    sisyphus-speckit task verify llm-mark <verify-id> --evidence "<detailed findings>"
     ```
 
   Evidence MUST include:
@@ -113,11 +113,11 @@ Follow this sequence to complete all verifications:
 3. MANUAL VERIFICATION
   Check manual verification requirements:
   ```sh
-   sisyphus task verify manual
+   sisyphus-speckit task verify manual
    ```
 
   Mark as complete:
-    sisyphus task verify manual-mark <verify-id> --evidence "<very detailed evidence>"
+    sisyphus-speckit task verify manual-mark <verify-id> --evidence "<very detailed evidence>"
 
   CRITICAL WARNING:
   DO NOT use "LLM judge passed" or "previous verification completed" as evidence.
@@ -188,7 +188,7 @@ Follow this sequence to complete all verifications:
 
 CHECK STATUS ANYTIME
 View all verification status:
-  sisyphus task verify status
+  sisyphus-speckit task verify status
 
 Shows:
 - Total progress (completed/total)
@@ -246,7 +246,7 @@ Final verification is for user acceptance, not a blocker for task completion.
 
   Then proceed to continue:
   ```sh
-  sisyphus task continue
+  sisyphus-speckit task continue
   ```
 
 This will:
@@ -254,7 +254,7 @@ This will:
 - Move to next pending task
 - Start sisyphus-executor on next task
 
-YOU MUST COMMIT CHANGES BEFORE RUNNING 'sisyphus task continue'.
+YOU MUST COMMIT CHANGES BEFORE RUNNING 'sisyphus-speckit task continue'.
 
 [MANDATORY REPORTING FORMAT]
 After completing EACH verification, report to user in this format:
@@ -263,7 +263,7 @@ After completing EACH verification, report to user in this format:
 - Verification Report: [bash/llm/manual] verification completed
 - Verification Type: [automated bash/LLM judge/manual inspection]
 - Commands Executed:
-  - [exact commands you ran, e.g., sisyphus task verify bash]
+  - [exact commands you ran, e.g., sisyphus-speckit task verify bash]
   - [exact commands you ran, e.g., pytest projects/sisyphus-cli/]
   - [exact commands you ran, e.g., ruff check .]
 - Evidence Collected:
@@ -278,7 +278,7 @@ After completing EACH verification, report to user in this format:
 After ALL verifications complete, report:
 ```
 - Final Status: All verifications completed
-- Task Status: Ready to continue (will run sisyphus task continue)
+- Task Status: Ready to continue (will run sisyphus-speckit task continue)
 - Next Action: Moving to next task
 ```
 
@@ -288,7 +288,7 @@ After ALL verifications complete, report:
 3. NEVER trust executor's claims without independent verification
 4. NEVER move forward with failing tests or lint errors
 5. ALWAYS provide concrete evidence (command outputs, file contents, test results)
-6. ALWAYS run 'sisyphus task continue' after all verifications pass
+6. ALWAYS run 'sisyphus-speckit task continue' after all verifications pass
 
 [IMPORTANT - NO SKIPPING]
 The concept of "skipping verification" does NOT exist.
@@ -390,7 +390,7 @@ def main() -> int:
 
 Git status check shows you have uncommitted changes in your working directory.
 
-BEFORE running 'sisyphus task continue', you MUST commit your changes:
+BEFORE running 'sisyphus-speckit task continue', you MUST commit your changes:
 
 1. Review your changes:
    git status

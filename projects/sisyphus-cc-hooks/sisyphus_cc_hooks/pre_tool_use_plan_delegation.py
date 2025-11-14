@@ -71,10 +71,7 @@ def check_executor_in_transcript(transcript_path: Path) -> bool:
                         if not isinstance(block, dict):
                             continue
 
-                        if (
-                            block.get("type") != "tool_use"
-                            or block.get("name") != "Task"
-                        ):
+                        if block.get("type") != "tool_use" or block.get("name") != "Task":
                             continue
 
                         tool_input = block.get("input", {})
@@ -129,11 +126,11 @@ This is a Sisyphus plan YAML file (.sisyphus/tasks/*.yaml).
 NEVEREVER TRY TO MODIFY THIS FILE DIRECTLY.
 ALWAYS USE SISYPHUS CLI TO WORK WITH PLANS.
 ```sh
-sisyphus plan --help
+sisyphus-speckit plan --help
 ```
 
 ```sh
-sisyphus task --help
+sisyphus-speckit task --help
 ```
 """.strip()
 

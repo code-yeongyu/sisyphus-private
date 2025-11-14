@@ -147,9 +147,9 @@ for YAML v3.0 work plans.**
 ---
 
 FORBIDDEN: NEVER CALL 'sisyphus work' COMMAND, THIS IS FOR USER, NOW YOU.
-For now, run 'sisyphus task continue' to continue the task, until you are fully done.
+For now, run 'sisyphus-speckit task continue' to continue the task, until you are fully done.
 
-RUN `sisyphus task continue`. NOW.
+RUN `sisyphus-speckit task continue`. NOW.
 """
 
 VERIFICATION_FAILURE_EXECUTE_PROMPT = """/sisyphus-execute
@@ -190,7 +190,7 @@ This means the work you claimed was complete either:
 
 ---
 
-Fix the issues properly, and once you are done, run `sisyphus task continue` to mark completed.
+Fix the issues properly, and once you are done, run `sisyphus-speckit task continue` to mark completed.
 """
 
 
@@ -239,7 +239,7 @@ def build_verify_prompt(plan_path: str) -> str:
         "**BEFORE** verifying individual todo checkboxes, you MUST handle final verification:\n\n"
         "1. **Read the work plan's `final_verification` field**:\n"
         "   ```bash\n"
-        "   sisyphus task verify status\n"
+        "   sisyphus-speckit task verify status\n"
         "   ```\n"
         "   This shows all verification items (todo-level + final-level) with completion status.\n\n"
         "2. **Check if final verification items exist and are appropriate**:\n"
@@ -254,37 +254,38 @@ def build_verify_prompt(plan_path: str) -> str:
         "   **Available Commands**:\n\n"
         "   a) **Bash Verification** (automated):\n"
         "      ```bash\n"
-        "      sisyphus task verify bash\n"
+        "      sisyphus-speckit task verify bash\n"
         "      ```\n"
         "      - Runs the next bash verification test automatically\n"
         "      - If exit code matches expected: automatically marked verified\n\n"
         "   b) **LLM Verification** (you judge):\n"
         "      ```bash\n"
         "      # Step 1: View what to verify\n"
-        "      sisyphus task verify llm\n"
+        "      sisyphus-speckit task verify llm\n"
         "      \n"
         "      # Step 2: After performing verification, mark it\n"
-        '      sisyphus task verify llm-mark <final-verify-id> --evidence "<detailed evidence>"\n'
+        '      sisyphus-speckit task verify llm-mark <final-verify-id> --evidence "<detailed evidence>"\n'
         "      ```\n"
         "      - Evidence must describe: what you tested, how you tested, results\n\n"
         "   c) **Manual Verification** (human-verifiable):\n"
         "      ```bash\n"
         "      # Step 1: View what to verify\n"
-        "      sisyphus task verify manual\n"
+        "      sisyphus-speckit task verify manual\n"
         "      \n"
         "      # Step 2: After performing verification, mark it\n"
-        '      sisyphus task verify manual-mark <final-verify-id> --evidence "<detailed evidence>"\n'
+        '      sisyphus-speckit task verify manual-mark <final-verify-id> --evidence "<detailed evidence>"\n'
         "      ```\n"
         "      - Evidence must be 100+ characters\n\n"
         "   **Example**: After testing end-to-end auth flow:\n"
         "   ```bash\n"
-        '   sisyphus task verify manual-mark final-verify-integration --evidence "Tested complete auth flow: \n'
-        "   login -> token generation -> protected endpoint access -> logout. All 4 steps working correctly. \n"
-        '   Verified with Playwright in Chrome 120. Screenshots captured for each step."\n'
+        "   sisyphus-speckit task verify manual-mark final-verify-integration \\\n"
+        '     --evidence "Tested complete auth flow: login -> token generation -> \n'
+        "   protected endpoint access -> logout. All 4 steps working correctly. \n"
+        '   Verified with Playwright in Chrome 120. Screenshots captured."\n'
         "   ```\n\n"
         "4. **Verify all final verification items are marked**:\n"
         "   ```bash\n"
-        "   sisyphus task verify status\n"
+        "   sisyphus-speckit task verify status\n"
         "   ```\n"
         "   Ensure all final-level items show as verified before proceeding.\n\n"
         "**CRITICAL**: Final verification validates system-level correctness. Do NOT skip this step.\n"
@@ -437,7 +438,7 @@ def build_verify_prompt(plan_path: str) -> str:
         "**Available Commands**:\\n\\n"
         "1. **Bash Verification** (automated):\\n"
         "   ```bash\\n"
-        "   sisyphus task verify bash\\n"
+        "   sisyphus-speckit task verify bash\\n"
         "   ```\\n"
         "   - Runs the next bash verification test automatically\\n"
         "   - Shows: command executed, exit code, pass/fail result\\n"
@@ -445,26 +446,26 @@ def build_verify_prompt(plan_path: str) -> str:
         "2. **LLM Verification** (you judge):\\n"
         "   ```bash\\n"
         "   # Step 1: View what to verify\\n"
-        "   sisyphus task verify llm\\n"
+        "   sisyphus-speckit task verify llm\\n"
         "   \\n"
         "   # Step 2: After performing verification, mark it\\n"
-        '   sisyphus task verify llm-mark <final-verify-id> --evidence \\"<detailed evidence>\\"\\n'
+        '   sisyphus-speckit task verify llm-mark <final-verify-id> --evidence \\"<detailed evidence>\\"\\n'
         "   ```\\n"
         "   - Evidence must describe: what you tested, how you tested, results\\n"
         "   - Example: Tested operations, verified error propagation, no race conditions\\n\\n"
         "3. **Manual Verification** (human-verifiable):\\n"
         "   ```bash\\n"
         "   # Step 1: View what to verify\\n"
-        "   sisyphus task verify manual\\n"
+        "   sisyphus-speckit task verify manual\\n"
         "   \\n"
         "   # Step 2: After performing verification, mark it\\n"
-        '   sisyphus task verify manual-mark <final-verify-id> --evidence \\"<detailed evidence>\\"\\n'
+        '   sisyphus-speckit task verify manual-mark <final-verify-id> --evidence \\"<detailed evidence>\\"\\n'
         "   ```\\n"
         "   - Evidence must be 100+ characters\\n"
         "   - Example: Chrome browser test complete, login form renders correctly, submit works\\n\\n"
         "4. **Check Status**:\\n"
         "   ```bash\\n"
-        "   sisyphus task verify status\\n"
+        "   sisyphus-speckit task verify status\\n"
         "   ```\\n"
         "   - Shows all verification items (todo-level + final-level) with completion status\\n\\n"
         "**Example**:\\n"
@@ -477,9 +478,10 @@ def build_verify_prompt(plan_path: str) -> str:
         "```\\n\\n"
         "After performing the verification, mark it:\\n"
         "```bash\\n"
-        'sisyphus task verify manual-mark final-verify-integration --evidence \\"Tested complete auth flow: \\n'
-        "login -> token generation -> protected endpoint access -> logout. All 4 steps working correctly. \\n"
-        'Verified with Playwright in Chrome 120. Screenshots captured for each step.\\"\\n'
+        "sisyphus-speckit task verify manual-mark final-verify-integration \\\\\n"
+        '  --evidence \\"Tested complete auth flow: login -> token generation -> \\n'
+        "protected endpoint access -> logout. All 4 steps working correctly. \\n"
+        'Verified with Playwright in Chrome 120. Screenshots captured.\\"\\n'
         "```\\n\\n"
         "**FINAL VERIFICATION IS YOUR JOB**:\\n"
         "- Executors complete individual todos\\n"

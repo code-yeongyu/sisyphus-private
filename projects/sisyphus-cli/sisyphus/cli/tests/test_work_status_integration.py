@@ -17,7 +17,7 @@ async def test_work_and_task_continue__use_same_plan_via_status_json(
     """Verify work and task continue synchronize via status.json.
 
     This test simulates the workflow:
-    1. User runs 'sisyphus task continue' → selects plan-A → status.json records it
+    1. User runs 'sisyphus-speckit task continue' → selects plan-A → status.json records it
     2. User runs 'sisyphus work' → automatically uses plan-A from status.json
     3. No need to select plan twice
 

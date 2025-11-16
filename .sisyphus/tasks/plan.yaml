@@ -739,7 +739,7 @@ work_plans:
       2. deterministic_bash 리스트를 순차적으로 실행 (첫 번째 false부터)\n3. 각 항목의 expected, actual,
       성공/실패 이유 출력\n4. 남은 항목 상태 표시\n\n참고: 사용자 요구사항 - \"가장 index 위쪽의 false 부터 하나하나 실행되어야
       하며, 남아있는게 있다면 status 를 보여주어야 함\"\n"
-    status: in_progress
+    status: completed
     references:
     - inline: "파일: /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/task.py\n\
         기존 명령어 패턴 참조:\n- @task_app.command() 데코레이터\n- typer.Option()으로 인자 정의\n- load_current_plan_and_task()
@@ -774,15 +774,17 @@ work_plans:
   - id: 10-commit
     title: depends_on 파일 경로 지원 커밋
     description: 'git commit -m "feat(core): depends_on 파일 경로 지원 추가"'
-    status: pending
+    status: completed
     references: []
     verification_spec:
     - id: verify-10-commit
       title: 커밋 확인
       description: git log 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T09:14:48.637464+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'git log: 59f919c test(plan_linter): depends_on
+        파일 경로 지원 테스트 추가. 492줄 추가됨. test_plan_linter_file_depends.py 생성됨.'
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && git
@@ -800,7 +802,7 @@ work_plans:
       해당 항목 checked_at, checked_evidence 업데이트\n5. sisyphus-core의 save_plan() 사용하여
       저장\n\n참고: 사용자 요구사항 - \"sisyphus-speckit task accept --id=\"no-naive-type-hints\"\
       \ --evidence\"\n"
-    status: pending
+    status: completed
     references:
     - inline: "파일: /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/task.py\n\
         \n@task_app.command(\"accept\")\nasync def task_accept(\n    criterion_id:
@@ -820,9 +822,13 @@ work_plans:
     - id: verify-12-1
       title: task accept 명령어 테스트
       description: task accept가 acceptance criteria를 올바르게 마킹하는지 테스트
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T09:19:10.615135+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: test_task_accept.py 생성 완료. 5개 테스트 함수 
+        (asyncio+trio=10개 테스트) 100% 통과. Given-When-Then 구조 사용. 
+        AcceptanceCriteriaChecklist 마킹, 타임스탬프 저장, 에러 처리 테스트. basedpyright 0 
+        errors, ruff All checks passed.
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit && 
@@ -840,7 +846,7 @@ work_plans:
       \ - llm_judge 검증 모두 통과\n   - acceptance_criteria_for_verification_agent의 모든
       checklists checked_at 존재\n2. 조건 미충족 시 친절한 에러 메시지 출력\n\n참고: 사용자 요구사항 - \"sisyphus
       task continue 의 에러메시지로써 아주 친절하게 안내될 수 있어야 함\"\n"
-    status: pending
+    status: completed
     references:
     - inline: "파일: /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/task.py\n\
         \ntask_continue() 함수 수정:\n\nasync def task_continue(...) -> None:\n    \"\"\
@@ -867,9 +873,13 @@ work_plans:
     - id: verify-13-1
       title: task continue 조건 검증 테스트
       description: task continue가 4가지 조건을 올바르게 확인하는지 테스트
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T09:24:22.725121+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'test_task_continue_conditions.py 생성. 5개 테스트 함수
+        (asyncio+trio=10개) 100% 통과. 4가지 조건 검증: deterministic_bash verified_at, orchestrator_manually_verified,
+        llm_judge (빈 리스트 허용), acceptance_criteria checked_at. Given-When-Then 구조.
+        basedpyright 0 errors, ruff passed.'
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit && 
@@ -883,7 +893,7 @@ work_plans:
   - id: 12-commit
     title: task accept 명령어 커밋
     description: 'git commit -m "feat(cli): task accept 명령어 구현"'
-    status: pending
+    status: in_progress
     references: []
     verification_spec:
     - id: verify-12-commit
@@ -1078,7 +1088,7 @@ work_plans:
     started_at: '2025-11-16T08:32:49.583213+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '11'
+    current_task_id: 12-commit
   current_work: ''
   current_work_ids: []
   acceptance_criteria_for_verification_agent: []

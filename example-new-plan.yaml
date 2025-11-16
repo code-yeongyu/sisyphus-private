@@ -7,45 +7,176 @@ work_plans:
     name: "Example New Plan with Extended Fields"
     depends_on: []
     user_request:
-      original: "Example plan demonstrating new UserRequest fields (expected_outcome, forbidden_outcome)"
+      original: "Example plan demonstrating new UserRequest fields"
       created_at: "2025-11-16T09:00:00Z"
-      additional: []
+      additional:
+        - "This is an additional note"
+        - "Another important point"
       expected_outcome: "All new fields should be properly parsed and accessible"
       forbidden_outcome: "The plan should not fail to load due to missing fields"
     objectives:
-      core: "Demonstrate new UserRequest fields"
-      detailed: []
+      core: "Demonstrate new fields in UserRequest, Todo, VerificationItem, WorkPlan, and ExecutionStatus"
+      detailed:
+        - goal: "Test UserRequest expected_outcome and forbidden_outcome"
+          measurable: "Fields are parsed correctly from YAML"
+        - goal: "Test Todo parallel and acceptance_criteria"
+          measurable: "New Todo fields are accessible"
     background:
-      current_situation: "Adding new fields to UserRequest model"
-      reason_for_change: "Enable clearer specification of expected and forbidden outcomes"
-      changes_to_make: "Add expected_outcome and forbidden_outcome fields"
+      current_situation: "Adding new fields to all Pydantic models"
+      reason_for_change: "Enable clearer specification and verification workflow"
+      changes_to_make: "Add expected_outcome, forbidden_outcome, parallel, acceptance_criteria, and other fields"
     required_background:
-      description: "Basic example to test field parsing"
-      file_structure: null
-      references: []
+      description: "Comprehensive example to test all new field parsing"
+      file_structure: "sisyphus-core project structure"
+      references:
+        - ref_id: "models-ref"
+          uri: "/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core/sisyphus_core/core/plans/models.py"
     workflow:
-      dependency_diagram: "Simple linear workflow"
-      critical_path: []
+      dependency_diagram: "Linear workflow for testing"
+      critical_path:
+        - "test-1"
+        - "test-2"
     success_vision:
-      user_perspective: []
-      business_perspective: []
-      technical_criteria: []
-    final_verification: []
+      user_perspective:
+        - scenario: "Developer loads plan and accesses all new fields"
+          experience: "All fields are properly accessible without errors"
+      business_perspective:
+        - metric: "Field compatibility"
+          target: "100% of new fields parse correctly"
+      technical_criteria:
+        - category: "Type safety"
+          criteria: "All fields match Pydantic model definitions"
+          command: "basedpyright"
+          expected: "0 errors"
+    final_verification:
+      - id: final-verify-1
+        title: "Verify all fields loaded"
+        category: "functional"
+        description: "Check that all new fields are accessible"
+        verified: false
+        orchestrator_manually_verified: false
+        manual_verification_evidence: ""
+        bash:
+          - execute: "echo 'Verification placeholder'"
+            expected_stdout: "Verification placeholder"
+            expected_exit_code: 0
+        llm_judge: []
     todos:
-      - id: "test-1"
-        title: "Verify new fields"
-        description: "Test that expected_outcome and forbidden_outcome are parsed correctly"
+      - id: test-1
+        title: "Test UserRequest fields"
+        description: "Verify expected_outcome and forbidden_outcome are parsed"
         status: pending
         children: null
         references: []
-        verification_spec: []
-    references: []
+        verification_spec:
+          - id: verify-ur-1
+            title: "UserRequest parsing"
+            description: "Check expected_outcome and forbidden_outcome"
+            verified: false
+            verified_at: null
+            verification_evidence: null
+            orchestrator_manually_verified: false
+            manual_verification_evidence: ""
+            bash:
+              - execute: "echo 'test'"
+                expected_stdout: "test"
+                expected_exit_code: 0
+            llm_judge: []
+            deterministic_bash:
+              - description: "Verify expected_outcome field exists"
+                reason_why_it_is_deterministic_and_reliable: "Pydantic model validation is deterministic"
+                execute: "echo 'expected_outcome check'"
+                expected_stdout: "expected_outcome check"
+                expected_exit_code: 0
+                verified_at: null
+            orchestrator_judge: []
+        parallel: false
+        parallelable_and_safe_evidence: null
+        acceptance_criteria:
+          - id: criterion-1
+            condition: "UserRequest has expected_outcome field"
+            verified_at: null
+            verification_evidence: null
+      - id: test-2
+        title: "Test Todo new fields"
+        description: "Verify parallel, parallelable_and_safe_evidence, and acceptance_criteria"
+        status: pending
+        children: null
+        references: []
+        verification_spec:
+          - id: verify-todo-1
+            title: "Todo new fields"
+            description: "Check parallel and acceptance_criteria"
+            verified: false
+            verified_at: null
+            verification_evidence: null
+            orchestrator_manually_verified: false
+            manual_verification_evidence: ""
+            bash: []
+            llm_judge:
+              - by: orchestrator-agent
+                context_commands: []
+                instruction: "Verify Todo parallel and acceptance_criteria fields"
+            deterministic_bash:
+              - description: "Check parallel field type"
+                reason_why_it_is_deterministic_and_reliable: "Type checking is deterministic"
+                execute: "echo 'parallel field check'"
+                expected_stdout: "parallel field check"
+                expected_exit_code: 0
+                verified_at: null
+            orchestrator_judge:
+              - prompt: "Are all Todo fields properly typed?"
+                verified_at: null
+                verification_evidence: null
+        parallel: true
+        parallelable_and_safe_evidence: "This task can run in parallel with others"
+        acceptance_criteria:
+          - id: criterion-2
+            condition: "Todo has parallel field set to true"
+            verified_at: null
+            verification_evidence: null
+          - id: criterion-3
+            condition: "Todo has acceptance_criteria list"
+            verified_at: null
+            verification_evidence: null
+    references:
+      - ref_id: "models"
+        uri: "/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core/sisyphus_core/core/plans/models.py"
     execution:
       started: false
       completed: false
       started_at: null
       completed_at: null
+      fully_done_at: null
     work_mode:
       parallel_requested: false
       current_task_id: null
     current_work: ""
+    current_work_ids:
+      - "test-1"
+      - "test-2"
+    acceptance_criteria_for_verification_agent:
+      - id: acceptance-1
+        title: "All UserRequest fields parsed"
+        accepted_at: null
+        checklists:
+          - id: checklist-1
+            title: "expected_outcome accessible"
+            content: "UserRequest.expected_outcome should be accessible"
+            checked_at: null
+            checked_evidence: null
+          - id: checklist-2
+            title: "forbidden_outcome accessible"
+            content: "UserRequest.forbidden_outcome should be accessible"
+            checked_at: null
+            checked_evidence: null
+      - id: acceptance-2
+        title: "All Todo new fields functional"
+        accepted_at: null
+        checklists:
+          - id: checklist-3
+            title: "parallel field working"
+            content: "Todo.parallel should be boolean"
+            checked_at: null
+            checked_evidence: null
+    fully_done_evidence: null

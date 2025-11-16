@@ -1543,36 +1543,37 @@ class PlanLinter:
         if visited is None:
             visited = set()
 
-        # Check if this is a file path (contains "/" or ends with .yml/.yaml)
+        if depends_on.startswith("file:"):
+            return None
+
+        if depends_on.startswith("registry:"):
+            return None
+
         if "/" not in depends_on and not depends_on.endswith((".yml", ".yaml")):
-            return None  # Not a file path, skip file validation
+            return None
 
         try:
             resolved_path = self.resolve_depends_on_path(depends_on, current_plan_path)
         except Exception as error:
             return f"Plan '{plan_id}' depends on file path '{depends_on}': failed to resolve path - {error}"
 
-        # Check if file exists
         if not resolved_path.exists():
             return (
                 f"Plan '{plan_id}' depends on file path '{depends_on}' which resolves to "
                 f"'{resolved_path}': file does not exist"
             )
 
-        # Check for circular references
         if resolved_path in visited:
             cycle_path = " → ".join(str(p) for p in visited) + f" → {resolved_path}"
             return f"Circular file dependency detected: {cycle_path}"
 
         visited = visited | {resolved_path}
 
-        # Load referenced plan and validate its dependencies
         try:
             referenced_plan_doc = self._load_plan_sync(resolved_path)
         except Exception as error:
             return f"Plan '{plan_id}' depends on file '{depends_on}': failed to load referenced file - {error}"
 
-        # Recursively validate dependencies in referenced file
         for ref_plan in referenced_plan_doc.work_plans:
             for ref_dep in ref_plan.depends_on:
                 error = self._validate_file_path_depends_on(ref_dep, ref_plan.id, resolved_path, visited)

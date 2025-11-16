@@ -86,6 +86,8 @@ class UserRequest(BaseModel):
     original: str
     created_at: str
     additional: list[str] = []
+    expected_outcome: str | None = None
+    forbidden_outcome: str | None = None
 
 
 class DetailedObjective(BaseModel):

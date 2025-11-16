@@ -198,6 +198,21 @@ class Todo(BaseModel):
     acceptance_criteria: list[AcceptanceCriteriaItem] = []
 
 
+class AcceptanceCriteriaChecklist(BaseModel):
+    id: str
+    title: str
+    content: str
+    checked_at: str | None = None
+    checked_evidence: str | None = None
+
+
+class AcceptanceCriteriaForVerificationAgent(BaseModel):
+    id: str
+    title: str
+    accepted_at: str | None = None
+    checklists: list[AcceptanceCriteriaChecklist] = []
+
+
 class WorkPlan(BaseModel):
     id: str
     name: str
@@ -222,6 +237,9 @@ class WorkPlan(BaseModel):
     )
     work_mode: WorkMode = Field(default_factory=lambda: WorkMode(parallel_requested=False, current_task_id=None))
     current_work: str = ""
+    current_work_ids: list[str] = []
+    acceptance_criteria_for_verification_agent: list[AcceptanceCriteriaForVerificationAgent] = []
+    fully_done_evidence: str | None = None
 
 
 class Metadata(BaseModel):

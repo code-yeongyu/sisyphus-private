@@ -28,10 +28,10 @@ class PlanTemplateGenerator:
     def _get_reference_example() -> Path:
         """Get path to example backend.yaml reference.
 
-        Uses importlib.resources to locate the file within the sisyphus package.
+        Uses importlib.resources to locate the file within the sisyphus_core package.
         """
         try:
-            examples_dir = files("sisyphus") / "examples" / "multi-file"
+            examples_dir = files("sisyphus_core") / "examples" / "multi-file"
             backend_yaml = examples_dir / "backend.yaml"
             path = Path(str(backend_yaml))
             if path.exists():
@@ -39,7 +39,7 @@ class PlanTemplateGenerator:
         except Exception:
             pass
 
-        raise FileNotFoundError("Example file not found: sisyphus/examples/multi-file/backend.yaml")
+        raise FileNotFoundError("Example file not found: sisyphus_core/examples/multi-file/backend.yaml")
 
     @staticmethod
     def full_example() -> PlanDocument:

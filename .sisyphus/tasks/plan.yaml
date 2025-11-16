@@ -196,7 +196,7 @@ work_plans:
     title: Pydantic 모델 확장 - UserRequest에 expected_outcome, forbidden_outcome 추가
     description: "sisyphus-core/sisyphus_core/core/plans/models.py의 UserRequest 모델에\n\
       expected_outcome, forbidden_outcome 필드 추가.\n\n참고: example-new-plan.yaml:15-19\n"
-    status: in_progress
+    status: completed
     references:
     - inline: "현재 models.py 구조:\n\nclass UserRequest(BaseModel):  # 라인 85-88\n   \
         \ original: str\n    created_at: str\n    additional: list[str] = []\n   \
@@ -227,9 +227,11 @@ work_plans:
       title: basedpyright 타입 체크 통과
       description: UserRequest 모델 변경 후 타입 체크 통과
       verified: true
-      verified_at: '2025-11-16T08:35:03.148003+00:00'
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified_at: '2025-11-16T08:35:43.758170+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'UserRequest 모델에 expected_outcome: str | None
+        = None, forbidden_outcome: str | None = None 필드 추가 완료. git diff로 models.py
+        라인 89-90에 정확히 추가됨 확인. basedpyright 타입 체크 0 errors 통과. 커밋 92875cf 완료.'
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv 
@@ -240,15 +242,18 @@ work_plans:
   - id: 1-test
     title: UserRequest 필드 추가 테스트
     description: UserRequest에 expected_outcome, forbidden_outcome 추가 후 즉시 테스트
-    status: pending
+    status: in_progress
     references: []
     verification_spec:
     - id: verify-1-test
       title: UserRequest 필드 테스트
       description: example-new-plan.yaml 로드하여 필드 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T08:37:54.989824+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: "example-new-plan.yaml 파일 생성 확인. load_plan() 함수로
+        YAML 로드 성공. hasattr() 체크로 expected_outcome, forbidden_outcome 필드 존재 확인. 테스트
+        출력 'OK', exit code 0. 실제 파일 경로: /Users/yeongyu/local-workspaces/sisyphus/example-new-plan.yaml"
       bash:
       - execute: "cd /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core
           && uv run python -c \"\nfrom pathlib import Path\nfrom sisyphus_core.core.plans.loader
@@ -917,5 +922,5 @@ work_plans:
     started_at: '2025-11-16T08:32:49.583213+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '1'
+    current_task_id: 1-test
   current_work: ''

@@ -1,0 +1,51 @@
+version: "3.0"
+metadata:
+  created_at: "2025-11-16T09:00:00Z"
+  updated_at: "2025-11-16T09:00:00Z"
+work_plans:
+  - id: example-new-spec
+    name: "Example New Plan with Extended Fields"
+    depends_on: []
+    user_request:
+      original: "Example plan demonstrating new UserRequest fields (expected_outcome, forbidden_outcome)"
+      created_at: "2025-11-16T09:00:00Z"
+      additional: []
+      expected_outcome: "All new fields should be properly parsed and accessible"
+      forbidden_outcome: "The plan should not fail to load due to missing fields"
+    objectives:
+      core: "Demonstrate new UserRequest fields"
+      detailed: []
+    background:
+      current_situation: "Adding new fields to UserRequest model"
+      reason_for_change: "Enable clearer specification of expected and forbidden outcomes"
+      changes_to_make: "Add expected_outcome and forbidden_outcome fields"
+    required_background:
+      description: "Basic example to test field parsing"
+      file_structure: null
+      references: []
+    workflow:
+      dependency_diagram: "Simple linear workflow"
+      critical_path: []
+    success_vision:
+      user_perspective: []
+      business_perspective: []
+      technical_criteria: []
+    final_verification: []
+    todos:
+      - id: "test-1"
+        title: "Verify new fields"
+        description: "Test that expected_outcome and forbidden_outcome are parsed correctly"
+        status: pending
+        children: null
+        references: []
+        verification_spec: []
+    references: []
+    execution:
+      started: false
+      completed: false
+      started_at: null
+      completed_at: null
+    work_mode:
+      parallel_requested: false
+      current_task_id: null
+    current_work: ""

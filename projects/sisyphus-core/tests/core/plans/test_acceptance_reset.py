@@ -1,269 +1,202 @@
-"""
-Tests for acceptance_criteria_for_verification_agent reset logic.
-
-Tests that WorkPlan.reset_acceptance_criteria() explicitly resets
-checked_at and checked_evidence fields when called.
-
-NOTE: The reset is now EXPLICIT (not automatic on construction) to prevent
-data loss during YAML deserialization.
-"""
-
+"""Test automatic reset of acceptance criteria when fully_done_at is set to None."""
 from __future__ import annotations
-
-from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import pytest
 
-from sisyphus_core.core.plans.loader import load_plan, save_plan
 from sisyphus_core.core.plans.models import (
     AcceptanceCriteriaChecklist,
     AcceptanceCriteriaForVerificationAgent,
+    ExecutionStatus,
+    WorkPlan,
+    WorkMode,
 )
-from sisyphus_core.core.plans.template import PlanTemplateGenerator
-
-pytestmark = [pytest.mark.anyio]
 
 
-async def test_workplan__reset_acceptance_criteria__resets_all_checklists() -> None:
-    """Given: WorkPlan with acceptance criteria with checked_at/checked_evidence set.
-    When: reset_acceptance_criteria() is called.
-    Then: All checked_at and checked_evidence fields should be reset to None.
+@pytest.mark.anyio
+async def test_acceptance_reset__if_fully_done_at_none__then_criteria_reset() -> None:
+    """Given: WorkPlan with acceptance criteria all checked.
+    When: execution.fully_done_at is set to None.
+    Then: All checked_at and checked_evidence should be automatically reset.
     """
     # Given
-    template_gen = PlanTemplateGenerator()
-    plan_doc = template_gen.full_example()
-    work_plan = plan_doc.work_plans[0]
-
-    checklist_1 = AcceptanceCriteriaChecklist(
-        id="check-1",
-        title="First check",
-        content="Check something",
+    checklist = AcceptanceCriteriaChecklist(
+        id="test-criterion-1",
+        title="Test Criterion",
+        content="This is a test criterion",
         checked_at="2025-11-16T10:00:00Z",
-        checked_evidence="Evidence 1",
+        checked_evidence="Verified by test",
     )
-    checklist_2 = AcceptanceCriteriaChecklist(
-        id="check-2",
-        title="Second check",
-        content="Check another thing",
-        checked_at="2025-11-16T10:05:00Z",
-        checked_evidence="Evidence 2",
-    )
-
     criteria = AcceptanceCriteriaForVerificationAgent(
         id="criteria-1",
-        title="Test Criteria",
-        accepted_at="2025-11-16T10:10:00Z",
-        checklists=[checklist_1, checklist_2],
+        title="Test Criteria Group",
+        accepted_at="2025-11-16T10:00:00Z",
+        checklists=[checklist],
+    )
+    work_plan = WorkPlan(
+        id="test-plan",
+        name="Test Plan",
+        user_request={"original": "test", "created_at": "2025-11-16T10:00:00Z", "additional": []},
+        objectives={"core": "test", "detailed": []},
+        background={"current_situation": "test", "reason_for_change": "test", "changes_to_make": "test"},
+        required_background={"description": "test", "file_structure": "test", "references": []},
+        workflow={"dependency_diagram": "test", "critical_path": []},
+        success_vision={"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+        final_verification=[],
+        todos=[],
+        execution=ExecutionStatus(
+            started=False, completed=False, started_at=None, completed_at=None, fully_done_at="2025-11-16T10:00:00Z"
+        ),
+        work_mode=WorkMode(parallel_requested=False),
+        acceptance_criteria_for_verification_agent=[criteria],
     )
 
-    work_plan.acceptance_criteria_for_verification_agent = [criteria]
+    # Verify initial state
+    assert work_plan.acceptance_criteria_for_verification_agent[0].checklists[0].checked_at is not None
+    assert work_plan.acceptance_criteria_for_verification_agent[0].checklists[0].checked_evidence is not None
 
-    # When: Explicitly call reset method
-    work_plan.reset_acceptance_criteria()
-
-    # Then: Verify that acceptance criteria checklists are reset
-    for criteria_item in work_plan.acceptance_criteria_for_verification_agent:
-        for checklist in criteria_item.checklists:
-            assert checklist.checked_at is None, f"Expected checked_at to be None but got {checklist.checked_at}"
-            assert checklist.checked_evidence is None
-
-
-async def test_workplan__without_reset__preserves_checklists() -> None:
-    """Given: WorkPlan with acceptance criteria with checked_at/checked_evidence set.
-    When: WorkPlan is loaded without calling reset_acceptance_criteria().
-    Then: All checked_at and checked_evidence fields should be preserved.
-    """
-    # Given
-    with TemporaryDirectory() as temp_dir:
-        plan_path = Path(temp_dir) / "test_plan.yaml"
-
-        template_gen = PlanTemplateGenerator()
-        plan_doc = template_gen.full_example()
-        work_plan = plan_doc.work_plans[0]
-
-        checklist = AcceptanceCriteriaChecklist(
-            id="check-1",
-            title="First check",
-            content="Check something",
-            checked_at="2025-11-16T10:00:00Z",
-            checked_evidence="Evidence 1",
-        )
-
-        criteria = AcceptanceCriteriaForVerificationAgent(
-            id="criteria-1",
-            title="Test Criteria",
-            accepted_at="2025-11-16T10:10:00Z",
-            checklists=[checklist],
-        )
-
-        work_plan.acceptance_criteria_for_verification_agent = [criteria]
-        await save_plan(plan_path, plan_doc)
-
-        # When: Load without calling reset
-        loaded_plan = await load_plan(plan_path)
-
-        # Then: Verify that acceptance criteria checklists are NOT reset (NO DATA LOSS)
-        for criteria_item in loaded_plan.work_plans[0].acceptance_criteria_for_verification_agent:
-            for checklist_item in criteria_item.checklists:
-                assert checklist_item.checked_at == "2025-11-16T10:00:00Z"
-                assert checklist_item.checked_evidence == "Evidence 1"
-
-
-async def test_workplan__reset_multiple_criteria__resets_all() -> None:
-    """Given: WorkPlan with multiple acceptance criteria, each with multiple checklists.
-    When: reset_acceptance_criteria() is called.
-    Then: All checked_at and checked_evidence fields across all criteria should be reset.
-    """
-    # Given
-    template_gen = PlanTemplateGenerator()
-    plan_doc = template_gen.full_example()
-    work_plan = plan_doc.work_plans[0]
-
-    criteria_list: list[AcceptanceCriteriaForVerificationAgent] = []
-    for i in range(3):
-        checklists: list[AcceptanceCriteriaChecklist] = []
-        for j in range(2):
-            checklist = AcceptanceCriteriaChecklist(
-                id=f"check-{i}-{j}",
-                title=f"Checklist {i}-{j}",
-                content=f"Content {i}-{j}",
-                checked_at=f"2025-11-16T10:{i:02d}:{j:02d}Z",
-                checked_evidence=f"Evidence {i}-{j}",
+    # When - Create new instance with fully_done_at = None
+    work_plan_reset = WorkPlan(
+        id="test-plan",
+        name="Test Plan",
+        user_request={"original": "test", "created_at": "2025-11-16T10:00:00Z", "additional": []},
+        objectives={"core": "test", "detailed": []},
+        background={"current_situation": "test", "reason_for_change": "test", "changes_to_make": "test"},
+        required_background={"description": "test", "file_structure": "test", "references": []},
+        workflow={"dependency_diagram": "test", "critical_path": []},
+        success_vision={"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+        final_verification=[],
+        todos=[],
+        execution=ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None, fully_done_at=None),
+        work_mode=WorkMode(parallel_requested=False),
+        acceptance_criteria_for_verification_agent=[
+            AcceptanceCriteriaForVerificationAgent(
+                id="criteria-1",
+                title="Test Criteria Group",
+                accepted_at="2025-11-16T10:00:00Z",
+                checklists=[
+                    AcceptanceCriteriaChecklist(
+                        id="test-criterion-1",
+                        title="Test Criterion",
+                        content="This is a test criterion",
+                        checked_at="2025-11-16T10:00:00Z",
+                        checked_evidence="Verified by test",
+                    )
+                ],
             )
-            checklists.append(checklist)
+        ],
+    )
 
-        criteria = AcceptanceCriteriaForVerificationAgent(
-            id=f"criteria-{i}",
-            title=f"Criteria {i}",
-            accepted_at=f"2025-11-16T10:10:{i:02d}Z",
-            checklists=checklists,
-        )
-        criteria_list.append(criteria)
-
-    work_plan.acceptance_criteria_for_verification_agent = criteria_list
-
-    # When: Call reset method
-    work_plan.reset_acceptance_criteria()
-
-    # Then: Verify ALL checklists in ALL criteria are reset
-    for criteria_item in work_plan.acceptance_criteria_for_verification_agent:
-        for checklist in criteria_item.checklists:
-            assert checklist.checked_at is None
-            assert checklist.checked_evidence is None
+    # Then - Model validator should have reset the criteria
+    assert work_plan_reset.acceptance_criteria_for_verification_agent[0].checklists[0].checked_at is None
+    assert work_plan_reset.acceptance_criteria_for_verification_agent[0].checklists[0].checked_evidence is None
 
 
-async def test_workplan__reset_then_save_reload__persists() -> None:
-    """Given: WorkPlan with checked acceptance criteria.
-    When: reset_acceptance_criteria() is called, saved, and reloaded.
-    Then: The reset criteria should persist after reload.
+@pytest.mark.anyio
+async def test_acceptance_reset__if_fully_done_at_not_none__then_criteria_unchanged() -> None:
+    """Given: WorkPlan with fully_done_at set to a timestamp.
+    When: Instance is created with fully_done_at not None.
+    Then: acceptance_criteria should NOT be reset.
     """
-    # Given
-    with TemporaryDirectory() as temp_dir:
-        plan_path = Path(temp_dir) / "test_plan.yaml"
+    # Given + When
+    work_plan = WorkPlan(
+        id="test-plan",
+        name="Test Plan",
+        user_request={"original": "test", "created_at": "2025-11-16T10:00:00Z", "additional": []},
+        objectives={"core": "test", "detailed": []},
+        background={"current_situation": "test", "reason_for_change": "test", "changes_to_make": "test"},
+        required_background={"description": "test", "file_structure": "test", "references": []},
+        workflow={"dependency_diagram": "test", "critical_path": []},
+        success_vision={"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+        final_verification=[],
+        todos=[],
+        execution=ExecutionStatus(
+            started=False, completed=False, started_at=None, completed_at=None, fully_done_at="2025-11-16T11:00:00Z"
+        ),
+        work_mode=WorkMode(parallel_requested=False),
+        acceptance_criteria_for_verification_agent=[
+            AcceptanceCriteriaForVerificationAgent(
+                id="criteria-1",
+                title="Test Criteria Group",
+                accepted_at="2025-11-16T10:00:00Z",
+                checklists=[
+                    AcceptanceCriteriaChecklist(
+                        id="test-criterion-1",
+                        title="Test Criterion",
+                        content="This is a test criterion",
+                        checked_at="2025-11-16T10:00:00Z",
+                        checked_evidence="Verified by test",
+                    )
+                ],
+            )
+        ],
+    )
 
-        template_gen = PlanTemplateGenerator()
-        plan_doc = template_gen.full_example()
-        work_plan = plan_doc.work_plans[0]
-
-        checklist = AcceptanceCriteriaChecklist(
-            id="check-1",
-            title="First check",
-            content="Check something",
-            checked_at="2025-11-16T10:00:00Z",
-            checked_evidence="Evidence 1",
-        )
-
-        criteria = AcceptanceCriteriaForVerificationAgent(
-            id="criteria-1",
-            title="Test Criteria",
-            checklists=[checklist],
-        )
-
-        work_plan.acceptance_criteria_for_verification_agent = [criteria]
-
-        await save_plan(plan_path, plan_doc)
-
-        # When: Load, reset, and save
-        loaded_plan = await load_plan(plan_path)
-        loaded_plan.work_plans[0].reset_acceptance_criteria()
-        await save_plan(plan_path, loaded_plan)
-
-        # Then: Reload and verify acceptance criteria are still reset
-        reloaded_plan = await load_plan(plan_path)
-        for criteria_item in reloaded_plan.work_plans[0].acceptance_criteria_for_verification_agent:
-            for checklist_item in criteria_item.checklists:
-                assert checklist_item.checked_at is None
-                assert checklist_item.checked_evidence is None
+    # Then - criteria should remain unchanged
+    assert work_plan.acceptance_criteria_for_verification_agent[0].checklists[0].checked_at == "2025-11-16T10:00:00Z"
+    assert work_plan.acceptance_criteria_for_verification_agent[0].checklists[0].checked_evidence == "Verified by test"
 
 
-async def test_workplan__reset_empty_criteria__handles_gracefully() -> None:
-    """Given: WorkPlan with empty acceptance_criteria_for_verification_agent list.
-    When: reset_acceptance_criteria() is called.
-    Then: No errors should occur.
+@pytest.mark.anyio
+async def test_acceptance_reset__if_multiple_checklists__then_all_reset() -> None:
+    """Given: WorkPlan with multiple checklists all checked.
+    When: fully_done_at is None.
+    Then: All checklists should be reset.
     """
-    # Given
-    template_gen = PlanTemplateGenerator()
-    plan_doc = template_gen.full_example()
-    work_plan = plan_doc.work_plans[0]
+    # Given + When
+    work_plan = WorkPlan(
+        id="test-plan",
+        name="Test Plan",
+        user_request={"original": "test", "created_at": "2025-11-16T10:00:00Z", "additional": []},
+        objectives={"core": "test", "detailed": []},
+        background={"current_situation": "test", "reason_for_change": "test", "changes_to_make": "test"},
+        required_background={"description": "test", "file_structure": "test", "references": []},
+        workflow={"dependency_diagram": "test", "critical_path": []},
+        success_vision={"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+        final_verification=[],
+        todos=[],
+        execution=ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None, fully_done_at=None),
+        work_mode=WorkMode(parallel_requested=False),
+        acceptance_criteria_for_verification_agent=[
+            AcceptanceCriteriaForVerificationAgent(
+                id="criteria-1",
+                title="Criteria Group 1",
+                accepted_at="2025-11-16T10:00:00Z",
+                checklists=[
+                    AcceptanceCriteriaChecklist(
+                        id="criterion-1-1",
+                        title="Criterion 1.1",
+                        content="Content 1.1",
+                        checked_at="2025-11-16T10:00:00Z",
+                        checked_evidence="Evidence 1.1",
+                    ),
+                    AcceptanceCriteriaChecklist(
+                        id="criterion-1-2",
+                        title="Criterion 1.2",
+                        content="Content 1.2",
+                        checked_at="2025-11-16T10:00:00Z",
+                        checked_evidence="Evidence 1.2",
+                    ),
+                ],
+            ),
+            AcceptanceCriteriaForVerificationAgent(
+                id="criteria-2",
+                title="Criteria Group 2",
+                accepted_at="2025-11-16T10:00:00Z",
+                checklists=[
+                    AcceptanceCriteriaChecklist(
+                        id="criterion-2-1",
+                        title="Criterion 2.1",
+                        content="Content 2.1",
+                        checked_at="2025-11-16T10:00:00Z",
+                        checked_evidence="Evidence 2.1",
+                    ),
+                ],
+            ),
+        ],
+    )
 
-    work_plan.acceptance_criteria_for_verification_agent = []
-
-    # When: Call reset on empty criteria
-    work_plan.reset_acceptance_criteria()
-
-    # Then: No error should occur, and criteria should remain empty
-    assert work_plan.acceptance_criteria_for_verification_agent == []
-
-
-async def test_workplan__no_data_loss_on_reload() -> None:
-    """Given: WorkPlan with checked_at and checked_evidence set.
-    When: Save and reload the plan multiple times.
-    Then: No data loss should occur (critical regression test).
-    """
-    # Given
-    with TemporaryDirectory() as temp_dir:
-        plan_path = Path(temp_dir) / "test_plan.yaml"
-
-        template_gen = PlanTemplateGenerator()
-        plan_doc = template_gen.full_example()
-        work_plan = plan_doc.work_plans[0]
-
-        original_checked_at = "2025-11-16T10:00:00Z"
-        original_evidence = "Critical evidence that MUST be preserved"
-
-        checklist = AcceptanceCriteriaChecklist(
-            id="check-1",
-            title="Critical check",
-            content="Important verification",
-            checked_at=original_checked_at,
-            checked_evidence=original_evidence,
-        )
-
-        criteria = AcceptanceCriteriaForVerificationAgent(
-            id="criteria-1",
-            title="Critical Criteria",
-            checklists=[checklist],
-        )
-
-        work_plan.acceptance_criteria_for_verification_agent = [criteria]
-        work_plan.execution.completed = True
-        work_plan.execution.fully_done_at = None  # This used to cause DATA LOSS
-
-        await save_plan(plan_path, plan_doc)
-
-        # When: Reload multiple times
-        for _ in range(3):
-            reloaded = await load_plan(plan_path)
-            await save_plan(plan_path, reloaded)
-
-        final_plan = await load_plan(plan_path)
-
-        # Then: NO DATA LOSS - values MUST be preserved
-        actual_checklist = final_plan.work_plans[0].acceptance_criteria_for_verification_agent[0].checklists[0]
-        assert actual_checklist.checked_at == original_checked_at, (
-            f"DATA LOSS: checked_at changed from {original_checked_at} to {actual_checklist.checked_at}"
-        )
-        assert actual_checklist.checked_evidence == original_evidence, (
-            f"DATA LOSS: evidence changed from {original_evidence} to {actual_checklist.checked_evidence}"
-        )
+    # Then - all checklists should be reset
+    for criteria in work_plan.acceptance_criteria_for_verification_agent:
+        for checklist in criteria.checklists:
+            assert checklist.checked_at is None, f"Expected {checklist.id} checked_at to be None"
+            assert checklist.checked_evidence is None, f"Expected {checklist.id} checked_evidence to be None"

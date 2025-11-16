@@ -1599,7 +1599,13 @@ class PlanLinter:
             return (current_plan_path.parent / depends_on).resolve()
 
         # 3. Filename only (foobar.yml) → search in .sisyphus/tasks/ directory
-        return (current_plan_path.parent / ".sisyphus/tasks" / depends_on).resolve()
+        # Check if current_plan_path.parent is already .sisyphus/tasks/ directory
+        if current_plan_path.parent.name == "tasks" and current_plan_path.parent.parent.name == ".sisyphus":
+            # Already in .sisyphus/tasks/, just return parent / filename
+            return (current_plan_path.parent / depends_on).resolve()
+        else:
+            # Not in .sisyphus/tasks/, need to add the path
+            return (current_plan_path.parent / ".sisyphus/tasks" / depends_on).resolve()
 
     def _validate_file_path_depends_on(
         self, depends_on: str, plan_id: str, current_plan_path: Path, visited: set[Path] | None = None

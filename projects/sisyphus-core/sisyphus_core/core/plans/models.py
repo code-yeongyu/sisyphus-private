@@ -96,8 +96,8 @@ class VerificationItem(BaseModel):
 
     @model_validator(mode="after")
     def validate_at_least_one(self) -> Self:
-        if not self.bash and not self.llm_judge:
-            raise ValueError("bash 또는 llm_judge 중 하나 이상 필수")
+        if not self.bash and not self.llm_judge and not self.deterministic_bash and not self.orchestrator_judge:
+            raise ValueError("bash, llm_judge, deterministic_bash, orchestrator_judge 중 하나 이상 필수")
         return self
 
 
@@ -241,6 +241,22 @@ class WorkPlan(BaseModel):
     current_work_ids: list[str] = []
     acceptance_criteria_for_verification_agent: list[AcceptanceCriteriaForVerificationAgent] = []
     fully_done_evidence: str | None = None
+
+    @model_validator(mode="after")
+    def reset_acceptance_on_fully_done_false(self) -> Self:
+        """Automatically reset acceptance criteria when fully_done_at is None.
+
+        When execution.fully_done_at is set to None, all checked_at and checked_evidence
+        fields in acceptance_criteria_for_verification_agent are automatically reset.
+        This ensures that when a task is marked as not fully done, all acceptance criteria
+        are cleared for re-verification.
+        """
+        if self.execution.fully_done_at is None:
+            for criteria in self.acceptance_criteria_for_verification_agent:
+                for checklist in criteria.checklists:
+                    checklist.checked_at = None
+                    checklist.checked_evidence = None
+        return self
 
     def reset_acceptance_criteria(self) -> None:
         """Explicitly reset acceptance criteria when fully_done is set to False.

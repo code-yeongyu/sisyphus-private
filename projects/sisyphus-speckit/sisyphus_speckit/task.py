@@ -693,11 +693,17 @@ def verify_bash(
         console.print(f"[bold]{verify_item.title}[/bold]")
         console.print(f"{verify_item.description}")
 
-        if not verify_item.bash:
-            console.print("[yellow]bash 검증 항목이 없습니다.[/yellow]")
+        if not verify_item.bash and not verify_item.deterministic_bash:
+            if verify_item.orchestrator_judge:
+                console.print("[yellow]orchestrator_judge 검증은 수동 확인이 필요합니다.[/yellow]")
+                console.print("[dim]orchestrator_judge는 LLM 기반 판단으로, CLI에서 자동 실행되지 않습니다.[/dim]")
+            else:
+                console.print("[yellow]bash 또는 deterministic_bash 검증 항목이 없습니다.[/yellow]")
             return
 
         all_passed = True
+
+        # Process regular bash verifications
         for bash_item in verify_item.bash:
             console.print(f"\n[cyan]실행:[/cyan] {bash_item.execute}")
 
@@ -721,6 +727,51 @@ def verify_bash(
 
             if result.stderr:
                 stderr_decoded = result.stderr.decode("utf-8", errors="replace")
+                console.print(f"[dim]오류:[/dim]\n{stderr_decoded}")
+
+        for det_bash_item in verify_item.deterministic_bash:
+            console.print(f"\n[cyan]Deterministic 실행:[/cyan] {det_bash_item.execute}")
+
+            result = await anyio.run_process(
+                ["bash", "-c", det_bash_item.execute],
+                check=False,
+                cwd=str(working_dir),
+            )
+
+            passed = True
+            if result.returncode != det_bash_item.expected_exit_code:
+                expected_code = det_bash_item.expected_exit_code
+                got_code = result.returncode
+                console.print(f"[red]✗ exit code 불일치[/red] (expected: {expected_code}, got: {got_code})")
+                passed = False
+
+            stdout_decoded = result.stdout.decode("utf-8", errors="replace") if result.stdout else ""
+            stderr_decoded = result.stderr.decode("utf-8", errors="replace") if result.stderr else ""
+
+            if det_bash_item.expected_stdout is not None:
+                if stdout_decoded.strip() != det_bash_item.expected_stdout.strip():
+                    console.print("[red]✗ stdout 불일치[/red]")
+                    console.print(f"[dim]expected:[/dim]\n{det_bash_item.expected_stdout}")
+                    console.print(f"[dim]got:[/dim]\n{stdout_decoded}")
+                    passed = False
+
+            if det_bash_item.expected_stderr is not None:
+                if stderr_decoded.strip() != det_bash_item.expected_stderr.strip():
+                    console.print("[red]✗ stderr 불일치[/red]")
+                    console.print(f"[dim]expected:[/dim]\n{det_bash_item.expected_stderr}")
+                    console.print(f"[dim]got:[/dim]\n{stderr_decoded}")
+                    passed = False
+
+            if passed:
+                console.print(f"[green]✓ 성공[/green] (exit code: {result.returncode})")
+                det_bash_item.verified_at = datetime.now(UTC).isoformat()
+            else:
+                all_passed = False
+
+            if stdout_decoded and det_bash_item.expected_stdout is None:
+                console.print(f"[dim]출력:[/dim]\n{stdout_decoded}")
+
+            if stderr_decoded and det_bash_item.expected_stderr is None:
                 console.print(f"[dim]오류:[/dim]\n{stderr_decoded}")
 
         if all_passed:

@@ -536,6 +536,33 @@ def continue_work(
 
             raise typer.Exit(1)
 
+        # CRITICAL: Validate 4 conditions BEFORE marking task as completed
+        errors: list[str] = []
+
+        # 1. deterministic_bash 모두 verified_at 존재
+        for verify_item in current_task.verification_spec:
+            for bash in verify_item.deterministic_bash:
+                if not bash.verified_at:
+                    errors.append(f"[{verify_item.id}] '{bash.description}' - deterministic bash 검증 미완료")
+
+        # 2. manual 검증 모두 통과 (orchestrator_manually_verified)
+        for verify_item in current_task.verification_spec:
+            if not verify_item.orchestrator_manually_verified:
+                errors.append(f"[{verify_item.id}] '{verify_item.title}' - 수동 검증 미완료")
+
+        # 3. acceptance_criteria_for_verification_agent 모든 checklists checked_at 존재
+        for criteria in work_plan.acceptance_criteria_for_verification_agent:
+            for checklist in criteria.checklists:
+                if not checklist.checked_at:
+                    errors.append(f"Acceptance '{checklist.title}' - 체크 미완료")
+
+        if errors:
+            console.print("[red]✗ 작업 완료 불가능 - 다음 검증이 누락되었습니다:[/red]\n")
+            for error in errors:
+                console.print(f"  [yellow]• {error}[/yellow]")
+            console.print()
+            raise typer.Exit(1)
+
         current_task.status = TodoStatus.completed
 
         next_task = task_manager.get_next_task(current_task.id)

@@ -1458,6 +1458,84 @@ class PlanLinter:
 
         return False
 
+
+    @staticmethod
+    def resolve_depends_on_path(depends_on: str, current_plan_path: Path) -> Path:
+        """Resolve depends_on value to actual file path.
+
+        Args:
+            depends_on: depends_on value (filename, relative path, or absolute path)
+            current_plan_path: Path to the current plan file
+
+        Returns:
+            Resolved absolute path
+
+        Raises:
+            ValueError: If path resolution fails
+        """
+        # 1. Absolute path (starts with /) → use as-is
+        if depends_on.startswith("/"):
+            return Path(depends_on)
+
+        # 2. Relative path (./ or ../) → resolve from current plan file's parent
+        if depends_on.startswith("./") or depends_on.startswith("../"):
+            return (current_plan_path.parent / depends_on).resolve()
+
+        # 3. Filename only (foobar.yml) → search in .sisyphus/tasks/ directory
+        return (current_plan_path.parent / ".sisyphus/tasks" / depends_on).resolve()
+
+    def _validate_file_path_depends_on(
+        self, depends_on: str, plan_id: str, current_plan_path: Path, visited: set[Path] | None = None
+    ) -> str | None:
+        """Validate file path format depends_on.
+
+        Args:
+            depends_on: depends_on value to validate
+            plan_id: ID of the plan that depends on this file
+            current_plan_path: Path to the current plan file
+            visited: Set of visited file paths (for cycle detection)
+
+        Returns:
+            Error message if validation fails, None if valid
+        """
+        if visited is None:
+            visited = set()
+
+        # Check if this is a file path (contains "/" or ends with .yml/.yaml)
+        if "/" not in depends_on and not depends_on.endswith((".yml", ".yaml")):
+            return None  # Not a file path, skip file validation
+
+        try:
+            resolved_path = self.resolve_depends_on_path(depends_on, current_plan_path)
+        except Exception as error:
+            return f"Plan '{plan_id}' depends on file path '{depends_on}': failed to resolve path - {error}"
+
+        # Check if file exists
+        if not resolved_path.exists():
+            return f"Plan '{plan_id}' depends on file path '{depends_on}' which resolves to '{resolved_path}': file does not exist"
+
+        # Check for circular references
+        if resolved_path in visited:
+            cycle_path = " → ".join(str(p) for p in visited) + f" → {resolved_path}"
+            return f"Circular file dependency detected: {cycle_path}"
+
+        visited = visited | {resolved_path}
+
+        # Load referenced plan and validate its dependencies
+        try:
+            referenced_plan_doc = self._load_plan_sync(resolved_path)
+        except Exception as error:
+            return f"Plan '{plan_id}' depends on file '{depends_on}': failed to load referenced file - {error}"
+
+        # Recursively validate dependencies in referenced file
+        for ref_plan in referenced_plan_doc.work_plans:
+            for ref_dep in ref_plan.depends_on:
+                error = self._validate_file_path_depends_on(ref_dep, ref_plan.id, resolved_path, visited)
+                if error:
+                    return error
+
+        return None
+
     def validate_depends_on(self, plan_document: PlanDocument, plan_path: Path) -> list[str]:
         """Validate depends_on field for all work plans.
 
@@ -1495,6 +1573,11 @@ class PlanLinter:
                         f"{available}"
                     )
 
+
+                # File path validation
+                file_error = self._validate_file_path_depends_on(dep_id, plan.id, plan_path)
+                if file_error:
+                    errors.append(file_error)
         graph = build_plan_graph(plans)
 
         cycles = detect_cycles(graph)

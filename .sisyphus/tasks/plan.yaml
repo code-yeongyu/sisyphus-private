@@ -645,7 +645,7 @@ work_plans:
     description: "sisyphus-core의 모든 변경사항 테스트 통과 확인:\n1. uv run basedpyright (타입 체크)\n\
       2. uv run ruff check (린트)\n3. uv run pytest (전체 테스트)\n\n모두 통과 시 커밋: \"feat(sisyphus-core):
       Pydantic 모델 확장 - example-new-plan.yaml 스펙 지원\"\n"
-    status: in_progress
+    status: completed
     references: []
     verification_spec:
     - id: verify-9-1
@@ -706,7 +706,7 @@ work_plans:
       \                validate_depends_on(dep, resolved_path, visited)\n```\n\nPlanLinter
       클래스에 통합:\n1. lint() 메서드에서 모든 depends_on 검증\n2. visited: set[Path] = set() 으로
       순환 참조 추적\n3. 에러 발생 시 명확한 메시지 출력"
-    status: pending
+    status: in_progress
     references:
     - inline: "구현 패턴:\ndef resolve_depends_on_path(depends_on: str, current_plan_path:
         Path) -> Path:\n    if depends_on.startswith('/'):\n        return Path(depends_on)\n\
@@ -717,9 +717,12 @@ work_plans:
     - id: verify-10-1
       title: 파일 경로 depends_on 검증 테스트
       description: 파일 경로 형식의 depends_on이 올바르게 검증되는지 테스트
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T09:10:31.071167+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'test_plan_linter_file_depends.py 생성 (352줄). 6개
+        테스트 통과: 절대경로, ./상대경로, ../상대경로, 파일명만, 혼합형식, 존재하지 않는 파일 검증. Given-When-Then
+        구조. TemporaryDirectory 사용. basedpyright 0 errors. ruff 통과.'
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv 
@@ -1072,7 +1075,7 @@ work_plans:
     started_at: '2025-11-16T08:32:49.583213+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '9'
+    current_task_id: '10'
   current_work: ''
   current_work_ids: []
   acceptance_criteria_for_verification_agent: []

@@ -49,6 +49,22 @@ class LLMJudgeVerification(BaseModel):
     instruction: str
 
 
+class DeterministicBashVerification(BaseModel):
+    description: str
+    reason_why_it_is_deterministic_and_reliable: str
+    execute: str
+    expected_stdout: str | None = None
+    expected_stderr: str | None = None
+    expected_exit_code: int = 0
+    verified_at: str | None = None
+
+
+class OrchestratorJudgeVerification(BaseModel):
+    prompt: str
+    verified_at: str | None = None
+    verification_evidence: str | None = None
+
+
 class ReferenceItem(BaseModel):
     ref_id: str | None = None
     uri: str | None = None
@@ -74,6 +90,8 @@ class VerificationItem(BaseModel):
     manual_verification_evidence: str
     bash: list[BashVerification] = []
     llm_judge: list[LLMJudgeVerification] = []
+    deterministic_bash: list[DeterministicBashVerification] = []
+    orchestrator_judge: list[OrchestratorJudgeVerification] = []
 
     @model_validator(mode="after")
     def validate_at_least_one(self) -> Self:

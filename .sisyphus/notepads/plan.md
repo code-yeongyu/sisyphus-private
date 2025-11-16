@@ -101,3 +101,34 @@ Task 1에서 sisyphus-core의 UserRequest 모델을 확장하여 expected_outcom
 - 테스트 파일 경로: tests/core/plans/test_models_todo.py
 
 소요 시간: 약 10분 (파일 수정 + 테스트 작성 + 실행 포함)
+
+[2025-11-16 17:43] - Task 3: Pydantic 모델 확장 - VerificationItem에 deterministic_bash, orchestrator_judge 구조 추가
+
+### DISCOVERED ISSUES
+- 없음
+
+### IMPLEMENTATION DECISIONS
+- DeterministicBashVerification 클래스: 7개 필드 (description, reason_why_it_is_deterministic_and_reliable, execute, expected_stdout, expected_stderr, expected_exit_code, verified_at)
+- OrchestratorJudgeVerification 클래스: 3개 필드 (prompt, verified_at, verification_evidence)
+- 두 클래스 모두 BaseModel을 상속하며 타입 안정성 확보
+- VerificationItem에 deterministic_bash, orchestrator_judge 필드 추가 (list[] 타입, 기본값 [])
+- 클래스 정의 순서: LLMJudgeVerification → DeterministicBashVerification → OrchestratorJudgeVerification → ReferenceItem → VerificationItem
+
+### PROBLEMS FOR NEXT TASKS
+- Task 4에서 WorkPlan 모델 확장 필요 (current_work_ids, acceptance_criteria_for_verification_agent, fully_done_evidence)
+- Task 5에서 ExecutionStatus 모델 확장 필요 (fully_done_at 필드)
+
+### VERIFICATION RESULTS
+- basedpyright 타입 체크: 0 errors, 0 warnings ✓
+- DeterministicBashVerification 클래스 생성 확인 ✓
+- OrchestratorJudgeVerification 클래스 생성 확인 ✓
+- VerificationItem.deterministic_bash 필드 추가 확인 ✓
+- VerificationItem.orchestrator_judge 필드 추가 확인 ✓
+
+### LEARNINGS
+- Pydantic BaseModel 사용 시 타입 힌트는 필수 (str | None 문법)
+- 클래스 정의 순서가 중요함 (의존성이 있는 클래스는 먼저 정의)
+- basedpyright strict mode에서 모든 타입 힌트가 올바르게 작성되어야 함
+- models.py의 기존 패턴: list[ClassName] = [] (기본값으로 빈 리스트)
+
+소요 시간: 약 5분

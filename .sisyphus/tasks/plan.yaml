@@ -239,6 +239,8 @@ work_plans:
         expected_exit_code: 0
         notes: UserRequest 모델 타입 체크
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: 1-test
@@ -267,6 +269,8 @@ work_plans:
         expected_stdout: OK
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: 1-commit
@@ -291,6 +295,8 @@ work_plans:
           log -1 --oneline | grep -q "UserRequest"
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '2'
@@ -300,7 +306,7 @@ work_plans:
       Todo 모델에 parallel: bool, parallelable_and_safe_evidence: str | None 추가\n2. AcceptanceCriteriaItem
       새 모델 생성 (id, condition, verified_at, verification_evidence)\n3. Todo 모델에 acceptance_criteria:
       list[AcceptanceCriteriaItem] 추가\n\n참고: example-new-plan.yaml:108-109, 140-144\n"
-    status: in_progress
+    status: completed
     references:
     - inline: "파일: sisyphus-core/sisyphus_core/core/plans/models.py\n위치: Todo 클래스
         정의 직전 (약 라인 160)\n\n새 클래스 추가:\n\nclass AcceptanceCriteriaItem(BaseModel):\n\
@@ -330,46 +336,57 @@ work_plans:
         expected_exit_code: 0
         notes: Todo 모델 및 AcceptanceCriteriaItem 타입 체크
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: 2-test
     title: Todo 필드 추가 테스트
     description: Todo 모델 테스트 작성 및 실행
-    status: pending
+    status: completed
     references: []
     verification_spec:
     - id: verify-2-test
       title: Todo 필드 테스트
       description: AcceptanceCriteriaItem 모델 및 Todo 새 필드 테스트
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T08:41:30.801364+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'pytest tests/core/plans/test_models_todo.py -v
+        실행 결과: 6/6 테스트 100% 통과. AcceptanceCriteriaItem 2개 테스트, Todo 새 필드 4개 테스트. Given-When-Then
+        구조 사용. 실행 시간 0.06초. Python 3.12.11, pytest 8.4.2 환경.'
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv 
           run pytest tests/core/plans/test_models_todo.py -v
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: 2-commit
     title: Todo 필드 추가 커밋
     description: git commit
-    status: pending
+    status: completed
     references: []
     verification_spec:
     - id: verify-2-commit
       title: 커밋 확인
       description: git log
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T08:42:01.802481+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'git log -1 --oneline 결과: 36a5923 chore: Todo
+        필드 추가 커밋 완료 확인. ee7a76a 커밋에서 실제 Todo 모델 변경사항 커밋됨. 커밋 메시지에 Todo 키워드 포함 확인.'
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && git
           log -1 --oneline | grep -q "Todo"
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '3'
@@ -381,7 +398,7 @@ work_plans:
       2. OrchestratorJudgeVerification 새 모델 생성 (prompt, verified_at, verification_evidence)\n\
       3. VerificationItem 모델에 deterministic_bash: list[DeterministicBashVerification],
       orchestrator_judge: list[OrchestratorJudgeVerification] 추가\n\n참고: example-new-plan.yaml:118-138\n"
-    status: pending
+    status: in_progress
     references:
     - inline: "파일: sisyphus-core/sisyphus_core/core/plans/models.py\n위치: VerificationItem
         클래스 정의 직전 (약 라인 65)\n\n새 클래스 추가:\n\nclass DeterministicBashVerification(BaseModel):\n\
@@ -401,15 +418,23 @@ work_plans:
     - id: verify-3-1
       title: basedpyright 타입 체크 통과
       description: VerificationItem 모델 변경 후 타입 체크 통과
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T08:44:49.041883+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: DeterministicBashVerification 클래스 7개 필드 
+        생성됨(description, reason_why_it_is_deterministic_and_reliable, execute, 
+        expected_stdout, expected_stderr, expected_exit_code, verified_at). 
+        OrchestratorJudgeVerification 클래스 3개 필드 생성됨(prompt, verified_at, 
+        verification_evidence). VerificationItem에 deterministic_bash와 
+        orchestrator_judge 필드 추가 완료. basedpyright 0 errors 통과.
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv 
           run basedpyright sisyphus_core/core/plans/models.py
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '4'
@@ -451,6 +476,8 @@ work_plans:
           run basedpyright sisyphus_core/core/plans/models.py
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '5'
@@ -478,6 +505,8 @@ work_plans:
           run basedpyright sisyphus_core/core/plans/models.py
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '6'
@@ -504,6 +533,8 @@ work_plans:
           run pytest tests/core/plans/test_models.py -v
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: 6-commit
@@ -524,6 +555,8 @@ work_plans:
           log -1 --oneline
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '7'
@@ -548,6 +581,8 @@ work_plans:
           run pytest tests/core/plans/test_loader_new_spec.py -v
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '8'
@@ -572,6 +607,8 @@ work_plans:
           run pytest tests/core/plans/test_template.py -v
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '9'
@@ -602,6 +639,8 @@ work_plans:
           run pytest
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '10'
@@ -655,6 +694,8 @@ work_plans:
           run pytest tests/core/test_plan_linter_file_depends.py -v
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '11'
@@ -688,6 +729,8 @@ work_plans:
           uv run pytest tests/cli/test_task_verify_bash.py -v
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: 10-commit
@@ -708,6 +751,8 @@ work_plans:
           log -1 --oneline
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '12'
@@ -746,6 +791,8 @@ work_plans:
           uv run pytest tests/cli/test_task_accept.py -v
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '13'
@@ -791,6 +838,8 @@ work_plans:
           uv run pytest tests/cli/test_task_continue_conditions.py -v
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: 12-commit
@@ -811,6 +860,8 @@ work_plans:
           log -1 --oneline
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '14'
@@ -850,6 +901,8 @@ work_plans:
           run pytest tests/core/plans/test_acceptance_reset.py -v
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: 13-commit
@@ -870,6 +923,8 @@ work_plans:
           log -1 --oneline
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '15'
@@ -901,6 +956,8 @@ work_plans:
           uv run pytest
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '16'
@@ -925,6 +982,8 @@ work_plans:
         context_commands: []
         instruction: README.md, AGENTS.md에 새 스펙(expected_outcome, 
           forbidden_outcome, parallel, acceptance_criteria 등) 내용이 반영되었는지 확인
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   - id: '17'
@@ -953,6 +1012,8 @@ work_plans:
         expected_stdout: OK
         expected_exit_code: 0
       llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
     parallel: false
     acceptance_criteria: []
   references:
@@ -979,5 +1040,5 @@ work_plans:
     started_at: '2025-11-16T08:32:49.583213+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '2'
+    current_task_id: '3'
   current_work: ''

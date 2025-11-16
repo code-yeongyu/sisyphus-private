@@ -239,6 +239,8 @@ work_plans:
         expected_exit_code: 0
         notes: UserRequest 모델 타입 체크
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: 1-test
     title: UserRequest 필드 추가 테스트
     description: UserRequest에 expected_outcome, forbidden_outcome 추가 후 즉시 테스트
@@ -265,6 +267,8 @@ work_plans:
         expected_stdout: OK
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: 1-commit
     title: UserRequest 필드 추가 커밋
     description: 'git commit -m "feat(models): UserRequest에 expected_outcome, forbidden_outcome
@@ -287,6 +291,8 @@ work_plans:
           log -1 --oneline | grep -q "UserRequest"
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '2'
     title: Pydantic 모델 확장 - Todo에 parallel, parallelable_and_safe_evidence, 
       acceptance_criteria 추가
@@ -310,9 +316,13 @@ work_plans:
     - id: verify-2-1
       title: basedpyright 타입 체크 통과
       description: Todo 모델 변경 후 타입 체크 통과
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T08:41:06.803718+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'AcceptanceCriteriaItem 클래스 생성 완료: id(str), condition(str),
+        verified_at(str|None), verification_evidence(str|None) 4개 필드. Todo 클래스에 parallel(bool=False),
+        parallelable_and_safe_evidence(str|None), acceptance_criteria(list[AcceptanceCriteriaItem])
+        3개 필드 추가. basedpyright 0 errors 통과. 커밋 ee7a76a 완료됨.'
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv 
@@ -320,6 +330,8 @@ work_plans:
         expected_exit_code: 0
         notes: Todo 모델 및 AcceptanceCriteriaItem 타입 체크
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: 2-test
     title: Todo 필드 추가 테스트
     description: Todo 모델 테스트 작성 및 실행
@@ -338,6 +350,8 @@ work_plans:
           run pytest tests/core/plans/test_models_todo.py -v
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: 2-commit
     title: Todo 필드 추가 커밋
     description: git commit
@@ -356,6 +370,8 @@ work_plans:
           log -1 --oneline | grep -q "Todo"
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '3'
     title: Pydantic 모델 확장 - VerificationItem에 deterministic_bash, 
       orchestrator_judge 구조 추가
@@ -394,6 +410,8 @@ work_plans:
           run basedpyright sisyphus_core/core/plans/models.py
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '4'
     title: Pydantic 모델 확장 - WorkPlan에 current_work_ids, 
       acceptance_criteria_for_verification_agent, fully_done_evidence 추가
@@ -433,6 +451,8 @@ work_plans:
           run basedpyright sisyphus_core/core/plans/models.py
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '5'
     title: Pydantic 모델 확장 - ExecutionStatus에 fully_done_at 추가
     description: "sisyphus-core/sisyphus_core/core/plans/models.py의 ExecutionStatus
@@ -458,6 +478,8 @@ work_plans:
           run basedpyright sisyphus_core/core/plans/models.py
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '6'
     title: Pydantic 모델 확장 테스트 작성
     description: "sisyphus-core/tests/core/plans/test_models.py 작성:\n1. UserRequest
@@ -482,6 +504,8 @@ work_plans:
           run pytest tests/core/plans/test_models.py -v
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: 6-commit
     title: Pydantic 모델 테스트 커밋
     description: 'git commit -m "test(models): Pydantic 모델 확장 테스트 추가"'
@@ -500,6 +524,8 @@ work_plans:
           log -1 --oneline
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '7'
     title: loader.py 호환성 확인 및 테스트
     description: "sisyphus-core/sisyphus_core/core/plans/loader.py가\n새로운 Pydantic
@@ -522,6 +548,8 @@ work_plans:
           run pytest tests/core/plans/test_loader_new_spec.py -v
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '8'
     title: template.py 업데이트 - full_example 메서드 수정
     description: "sisyphus-core/sisyphus_core/core/plans/template.py의\nPlanTemplateGenerator.full_example()
@@ -544,6 +572,8 @@ work_plans:
           run pytest tests/core/plans/test_template.py -v
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '9'
     title: sisyphus-core 전체 테스트 통과 확인 및 커밋
     description: "sisyphus-core의 모든 변경사항 테스트 통과 확인:\n1. uv run basedpyright (타입 체크)\n\
@@ -572,6 +602,8 @@ work_plans:
           run pytest
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '10'
     title: depends_on 파일 경로 지원 - PlanLinter 확장
     description: "sisyphus-core/sisyphus_core/core/plan_linter.py 수정:\n\n파일 경로 해결
@@ -623,6 +655,8 @@ work_plans:
           run pytest tests/core/test_plan_linter_file_depends.py -v
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '11'
     title: sisyphus-speckit task verify bash 순차 실행 구현
     description: "sisyphus-cli/sisyphus/cli/task.py 수정:\n1. task verify bash 명령어 구현\n\
@@ -654,6 +688,8 @@ work_plans:
           uv run pytest tests/cli/test_task_verify_bash.py -v
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: 10-commit
     title: depends_on 파일 경로 지원 커밋
     description: 'git commit -m "feat(core): depends_on 파일 경로 지원 추가"'
@@ -672,6 +708,8 @@ work_plans:
           log -1 --oneline
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '12'
     title: sisyphus-speckit task accept 명령어 구현
     description: "sisyphus-cli/sisyphus/cli/task.py 수정:\n1. task accept 명령어 구현\n2.
@@ -708,6 +746,8 @@ work_plans:
           uv run pytest tests/cli/test_task_accept.py -v
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '13'
     title: sisyphus-speckit task continue 4가지 조건 검증 구현
     description: "sisyphus-cli/sisyphus/cli/task.py 수정:\n1. task continue 실행 전 4가지
@@ -751,6 +791,8 @@ work_plans:
           uv run pytest tests/cli/test_task_continue_conditions.py -v
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: 12-commit
     title: task accept 명령어 커밋
     description: 'git commit -m "feat(cli): task accept 명령어 구현"'
@@ -769,6 +811,8 @@ work_plans:
           log -1 --oneline
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '14'
     title: acceptance_criteria_for_verification_agent 초기화 로직 구현
     description: "sisyphus-core 또는 sisyphus-cli에 로직 추가:\nexecution.fully_done = False로
@@ -806,6 +850,8 @@ work_plans:
           run pytest tests/core/plans/test_acceptance_reset.py -v
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: 13-commit
     title: task continue 조건 검증 커밋
     description: 'git commit -m "feat(cli): task continue 4가지 조건 검증 추가"'
@@ -824,6 +870,8 @@ work_plans:
           log -1 --oneline
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '15'
     title: sisyphus-cli 전체 테스트 작성 및 통과
     description: "sisyphus-cli의 모든 새 기능에 대한 테스트 작성:\n1. task verify bash 테스트\n2. task
@@ -853,6 +901,8 @@ work_plans:
           uv run pytest
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   - id: '16'
     title: README.md, AGENTS.md 문서 업데이트
     description: "README.md, AGENTS.md에 새 스펙 내용 반영:\n1. example-new-plan.yaml 스펙 지원
@@ -875,6 +925,8 @@ work_plans:
         context_commands: []
         instruction: README.md, AGENTS.md에 새 스펙(expected_outcome, 
           forbidden_outcome, parallel, acceptance_criteria 등) 내용이 반영되었는지 확인
+    parallel: false
+    acceptance_criteria: []
   - id: '17'
     title: 최종 커밋 및 정리
     description: "모든 변경사항 커밋:\n\"feat(sisyphus): example-new-plan.yaml 스펙 완전 지원 -
@@ -901,6 +953,8 @@ work_plans:
         expected_stdout: OK
         expected_exit_code: 0
       llm_judge: []
+    parallel: false
+    acceptance_criteria: []
   references:
   - ref_id: example-new-plan
     uri: /Users/yeongyu/local-workspaces/sisyphus/example-new-plan.yaml

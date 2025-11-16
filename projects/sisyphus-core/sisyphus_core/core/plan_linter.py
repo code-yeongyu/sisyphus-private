@@ -125,6 +125,9 @@ class PlanLinter:
             "execution",
             "work_mode",
             "current_work",
+            "current_work_ids",
+            "acceptance_criteria_for_verification_agent",
+            "fully_done_evidence",
         }
         self._check_extra_fields(plan, path, allowed_fields)
 
@@ -188,7 +191,7 @@ class PlanLinter:
             self._check_type(user_req, path, "dict")
             return
 
-        allowed_fields = {"original", "created_at", "additional"}
+        allowed_fields = {"original", "created_at", "additional", "expected_outcome", "forbidden_outcome"}
         self._check_extra_fields(user_req, path, allowed_fields)
         self._validate_nested_required(user_req, path, ["original", "created_at"])
 
@@ -198,6 +201,10 @@ class PlanLinter:
             self._check_type(user_req["created_at"], f"{path}.created_at", "string")
         if "additional" in user_req:
             self._check_type(user_req["additional"], f"{path}.additional", "list")
+        if "expected_outcome" in user_req and user_req["expected_outcome"] is not None:
+            self._check_type(user_req["expected_outcome"], f"{path}.expected_outcome", "string")
+        if "forbidden_outcome" in user_req and user_req["forbidden_outcome"] is not None:
+            self._check_type(user_req["forbidden_outcome"], f"{path}.forbidden_outcome", "string")
 
     def _validate_objectives_in_plan(self, objectives: Any, path: str) -> None:
         """Validate objectives within a work plan."""
@@ -872,6 +879,9 @@ class PlanLinter:
             "children",
             "references",
             "verification_spec",
+            "parallel",
+            "parallelable_and_safe_evidence",
+            "acceptance_criteria",
         }
         self._check_extra_fields(todo, path, allowed_fields)
 
@@ -898,6 +908,23 @@ class PlanLinter:
                 for i, spec in enumerate(todo["verification_spec"]):
                     self._validate_verification_item(spec, f"{path}.verification_spec[{i}]")
 
+        if "parallel" in todo:
+            self._check_type(todo["parallel"], f"{path}.parallel", "boolean")
+
+        if "parallelable_and_safe_evidence" in todo:
+            if todo["parallelable_and_safe_evidence"] is not None:
+                self._check_type(
+                    todo["parallelable_and_safe_evidence"],
+                    f"{path}.parallelable_and_safe_evidence",
+                    "string",
+                )
+
+        if "acceptance_criteria" in todo:
+            self._check_type(todo["acceptance_criteria"], f"{path}.acceptance_criteria", "list")
+            if isinstance(todo["acceptance_criteria"], list):
+                for i, criteria in enumerate(todo["acceptance_criteria"]):
+                    self._validate_acceptance_criteria_item(criteria, f"{path}.acceptance_criteria[{i}]")
+
         if "children" in todo:
             self._check_type(todo["children"], f"{path}.children", "list")
             if isinstance(todo["children"], list):
@@ -921,6 +948,8 @@ class PlanLinter:
             "manual_verification_evidence",
             "bash",
             "llm_judge",
+            "deterministic_bash",
+            "orchestrator_judge",
         }
         self._check_extra_fields(item, path, allowed_fields)
 
@@ -971,6 +1000,20 @@ class PlanLinter:
         # Validate llm_judge list
         if has_llm:
             self._validate_llm_judge_list(item["llm_judge"], f"{path}.llm_judge")
+
+        # Validate deterministic_bash list
+        if "deterministic_bash" in item:
+            self._check_type(item["deterministic_bash"], f"{path}.deterministic_bash", "list")
+            if isinstance(item["deterministic_bash"], list):
+                for i, det_bash in enumerate(item["deterministic_bash"]):
+                    self._validate_deterministic_bash_item(det_bash, f"{path}.deterministic_bash[{i}]")
+
+        # Validate orchestrator_judge list
+        if "orchestrator_judge" in item:
+            self._check_type(item["orchestrator_judge"], f"{path}.orchestrator_judge", "list")
+            if isinstance(item["orchestrator_judge"], list):
+                for i, orch_judge in enumerate(item["orchestrator_judge"]):
+                    self._validate_orchestrator_judge_item(orch_judge, f"{path}.orchestrator_judge[{i}]")
 
     def _validate_bash_list(self, bash_list: Any, path: str) -> None:
         """Validate list of BashVerification."""
@@ -1458,7 +1501,6 @@ class PlanLinter:
 
         return False
 
-
     @staticmethod
     def resolve_depends_on_path(depends_on: str, current_plan_path: Path) -> Path:
         """Resolve depends_on value to actual file path.
@@ -1512,7 +1554,10 @@ class PlanLinter:
 
         # Check if file exists
         if not resolved_path.exists():
-            return f"Plan '{plan_id}' depends on file path '{depends_on}' which resolves to '{resolved_path}': file does not exist"
+            return (
+                f"Plan '{plan_id}' depends on file path '{depends_on}' which resolves to "
+                f"'{resolved_path}': file does not exist"
+            )
 
         # Check for circular references
         if resolved_path in visited:
@@ -1572,7 +1617,6 @@ class PlanLinter:
                         f"Fix: Either create a plan with id '{dep_id}', or change the dependency to one of: "
                         f"{available}"
                     )
-
 
                 # File path validation
                 file_error = self._validate_file_path_depends_on(dep_id, plan.id, plan_path)

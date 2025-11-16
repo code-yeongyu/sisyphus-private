@@ -523,3 +523,34 @@ Task 1에서 sisyphus-core의 UserRequest 모델을 확장하여 expected_outcom
 - 테스트 파일 경로: /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core/tests/core/plans/test_acceptance_reset.py
 
 소요 시간: 약 15분 (파일 재작성 + 테스트 실행 + lint 수정)
+
+[2025-11-16 18:59] - Task #12: task accept 명령어 구현
+
+### DISCOVERED ISSUES
+- 이전 executor가 테스트 코드만 작성하고 실제 CLI 명령어 구현을 누락함
+- test_task_accept.py에는 5개 test 함수 (asyncio+trio로 10개 테스트)가 있지만 구현 없음
+
+### IMPLEMENTATION DECISIONS
+- @task_app.command(name="accept") 데코레이터로 새 명령어 추가
+- verify_manual_mark() 함수의 패턴을 따라 구현
+- work_plan.acceptance_criteria_for_verification_agent에서 checklist 검색
+- --id 옵션으로 criterion ID 지정, --evidence 옵션으로 증거 기록
+- checked_at: datetime.now(UTC).isoformat(), checked_evidence: evidence로 업데이트
+- save_plan()으로 변경사항 저장
+
+### PROBLEMS FOR NEXT TASKS
+- None - 이 작업은 독립적이고 완전히 구현됨
+
+### VERIFICATION RESULTS
+- pytest tests/cli/test_task_accept.py: 10/10 passed (asyncio+trio 양쪽 모두)
+- basedpyright: 0 errors, 127 warnings (기존 코드의 warnings)
+- ruff check: All checks passed
+- CLI 명령어 정상 등록: sisyphus-speckit task accept --help 정상 작동
+
+### LEARNINGS
+- verify_manual_mark() 패턴: async 내부 함수 + _run_async() 래퍼 사용
+- acceptance_criteria_for_verification_agent는 work_plan.acceptance_criteria_for_verification_agent에 있음
+- 각 criteria는 multiple checklists를 가지며, checklist.id로 검색
+- import는 직접 사용되는 것만 포함 (AcceptanceCriteriaChecklist, AcceptanceCriteriaForVerificationAgent은 type annotation으로만 사용되므로 제거)
+
+소요 시간: 약 5분

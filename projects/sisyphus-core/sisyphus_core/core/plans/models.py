@@ -244,8 +244,7 @@ class WorkPlan(BaseModel):
 
     @model_validator(mode="after")
     def reset_acceptance_on_fully_done_false(self) -> Self:
-        """fully_done_at이 None이 될 때 acceptance criteria 초기화"""
-        if self.execution.fully_done_at is None:
+        if self.execution.fully_done_at is None and self.execution.completed:
             for criteria in self.acceptance_criteria_for_verification_agent:
                 for checklist in criteria.checklists:
                     checklist.checked_at = None

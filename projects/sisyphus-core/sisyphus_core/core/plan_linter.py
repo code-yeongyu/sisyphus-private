@@ -451,7 +451,7 @@ class PlanLinter:
             self._check_type(exec_data, path, "dict")
             return
 
-        allowed_exec_fields = {"started", "completed", "started_at", "completed_at"}
+        allowed_exec_fields = {"started", "completed", "started_at", "completed_at", "fully_done_at"}
         self._check_extra_fields(exec_data, path, allowed_exec_fields)
         self._validate_nested_required(exec_data, path, ["started", "completed"])
 
@@ -1080,6 +1080,81 @@ class PlanLinter:
 
             if "instruction" in llm:
                 self._check_type(llm["instruction"], f"{llm_path}.instruction", "string")
+
+    def _validate_acceptance_criteria_item(self, item: Any, path: str) -> None:
+        """Validate AcceptanceCriteriaItem."""
+        if not isinstance(item, dict):
+            self._check_type(item, path, "dict")
+            return
+
+        allowed_fields = {"id", "condition", "verified_at", "verification_evidence"}
+        self._check_extra_fields(item, path, allowed_fields)
+        self._validate_nested_required(item, path, ["id", "condition"])
+
+        if "id" in item:
+            self._check_type(item["id"], f"{path}.id", "string")
+        if "condition" in item:
+            self._check_type(item["condition"], f"{path}.condition", "string")
+        if "verified_at" in item and item["verified_at"] is not None:
+            self._check_type(item["verified_at"], f"{path}.verified_at", "string")
+        if "verification_evidence" in item and item["verification_evidence"] is not None:
+            self._check_type(item["verification_evidence"], f"{path}.verification_evidence", "string")
+
+    def _validate_deterministic_bash_item(self, item: Any, path: str) -> None:
+        """Validate DeterministicBashVerification."""
+        if not isinstance(item, dict):
+            self._check_type(item, path, "dict")
+            return
+
+        allowed_fields = {
+            "description",
+            "reason_why_it_is_deterministic_and_reliable",
+            "execute",
+            "expected_stdout",
+            "expected_stderr",
+            "expected_exit_code",
+            "verified_at",
+        }
+        self._check_extra_fields(item, path, allowed_fields)
+        self._validate_nested_required(
+            item, path, ["description", "reason_why_it_is_deterministic_and_reliable", "execute"]
+        )
+
+        if "description" in item:
+            self._check_type(item["description"], f"{path}.description", "string")
+        if "reason_why_it_is_deterministic_and_reliable" in item:
+            self._check_type(
+                item["reason_why_it_is_deterministic_and_reliable"],
+                f"{path}.reason_why_it_is_deterministic_and_reliable",
+                "string",
+            )
+        if "execute" in item:
+            self._check_type(item["execute"], f"{path}.execute", "string")
+        if "expected_stdout" in item and item["expected_stdout"] is not None:
+            self._check_type(item["expected_stdout"], f"{path}.expected_stdout", "string")
+        if "expected_stderr" in item and item["expected_stderr"] is not None:
+            self._check_type(item["expected_stderr"], f"{path}.expected_stderr", "string")
+        if "expected_exit_code" in item:
+            self._check_type(item["expected_exit_code"], f"{path}.expected_exit_code", "int")
+        if "verified_at" in item and item["verified_at"] is not None:
+            self._check_type(item["verified_at"], f"{path}.verified_at", "string")
+
+    def _validate_orchestrator_judge_item(self, item: Any, path: str) -> None:
+        """Validate OrchestratorJudgeVerification."""
+        if not isinstance(item, dict):
+            self._check_type(item, path, "dict")
+            return
+
+        allowed_fields = {"prompt", "verified_at", "verification_evidence"}
+        self._check_extra_fields(item, path, allowed_fields)
+        self._validate_nested_required(item, path, ["prompt"])
+
+        if "prompt" in item:
+            self._check_type(item["prompt"], f"{path}.prompt", "string")
+        if "verified_at" in item and item["verified_at"] is not None:
+            self._check_type(item["verified_at"], f"{path}.verified_at", "string")
+        if "verification_evidence" in item and item["verification_evidence"] is not None:
+            self._check_type(item["verification_evidence"], f"{path}.verification_evidence", "string")
 
     def _validate_success_vision(self, data: dict[str, Any]) -> None:
         """Validate success_vision section."""

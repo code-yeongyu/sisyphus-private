@@ -556,6 +556,13 @@ def continue_work(
                 if not checklist.checked_at:
                     errors.append(f"Acceptance '{checklist.title}' - 체크 미완료")
 
+        # 4. llm_judge 검증 모두 통과 (빈 리스트는 통과)
+        for verify_item in current_task.verification_spec:
+            for llm_judge in verify_item.llm_judge:
+                if not verify_item.verified:
+                    errors.append(f"[{verify_item.id}] '{verify_item.title}' - LLM Judge 검증 미완료")
+                    break
+
         if errors:
             console.print("[red]✗ 작업 완료 불가능 - 다음 검증이 누락되었습니다:[/red]\n")
             for error in errors:

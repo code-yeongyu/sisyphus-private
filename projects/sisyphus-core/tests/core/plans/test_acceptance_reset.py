@@ -57,6 +57,8 @@ async def test_workplan__if_fully_done_at_none__resets_all_checklists() -> None:
     )
 
     work_plan.acceptance_criteria_for_verification_agent = [criteria]
+    work_plan.execution.completed = True
+    work_plan.execution.fully_done_at = None
 
     # When: Create a new WorkPlan instance with fully_done_at = None to trigger validator
     new_plan = WorkPlan(
@@ -83,9 +85,7 @@ async def test_workplan__if_fully_done_at_none__resets_all_checklists() -> None:
     # Then: Verify that acceptance criteria checklists are reset
     for criteria_item in new_plan.acceptance_criteria_for_verification_agent:
         for checklist in criteria_item.checklists:
-            assert (
-                checklist.checked_at is None
-            ), f"Expected checked_at to be None but got {checklist.checked_at}"
+            assert checklist.checked_at is None, f"Expected checked_at to be None but got {checklist.checked_at}"
             assert checklist.checked_evidence is None
 
 
@@ -178,6 +178,7 @@ async def test_workplan__if_multiple_criteria__resets_all() -> None:
         criteria_list.append(criteria)
 
     work_plan.acceptance_criteria_for_verification_agent = criteria_list
+    work_plan.execution.completed = True
     work_plan.execution.fully_done_at = None
 
     # When: Create new instance to trigger validator
@@ -237,6 +238,7 @@ async def test_workplan__if_reset_and_reloaded__persists() -> None:
         )
 
         work_plan.acceptance_criteria_for_verification_agent = [criteria]
+        work_plan.execution.completed = True
         work_plan.execution.fully_done_at = "2025-11-16T11:00:00Z"
 
         await save_plan(plan_path, plan_doc)
@@ -244,6 +246,7 @@ async def test_workplan__if_reset_and_reloaded__persists() -> None:
         # When: Load, reset fully_done_at, and save
         loaded_plan = await load_plan(plan_path)
         work_plan_reset = loaded_plan.work_plans[0]
+        work_plan_reset.execution.completed = True
         work_plan_reset.execution.fully_done_at = None
 
         new_plan = WorkPlan(

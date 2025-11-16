@@ -160,6 +160,13 @@ class FinalVerificationItem(BaseModel):
         return self
 
 
+class AcceptanceCriteriaItem(BaseModel):
+    id: str
+    condition: str
+    verified_at: str | None = None
+    verification_evidence: str | None = None
+
+
 class Todo(BaseModel):
     id: str
     title: str
@@ -168,6 +175,9 @@ class Todo(BaseModel):
     children: list[Todo] | None = None
     references: list[ReferenceItem] = []
     verification_spec: list[VerificationItem] = []
+    parallel: bool = False
+    parallelable_and_safe_evidence: str | None = None
+    acceptance_criteria: list[AcceptanceCriteriaItem] = []
 
 
 class WorkPlan(BaseModel):

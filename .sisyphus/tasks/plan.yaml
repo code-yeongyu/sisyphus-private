@@ -242,7 +242,7 @@ work_plans:
   - id: 1-test
     title: UserRequest 필드 추가 테스트
     description: UserRequest에 expected_outcome, forbidden_outcome 추가 후 즉시 테스트
-    status: in_progress
+    status: completed
     references: []
     verification_spec:
     - id: verify-1-test
@@ -269,15 +269,18 @@ work_plans:
     title: UserRequest 필드 추가 커밋
     description: 'git commit -m "feat(models): UserRequest에 expected_outcome, forbidden_outcome
       추가"'
-    status: pending
+    status: completed
     references: []
     verification_spec:
     - id: verify-1-commit
       title: 커밋 확인
       description: git log 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T08:38:22.852372+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'git log -1 --oneline 실행 결과: 92875cf feat(models):
+        UserRequest에 expected_outcome, forbidden_outcome 추가. 커밋 메시지에 UserRequest 키워드
+        포함됨 확인. Co-Authored-By: Claude 포함. 커밋 해시 92875cf.'
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && git
@@ -291,7 +294,7 @@ work_plans:
       Todo 모델에 parallel: bool, parallelable_and_safe_evidence: str | None 추가\n2. AcceptanceCriteriaItem
       새 모델 생성 (id, condition, verified_at, verification_evidence)\n3. Todo 모델에 acceptance_criteria:
       list[AcceptanceCriteriaItem] 추가\n\n참고: example-new-plan.yaml:108-109, 140-144\n"
-    status: pending
+    status: in_progress
     references:
     - inline: "파일: sisyphus-core/sisyphus_core/core/plans/models.py\n위치: Todo 클래스
         정의 직전 (약 라인 160)\n\n새 클래스 추가:\n\nclass AcceptanceCriteriaItem(BaseModel):\n\
@@ -922,5 +925,5 @@ work_plans:
     started_at: '2025-11-16T08:32:49.583213+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: 1-test
+    current_task_id: '2'
   current_work: ''

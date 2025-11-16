@@ -72,3 +72,32 @@ Task 1에서 sisyphus-core의 UserRequest 모델을 확장하여 expected_outcom
 - example-new-plan.yaml 파일은 프로젝트 root에 위치해야 함
 
 소요 시간: 약 5분
+
+[2025-11-16 17:40] - Task 2: Todo 모델 확장
+
+### DISCOVERED ISSUES
+- None. All changes integrated smoothly.
+
+### IMPLEMENTATION DECISIONS
+- AcceptanceCriteriaItem 클래스는 Todo 클래스 정의 직전에 위치
+- 모든 새 필드에 기본값 설정 (parallel=False, acceptance_criteria=[])
+- Optional 필드는 str | None = None 패턴 사용 (Python 3.10+ 문법)
+- 필드 순서: parallel, parallelable_and_safe_evidence, acceptance_criteria
+
+### PROBLEMS FOR NEXT TASKS
+- None identified. Task completion ready.
+
+### VERIFICATION RESULTS
+- basedpyright: 0 errors, 0 warnings
+- pytest: 6/6 tests passed (100% pass rate)
+- Test coverage: AcceptanceCriteriaItem (2 tests), Todo (4 tests)
+- All Given-When-Then structure tests created and executed
+
+### LEARNINGS
+- AcceptanceCriteriaItem 모델 구조: id(str) + condition(str) + verified_at/verification_evidence (optional)
+- Todo 모델에 acceptance_criteria는 list[AcceptanceCriteriaItem] 타입
+- basedpyright 타입 체크는 완전히 자동으로 처리됨 (명시적 타입 힌트만 필요)
+- Pydantic BaseModel 필드 기본값은 Field()나 = None으로 설정 가능
+- 테스트 파일 경로: tests/core/plans/test_models_todo.py
+
+소요 시간: 약 10분 (파일 수정 + 테스트 작성 + 실행 포함)

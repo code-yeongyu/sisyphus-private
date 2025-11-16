@@ -23,6 +23,7 @@ class ExecutionStatus(BaseModel):
     completed: bool
     started_at: str | None = None
     completed_at: str | None = None
+    fully_done_at: str | None = None
 
 
 class WorkMode(BaseModel):

@@ -398,7 +398,7 @@ work_plans:
       2. OrchestratorJudgeVerification 새 모델 생성 (prompt, verified_at, verification_evidence)\n\
       3. VerificationItem 모델에 deterministic_bash: list[DeterministicBashVerification],
       orchestrator_judge: list[OrchestratorJudgeVerification] 추가\n\n참고: example-new-plan.yaml:118-138\n"
-    status: in_progress
+    status: completed
     references:
     - inline: "파일: sisyphus-core/sisyphus_core/core/plans/models.py\n위치: VerificationItem
         클래스 정의 직전 (약 라인 65)\n\n새 클래스 추가:\n\nclass DeterministicBashVerification(BaseModel):\n\
@@ -446,7 +446,7 @@ work_plans:
       list[AcceptanceCriteriaChecklist])\n3. WorkPlan 모델에 current_work_ids: list[str],
       acceptance_criteria_for_verification_agent: list[AcceptanceCriteriaForVerificationAgent],
       fully_done_evidence: str | None 추가\n\n참고: example-new-plan.yaml:222-276, 325\n"
-    status: pending
+    status: completed
     references:
     - inline: "파일: sisyphus-core/sisyphus_core/core/plans/models.py\n위치: WorkPlan
         클래스 정의 직전 (약 라인 170)\n\n새 클래스 추가:\n\nclass AcceptanceCriteriaChecklist(BaseModel):\n\
@@ -467,9 +467,16 @@ work_plans:
     - id: verify-4-1
       title: basedpyright 타입 체크 통과
       description: WorkPlan 모델 변경 후 타입 체크 통과
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T08:47:55.988766+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: AcceptanceCriteriaChecklist 클래스 5개 필드(id, 
+        title, content, checked_at, checked_evidence). 
+        AcceptanceCriteriaForVerificationAgent 클래스 4개 필드(id, title, accepted_at,
+        checklists). WorkPlan에 current_work_ids(list[str]), 
+        acceptance_criteria_for_verification_agent, 
+        fully_done_evidence(str|None) 추가. basedpyright 0 errors. 42/42 테스트 통과. 
+        커밋 d37508c.
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv 
@@ -484,7 +491,7 @@ work_plans:
     title: Pydantic 모델 확장 - ExecutionStatus에 fully_done_at 추가
     description: "sisyphus-core/sisyphus_core/core/plans/models.py의 ExecutionStatus
       모델에\nfully_done_at: str | None 필드 추가.\n\n참고: example-new-plan.yaml:327-330\n"
-    status: pending
+    status: completed
     references:
     - inline: "파일: sisyphus-core/sisyphus_core/core/plans/models.py\n위치: ExecutionStatus
         클래스 (라인 21-25)\n\n현재:\nclass ExecutionStatus(BaseModel):\n    started: bool\n\
@@ -496,9 +503,12 @@ work_plans:
     - id: verify-5-1
       title: basedpyright 타입 체크 통과
       description: ExecutionStatus 모델 변경 후 타입 체크 통과
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T08:49:43.111745+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'ExecutionStatus 클래스에 fully_done_at: str | None
+        = None 필드 추가 완료. 라인 27에 추가됨. basedpyright 0 errors 통과. 기존 started_at, completed_at
+        패턴과 일관성 유지. 커밋 a4d42a3.'
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv 
@@ -516,7 +526,7 @@ work_plans:
       및 DeterministicBashVerification, OrchestratorJudgeVerification 테스트\n4. WorkPlan
       새 필드 및 AcceptanceCriteriaForVerificationAgent 테스트\n5. ExecutionStatus 새 필드 테스트\n\
       \n모든 테스트는 tempfile/TemporaryDirectory 사용, Given-When-Then 구조\n"
-    status: pending
+    status: in_progress
     references:
     - inline: "pytest-anyio 사용, Given-When-Then 구조\ntempfile/TemporaryDirectory로 경로
         의존성 제거\n"
@@ -524,9 +534,15 @@ work_plans:
     - id: verify-6-1
       title: 모델 테스트 통과
       description: 새로 작성한 모델 테스트가 모두 통과
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T08:53:51.553246+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: test_models.py 생성됨. 21개 테스트 작성 (UserRequest 
+        3개, DeterministicBashVerification 2개, OrchestratorJudgeVerification 2개, 
+        VerificationItem 3개, AcceptanceCriteriaChecklist 2개, 
+        AcceptanceCriteriaForVerificationAgent 2개, ExecutionStatus 2개, Todo 1개, 
+        WorkPlan 3개). pytest 27/27 테스트 통과. Given-When-Then 구조. basedpyright 0 
+        errors. ruff check 통과.
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv 
@@ -1040,5 +1056,7 @@ work_plans:
     started_at: '2025-11-16T08:32:49.583213+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '3'
+    current_task_id: '6'
   current_work: ''
+  current_work_ids: []
+  acceptance_criteria_for_verification_agent: []

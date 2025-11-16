@@ -132,3 +132,103 @@ Task 1에서 sisyphus-core의 UserRequest 모델을 확장하여 expected_outcom
 - models.py의 기존 패턴: list[ClassName] = [] (기본값으로 빈 리스트)
 
 소요 시간: 약 5분
+
+[2025-11-16 17:47] - Task 4: Pydantic 모델 확장 - WorkPlan에 current_work_ids, acceptance_criteria_for_verification_agent, fully_done_evidence 추가
+
+### DISCOVERED ISSUES
+- 없음 (모든 작업이 정상 진행)
+
+### IMPLEMENTATION DECISIONS
+- AcceptanceCriteriaChecklist: id, title, content, checked_at, checked_evidence 5개 필드로 구성
+  - checked_at, checked_evidence는 optional (str | None)
+- AcceptanceCriteriaForVerificationAgent: id, title, accepted_at, checklists 4개 필드
+  - accepted_at는 optional
+  - checklists는 list[AcceptanceCriteriaChecklist] 타입
+- WorkPlan에 3개 필드 추가:
+  - current_work_ids: list[str] = []
+  - acceptance_criteria_for_verification_agent: list[AcceptanceCriteriaForVerificationAgent] = []
+  - fully_done_evidence: str | None = None
+
+### PROBLEMS FOR NEXT TASKS
+- 없음
+
+### VERIFICATION RESULTS
+- basedpyright: 0 errors, 0 warnings 통과
+- pytest: 42/42 tests passed (100% pass rate)
+- 테스트 실행 시간: 0.32초
+- Python 3.12.11, pytest 8.4.2 환경에서 모두 통과
+- asyncio/trio 양쪽 백엔드 모두 정상 동작
+
+### LEARNINGS
+- Pydantic BaseModel 타입 힌트는 항상 명확하게 지정 (list[str] not list)
+- Optional 필드는 str | None = None 형태로 표기
+- WorkPlan 클래스의 필드는 기존 패턴 (Field 데코레이터, default factory 등)을 고려하여 추가
+- 두 새 클래스는 WorkPlan 정의 직전에 위치해야 함 (클래스 사용 순서 준수)
+
+소요 시간: 약 15분
+
+[2025-11-16 17:49] - Task 5: ExecutionStatus에 fully_done_at 필드 추가
+
+### DISCOVERED ISSUES
+- None
+
+### IMPLEMENTATION DECISIONS
+- ExecutionStatus 클래스에 `fully_done_at: str | None = None` 필드를 라인 27에 추가
+- 타입 힌트: `str | None` - ISO 형식 타임스탬프 또는 None
+- 기본값 None으로 설정 (미완료 상태)
+
+### PROBLEMS FOR NEXT TASKS
+- None
+
+### VERIFICATION RESULTS
+- basedpyright 실행: 0 errors, 0 warnings
+- 모델 타입 체크 통과
+- 파일: /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core/sisyphus_core/core/plans/models.py
+
+### LEARNINGS
+- ExecutionStatus 모델은 작업 실행 상태를 추적하는 중요한 구조체
+- fully_done_at은 작업이 완전히 완료된 시점을 기록하기 위한 필드
+- 기존 started_at, completed_at과 함께 작업 라이프사이클의 타임스탬프 시리즈 구성
+
+소요 시간: 3분
+
+[2025-11-16 17:53] - Task 6: Pydantic 모델 확장 테스트 작성
+
+### DISCOVERED ISSUES
+- VerificationItem validator requires bash or llm_judge to be present (not deterministic_bash or orchestrator_judge alone)
+- WorkPlan constructor requires properly typed Pydantic model instances, not plain dicts
+
+### IMPLEMENTATION DECISIONS
+- Created comprehensive test file: tests/core/plans/test_models.py with 21 tests
+- Used Given-When-Then structure per project requirements
+- Tested all 10 new model fields across 5 different models:
+  1. UserRequest: expected_outcome, forbidden_outcome
+  2. DeterministicBashVerification: 7 fields including reason_why_it_is_deterministic_and_reliable
+  3. OrchestratorJudgeVerification: 3 fields (prompt, verified_at, verification_evidence)
+  4. VerificationItem: deterministic_bash, orchestrator_judge fields
+  5. AcceptanceCriteriaChecklist: 5 fields
+  6. AcceptanceCriteriaForVerificationAgent: 4 fields
+  7. ExecutionStatus: fully_done_at field
+  8. Todo: parallel, parallelable_and_safe_evidence, acceptance_criteria
+  9. WorkPlan: current_work_ids, acceptance_criteria_for_verification_agent, fully_done_evidence
+- All tests properly import and instantiate Pydantic models with correct types
+- Tests verify default values, None assignments, and field combinations
+
+### PROBLEMS FOR NEXT TASKS
+- None identified. All tests pass and type checking passes.
+
+### VERIFICATION RESULTS
+- Ran: uv run pytest tests/core/plans/test_models.py -v (21/21 tests PASSED)
+- Ran: uv run pytest tests/core/plans/ -v (27/27 tests PASSED - includes existing 6 tests)
+- Type check: uv run basedpyright tests/core/plans/test_models.py (0 errors, 1 warning about missing stubs)
+- Linting: uv run ruff check tests/core/plans/test_models.py (All checks passed)
+- Tests created in: /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core/tests/core/plans/test_models.py
+
+### LEARNINGS
+- Pydantic model validators can restrict field combinations (e.g., require at least one of bash/llm_judge)
+- When testing Pydantic models, use model instances not dicts for type safety
+- Test naming convention: test_{class}__if_{condition}__{result} works well for readability
+- All 10 new model fields successfully tested with Given-When-Then pattern
+- Type hints for Pydantic models are important for type checker compatibility
+
+소요 시간: ~5분

@@ -232,3 +232,67 @@ Task 1에서 sisyphus-core의 UserRequest 모델을 확장하여 expected_outcom
 - Type hints for Pydantic models are important for type checker compatibility
 
 소요 시간: ~5분
+
+[2025-11-16 17:56] - Task 7: loader.py 호환성 확인 및 테스트
+
+### DISCOVERED ISSUES
+- None: loader.py는 Pydantic 모델을 활용하므로 자동으로 새 필드를 처리함
+
+### IMPLEMENTATION DECISIONS
+- example-new-plan.yaml을 모든 새로운 필드로 업데이트 (기존 minimal 버전에서 확장)
+- loader.py 코드 변경 불필요 - Pydantic이 자동으로 처리
+- test_loader_new_spec.py 작성: 모든 새 필드의 로드 및 접근성 확인
+
+### PROBLEMS FOR NEXT TASKS
+- None identified: loader 호환성이 완벽함
+- 다음 Task 8 (template.py 업데이트)에서 full_example 메서드가 새 필드를 포함하도록 수정 필요
+
+### VERIFICATION RESULTS
+- pytest tests/core/plans/test_loader_new_spec.py: 20/20 통과 (asyncio & trio 양쪽)
+- basedpyright: 0 errors, 2 warnings (stub file 미제공 - 무시 가능)
+- ruff check: All checks passed (import 정렬 자동 수정)
+- UserRequest: expected_outcome, forbidden_outcome 필드 파싱 확인
+- Todo: parallel, parallelable_and_safe_evidence, acceptance_criteria 필드 파싱 확인
+- VerificationItem: deterministic_bash, orchestrator_judge 필드 파싱 확인
+- WorkPlan: current_work_ids, acceptance_criteria_for_verification_agent, fully_done_evidence 필드 파싱 확인
+- ExecutionStatus: fully_done_at 필드 파싱 확인
+
+### LEARNINGS
+- loader.py의 PlanDocument.model_validate() 패턴이 강력함 - Pydantic이 자동으로 새 필드 처리
+- example-new-plan.yaml이 comprehensive하면 테스트 커버리지가 매우 우수함
+- pytest-anyio로 asyncio/trio 양쪽 백엔드 자동 테스트 가능
+- Given-When-Then 구조 사용으로 테스트 가독성 향상
+
+소요 시간: 약 20분
+
+[2025-11-16 17:59] - Task 8: template.py 업데이트 - full_example 메서드 수정
+
+### DISCOVERED ISSUES
+- VerificationItem 모델에는 bash 또는 llm_judge 중 하나 이상 필수 (model_validator 적용)
+- backend.yaml의 verification_spec 항목들이 이 검증을 통과하지 못함
+
+### IMPLEMENTATION DECISIONS
+- backend.yaml 파일을 example-new-plan.yaml 수준으로 완전히 업데이트
+- 모든 새 필드 포함: expected_outcome, forbidden_outcome, parallel, parallelable_and_safe_evidence, acceptance_criteria, deterministic_bash, orchestrator_judge, current_work_ids, acceptance_criteria_for_verification_agent, fully_done_evidence, fully_done_at
+- verification_spec 항목에 bash 필드를 추가하여 검증 통과
+- full_example() 메서드는 _get_reference_example()으로 backend.yaml을 로드하고 타임스탬프 업데이트하는 방식 유지
+
+### PROBLEMS FOR NEXT TASKS
+- 없음 (현재 작업 완료)
+
+### VERIFICATION RESULTS
+- 전체 테스트 14/14 통과 (asyncio + trio 각 7개 = 14개)
+- full_example() 메서드가 모든 새 필드를 포함하는지 확인됨
+- UserRequest: expected_outcome, forbidden_outcome ✓
+- Todo: parallel, parallelable_and_safe_evidence, acceptance_criteria ✓
+- VerificationItem: deterministic_bash, orchestrator_judge ✓
+- WorkPlan: current_work_ids, acceptance_criteria_for_verification_agent, fully_done_evidence ✓
+- ExecutionStatus: fully_done_at ✓
+
+### LEARNINGS
+- Pydantic v2 model_validator를 사용하여 필드 간 검증 가능
+- bash 또는 llm_judge 중 하나 이상 필수는 VerificationItem의 비즈니스 규칙
+- YAML 예제 파일의 검증 구조가 중요하며, 모든 새 필드를 포함해야 함
+- template.py의 full_example()은 Pydantic model_validate()를 사용하여 자동으로 새 필드 지원
+
+소요 시간: 약 15분

@@ -16,6 +16,8 @@ work_plans:
       original: "Implement backend REST API with FastAPI"
       created_at: "2025-11-09T15:00:00Z"
       additional: []
+      expected_outcome: "Fully functional REST API with authentication, CRUD endpoints, and database persistence"
+      forbidden_outcome: "Incomplete endpoints, missing error handling, or insecure authentication"
 
     objectives:
       core: "Build production-ready REST API for user and post management"
@@ -32,6 +34,7 @@ work_plans:
 
     required_background:
       description: "Python 3.12+, FastAPI, PostgreSQL, SQLAlchemy"
+      file_structure: null
       references:
         - ref_id: "fastapi_docs"
           uri: "https://fastapi.tiangolo.com/"
@@ -41,12 +44,17 @@ work_plans:
       critical_path: ["1", "2", "3"]
 
     success_vision:
-      user_perspective: []
-      business_perspective: []
+      user_perspective:
+        - scenario: "Developer can run API and access all endpoints"
+          experience: "API starts without errors, all endpoints respond correctly"
+      business_perspective:
+        - metric: "API completeness"
+          target: "100% of CRUD endpoints implemented"
       technical_criteria:
         - category: "API Functionality"
           criteria: "All CRUD endpoints operational"
-          expected: "HTTP 200 responses for valid requests"
+          command: "pytest tests/api/"
+          expected: "100% test pass rate"
 
     final_verification:
       - id: "final-api-test"
@@ -73,48 +81,229 @@ work_plans:
 
               Success: All criteria met
               Failure: Any criterion fails
+        deterministic_bash: []
+        orchestrator_judge: []
 
     todos:
       - id: "1"
         title: "Database schema design"
         description: "Create PostgreSQL tables for users and posts"
         status: pending
+        parallel: false
+        parallelable_and_safe_evidence: null
+        children: null
 
         references:
           - inline: "Use UUID for primary keys, add created_at/updated_at timestamps"
 
-        verification_spec: []
+        verification_spec:
+          - id: verify-db-schema
+            title: "Database schema verification"
+            description: "Verify tables are created correctly"
+            verified: false
+            verified_at: null
+            verification_evidence: null
+            orchestrator_manually_verified: false
+            manual_verification_evidence: ""
+            bash:
+              - execute: "ls migrations/*.py | head -5"
+                expected_exit_code: 0
+                notes: "Check if migration files exist"
+            llm_judge: []
+            deterministic_bash:
+              - description: "Check if migration files exist"
+                reason_why_it_is_deterministic_and_reliable: "File existence is deterministic"
+                execute: "ls migrations/*.py | head -5"
+                expected_stdout: null
+                expected_stderr: null
+                expected_exit_code: 0
+                verified_at: null
+            orchestrator_judge: []
+
+        acceptance_criteria:
+          - id: criterion-db-1
+            condition: "Migration files created for user and post tables"
+            verified_at: null
+            verification_evidence: null
+          - id: criterion-db-2
+            condition: "UUID primary keys configured"
+            verified_at: null
+            verification_evidence: null
 
       - id: "2"
         title: "REST API endpoints"
         description: "Implement CRUD endpoints with FastAPI"
         status: pending
+        parallel: false
+        parallelable_and_safe_evidence: null
 
         children:
           - id: "2.1"
             title: "User endpoints (/api/users)"
             description: "GET, POST, PUT, DELETE for users"
             status: pending
+            parallel: true
+            parallelable_and_safe_evidence: "User endpoints don't conflict with post endpoints"
+            references: []
             verification_spec: []
+            acceptance_criteria: []
 
           - id: "2.2"
             title: "Post endpoints (/api/posts)"
             description: "GET, POST, PUT, DELETE for posts"
             status: pending
+            parallel: true
+            parallelable_and_safe_evidence: "Post endpoints don't conflict with user endpoints"
+            references: []
             verification_spec: []
+            acceptance_criteria: []
 
         references:
           - inline: "Use Pydantic models for request/response validation"
 
-        verification_spec: []
+        verification_spec:
+          - id: verify-api-endpoints
+            title: "API endpoints verification"
+            description: "Verify all CRUD endpoints are implemented"
+            verified: false
+            verified_at: null
+            verification_evidence: null
+            orchestrator_manually_verified: false
+            manual_verification_evidence: ""
+            bash: []
+            llm_judge:
+              - by: "orchestrator-agent"
+                context_commands:
+                  - "cat src/routes.py"
+                instruction: "Verify all CRUD endpoints are defined"
+            deterministic_bash:
+              - description: "Run API endpoint tests"
+                reason_why_it_is_deterministic_and_reliable: "Test results are deterministic with fixed database state"
+                execute: "pytest tests/api/test_endpoints.py -v"
+                expected_stdout: null
+                expected_stderr: null
+                expected_exit_code: 0
+                verified_at: null
+            orchestrator_judge:
+              - prompt: "Are all CRUD operations properly implemented?"
+                verified_at: null
+                verification_evidence: null
+
+        acceptance_criteria:
+          - id: criterion-api-1
+            condition: "All CRUD endpoints implemented for users and posts"
+            verified_at: null
+            verification_evidence: null
+          - id: criterion-api-2
+            condition: "Pydantic validation applied to all endpoints"
+            verified_at: null
+            verification_evidence: null
 
       - id: "3"
         title: "Authentication middleware"
         description: "Add JWT-based authentication"
         status: pending
+        parallel: false
+        parallelable_and_safe_evidence: null
 
-        verification_spec: []
+        references: []
+
+        verification_spec:
+          - id: verify-auth
+            title: "Authentication verification"
+            description: "Verify JWT auth is implemented"
+            verified: false
+            verified_at: null
+            verification_evidence: null
+            orchestrator_manually_verified: false
+            manual_verification_evidence: ""
+            bash:
+              - execute: "pytest tests/auth/test_jwt.py -v"
+                expected_exit_code: 0
+                notes: "JWT authentication tests"
+            llm_judge: []
+            deterministic_bash:
+              - description: "Test JWT token generation and validation"
+                reason_why_it_is_deterministic_and_reliable: "Token validation is deterministic with fixed secret"
+                execute: "pytest tests/auth/test_jwt.py -v"
+                expected_stdout: null
+                expected_stderr: null
+                expected_exit_code: 0
+                verified_at: null
+            orchestrator_judge: []
+
+        acceptance_criteria:
+          - id: criterion-auth-1
+            condition: "JWT token generation works correctly"
+            verified_at: null
+            verification_evidence: null
+          - id: criterion-auth-2
+            condition: "Protected endpoints require valid JWT"
+            verified_at: null
+            verification_evidence: null
 
     references:
       - ref_id: "fastapi_docs"
         uri: "https://fastapi.tiangolo.com/"
+
+    execution:
+      started: false
+      completed: false
+      started_at: null
+      completed_at: null
+      fully_done_at: null
+
+    work_mode:
+      parallel_requested: false
+      current_task_id: null
+
+    current_work: ""
+    current_work_ids: ["1", "2", "3"]
+
+    acceptance_criteria_for_verification_agent:
+      - id: acceptance-backend-1
+        title: "All database components implemented"
+        accepted_at: null
+        checklists:
+          - id: checklist-db-1
+            title: "Schema migrations created"
+            content: "Database migration files exist for users and posts tables"
+            checked_at: null
+            checked_evidence: null
+          - id: checklist-db-2
+            title: "Connection pooling configured"
+            content: "Database connection pool is properly configured for production"
+            checked_at: null
+            checked_evidence: null
+
+      - id: acceptance-backend-2
+        title: "All API endpoints functional"
+        accepted_at: null
+        checklists:
+          - id: checklist-api-1
+            title: "User CRUD endpoints"
+            content: "POST, GET, PUT, DELETE for users implemented and tested"
+            checked_at: null
+            checked_evidence: null
+          - id: checklist-api-2
+            title: "Post CRUD endpoints"
+            content: "POST, GET, PUT, DELETE for posts implemented and tested"
+            checked_at: null
+            checked_evidence: null
+
+      - id: acceptance-backend-3
+        title: "Authentication and security"
+        accepted_at: null
+        checklists:
+          - id: checklist-auth-1
+            title: "JWT implementation"
+            content: "JWT-based authentication working for all protected endpoints"
+            checked_at: null
+            checked_evidence: null
+          - id: checklist-auth-2
+            title: "Error handling"
+            content: "Proper error responses for invalid auth tokens"
+            checked_at: null
+            checked_evidence: null
+
+    fully_done_evidence: null

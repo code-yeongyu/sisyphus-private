@@ -526,7 +526,7 @@ work_plans:
       및 DeterministicBashVerification, OrchestratorJudgeVerification 테스트\n4. WorkPlan
       새 필드 및 AcceptanceCriteriaForVerificationAgent 테스트\n5. ExecutionStatus 새 필드 테스트\n\
       \n모든 테스트는 tempfile/TemporaryDirectory 사용, Given-When-Then 구조\n"
-    status: in_progress
+    status: completed
     references:
     - inline: "pytest-anyio 사용, Given-When-Then 구조\ntempfile/TemporaryDirectory로 경로
         의존성 제거\n"
@@ -556,15 +556,17 @@ work_plans:
   - id: 6-commit
     title: Pydantic 모델 테스트 커밋
     description: 'git commit -m "test(models): Pydantic 모델 확장 테스트 추가"'
-    status: pending
+    status: completed
     references: []
     verification_spec:
     - id: verify-6-commit
       title: 커밋 확인
       description: git log 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T08:54:14.142694+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'git log -1 --oneline: b89acf0 test(models): Pydantic
+        모델 확장 테스트 21개 추가. 커밋 메시지에 test, models 키워드 포함. 746줄 추가, test_models.py 생성됨.'
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && git
@@ -580,7 +582,7 @@ work_plans:
     description: "sisyphus-core/sisyphus_core/core/plans/loader.py가\n새로운 Pydantic
       모델과 호환되는지 확인.\n\nloader.py는 Pydantic이 자동으로 처리하므로 코드 변경 불필요.\n대신 example-new-plan.yaml
       로드 테스트 작성.\n"
-    status: pending
+    status: completed
     references:
     - inline: "loader.py는 PlanDocument.model_validate()로 파싱하므로\nPydantic 모델만 올바르면
         자동 호환\n"
@@ -588,9 +590,15 @@ work_plans:
     - id: verify-7-1
       title: example-new-plan.yaml 로드 테스트
       description: example-new-plan.yaml을 load_plan으로 로드하고 모든 필드 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T08:57:21.009633+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'test_loader_new_spec.py 생성. 10개 테스트 함수(asyncio+trio
+        = 20개 테스트) 모두 통과. example-new-plan.yaml 업데이트됨: UserRequest(expected_outcome,
+        forbidden_outcome), Todo(parallel, parallelable_and_safe_evidence, acceptance_criteria),
+        VerificationItem(deterministic_bash, orchestrator_judge), WorkPlan(current_work_ids,
+        acceptance_criteria_for_verification_agent, fully_done_evidence), ExecutionStatus(fully_done_at)
+        모든 새 필드 포함. load_plan() 정상 동작. 커밋 76c116c.'
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv 
@@ -606,7 +614,7 @@ work_plans:
     description: "sisyphus-core/sisyphus_core/core/plans/template.py의\nPlanTemplateGenerator.full_example()
       메서드를 수정하여\nexample-new-plan.yaml 수준의 풀 템플릿 생성.\n\n현재는 reference example 파일을
       로드하므로,\n해당 파일을 example-new-plan.yaml 구조로 업데이트하거나\nfull_example() 메서드에서 직접 생성.\n"
-    status: pending
+    status: in_progress
     references:
     - inline: "template.py에서 _get_reference_example() 사용 중.\nfull_example()이 example-new-plan.yaml
         수준의 모든 필드를 포함해야 함.\n"
@@ -614,9 +622,14 @@ work_plans:
     - id: verify-8-1
       title: full_example 생성 테스트
       description: PlanTemplateGenerator.full_example()이 모든 새 필드를 포함하는지 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-16T09:02:26.329493+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'test_template.py 생성됨 (6821 bytes). 13개 테스트 모두
+        통과. full_example()이 모든 새 필드 포함: UserRequest(expected_outcome, forbidden_outcome),
+        Todo(parallel, parallelable_and_safe_evidence, acceptance_criteria), VerificationItem(deterministic_bash,
+        orchestrator_judge), WorkPlan(current_work_ids, acceptance_criteria_for_verification_agent,
+        fully_done_evidence), ExecutionStatus(fully_done_at). Given-When-Then 구조 사용.'
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv 
@@ -1056,7 +1069,7 @@ work_plans:
     started_at: '2025-11-16T08:32:49.583213+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '6'
+    current_task_id: '8'
   current_work: ''
   current_work_ids: []
   acceptance_criteria_for_verification_agent: []

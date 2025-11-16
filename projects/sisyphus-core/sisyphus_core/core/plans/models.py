@@ -242,6 +242,16 @@ class WorkPlan(BaseModel):
     acceptance_criteria_for_verification_agent: list[AcceptanceCriteriaForVerificationAgent] = []
     fully_done_evidence: str | None = None
 
+    @model_validator(mode="after")
+    def reset_acceptance_on_fully_done_false(self) -> Self:
+        """fully_done_at이 None이 될 때 acceptance criteria 초기화"""
+        if self.execution.fully_done_at is None:
+            for criteria in self.acceptance_criteria_for_verification_agent:
+                for checklist in criteria.checklists:
+                    checklist.checked_at = None
+                    checklist.checked_evidence = None
+        return self
+
 
 class Metadata(BaseModel):
     created_at: str

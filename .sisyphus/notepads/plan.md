@@ -479,3 +479,47 @@ Task 1에서 sisyphus-core의 UserRequest 모델을 확장하여 expected_outcom
 - assert로 각 조건의 상태 확인 (verified_at is None, checked_at is None 등)
 
 소요 시간: 약 20분 (테스트 파일 생성 + 모델 검증 + ruff 수정 + 최종 검증)
+
+[2025-11-16 18:32] - Task 14: acceptance_criteria_for_verification_agent 초기화 로직 구현
+
+### DISCOVERED ISSUES
+- 파일이 이미 존재했으나 구조가 Given-When-Then 패턴을 완벽히 따르지 않음
+- pytest fixture 배치 규칙 준수 필요 (파일 맨 끝에 pytestmark 배치)
+- Import 정렬 (ruff I001) 필요
+
+### IMPLEMENTATION DECISIONS
+- 테스트 파일을 완전히 재작성하여 Given-When-Then 구조 적용
+- 5개 테스트 함수 작성 (asyncio + trio = 10개 테스트):
+  1. test_workplan__if_fully_done_at_none__resets_all_checklists: 단일 criteria, 2개 checklists 초기화 검증
+  2. test_workplan__if_fully_done_at_set__preserves_checklists: fully_done_at 설정 시 보존 확인
+  3. test_workplan__if_multiple_criteria__resets_all: 3개 criteria × 2개 checklists = 6개 모두 초기화 확인
+  4. test_workplan__if_reset_and_reloaded__persists: 파일 저장/로드 후 초기화 지속 확인
+  5. test_workplan__if_empty_criteria__handles_gracefully: 빈 criteria 리스트 처리 확인
+
+### PROBLEMS FOR NEXT TASKS
+- None. Task 14 완료. 모든 acceptance criteria 초기화 로직이 models.py의 model_validator로 구현됨.
+
+### VERIFICATION RESULTS
+- pytest: 10/10 테스트 통과 (asyncio 5개 + trio 5개) 100% pass
+  - test_acceptance_reset.py 실행 시간: 0.47초
+- basedpyright: 0 errors, 3 warnings (stub file 미제공 - 무시 가능)
+- ruff check: All checks passed (import 정렬 자동 수정 완료)
+
+### KEY IMPLEMENTATION PATTERNS
+- WorkPlan 재생성 시 model_validator 자동 호출
+- fully_done_at = None일 때만 reset_acceptance_on_fully_done_false() 실행
+- 중첩 루프로 모든 criteria와 checklist의 checked_at, checked_evidence를 None으로 설정
+- TemporaryDirectory 사용으로 파일 시스템 의존성 제거
+
+### LEARNINGS
+- Pydantic model_validator는 model 재구성 시 자동으로 실행됨
+- fully_done_at 필드는 이미 ExecutionStatus에 추가되어 있었음 (Task 5 완료)
+- WorkPlan의 reset_acceptance_on_fully_done_false 메서드는 이미 구현되어 있었음
+- 테스트는 이 기존 로직을 검증하는 역할
+
+### CURRENT STATUS
+- Task 14 완료: acceptance_criteria_for_verification_agent 초기화 로직 테스트 작성 완료
+- 모든 검증 통과: pytest 10/10, basedpyright 0 errors, ruff passed
+- 테스트 파일 경로: /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core/tests/core/plans/test_acceptance_reset.py
+
+소요 시간: 약 15분 (파일 재작성 + 테스트 실행 + lint 수정)

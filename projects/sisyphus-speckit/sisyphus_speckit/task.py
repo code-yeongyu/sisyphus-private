@@ -21,7 +21,12 @@ from sisyphus_core.core.plans.loader import (
     resolve_current_plan_from_status,
     save_plan,
 )
-from sisyphus_core.core.plans.models import PlanDocument, Todo, TodoStatus, WorkPlan
+from sisyphus_core.core.plans.models import (
+    PlanDocument,
+    Todo,
+    TodoStatus,
+    WorkPlan,
+)
 from sisyphus_core.core.status.manager import StatusManager
 from sisyphus_core.core.task_manager import TaskManager
 from sisyphus_core.utils.common import resolve_cwd
@@ -559,6 +564,56 @@ def continue_work(
         console.print("[yellow]절대로 직접 진행하지 마세요.[/yellow]")
 
     _run_async(_continue())
+
+
+@task_app.command(name="accept")
+def task_accept(
+    criterion_id: str = typer.Option(..., "--id", help="Acceptance criterion ID"),
+    evidence: str = typer.Option(..., "--evidence", help="Evidence of completion"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+) -> None:
+    """Mark acceptance criteria checklist as completed with evidence."""
+
+    async def _accept() -> None:
+        working_dir = resolve_cwd(cwd)
+        status_path = working_dir / ".sisyphus" / "status.json"
+
+        status_manager = StatusManager(status_path)
+        status = await status_manager.get()
+
+        if status.current_plan is None:
+            console.print("[red]현재 활성화된 작업 계획이 없습니다.[/red]")
+            raise typer.Exit(1)
+
+        plan_path = working_dir / status.current_plan.plan_path
+        plan_doc = await load_plan(plan_path)
+
+        if not plan_doc.work_plans:
+            console.print("[red]작업 계획에 work_plans가 없습니다.[/red]")
+            raise typer.Exit(1)
+
+        work_plan = plan_doc.work_plans[0]
+
+        found = False
+        for criteria in work_plan.acceptance_criteria_for_verification_agent:
+            for checklist in criteria.checklists:
+                if checklist.id == criterion_id:
+                    checklist.checked_at = datetime.now(UTC).isoformat()
+                    checklist.checked_evidence = evidence
+                    found = True
+                    break
+            if found:
+                break
+
+        if not found:
+            console.print(f"[red]❌ Acceptance criterion ID를 찾을 수 없습니다: {criterion_id}[/red]")
+            raise typer.Exit(1)
+
+        await save_plan(plan_path, plan_doc)
+        console.print(f"[green]✓ Acceptance criterion '{criterion_id}' 마킹 완료[/green]")
+        console.print(f"[cyan]증거:[/cyan] {evidence}")
+
+    _run_async(_accept())
 
 
 @verify_app.command(name="bash")

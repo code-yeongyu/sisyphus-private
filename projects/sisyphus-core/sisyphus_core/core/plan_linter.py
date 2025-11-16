@@ -790,7 +790,7 @@ class PlanLinter:
             if not isinstance(exec_data, dict):
                 self._check_type(exec_data, "status.execution", "dict")
             else:
-                allowed_exec_fields = {"started", "completed", "started_at", "completed_at"}
+                allowed_exec_fields = {"started", "completed", "started_at", "completed_at", "fully_done_at"}
                 self._check_extra_fields(exec_data, "status.execution", allowed_exec_fields)
                 self._validate_nested_required(exec_data, "status.execution", ["started", "completed"])
                 if "started" in exec_data:

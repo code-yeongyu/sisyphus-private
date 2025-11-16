@@ -242,14 +242,16 @@ class WorkPlan(BaseModel):
     acceptance_criteria_for_verification_agent: list[AcceptanceCriteriaForVerificationAgent] = []
     fully_done_evidence: str | None = None
 
-    @model_validator(mode="after")
-    def reset_acceptance_on_fully_done_false(self) -> Self:
-        if self.execution.fully_done_at is None and self.execution.completed:
-            for criteria in self.acceptance_criteria_for_verification_agent:
-                for checklist in criteria.checklists:
-                    checklist.checked_at = None
-                    checklist.checked_evidence = None
-        return self
+    def reset_acceptance_criteria(self) -> None:
+        """Explicitly reset acceptance criteria when fully_done is set to False.
+
+        This should be called when the user explicitly wants to reset the fully_done state,
+        NOT automatically on every deserialization.
+        """
+        for criteria in self.acceptance_criteria_for_verification_agent:
+            for checklist in criteria.checklists:
+                checklist.checked_at = None
+                checklist.checked_evidence = None
 
 
 class Metadata(BaseModel):

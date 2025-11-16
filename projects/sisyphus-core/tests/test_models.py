@@ -77,7 +77,7 @@ async def test_reference_item__if_uri_and_inline__raises_error() -> None:
 async def test_verification_item__if_valid_bash__creates_successfully() -> None:
     # given
     bash_verification = BashVerification(execute="pytest", expected_exit_code=0)
-    
+
     # when
     ver = VerificationItem(
         id="v1",

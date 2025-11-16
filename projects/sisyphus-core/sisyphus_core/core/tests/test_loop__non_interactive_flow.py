@@ -9,7 +9,13 @@ from typing import TYPE_CHECKING
 import pytest
 
 from sisyphus_core.core.loop import ExecutionLoop
-from sisyphus_core.core.tests.test_loop import MockAgent, MockLoggerFactory, MockSessionStore, MockStatusManager, MockUI
+from sisyphus_core.core.tests.test_loop import (
+    MockAgent,
+    MockLoggerFactory,
+    MockSessionStore,
+    MockStatusManager,
+    MockUI,
+)
 from sisyphus_core.utils.types import AgentMessage
 
 if TYPE_CHECKING:

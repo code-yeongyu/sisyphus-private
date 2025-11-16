@@ -2,11 +2,8 @@ from sisyphus_core.core.plans.models import (
     AcceptanceCriteriaItem,
     DeterministicBashVerification,
     ExecutionStatus,
-    OrchestratorJudgeVerification,
     PlanDocument,
-    TodoStatus,
     UserRequest,
-    VerificationItem,
 )
 from sisyphus_core.core.plans.template import PlanTemplateGenerator
 
@@ -102,13 +99,11 @@ def test_full_example__includes_verification_deterministic_bash__returns_documen
     assert isinstance(plan_doc, PlanDocument)
     work_plan = plan_doc.work_plans[0]
     # Find a verification item with deterministic_bash
-    found_deterministic = False
     for todo in work_plan.todos:
         for verif in todo.verification_spec:
             assert hasattr(verif, "deterministic_bash")
             assert isinstance(verif.deterministic_bash, list)
             if len(verif.deterministic_bash) > 0:
-                found_deterministic = True
                 bash_item = verif.deterministic_bash[0]
                 assert isinstance(bash_item, DeterministicBashVerification)
 

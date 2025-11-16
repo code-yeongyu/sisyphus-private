@@ -1,4 +1,3 @@
-import pytest
 from sisyphus_core.core.plans.models import AcceptanceCriteriaItem, Todo, TodoStatus
 
 

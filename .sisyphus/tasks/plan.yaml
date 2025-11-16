@@ -1,0 +1,1051 @@
+version: '3.0'
+metadata:
+  created_at: '2025-11-15T07:15:26.466356+00:00'
+  updated_at: '2025-11-15T08:15:07.883820+00:00'
+work_plans:
+- id: sisyphus-speckit-spec-update
+  name: sisyphus-speckit 작업계획서 스펙 업데이트 (example-new-plan.yaml 기준)
+  depends_on: []
+  user_request:
+    original: "sisyphus-plan-writer @example-new-plan.yaml 대로 작업계획서 스펙을 업데이트 하려고 함.\n\
+      \n아래의 내용은 모두 완수됐을때 내가 기대하는것들임. 모두 다 완수 되어야 함. 이것을 엄밀히 준수되어야 함.\n\ndepends_on
+      안의 값이 가리키는것은 work_plans 밖으로 나옴. #로 매핑되는것이 아니라 그냥 ./sisyphus/tasks/ or relate
+      File path or absolute file path, 기준으로 매핑되어야 함. 예를들어 foobar.yml 혹은 .sisyphus/tasks/foobar.yml
+      혹은 abspath 모두 지원해야 함\n\nsisyphus-speckit task init 은 풀템플릿, 미니멀템플릿 구분 없이 지금 예시로
+      적은 수준의 꽉채워진 내용으로써 있어야 함\n\nacceptance_criteria_for_verification_agent 안의 모든
+      요소들의 checked_at / checked_evidence 는 execution.fully_done = False 가 될 때 마다 모두
+      초기화되어야 함\n\n그리고 또한 todo spec 은 sisyphus-speckit task verify bash 했을 때 가장 index
+      위쪽의 false 부터 하나하나 실행되어야 하며, 남아있는게 있다면 status 를 보여주어야 함. 어떤것을 기대하는 어떤것이 실행됐고,
+      결과가 어떠해서 성공/실패했는지를 보여주어야 함.\n참고로 기존적으로 저기 적혀있는것들은 모두 required 라고 생각해주면 됨 명시적으로
+      null 로 적거나 키가 있거나 없거나 하는 경우 제외하고서.\ntodo 안의 acceptance criteria 도 모두 마킹되어야 continue
+      가 가능해야 함. 해당을 위한 명령어가 새로 추가해야하는데: sisyphus-speckit task accept --id=\"no-naive-type-hints\"\
+      \ --evidence 이것임.\n\n그리고 또한 코드 cli / speckit 내에서 구버전 명령으로 안내하거나 흐름도와 다르게 안내하는
+      부분도 모두 고쳐져야 함. sisyphus-speckit task continue 는\n\n1. sisyphus-speckit task
+      verify bash 가 모두 통과\n2. sisyphus-speckit task verify manual 이 모두 통과\n3. sisyphus-speckit
+      task verify llm_judge 가 모두 통과\n4. sisyphus-speckit task accept 가 모든 acceptance
+      criteria 를 만족 시켜야 함\n\n물론 당연하게도 이것이 sisyphus task continue 의 에러메시지로써 아주 친절하게
+      안내될 수 있어야 함\n\n그리고 또한 모든 계획서에 대한 IO 는 sisyphus core 를 통해 작성되어야 함. 이것은 엄숙히 준수되어야
+      하며 직접 접근하면 안됨.\n\n테스트 코드는 실제 file path 에 의존하면 안되며, 각 모듈별로 당연하게도 cwd 나 path 를
+      받아서 Injectable 하게 구성되도록 하고 이러한 방식으로 tempfile / tempdirectory 를 테스트 코드에서 사용하는
+      방식으로 작성 되어야 함.\n\nuv tool install 통해서 직접 설치하고 테스트하는것은 엄밀히 금지되며, 항상 직접 uv run
+      통해서 sisyphus 를 테스트/QA 해야함.\n"
+    created_at: '2025-11-15T07:15:26.466356+00:00'
+    additional:
+    - 모든 기능이 새 작업계획서 용으로 완전히 재작성되어야 함
+    - 이 문서는 절대 수정하면 안됨
+    - example-new-plan.yaml 도 절대로 수정되면 안됨
+  objectives:
+    core: "sisyphus-speckit 작업계획서 스펙을 example-new-plan.yaml 수준으로 업데이트하고,\n모든 관련 기능(depends_on
+      파일경로 지원, acceptance_criteria, 새 명령어 등)을 구현하여\n완전한 작업계획서 시스템을 완성한다.\n"
+    detailed:
+    - goal: Pydantic 모델 확장 (현재 대비 주요 차이점)
+      measurable: "UserRequest에 expected_outcome, forbidden_outcome 추가\nTodo에 parallel,
+        parallelable_and_safe_evidence, acceptance_criteria 추가\nVerificationItem에
+        deterministic_bash, orchestrator_judge 구조 추가\nWorkPlan에 current_work_ids,
+        acceptance_criteria_for_verification_agent, fully_done_evidence 추가\nExecutionStatus에
+        fully_done_at 추가\n모든 변경사항 basedpyright 타입 체크 통과\n"
+    - goal: 파일 경로 기반 depends_on 지원 (현재 대비 주요 차이점)
+      measurable: "현재: work_plans 내부 ID 참조만 지원\n변경 후: 상대경로(foobar.yml), .sisyphus/tasks/
+        경로, 절대경로 모두 지원\nPlanLinter에서 파일 경로 검증 추가\n"
+    - goal: 새로운 검증 시스템 구현 (현재 대비 주요 차이점)
+      measurable: "현재: bash, llm_judge만 존재\n변경 후: deterministic_bash (reason_why 필수),
+        orchestrator_judge, acceptance_criteria 추가\nsisyphus-speckit task verify bash
+        순차 실행 및 상세 출력\nsisyphus-speckit task accept 명령어 신규 구현\n"
+    - goal: task continue 조건 확장 (현재 대비 주요 차이점)
+      measurable: "현재: 단순 todos 상태 확인\n변경 후: bash/manual/llm_judge/acceptance 4가지
+        조건 모두 확인\n조건 미충족 시 친절한 에러 메시지 제공\n"
+    - goal: 전체 시스템 재작성
+      measurable: "현재: 구버전 스펙 지원\n변경 후: example-new-plan.yaml 스펙 100% 지원\n모든 테스트 통과,
+        레거시 코드 완전 제거\n"
+  background:
+    current_situation: "현재 sisyphus-speckit은 v3.0 YAML 스펙을 사용하지만,\nexample-new-plan.yaml에
+      정의된 풍부한 필드들을 지원하지 않음.\n\n누락된 주요 필드:\n- UserRequest: expected_outcome, forbidden_outcome\n\
+      - Todo: parallel, parallelable_and_safe_evidence, acceptance_criteria\n- VerificationItem:
+      deterministic_bash, orchestrator_judge\n- WorkPlan: current_work_ids, acceptance_criteria_for_verification_agent,
+      fully_done_evidence\n- ExecutionStatus: fully_done_at\n\n누락된 주요 기능:\n- depends_on
+      파일 경로 지원 (현재는 work_plans 내부 ID만 지원)\n- deterministic_bash 검증 (reason_why 필드
+      없음)\n- orchestrator_judge 검증 (존재하지 않음)\n- acceptance_criteria 시스템 (존재하지 않음)\n\
+      - task accept 명령어 (존재하지 않음)\n- task verify bash 순차 실행 및 상세 출력 (미구현)\n- task
+      continue 4가지 조건 검증 (미구현)\n"
+    reason_for_change: "사용자가 더 상세하고 명확한 작업계획서를 작성할 수 있도록 스펙을 확장해야 함.\n특히 검증 시스템을 강화하여
+      작업 완료 여부를 더 정확히 판단할 수 있어야 함.\n"
+    changes_to_make: "현재: 제한된 필드, work_plans 내부 의존성만 지원, 단순 검증 시스템\n변경 후: Pydantic
+      모델 확장, 파일 경로 depends_on 지원, 강화된 검증 시스템 (deterministic_bash, orchestrator_judge,
+      acceptance_criteria)\n"
+  required_background:
+    description: "기술 스택:\n- Python 3.12+\n- Pydantic 2.0+\n- ruamel.yaml 0.18+\n-
+      anyio 4.11+\n- Typer 0.15+\n- pytest with anyio support\n- basedpyright (타입
+      체커)\n- ruff (린터, line-length 119, ANN001 enforced)\n\n아키텍처:\n- sisyphus-core:
+      공유 코어 모듈 (models, loader, utilities)\n- sisyphus-cli (sisyphus-speckit): CLI
+      패키지 (sisyphus-core 의존)\n- Protocol-based design (typing.Protocol, not ABC)\n\
+      - anyio 기반 비동기 (asyncio/trio 호환)\n\n테스트 규칙:\n- Given-When-Then 구조 (not Arrange-Act-Assert)\n\
+      - pytest.mark.anyio 필수\n- tempfile/TemporaryDirectory 사용 (경로 의존성 제거)\n- uv run
+      pytest (not uv tool install)\n"
+    file_structure: "sisyphus/\n├── projects/\n│   ├── sisyphus-core/\n│   │   └──
+      sisyphus_core/\n│   │       └── core/\n│   │           └── plans/\n│   │   \
+      \            ├── models.py     # Pydantic 모델 (확장 필요)\n│   │               ├──
+      loader.py     # load_plan, save_plan\n│   │               └── template.py  \
+      \ # PlanTemplateGenerator (업데이트 필요)\n│   └── sisyphus-cli/\n│       └── sisyphus/\n\
+      │           └── cli/\n│               ├── plan.py          # plan 관련 명령어\n│\
+      \               └── task.py          # task 관련 명령어 (확장 필요)\n"
+    references:
+    - ref_id: example-new-plan
+      uri: /Users/yeongyu/local-workspaces/sisyphus/example-new-plan.yaml
+    - ref_id: current-models
+      uri:
+        /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core/sisyphus_core/core/plans/models.py
+  workflow:
+    dependency_diagram: "1. Pydantic 모델 확장 (sisyphus-core)\n   ↓\n2. loader.py 호환성
+      확인 (sisyphus-core)\n   ↓\n3. template.py 업데이트 (sisyphus-core)\n   ↓\n4. depends_on
+      파일 경로 지원 (sisyphus-core)\n   ↓\n5. task verify bash 순차 실행 (sisyphus-cli)\n \
+      \  ↓\n6. task accept 명령어 추가 (sisyphus-cli)\n   ↓\n7. task continue 4가지 조건 검증
+      (sisyphus-cli)\n   ↓\n8. 전체 테스트 작성 및 통과\n   ↓\n9. 레거시 코드 제거\n"
+    critical_path:
+    - Pydantic 모델 확장이 모든 작업의 기반
+    - loader.py는 새 필드를 자동으로 처리하므로 변경 최소화
+    - 테스트는 각 구현 직후 작성 (TDD)
+  success_vision:
+    user_perspective:
+    - scenario: 사용자가 example-new-plan.yaml과 동일한 구조의 계획서 작성
+      experience: "모든 필드가 정상 파싱되고 저장됨.\nsisyphus-speckit task verify bash 실행 시 순차적으로
+        검증되고 상세한 결과 출력.\nsisyphus-speckit task accept로 acceptance criteria 마킹.\nsisyphus-speckit
+        task continue 실행 시 4가지 조건 모두 확인 후 진행.\n"
+    business_perspective:
+    - metric: 스펙 호환성
+      target: example-new-plan.yaml 100% 파싱 및 처리
+    - metric: 사용자 경험
+      target: 친절한 에러 메시지, 상세한 검증 결과
+    technical_criteria:
+    - category: 타입 안정성
+      criteria: 모든 Pydantic 모델이 타입 체크 통과
+      command: uv run basedpyright
+      expected: 0 errors
+    - category: 테스트 통과
+      criteria: 모든 테스트가 asyncio/trio 양쪽 백엔드에서 통과
+      command: uv run pytest
+      expected: 100% pass
+    - category: 린트 통과
+      criteria: ruff 체크 통과
+      command: uv run ruff check
+      expected: 0 errors
+  final_verification:
+  - id: final-verify-1
+    title: example-new-plan.yaml 파싱 검증
+    category: 기능 검증
+    description: example-new-plan.yaml을 sisyphus-speckit으로 로드하고 모든 필드가 정상 파싱되는지
+      확인
+    verified: false
+    verified_at: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash:
+    - execute: "cd /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-cli
+        && \\\nuv run python -c \"\nimport asyncio\nfrom pathlib import Path\nfrom
+        sisyphus_core.core.plans.loader import load_plan\n\nasync def main():\n  \
+        \  plan = await load_plan(Path('/Users/yeongyu/local-workspaces/sisyphus/example-new-plan.yaml'))\n\
+        \    assert plan.work_plans[0].user_request.expected_outcome is not None\n\
+        \    assert plan.work_plans[0].user_request.forbidden_outcome is not None\n\
+        \    assert plan.work_plans[0].todos[0].parallel is not None\n    assert plan.work_plans[0].current_work_ids
+        is not None\n    assert plan.work_plans[0].acceptance_criteria_for_verification_agent
+        is not None\n    print('OK')\n\nasyncio.run(main())\n\"\n"
+      expected_stdout: OK
+      expected_exit_code: 0
+    llm_judge: []
+  - id: final-verify-2
+    title: task verify bash 순차 실행 검증
+    category: 기능 검증
+    description: sisyphus-speckit task verify bash가 순차적으로 실행되고 상세한 결과를 출력하는지 확인
+    verified: false
+    verified_at: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash: []
+    llm_judge:
+    - by: orchestrator-agent
+      context_commands: []
+      instruction: "sisyphus-speckit task verify bash 실행 후 출력 확인:\n1. 첫 번째 false 항목부터
+        순차 실행\n2. 각 항목의 expected, actual, 성공/실패 이유 출력\n3. 남은 항목 상태 표시\n"
+  - id: final-verify-3
+    title: task accept 명령어 검증
+    category: 기능 검증
+    description: sisyphus-speckit task accept 명령어가 정상 동작하는지 확인
+    verified: false
+    verified_at: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash: []
+    llm_judge:
+    - by: orchestrator-agent
+      context_commands: []
+      instruction: "sisyphus-speckit task accept --id=\"test-criterion\" --evidence=\"\
+        test evidence\" 실행 후:\n1. acceptance_criteria의 해당 항목이 마킹됨\n2. checked_at,
+        checked_evidence가 올바르게 기록됨\n"
+  - id: final-verify-4
+    title: task continue 4가지 조건 검증
+    category: 기능 검증
+    description: sisyphus-speckit task continue가 4가지 조건을 모두 확인하는지 검증
+    verified: false
+    verified_at: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash: []
+    llm_judge:
+    - by: orchestrator-agent
+      context_commands: []
+      instruction: "조건 미충족 상태에서 sisyphus-speckit task continue 실행 시:\n1. bash 검증 미통과
+        시 에러 메시지 출력\n2. manual 검증 미통과 시 에러 메시지 출력\n3. llm_judge 검증 미통과 시 에러 메시지 출력\n\
+        4. acceptance criteria 미충족 시 에러 메시지 출력\n모든 에러 메시지가 친절하고 명확해야 함\n"
+  todos:
+  - id: '1'
+    title: Pydantic 모델 확장 - UserRequest에 expected_outcome, forbidden_outcome 추가
+    description: "sisyphus-core/sisyphus_core/core/plans/models.py의 UserRequest 모델에\n\
+      expected_outcome, forbidden_outcome 필드 추가.\n\n참고: example-new-plan.yaml:15-19\n"
+    status: pending
+    references:
+    - inline: "현재 models.py 구조:\n\nclass UserRequest(BaseModel):  # 라인 85-88\n   \
+        \ original: str\n    created_at: str\n    additional: list[str] = []\n   \
+        \ # 추가 필요: expected_outcome, forbidden_outcome\n\nclass Todo(BaseModel): \
+        \ # 라인 161-168\n    id: str\n    title: str\n    description: str | None =
+        None\n    status: TodoStatus\n    children: list[Todo] | None = None\n   \
+        \ references: list[ReferenceItem] = []\n    verification_spec: list[VerificationItem]
+        = []\n    # 추가 필요: parallel, parallelable_and_safe_evidence, acceptance_criteria\n\
+        \nclass VerificationItem(BaseModel):  # 라인 66-82\n    id: str\n    title:
+        str\n    description: str\n    verified: bool = False\n    verified_at: str
+        | None = None\n    verification_evidence: str | None = None\n    orchestrator_manually_verified:
+        bool\n    manual_verification_evidence: str\n    bash: list[BashVerification]
+        = []\n    llm_judge: list[LLMJudgeVerification] = []\n    # 추가 필요: deterministic_bash,
+        orchestrator_judge\n\nclass WorkPlan(BaseModel):  # 라인 171-194\n    id: str\n\
+        \    name: str\n    depends_on: list[str] = []\n    user_request: UserRequest\n\
+        \    objectives: Objectives\n    background: Background\n    required_background:
+        RequiredBackground\n    workflow: Workflow\n    success_vision: SuccessVision\n\
+        \    final_verification: list[FinalVerificationItem]\n    todos: list[Todo]\n\
+        \    references: list[ReferenceItem] = []\n    execution: ExecutionStatus\n\
+        \    work_mode: WorkMode\n    current_work: str = \"\"\n    # 추가 필요: current_work_ids,
+        acceptance_criteria_for_verification_agent, fully_done_evidence\n\nclass ExecutionStatus(BaseModel):\
+        \  # 라인 21-25\n    started: bool\n    completed: bool\n    started_at: str
+        | None = None\n    completed_at: str | None = None\n    # 추가 필요: fully_done_at"
+    - inline: "추가할 필드 (models.py:85-88):\n    expected_outcome: str | None = None\n\
+        \    forbidden_outcome: str | None = None"
+    verification_spec:
+    - id: verify-1-1
+      title: basedpyright 타입 체크 통과
+      description: UserRequest 모델 변경 후 타입 체크 통과
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv
+          run basedpyright sisyphus_core/core/plans/models.py
+        expected_exit_code: 0
+        notes: UserRequest 모델 타입 체크
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: 1-test
+    title: UserRequest 필드 추가 테스트
+    description: UserRequest에 expected_outcome, forbidden_outcome 추가 후 즉시 테스트
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-1-test
+      title: UserRequest 필드 테스트
+      description: example-new-plan.yaml 로드하여 필드 확인
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: "cd /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core
+          && uv run python -c \"\nfrom pathlib import Path\nfrom sisyphus_core.core.plans.loader
+          import load_plan\nimport asyncio\n\nasync def test():\n    plan_doc = await
+          load_plan(Path('/Users/yeongyu/local-workspaces/sisyphus/example-new-plan.yaml'))\n\
+          \    assert hasattr(plan_doc.work_plans[0].user_request, 'expected_outcome')\n\
+          \    assert hasattr(plan_doc.work_plans[0].user_request, 'forbidden_outcome')\n\
+          \    print('OK')\n\nasyncio.run(test())\n\""
+        expected_stdout: OK
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: 1-commit
+    title: UserRequest 필드 추가 커밋
+    description: 'git commit -m "feat(models): UserRequest에 expected_outcome, forbidden_outcome
+      추가"'
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-1-commit
+      title: 커밋 확인
+      description: git log 확인
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && git
+          log -1 --oneline | grep -q "UserRequest"
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '2'
+    title: Pydantic 모델 확장 - Todo에 parallel, parallelable_and_safe_evidence,
+      acceptance_criteria 추가
+    description: "sisyphus-core/sisyphus_core/core/plans/models.py에 다음 작업 수행:\n1.
+      Todo 모델에 parallel: bool, parallelable_and_safe_evidence: str | None 추가\n2. AcceptanceCriteriaItem
+      새 모델 생성 (id, condition, verified_at, verification_evidence)\n3. Todo 모델에 acceptance_criteria:
+      list[AcceptanceCriteriaItem] 추가\n\n참고: example-new-plan.yaml:108-109, 140-144\n"
+    status: pending
+    references:
+    - inline: "파일: sisyphus-core/sisyphus_core/core/plans/models.py\n위치: Todo 클래스
+        정의 직전 (약 라인 160)\n\n새 클래스 추가:\n\nclass AcceptanceCriteriaItem(BaseModel):\n\
+        \    id: str\n    condition: str\n    verified_at: str | None = None\n   \
+        \ verification_evidence: str | None = None\n\nTodo 클래스 수정 (라인 161-168):\n\
+        class Todo(BaseModel):\n    id: str\n    title: str\n    description: str
+        | None = None\n    status: TodoStatus\n    children: list[Todo] | None = None\n\
+        \    references: list[ReferenceItem] = []\n    verification_spec: list[VerificationItem]
+        = []\n    # 새로 추가:\n    parallel: bool = False\n    parallelable_and_safe_evidence:
+        str | None = None\n    acceptance_criteria: list[AcceptanceCriteriaItem] =
+        []"
+    verification_spec:
+    - id: verify-2-1
+      title: basedpyright 타입 체크 통과
+      description: Todo 모델 변경 후 타입 체크 통과
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv
+          run basedpyright sisyphus_core/core/plans/models.py
+        expected_exit_code: 0
+        notes: Todo 모델 및 AcceptanceCriteriaItem 타입 체크
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: 2-test
+    title: Todo 필드 추가 테스트
+    description: Todo 모델 테스트 작성 및 실행
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-2-test
+      title: Todo 필드 테스트
+      description: AcceptanceCriteriaItem 모델 및 Todo 새 필드 테스트
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv
+          run pytest tests/core/plans/test_models_todo.py -v
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: 2-commit
+    title: Todo 필드 추가 커밋
+    description: git commit
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-2-commit
+      title: 커밋 확인
+      description: git log
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && git
+          log -1 --oneline | grep -q "Todo"
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '3'
+    title: Pydantic 모델 확장 - VerificationItem에 deterministic_bash,
+      orchestrator_judge 구조 추가
+    description: "sisyphus-core/sisyphus_core/core/plans/models.py에 다음 작업 수행:\n1.
+      DeterministicBashVerification 새 모델 생성 (description, reason_why_it_is_deterministic_and_reliable,
+      execute, expected_stdout, expected_stderr, expected_exit_code, verified_at)\n\
+      2. OrchestratorJudgeVerification 새 모델 생성 (prompt, verified_at, verification_evidence)\n\
+      3. VerificationItem 모델에 deterministic_bash: list[DeterministicBashVerification],
+      orchestrator_judge: list[OrchestratorJudgeVerification] 추가\n\n참고: example-new-plan.yaml:118-138\n"
+    status: pending
+    references:
+    - inline: "파일: sisyphus-core/sisyphus_core/core/plans/models.py\n위치: VerificationItem
+        클래스 정의 직전 (약 라인 65)\n\n새 클래스 추가:\n\nclass DeterministicBashVerification(BaseModel):\n\
+        \    description: str\n    reason_why_it_is_deterministic_and_reliable: str\n\
+        \    execute: str\n    expected_stdout: str | None = None\n    expected_stderr:
+        str | None = None\n    expected_exit_code: int = 0\n    verified_at: str |
+        None = None\n\nclass OrchestratorJudgeVerification(BaseModel):\n    prompt:
+        str\n    verified_at: str | None = None\n    verification_evidence: str |
+        None = None\n\nVerificationItem 클래스 수정 (라인 66-82):\nclass VerificationItem(BaseModel):\n\
+        \    id: str\n    title: str\n    description: str\n    verified: bool = False\n\
+        \    verified_at: str | None = None\n    verification_evidence: str | None
+        = None\n    orchestrator_manually_verified: bool\n    manual_verification_evidence:
+        str\n    bash: list[BashVerification] = []\n    llm_judge: list[LLMJudgeVerification]
+        = []\n    # 새로 추가:\n    deterministic_bash: list[DeterministicBashVerification]
+        = []\n    orchestrator_judge: list[OrchestratorJudgeVerification] = []"
+    verification_spec:
+    - id: verify-3-1
+      title: basedpyright 타입 체크 통과
+      description: VerificationItem 모델 변경 후 타입 체크 통과
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv
+          run basedpyright sisyphus_core/core/plans/models.py
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '4'
+    title: Pydantic 모델 확장 - WorkPlan에 current_work_ids,
+      acceptance_criteria_for_verification_agent, fully_done_evidence 추가
+    description: "sisyphus-core/sisyphus_core/core/plans/models.py에 다음 작업 수행:\n1.
+      AcceptanceCriteriaChecklist 새 모델 생성 (id, title, content, checked_at, checked_evidence)\n\
+      2. AcceptanceCriteriaForVerificationAgent 새 모델 생성 (id, title, accepted_at, checklists:
+      list[AcceptanceCriteriaChecklist])\n3. WorkPlan 모델에 current_work_ids: list[str],
+      acceptance_criteria_for_verification_agent: list[AcceptanceCriteriaForVerificationAgent],
+      fully_done_evidence: str | None 추가\n\n참고: example-new-plan.yaml:222-276, 325\n"
+    status: pending
+    references:
+    - inline: "파일: sisyphus-core/sisyphus_core/core/plans/models.py\n위치: WorkPlan
+        클래스 정의 직전 (약 라인 170)\n\n새 클래스 추가:\n\nclass AcceptanceCriteriaChecklist(BaseModel):\n\
+        \    id: str\n    title: str\n    content: str\n    checked_at: str | None
+        = None\n    checked_evidence: str | None = None\n\nclass AcceptanceCriteriaForVerificationAgent(BaseModel):\n\
+        \    id: str\n    title: str\n    accepted_at: str | None = None\n    checklists:
+        list[AcceptanceCriteriaChecklist] = []\n\nWorkPlan 클래스 수정 (라인 171-194):\n\
+        class WorkPlan(BaseModel):\n    id: str\n    name: str\n    depends_on: list[str]
+        = []\n    user_request: UserRequest\n    objectives: Objectives\n    background:
+        Background\n    required_background: RequiredBackground\n    workflow: Workflow\n\
+        \    success_vision: SuccessVision\n    final_verification: list[FinalVerificationItem]\n\
+        \    todos: list[Todo]\n    references: list[ReferenceItem] = []\n    execution:
+        ExecutionStatus\n    work_mode: WorkMode\n    current_work: str = \"\"\n \
+        \   # 새로 추가:\n    current_work_ids: list[str] = []\n    acceptance_criteria_for_verification_agent:
+        list[AcceptanceCriteriaForVerificationAgent] = []\n    fully_done_evidence:
+        str | None = None"
+    verification_spec:
+    - id: verify-4-1
+      title: basedpyright 타입 체크 통과
+      description: WorkPlan 모델 변경 후 타입 체크 통과
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv
+          run basedpyright sisyphus_core/core/plans/models.py
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '5'
+    title: Pydantic 모델 확장 - ExecutionStatus에 fully_done_at 추가
+    description: "sisyphus-core/sisyphus_core/core/plans/models.py의 ExecutionStatus
+      모델에\nfully_done_at: str | None 필드 추가.\n\n참고: example-new-plan.yaml:327-330\n"
+    status: pending
+    references:
+    - inline: "파일: sisyphus-core/sisyphus_core/core/plans/models.py\n위치: ExecutionStatus
+        클래스 (라인 21-25)\n\n현재:\nclass ExecutionStatus(BaseModel):\n    started: bool\n\
+        \    completed: bool\n    started_at: str | None = None\n    completed_at:
+        str | None = None\n\n수정 후:\nclass ExecutionStatus(BaseModel):\n    started:
+        bool\n    completed: bool\n    started_at: str | None = None\n    completed_at:
+        str | None = None\n    fully_done_at: str | None = None  # 추가"
+    verification_spec:
+    - id: verify-5-1
+      title: basedpyright 타입 체크 통과
+      description: ExecutionStatus 모델 변경 후 타입 체크 통과
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv
+          run basedpyright sisyphus_core/core/plans/models.py
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '6'
+    title: Pydantic 모델 확장 테스트 작성
+    description: "sisyphus-core/tests/core/plans/test_models.py 작성:\n1. UserRequest
+      새 필드 테스트\n2. Todo 새 필드 및 AcceptanceCriteriaItem 테스트\n3. VerificationItem 새 필드
+      및 DeterministicBashVerification, OrchestratorJudgeVerification 테스트\n4. WorkPlan
+      새 필드 및 AcceptanceCriteriaForVerificationAgent 테스트\n5. ExecutionStatus 새 필드 테스트\n\
+      \n모든 테스트는 tempfile/TemporaryDirectory 사용, Given-When-Then 구조\n"
+    status: pending
+    references:
+    - inline: "pytest-anyio 사용, Given-When-Then 구조\ntempfile/TemporaryDirectory로 경로
+        의존성 제거\n"
+    verification_spec:
+    - id: verify-6-1
+      title: 모델 테스트 통과
+      description: 새로 작성한 모델 테스트가 모두 통과
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv
+          run pytest tests/core/plans/test_models.py -v
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: 6-commit
+    title: Pydantic 모델 테스트 커밋
+    description: 'git commit -m "test(models): Pydantic 모델 확장 테스트 추가"'
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-6-commit
+      title: 커밋 확인
+      description: git log 확인
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && git
+          log -1 --oneline
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '7'
+    title: loader.py 호환성 확인 및 테스트
+    description: "sisyphus-core/sisyphus_core/core/plans/loader.py가\n새로운 Pydantic
+      모델과 호환되는지 확인.\n\nloader.py는 Pydantic이 자동으로 처리하므로 코드 변경 불필요.\n대신 example-new-plan.yaml
+      로드 테스트 작성.\n"
+    status: pending
+    references:
+    - inline: "loader.py는 PlanDocument.model_validate()로 파싱하므로\nPydantic 모델만 올바르면
+        자동 호환\n"
+    verification_spec:
+    - id: verify-7-1
+      title: example-new-plan.yaml 로드 테스트
+      description: example-new-plan.yaml을 load_plan으로 로드하고 모든 필드 확인
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv
+          run pytest tests/core/plans/test_loader_new_spec.py -v
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '8'
+    title: template.py 업데이트 - full_example 메서드 수정
+    description: "sisyphus-core/sisyphus_core/core/plans/template.py의\nPlanTemplateGenerator.full_example()
+      메서드를 수정하여\nexample-new-plan.yaml 수준의 풀 템플릿 생성.\n\n현재는 reference example 파일을
+      로드하므로,\n해당 파일을 example-new-plan.yaml 구조로 업데이트하거나\nfull_example() 메서드에서 직접 생성.\n"
+    status: pending
+    references:
+    - inline: "template.py에서 _get_reference_example() 사용 중.\nfull_example()이 example-new-plan.yaml
+        수준의 모든 필드를 포함해야 함.\n"
+    verification_spec:
+    - id: verify-8-1
+      title: full_example 생성 테스트
+      description: PlanTemplateGenerator.full_example()이 모든 새 필드를 포함하는지 확인
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv
+          run pytest tests/core/plans/test_template.py -v
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '9'
+    title: sisyphus-core 전체 테스트 통과 확인 및 커밋
+    description: "sisyphus-core의 모든 변경사항 테스트 통과 확인:\n1. uv run basedpyright (타입 체크)\n\
+      2. uv run ruff check (린트)\n3. uv run pytest (전체 테스트)\n\n모두 통과 시 커밋: \"feat(sisyphus-core):
+      Pydantic 모델 확장 - example-new-plan.yaml 스펙 지원\"\n"
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-9-1
+      title: sisyphus-core 전체 검증 통과
+      description: 타입 체크, 린트, 테스트 모두 통과
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv
+          run basedpyright
+        expected_exit_code: 0
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv
+          run ruff check
+        expected_exit_code: 0
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv
+          run pytest
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '10'
+    title: depends_on 파일 경로 지원 - PlanLinter 확장
+    description: "sisyphus-core/sisyphus_core/core/plan_linter.py 수정:\n\n파일 경로 해결
+      알고리즘 구현:\n\n```python\nfrom pathlib import Path\n\ndef resolve_depends_on_path(depends_on:
+      str, current_plan_path: Path) -> Path:\n    \"\"\"\n    depends_on 값을 실제 파일
+      경로로 해결\n    \n    Args:\n        depends_on: depends_on 값 (파일명, 상대경로, 또는 절대경로)\n\
+      \        current_plan_path: 현재 plan 파일의 경로\n    \n    Returns:\n        해결된
+      절대 경로\n    \"\"\"\n    # 1. 절대경로 (/로 시작) → 그대로 사용\n    if depends_on.startswith('/'):\n\
+      \        return Path(depends_on)\n    \n    # 2. 상대경로 (./ 또는 ../) → 현재 plan
+      파일 기준으로 resolve\n    elif depends_on.startswith('./') or depends_on.startswith('../'):\n\
+      \        return (current_plan_path.parent / depends_on).resolve()\n    \n  \
+      \  # 3. 파일명만 (foobar.yml) → .sisyphus/tasks/ 디렉토리에서 검색\n    else:\n        return
+      (current_plan_path.parent / '.sisyphus/tasks' / depends_on).resolve()\n\ndef
+      validate_depends_on(depends_on: str, current_plan_path: Path, visited: set[Path])
+      -> None:\n    \"\"\"\n    depends_on 검증\n    \n    Args:\n        depends_on:
+      검증할 depends_on 값\n        current_plan_path: 현재 plan 파일 경로\n        visited:
+      방문한 파일들 (순환 참조 검사용)\n    \n    Raises:\n        ValueError: 파일이 존재하지 않거나 순환
+      참조 발견 시\n    \"\"\"\n    # depends_on 값에 \"/\" 또는 \".yml/.yaml\" 확장자가 있으면 파일
+      경로로 판단\n    if \"/\" in depends_on or depends_on.endswith(('.yml', '.yaml')):\n\
+      \        resolved_path = resolve_depends_on_path(depends_on, current_plan_path)\n\
+      \        \n        # 파일 존재 확인\n        if not resolved_path.exists():\n    \
+      \        raise ValueError(f\"depends_on 파일이 존재하지 않음: {resolved_path}\")\n  \
+      \      \n        # 순환 참조 검사\n        if resolved_path in visited:\n        \
+      \    raise ValueError(f\"순환 참조 발견: {resolved_path}\")\n        \n        visited.add(resolved_path)\n\
+      \        \n        # 참조된 파일 로드 후 plan ID 검증\n        from sisyphus_core.core.plans.loader
+      import load_plan\n        referenced_plan_doc = asyncio.run(load_plan(resolved_path))\n\
+      \        \n        # 재귀적으로 참조된 파일의 depends_on도 검증\n        for work_plan in
+      referenced_plan_doc.work_plans:\n            for dep in work_plan.depends_on:\n\
+      \                validate_depends_on(dep, resolved_path, visited)\n```\n\nPlanLinter
+      클래스에 통합:\n1. lint() 메서드에서 모든 depends_on 검증\n2. visited: set[Path] = set() 으로
+      순환 참조 추적\n3. 에러 발생 시 명확한 메시지 출력"
+    status: pending
+    references:
+    - inline: "구현 패턴:\ndef resolve_depends_on_path(depends_on: str, current_plan_path:
+        Path) -> Path:\n    if depends_on.startswith('/'):\n        return Path(depends_on)\n\
+        \    elif depends_on.startswith('./') or depends_on.startswith('../'):\n \
+        \       return (current_plan_path.parent / depends_on).resolve()\n    else:\n\
+        \        return (current_plan_path.parent / '.sisyphus/tasks' / depends_on).resolve()"
+    verification_spec:
+    - id: verify-10-1
+      title: 파일 경로 depends_on 검증 테스트
+      description: 파일 경로 형식의 depends_on이 올바르게 검증되는지 테스트
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv
+          run pytest tests/core/test_plan_linter_file_depends.py -v
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '11'
+    title: sisyphus-speckit task verify bash 순차 실행 구현
+    description: "sisyphus-cli/sisyphus/cli/task.py 수정:\n1. task verify bash 명령어 구현\n\
+      2. deterministic_bash 리스트를 순차적으로 실행 (첫 번째 false부터)\n3. 각 항목의 expected, actual,
+      성공/실패 이유 출력\n4. 남은 항목 상태 표시\n\n참고: 사용자 요구사항 - \"가장 index 위쪽의 false 부터 하나하나 실행되어야
+      하며, 남아있는게 있다면 status 를 보여주어야 함\"\n"
+    status: pending
+    references:
+    - inline: "파일: /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/task.py\n\
+        기존 명령어 패턴 참조:\n- @task_app.command() 데코레이터\n- typer.Option()으로 인자 정의\n- load_current_plan_and_task()
+        유틸 사용\n- Rich console로 출력\n- save_plan() 호출하여 변경사항 저장\n\n구현 예시:\n@task_app.command(\"\
+        verify\")\nasync def task_verify_bash(\n    task_id: str = typer.Option(...,
+        help=\"Task ID\"),\n) -> None:\n    \"\"\"deterministic_bash 순차 실행\"\"\"\n\
+        \    plan_doc = await load_current_plan()\n    task = find_task_by_id(plan_doc,
+        task_id)\n    \n    for verif in task.verification_spec:\n        for bash_item
+        in verif.deterministic_bash:\n            if not bash_item.verified_at:\n\
+        \                # 실행 및 출력\n                console.print(f\"[bold]실행: {bash_item.execute}[/bold]\"\
+        )\n                # ...\n                break  # 첫 번째 false만 실행"
+    verification_spec:
+    - id: verify-11-1
+      title: task verify bash 순차 실행 테스트
+      description: task verify bash가 순차적으로 실행되고 상세 출력하는지 테스트
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit &&
+          uv run pytest tests/cli/test_task_verify_bash.py -v
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: 10-commit
+    title: depends_on 파일 경로 지원 커밋
+    description: 'git commit -m "feat(core): depends_on 파일 경로 지원 추가"'
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-10-commit
+      title: 커밋 확인
+      description: git log 확인
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && git
+          log -1 --oneline
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '12'
+    title: sisyphus-speckit task accept 명령어 구현
+    description: "sisyphus-cli/sisyphus/cli/task.py 수정:\n1. task accept 명령어 구현\n2.
+      --id 인자로 acceptance_criteria의 특정 항목 지정\n3. --evidence 인자로 evidence 기록\n4. acceptance_criteria의
+      해당 항목 checked_at, checked_evidence 업데이트\n5. sisyphus-core의 save_plan() 사용하여
+      저장\n\n참고: 사용자 요구사항 - \"sisyphus-speckit task accept --id=\"no-naive-type-hints\"\
+      \ --evidence\"\n"
+    status: pending
+    references:
+    - inline: "파일: /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/task.py\n\
+        \n@task_app.command(\"accept\")\nasync def task_accept(\n    criterion_id:
+        str = typer.Option(..., \"--id\", help=\"Acceptance criterion ID\"),\n   \
+        \ evidence: str = typer.Option(..., \"--evidence\", help=\"Evidence of completion\"\
+        ),\n) -> None:\n    \"\"\"acceptance_criteria 마킹\"\"\"\n    from datetime
+        import datetime, UTC\n    \n    plan_doc = await load_current_plan()\n   \
+        \ work_plan = plan_doc.work_plans[0]\n    \n    # acceptance_criteria_for_verification_agent에서
+        찾기\n    for criteria in work_plan.acceptance_criteria_for_verification_agent:\n\
+        \        for checklist in criteria.checklists:\n            if checklist.id
+        == criterion_id:\n                checklist.checked_at = datetime.now(UTC).isoformat()\n\
+        \                checklist.checked_evidence = evidence\n                await
+        save_plan(plan_doc)\n                console.print(f\"[green]✓ {criterion_id}
+        marked as completed[/green]\")\n                return\n    \n    console.print(f\"\
+        [red]✗ Criterion {criterion_id} not found[/red]\")"
+    verification_spec:
+    - id: verify-12-1
+      title: task accept 명령어 테스트
+      description: task accept가 acceptance criteria를 올바르게 마킹하는지 테스트
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit &&
+          uv run pytest tests/cli/test_task_accept.py -v
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '13'
+    title: sisyphus-speckit task continue 4가지 조건 검증 구현
+    description: "sisyphus-cli/sisyphus/cli/task.py 수정:\n1. task continue 실행 전 4가지
+      조건 확인:\n   - deterministic_bash 모두 verified_at 존재\n   - manual 검증 모두 통과\n  \
+      \ - llm_judge 검증 모두 통과\n   - acceptance_criteria_for_verification_agent의 모든
+      checklists checked_at 존재\n2. 조건 미충족 시 친절한 에러 메시지 출력\n\n참고: 사용자 요구사항 - \"sisyphus
+      task continue 의 에러메시지로써 아주 친절하게 안내될 수 있어야 함\"\n"
+    status: pending
+    references:
+    - inline: "파일: /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/task.py\n\
+        \ntask_continue() 함수 수정:\n\nasync def task_continue(...) -> None:\n    \"\"\
+        \"task continue 실행 전 4가지 조건 검증\"\"\"\n    plan_doc = await load_current_plan()\n\
+        \    work_plan = plan_doc.work_plans[0]\n    \n    errors = []\n    \n   \
+        \ # 1. deterministic_bash 모두 verified_at 존재\n    for task in work_plan.todos:\n\
+        \        for verif in task.verification_spec:\n            for bash in verif.deterministic_bash:\n\
+        \                if not bash.verified_at:\n                    errors.append(f\"\
+        Task {task.id}: deterministic_bash '{bash.description}' not verified\")\n\
+        \    \n    # 2. manual 검증 모두 통과\n    for task in work_plan.todos:\n      \
+        \  for verif in task.verification_spec:\n            if not verif.orchestrator_manually_verified:\n\
+        \                errors.append(f\"Task {task.id}: manual verification not
+        completed\")\n    \n    # 3. llm_judge 검증 모두 통과\n    for task in work_plan.todos:\n\
+        \        for verif in task.verification_spec:\n            for judge in verif.llm_judge:\n\
+        \                # LLM judge 검증 로직 추가 필요\n                pass\n    \n   \
+        \ # 4. acceptance_criteria 모두 checked_at 존재\n    for criteria in work_plan.acceptance_criteria_for_verification_agent:\n\
+        \        for checklist in criteria.checklists:\n            if not checklist.checked_at:\n\
+        \                errors.append(f\"Acceptance: {checklist.id} not checked\"\
+        )\n    \n    if errors:\n        console.print(\"[red]✗ Cannot continue -
+        missing verifications:[/red]\")\n        for err in errors:\n            console.print(f\"\
+        \  - {err}\")\n        raise typer.Exit(1)\n    \n    # 모든 조건 통과 시 계속 진행\n\
+        \    # ..."
+    verification_spec:
+    - id: verify-13-1
+      title: task continue 조건 검증 테스트
+      description: task continue가 4가지 조건을 올바르게 확인하는지 테스트
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit &&
+          uv run pytest tests/cli/test_task_continue_conditions.py -v
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: 12-commit
+    title: task accept 명령어 커밋
+    description: 'git commit -m "feat(cli): task accept 명령어 구현"'
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-12-commit
+      title: 커밋 확인
+      description: git log 확인
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && git
+          log -1 --oneline
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '14'
+    title: acceptance_criteria_for_verification_agent 초기화 로직 구현
+    description: "sisyphus-core 또는 sisyphus-cli에 로직 추가:\nexecution.fully_done = False로
+      변경될 때마다\nacceptance_criteria_for_verification_agent의 모든 checked_at, checked_evidence를
+      null로 초기화.\n\n참고: 사용자 요구사항 - \"execution.fully_done = False 가 될 때 마다 모두 초기화되어야
+      함\"\n"
+    status: pending
+    references:
+    - inline: "파일: sisyphus-core/sisyphus_core/core/plans/models.py\n\nWorkPlan 클래스에
+        model_validator 추가:\n\nclass WorkPlan(BaseModel):\n    # ... 기존 필드들 ...\n\
+        \    \n    @model_validator(mode=\"after\")\n    def reset_acceptance_on_fully_done_false(self)
+        -> Self:\n        \"\"\"execution.fully_done = False 시 acceptance criteria
+        초기화\"\"\"\n        # fully_done 필드가 추가되면 사용\n        # if hasattr(self.execution,
+        'fully_done') and not self.execution.fully_done:\n        #     for criteria
+        in self.acceptance_criteria_for_verification_agent:\n        #         for
+        checklist in criteria.checklists:\n        #             checklist.checked_at
+        = None\n        #             checklist.checked_evidence = None\n        return
+        self\n\n또는 task.py의 task continue/reset 명령어에서 초기화:\n\nasync def task_reset(...)
+        -> None:\n    \"\"\"Reset task and clear acceptance criteria\"\"\"\n    plan_doc
+        = await load_current_plan()\n    work_plan = plan_doc.work_plans[0]\n    \n\
+        \    # execution.fully_done = False로 변경\n    work_plan.execution.fully_done
+        = False\n    \n    # acceptance_criteria 초기화\n    for criteria in work_plan.acceptance_criteria_for_verification_agent:\n\
+        \        for checklist in criteria.checklists:\n            checklist.checked_at
+        = None\n            checklist.checked_evidence = None\n    \n    await save_plan(plan_doc)"
+    verification_spec:
+    - id: verify-14-1
+      title: acceptance criteria 초기화 테스트
+      description: execution.fully_done = False 시 acceptance criteria 초기화 확인
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv
+          run pytest tests/core/plans/test_acceptance_reset.py -v
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: 13-commit
+    title: task continue 조건 검증 커밋
+    description: 'git commit -m "feat(cli): task continue 4가지 조건 검증 추가"'
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-13-commit
+      title: 커밋 확인
+      description: git log 확인
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && git
+          log -1 --oneline
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '15'
+    title: sisyphus-cli 전체 테스트 작성 및 통과
+    description: "sisyphus-cli의 모든 새 기능에 대한 테스트 작성:\n1. task verify bash 테스트\n2. task
+      accept 테스트\n3. task continue 조건 검증 테스트\n4. 통합 테스트 (example-new-plan.yaml 전체
+      플로우)\n\n모든 테스트 통과 확인:\n- uv run basedpyright\n- uv run ruff check\n- uv run
+      pytest\n"
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-15-1
+      title: sisyphus-cli 전체 검증 통과
+      description: 타입 체크, 린트, 테스트 모두 통과
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit &&
+          uv run basedpyright
+        expected_exit_code: 0
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit &&
+          uv run ruff check
+        expected_exit_code: 0
+      - execute: cd
+          /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit &&
+          uv run pytest
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '16'
+    title: README.md, AGENTS.md 문서 업데이트
+    description: "README.md, AGENTS.md에 새 스펙 내용 반영:\n1. example-new-plan.yaml 스펙 지원
+      명시\n2. 새 필드 설명 추가\n3. 사용 예시 업데이트\n(기존 코드는 변경하지 않음, 문서만 업데이트)"
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-16-1
+      title: 레거시 코드 제거 확인
+      description: 구버전 스펙 관련 코드가 모두 제거되었는지 확인
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: echo "Manual verification required"
+        expected_stdout: Manual verification required
+        expected_exit_code: 0
+      llm_judge:
+      - by: orchestrator-agent
+        context_commands: []
+        instruction: README.md, AGENTS.md에 새 스펙(expected_outcome,
+          forbidden_outcome, parallel, acceptance_criteria 등) 내용이 반영되었는지 확인
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  - id: '17'
+    title: 최종 커밋 및 정리
+    description: "모든 변경사항 커밋:\n\"feat(sisyphus): example-new-plan.yaml 스펙 완전 지원 -
+      depends_on 파일 경로, acceptance_criteria, 강화된 검증 시스템\"\n\n최종 검증:\n1. example-new-plan.yaml
+      로드 및 모든 필드 파싱 확인\n2. sisyphus-speckit task verify bash 실행 확인\n3. sisyphus-speckit
+      task accept 실행 확인\n4. sisyphus-speckit task continue 조건 검증 확인\n"
+    status: pending
+    references: []
+    verification_spec:
+    - id: verify-17-1
+      title: 최종 통합 테스트
+      description: example-new-plan.yaml 전체 플로우 테스트
+      verified: false
+      verified_at: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: "cd /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit
+          && uv run python -c \"\nimport asyncio\nfrom pathlib import Path\nfrom sisyphus_core.core.plans.loader
+          import load_plan\n\nasync def main():\n    plan_doc = await load_plan(Path('/Users/yeongyu/local-workspaces/sisyphus/example-new-plan.yaml'))\n\
+          \    plan = plan_doc.work_plans[0]\n    assert hasattr(plan.user_request,
+          'expected_outcome')\n    assert hasattr(plan.user_request, 'forbidden_outcome')\n\
+          \    assert hasattr(plan.todos[0], 'parallel')\n    print('OK')\n\nasyncio.run(main())\n\
+          \""
+        expected_stdout: OK
+        expected_exit_code: 0
+      llm_judge: []
+      deterministic_bash: []
+      orchestrator_judge: []
+    parallel: false
+    acceptance_criteria: []
+  references:
+  - ref_id: example-new-plan
+    uri: /Users/yeongyu/local-workspaces/sisyphus/example-new-plan.yaml
+  - ref_id: current-models
+    uri:
+      /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core/sisyphus_core/core/plans/models.py
+  - ref_id: loader
+    uri:
+      /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core/sisyphus_core/core/plans/loader.py
+  - ref_id: template
+    uri:
+      /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core/sisyphus_core/core/plans/template.py
+  - ref_id: speckit-task
+    uri:
+      /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/task.py
+  - ref_id: speckit-plan
+    uri:
+      /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/plan.py
+  execution:
+    started: false
+    completed: false
+    started_at: null
+    completed_at: null
+  work_mode:
+    parallel_requested: false
+  current_work: ''
+  current_work_ids: []
+  acceptance_criteria_for_verification_agent: []

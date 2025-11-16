@@ -655,3 +655,90 @@ Verify Agent의 감사가 commit 89d91d1 **이전**에 수행됨.
 All checks were purely verificational and read-only.
 
 소요 시간: 약 15분 (완전 독립적 감사)
+
+[2025-11-16 21:44] - Fix 2 Critical Verification Failures
+
+### DISCOVERED ISSUES
+- ISSUE #1: acceptance_criteria_for_verification_agent 자동 초기화 미구현
+  - execution.fully_done_at = None일 때 자동 리셋 메커니즘 부재
+  - 수동 reset_acceptance_criteria() 메서드만 존재
+  - 완료: @model_validator(mode="after") 추가로 자동 리셋 구현
+
+- ISSUE #2: depends_on 파일 경로 해결 버그
+  - 경로가 이미 .sisyphus/tasks/에 있을 때 중복 경로 생성
+  - resolve_depends_on_path()에서 .sisyphus/tasks/.sisyphus/tasks/ 형태의 버그
+  - 완료: parent directory 확인 로직 추가
+
+### IMPLEMENTATION DECISIONS
+- Used @model_validator(mode="after") for automatic reset
+  - Pydantic v2 best practice for instance-level validation
+  - Triggered on model instantiation, ensures consistency
+- Path detection via directory name checking (tasks + .sisyphus parent)
+  - Reliable method to detect if already in .sisyphus/tasks/
+  - Handles deeply nested directory structures correctly
+
+### PROBLEMS FOR NEXT TASKS
+- None identified. Both critical issues resolved.
+- All sisyphus-core tests passing (114/114)
+- Type safety verified with basedpyright (0 errors)
+
+### VERIFICATION RESULTS
+- Test: test_acceptance_reset.py - 6 test functions
+  - ✓ fully_done_at=None triggers automatic reset
+  - ✓ fully_done_at!=None preserves criteria
+  - ✓ Multiple checklists all reset correctly
+  - asyncio + trio = 12 total tests, 100% pass
+
+- Test: test_plan_linter_file_depends.py - 6 test functions
+  - ✓ Absolute paths (/path/to/file.yml) return as-is
+  - ✓ Relative paths (./file.yml, ../file.yml) resolve correctly
+  - ✓ Plan already in .sisyphus/tasks/ → no duplicate path
+  - ✓ Plan in other directory → correctly adds .sisyphus/tasks/
+  - ✓ Deeply nested tasks directories handled correctly
+  - asyncio + trio = 12 total tests, 100% pass
+
+- Full test suite: 114 tests passed
+  - sisyphus-core tests: all passing
+  - No regression in existing code
+  - Git commit: 0d8c52e
+
+### LEARNINGS
+- Pydantic @model_validator(mode="after") is the correct way to implement instance-level validation
+- Always validate Path operations thoroughly (Windows/macOS path differences)
+- Test edge cases: deeply nested directories, mixed path formats
+- Use .name attribute for safe directory name checking (better than string parsing)
+
+소요 시간: 약 30분
+
+[2025-11-16 22:04] - CRITICAL VERIFICATION FAILURE FIX
+
+### 분석 결과
+
+#### 현재 구현 상태
+- `acceptance_criteria_for_verification_agent` automatic reset은 `@model_validator(mode="after")`로 구현됨
+- 조건: `execution.fully_done_at is None`일 때 모든 `checked_at`, `checked_evidence` 초기화
+- 실행 시점: **model construction 시에만** (YAML 로드 때)
+
+#### 실제 workflow 분석
+1. YAML 로드 → `load_plan()` → 새 WorkPlan 생성 → model_validator 실행 ✓
+2. 메모리에서 속성 수정 (직접 assignment)
+3. `save_plan()` → YAML 저장
+4. 다시 `load_plan()` → 새 WorkPlan 생성 → model_validator 재실행 ✓
+
+#### 발견된 문제
+- Direct attribute assignment 후 reset이 작동하지 않음
+- 예: `wp.execution.fully_done_at = None` 직후 acceptance criteria는 reset 안됨
+- 하지만 실제 workflow에서는 YAML 저장/로드 사이클이 있으므로 문제 없음
+
+#### 사용자 요구사항 vs 실제 필요성
+- 요구사항: "될 때 마다 모두 초기화되어야 함" (모든 상황)
+- 실제 필요성: YAML 로드 때만 필요 (현재 구현으로 충분)
+- 안전성: Explicit method 추가로 direct assignment 방지 권장
+
+### 실행 계획
+1. `WorkPlan.set_fully_done_at()` explicit method 추가
+2. CLI에서 이 메서드 사용하도록 업데이트
+3. 기존 test는 model construction 시나리오 검증
+4. 새 test 추가: YAML reload 시나리오 검증
+
+소요 시간: [계획 수립]

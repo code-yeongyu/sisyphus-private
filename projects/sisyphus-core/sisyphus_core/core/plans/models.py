@@ -270,6 +270,22 @@ class WorkPlan(BaseModel):
                 checklist.checked_evidence = None
 
 
+    def set_fully_done_at(self, value: str | None) -> None:
+        """Set fully_done_at and automatically reset acceptance criteria if value is None.
+
+        When setting fully_done_at to None, all checked_at and checked_evidence
+        fields in acceptance_criteria_for_verification_agent are automatically reset.
+        This ensures that when a task is marked as not fully done, all acceptance criteria
+        are cleared for re-verification.
+
+        Args:
+            value: ISO format timestamp string or None
+        """
+        self.execution.fully_done_at = value
+        if value is None:
+            self.reset_acceptance_criteria()
+
+
 class Metadata(BaseModel):
     created_at: str
     updated_at: str | None = None

@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from sisyphus_core.core.graph.dependencies import build_plan_graph, detect_cycles
 from sisyphus_core.core.plan_linter import PlanLinter
 from sisyphus_core.core.plans.models import (

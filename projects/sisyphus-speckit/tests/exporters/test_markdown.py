@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from sisyphus_core.core.exporters.markdown import MarkdownExporter
 from sisyphus_core.core.plans.models import (
     Background,

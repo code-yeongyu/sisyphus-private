@@ -119,7 +119,8 @@ def _display_verification_guidance(current_task: Todo) -> None:
     if has_llm:
         console.print("  [cyan]●[/cyan] LLM 검증 확인: [bold]sisyphus-speckit task verify llm[/bold]")
         console.print(
-            "  [cyan]●[/cyan] LLM 검증 완료: [bold]sisyphus-speckit task verify llm-mark <verify-id> --evidence '...'[/bold]"
+            "  [cyan]●[/cyan] LLM 검증 완료: "
+            "[bold]sisyphus-speckit task verify llm-mark <verify-id> --evidence '...'[/bold]"
         )
 
     if needs_manual_mark:

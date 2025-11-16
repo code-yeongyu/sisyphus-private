@@ -1,6 +1,5 @@
 
 import pytest
-
 from sisyphus_core.core.graph.renderer import AsciiRenderer, MermaidRenderer, PngRenderer
 
 pytestmark = [pytest.mark.anyio]

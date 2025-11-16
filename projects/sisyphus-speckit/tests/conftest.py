@@ -1,7 +1,6 @@
 """Shared test fixtures for sisyphus-speckit tests."""
 
 import pytest
-
 from sisyphus_core.core.plans.models import (
     Background,
     Objectives,

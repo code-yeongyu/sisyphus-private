@@ -2,7 +2,6 @@ from pathlib import Path
 
 import anyio
 import pytest
-
 from sisyphus_core.core.status.manager import StatusManager
 
 pytestmark = [pytest.mark.anyio]

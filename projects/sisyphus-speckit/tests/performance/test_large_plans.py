@@ -13,7 +13,6 @@ from pathlib import Path
 
 import pytest
 import ruamel.yaml
-
 from sisyphus_core.core.graph.dependencies import build_plan_graph, topo_sort
 from sisyphus_core.core.plan_linter import PlanLinter
 from sisyphus_core.core.plans.loader import load_plan

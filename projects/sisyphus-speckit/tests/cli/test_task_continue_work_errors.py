@@ -4,7 +4,6 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import pytest
-
 from sisyphus_core.core.plans.models import (
     Background,
     BashVerification,

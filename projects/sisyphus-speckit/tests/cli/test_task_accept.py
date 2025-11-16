@@ -121,7 +121,7 @@ async def test_accept__if_valid_criterion_id__marks_checklist() -> None:
             ),
             final_verification=[],
             todos=[todo],
-            execution=ExecutionStatus(started=False, completed=False),
+            execution=ExecutionStatus(started=False, completed=False, fully_done_at="2025-11-16T10:00:00+00:00"),
             work_mode=WorkMode(parallel_requested=False, current_task_id="test-1"),
             acceptance_criteria_for_verification_agent=acceptance_criteria,
         )
@@ -149,11 +149,7 @@ async def test_accept__if_valid_criterion_id__marks_checklist() -> None:
 
         # then
         reloaded_plan = await load_plan(plan_path)
-        marked_checklist = (
-            reloaded_plan.work_plans[0]
-            .acceptance_criteria_for_verification_agent[0]
-            .checklists[0]
-        )
+        marked_checklist = reloaded_plan.work_plans[0].acceptance_criteria_for_verification_agent[0].checklists[0]
         assert marked_checklist.checked_at is not None
         assert marked_checklist.checked_at == now
         assert marked_checklist.checked_evidence == evidence
@@ -256,7 +252,7 @@ async def test_accept__if_multiple_checklists__updates_only_specified() -> None:
             ),
             final_verification=[],
             todos=[todo],
-            execution=ExecutionStatus(started=False, completed=False),
+            execution=ExecutionStatus(started=False, completed=False, fully_done_at="2025-11-16T10:00:00+00:00"),
             work_mode=WorkMode(parallel_requested=False, current_task_id="test-1"),
             acceptance_criteria_for_verification_agent=acceptance_criteria,
         )
@@ -282,10 +278,7 @@ async def test_accept__if_multiple_checklists__updates_only_specified() -> None:
 
         # then
         reloaded_plan = await load_plan(plan_path)
-        reloaded_criteria = (
-            reloaded_plan.work_plans[0]
-            .acceptance_criteria_for_verification_agent[0]
-        )
+        reloaded_criteria = reloaded_plan.work_plans[0].acceptance_criteria_for_verification_agent[0]
 
         # First checklist should remain unchecked
         assert reloaded_criteria.checklists[0].checked_at is None
@@ -383,7 +376,7 @@ async def test_accept__if_invalid_criterion_id__returns_error() -> None:
             ),
             final_verification=[],
             todos=[todo],
-            execution=ExecutionStatus(started=False, completed=False),
+            execution=ExecutionStatus(started=False, completed=False, fully_done_at="2025-11-16T10:00:00+00:00"),
             work_mode=WorkMode(parallel_requested=False, current_task_id="test-1"),
             acceptance_criteria_for_verification_agent=acceptance_criteria,
         )
@@ -496,7 +489,7 @@ async def test_accept__if_timestamp_persists__saves_correctly() -> None:
             ),
             final_verification=[],
             todos=[todo],
-            execution=ExecutionStatus(started=False, completed=False),
+            execution=ExecutionStatus(started=False, completed=False, fully_done_at="2025-11-16T10:00:00+00:00"),
             work_mode=WorkMode(parallel_requested=False, current_task_id="test-1"),
             acceptance_criteria_for_verification_agent=acceptance_criteria,
         )
@@ -513,11 +506,7 @@ async def test_accept__if_timestamp_persists__saves_correctly() -> None:
         reloaded_plan = await load_plan(plan_path)
 
         # then
-        checklist = (
-            reloaded_plan.work_plans[0]
-            .acceptance_criteria_for_verification_agent[0]
-            .checklists[0]
-        )
+        checklist = reloaded_plan.work_plans[0].acceptance_criteria_for_verification_agent[0].checklists[0]
         assert checklist.checked_at == original_timestamp
         assert checklist.checked_evidence == "Original evidence"
 
@@ -589,7 +578,7 @@ async def test_accept__if_empty_acceptance_criteria__handles_gracefully() -> Non
             ),
             final_verification=[],
             todos=[todo],
-            execution=ExecutionStatus(started=False, completed=False),
+            execution=ExecutionStatus(started=False, completed=False, fully_done_at="2025-11-16T10:00:00+00:00"),
             work_mode=WorkMode(parallel_requested=False, current_task_id="test-1"),
             acceptance_criteria_for_verification_agent=[],
         )

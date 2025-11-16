@@ -1,6 +1,5 @@
 import pytest
 from pydantic import ValidationError
-
 from sisyphus_core.core.plans.models import (
     Background,
     Metadata,

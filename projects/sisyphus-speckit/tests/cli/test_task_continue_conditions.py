@@ -119,14 +119,15 @@ async def test_continue__if_deterministic_bash_not_verified__returns_error() -> 
                 description="Test description", file_structure="Test structure", references=[]
             ),
             workflow=Workflow(dependency_diagram="Test diagram", critical_path=[]),
-            success_vision=SuccessVision(
-                user_perspective=[], business_perspective=[], technical_criteria=[]
-            ),
+            success_vision=SuccessVision(user_perspective=[], business_perspective=[], technical_criteria=[]),
             final_verification=[],
             todos=[todo],
             references=[],
             execution=ExecutionStatus(
-                started=True, completed=False, started_at=datetime.now(UTC).isoformat()
+                started=True,
+                completed=False,
+                started_at=datetime.now(UTC).isoformat(),
+                fully_done_at="2025-11-16T10:00:00+00:00",
             ),
             work_mode=WorkMode(parallel_requested=False),
             current_work="test-1",
@@ -244,14 +245,15 @@ async def test_continue__if_manual_verification_not_passed__returns_error() -> N
                 description="Test description", file_structure="Test structure", references=[]
             ),
             workflow=Workflow(dependency_diagram="Test diagram", critical_path=[]),
-            success_vision=SuccessVision(
-                user_perspective=[], business_perspective=[], technical_criteria=[]
-            ),
+            success_vision=SuccessVision(user_perspective=[], business_perspective=[], technical_criteria=[]),
             final_verification=[],
             todos=[todo],
             references=[],
             execution=ExecutionStatus(
-                started=True, completed=False, started_at=datetime.now(UTC).isoformat()
+                started=True,
+                completed=False,
+                started_at=datetime.now(UTC).isoformat(),
+                fully_done_at="2025-11-16T10:00:00+00:00",
             ),
             work_mode=WorkMode(parallel_requested=False),
             current_work="test-1",
@@ -355,14 +357,15 @@ async def test_continue__if_llm_judge_empty__allows_continue() -> None:
                 description="Test description", file_structure="Test structure", references=[]
             ),
             workflow=Workflow(dependency_diagram="Test diagram", critical_path=[]),
-            success_vision=SuccessVision(
-                user_perspective=[], business_perspective=[], technical_criteria=[]
-            ),
+            success_vision=SuccessVision(user_perspective=[], business_perspective=[], technical_criteria=[]),
             final_verification=[],
             todos=[todo],
             references=[],
             execution=ExecutionStatus(
-                started=True, completed=False, started_at=datetime.now(UTC).isoformat()
+                started=True,
+                completed=False,
+                started_at=datetime.now(UTC).isoformat(),
+                fully_done_at="2025-11-16T10:00:00+00:00",
             ),
             work_mode=WorkMode(parallel_requested=False),
             current_work="test-1",
@@ -466,14 +469,15 @@ async def test_continue__if_acceptance_criteria_not_checked__returns_error() -> 
                 description="Test description", file_structure="Test structure", references=[]
             ),
             workflow=Workflow(dependency_diagram="Test diagram", critical_path=[]),
-            success_vision=SuccessVision(
-                user_perspective=[], business_perspective=[], technical_criteria=[]
-            ),
+            success_vision=SuccessVision(user_perspective=[], business_perspective=[], technical_criteria=[]),
             final_verification=[],
             todos=[todo],
             references=[],
             execution=ExecutionStatus(
-                started=True, completed=False, started_at=datetime.now(UTC).isoformat()
+                started=True,
+                completed=False,
+                started_at=datetime.now(UTC).isoformat(),
+                fully_done_at="2025-11-16T10:00:00+00:00",
             ),
             work_mode=WorkMode(parallel_requested=False),
             current_work="test-1",
@@ -596,14 +600,15 @@ async def test_continue__if_all_conditions_met__allows_continue() -> None:
                 description="Test description", file_structure="Test structure", references=[]
             ),
             workflow=Workflow(dependency_diagram="Test diagram", critical_path=[]),
-            success_vision=SuccessVision(
-                user_perspective=[], business_perspective=[], technical_criteria=[]
-            ),
+            success_vision=SuccessVision(user_perspective=[], business_perspective=[], technical_criteria=[]),
             final_verification=[],
             todos=[todo],
             references=[],
             execution=ExecutionStatus(
-                started=True, completed=False, started_at=datetime.now(UTC).isoformat()
+                started=True,
+                completed=False,
+                started_at=datetime.now(UTC).isoformat(),
+                fully_done_at="2025-11-16T10:00:00+00:00",
             ),
             work_mode=WorkMode(parallel_requested=False),
             current_work="test-1",

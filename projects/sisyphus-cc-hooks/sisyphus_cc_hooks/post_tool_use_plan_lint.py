@@ -33,7 +33,7 @@ def should_run_sisyphus_plan_lint(tool_name: str, file_path: str) -> bool:
 def run_sisyphus_plan_lint(yaml_path: str, cwd: str) -> tuple[bool, str]:
     try:
         result = subprocess.run(
-            ["sisyphus", "plan", "lint", "--file", yaml_path],
+            ["sisyphus-speckit", "plan", "lint", "--file", yaml_path],
             check=False,
             capture_output=True,
             text=True,

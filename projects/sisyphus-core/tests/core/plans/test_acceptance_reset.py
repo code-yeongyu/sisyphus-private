@@ -332,3 +332,123 @@ async def test_acceptance_reset__if_model_validate_called__then_validator_runs()
     # Then - model_validator should have reset the criteria
     assert work_plan.acceptance_criteria_for_verification_agent[0].checklists[0].checked_at is None
     assert work_plan.acceptance_criteria_for_verification_agent[0].checklists[0].checked_evidence is None
+
+
+@pytest.mark.anyio()
+async def test_acceptance_reset__if_set_fully_done_at_called_with_none__then_criteria_reset() -> None:
+    """Given: WorkPlan with acceptance criteria all checked and fully_done_at set.
+    When: set_fully_done_at(None) is called.
+    Then: All checked_at and checked_evidence should be automatically reset.
+
+    This tests the explicit method for resetting acceptance criteria when changing fully_done_at.
+    """
+    # Given
+    work_plan = WorkPlan.model_validate(
+        {
+            "id": "test-plan",
+            "name": "Test Plan",
+            "user_request": {"original": "test", "created_at": "2025-11-16T10:00:00Z", "additional": []},
+            "objectives": {"core": "test", "detailed": []},
+            "background": {"current_situation": "test", "reason_for_change": "test", "changes_to_make": "test"},
+            "required_background": {"description": "test", "file_structure": "test", "references": []},
+            "workflow": {"dependency_diagram": "test", "critical_path": []},
+            "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+            "final_verification": [],
+            "todos": [],
+            "execution": {
+                "started": False,
+                "completed": False,
+                "started_at": None,
+                "completed_at": None,
+                "fully_done_at": "2025-11-16T10:00:00Z",
+            },
+            "work_mode": {"parallel_requested": False},
+            "acceptance_criteria_for_verification_agent": [
+                {
+                    "id": "criteria-1",
+                    "title": "Test Criteria Group",
+                    "accepted_at": "2025-11-16T10:00:00Z",
+                    "checklists": [
+                        {
+                            "id": "test-criterion-1",
+                            "title": "Test Criterion",
+                            "content": "This is a test criterion",
+                            "checked_at": "2025-11-16T10:00:00Z",
+                            "checked_evidence": "Verified by test",
+                        }
+                    ],
+                }
+            ],
+        }
+    )
+
+    # Given - criteria should NOT be reset (fully_done_at is set)
+    assert work_plan.acceptance_criteria_for_verification_agent[0].checklists[0].checked_at is not None
+    assert work_plan.acceptance_criteria_for_verification_agent[0].checklists[0].checked_evidence is not None
+    assert work_plan.execution.fully_done_at == "2025-11-16T10:00:00Z"
+
+    # When
+    work_plan.set_fully_done_at(None)
+
+    # Then
+    assert work_plan.execution.fully_done_at is None
+    assert work_plan.acceptance_criteria_for_verification_agent[0].checklists[0].checked_at is None
+    assert work_plan.acceptance_criteria_for_verification_agent[0].checklists[0].checked_evidence is None
+
+
+@pytest.mark.anyio()
+async def test_acceptance_reset__if_set_fully_done_at_called_with_value__then_criteria_unchanged() -> None:
+    """Given: WorkPlan with acceptance criteria all checked.
+    When: set_fully_done_at() is called with a non-None value.
+    Then: acceptance_criteria should NOT be reset.
+    """
+    # Given
+    work_plan = WorkPlan.model_validate(
+        {
+            "id": "test-plan",
+            "name": "Test Plan",
+            "user_request": {"original": "test", "created_at": "2025-11-16T10:00:00Z", "additional": []},
+            "objectives": {"core": "test", "detailed": []},
+            "background": {"current_situation": "test", "reason_for_change": "test", "changes_to_make": "test"},
+            "required_background": {"description": "test", "file_structure": "test", "references": []},
+            "workflow": {"dependency_diagram": "test", "critical_path": []},
+            "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+            "final_verification": [],
+            "todos": [],
+            "execution": {
+                "started": False,
+                "completed": False,
+                "started_at": None,
+                "completed_at": None,
+                "fully_done_at": "2025-11-16T10:00:00Z",
+            },
+            "work_mode": {"parallel_requested": False},
+            "acceptance_criteria_for_verification_agent": [
+                {
+                    "id": "criteria-1",
+                    "title": "Test Criteria Group",
+                    "accepted_at": "2025-11-16T10:00:00Z",
+                    "checklists": [
+                        {
+                            "id": "test-criterion-1",
+                            "title": "Test Criterion",
+                            "content": "This is a test criterion",
+                            "checked_at": "2025-11-16T10:00:00Z",
+                            "checked_evidence": "Verified by test",
+                        }
+                    ],
+                }
+            ],
+        }
+    )
+
+    # Given
+    assert work_plan.acceptance_criteria_for_verification_agent[0].checklists[0].checked_at == "2025-11-16T10:00:00Z"
+
+    # When
+    work_plan.set_fully_done_at("2025-11-16T12:00:00Z")
+
+    # Then
+    assert work_plan.execution.fully_done_at == "2025-11-16T12:00:00Z"
+    assert work_plan.acceptance_criteria_for_verification_agent[0].checklists[0].checked_at == "2025-11-16T10:00:00Z"
+    assert work_plan.acceptance_criteria_for_verification_agent[0].checklists[0].checked_evidence == "Verified by test"

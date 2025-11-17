@@ -20,6 +20,7 @@ from sisyphus_core.core.plans.operations import get_current_task as get_current_
 from sisyphus_core.core.plans.operations import (
     mark_current_task_acceptance_criterion as mark_current_task_acceptance_criterion,
 )
+from sisyphus_core.core.plans.operations import mark_fully_done as mark_fully_done
 from sisyphus_core.core.plans.operations import (
     mark_todo_acceptance_criterion as mark_todo_acceptance_criterion,
 )

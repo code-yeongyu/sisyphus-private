@@ -120,3 +120,21 @@ def mark_verification_agent_checklist(
                 return True, f"Verification agent checklist '{checklist_id}' 검증 완료"
 
     return False, f"Checklist ID '{checklist_id}'를 acceptance_criteria_for_verification_agent에서 찾을 수 없습니다"
+
+
+def mark_fully_done(
+    work_plan: WorkPlan,
+    evidence: str,
+) -> tuple[bool, str]:
+    """Mark work plan as fully done with evidence.
+
+    Args:
+        work_plan: WorkPlan to mark as fully done
+        evidence: Evidence string describing completion
+
+    Returns:
+        Tuple of (success, message)
+    """
+    work_plan.execution.fully_done_at = datetime.now(UTC).isoformat()
+    work_plan.fully_done_evidence = evidence
+    return True, f"WorkPlan '{work_plan.id}' fully done 마킹 완료"

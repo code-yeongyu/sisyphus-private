@@ -418,7 +418,12 @@ def build_verify_prompt(plan_path: str) -> str:
         "---\n\n"
         "**FINAL JUDGMENT (REQUIRED)**:\n\n"
         "If you are absolutely certain that ALL work is genuinely complete and working:\n"
-        "→ Say `FULLY_DONE = TRUE`\n\n"
+        "→ **FIRST**, run this command to mark the plan as fully done:\n"
+        "   ```bash\n"
+        '   sisyphus-speckit plan mark-fully-done --evidence "<comprehensive completion evidence>"\n'
+        "   ```\n"
+        "   Evidence should include: all tasks completed, tests passed, documentation updated, etc.\n"
+        "→ **THEN**, after the command completes successfully, say `FULLY_DONE = TRUE` as the final message\n\n"
         "If you found ANY issues, incomplete work, or tasks that need fixing:\n"
         "→ Say `FULLY_DONE = FALSE`\n\n"
         "Your report will be sent directly to the executor who must fix these issues.\\n\\n"

@@ -1115,9 +1115,9 @@ work_plans:
       /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/plan.py
   execution:
     started: true
-    completed: false
+    completed: true
     started_at: '2025-11-16T08:32:49.583213+00:00'
-    completed_at: '2025-11-16T12:34:32.299116+00:00'
+    completed_at: '2025-11-16T13:21:53.935280+00:00'
   work_mode:
     parallel_requested: false
   current_work: ''

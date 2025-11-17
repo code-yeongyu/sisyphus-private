@@ -96,6 +96,7 @@ class ExecutionLoop:
         self._sdk_exception_count: int = 0
         self._should_exit_execute_phase = False
         self._current_plan_id: str = ""
+        self._acceptance_criteria_retry_message: str | None = None
 
     async def run(
         self,
@@ -767,6 +768,54 @@ class ExecutionLoop:
                 if has_true and not has_false:
                     fully_done = True
                     has_judgment = True
+
+                    if self.task_validator and self.task_validator.todolist_path:
+                        try:
+                            plan_doc = await load_plan(self.task_validator.todolist_path)
+                            unchecked_items: list[str] = []
+
+                            for work_plan in plan_doc.work_plans:
+                                if work_plan.acceptance_criteria_for_verification_agent:
+                                    for criteria in work_plan.acceptance_criteria_for_verification_agent:
+                                        for checklist in criteria.checklists:
+                                            if checklist.checked_at is None or not checklist.checked_evidence:
+                                                unchecked_items.append(
+                                                    f"  - [{checklist.id}] {checklist.title}\n"
+                                                    f"    Content: {checklist.content}"
+                                                )
+
+                            if unchecked_items:
+                                assert self.verify_logger is not None
+                                self.verify_logger.warning(
+                                    f"FULLY_DONE = TRUE but {len(unchecked_items)} AC items unchecked"
+                                )
+                                self._acceptance_criteria_retry_message = (
+                                    "❌ You said FULLY_DONE = TRUE, but you have NOT completed all "
+                                    "acceptance_criteria_for_verification_agent items!\n\n"
+                                    "**UNCHECKED ITEMS**:\n\n" + "\n".join(unchecked_items) + "\n\n"
+                                    "**YOU MUST**:\n\n"
+                                    "1. Read each unchecked item's content carefully\n"
+                                    "2. Perform the verification specified in the content\n"
+                                    "3. Mark each item using:\n"
+                                    "   ```bash\n"
+                                    "   sisyphus-speckit plan accept-as-verification-agent --id <checklist-id> "
+                                    '--evidence "<detailed evidence>"\n'
+                                    "   ```\n\n"
+                                    "4. After ALL items are checked, THEN you can say FULLY_DONE = TRUE\n\n"
+                                    "Please complete the unchecked items now and resume your work."
+                                )
+                                fully_done = False
+                                has_judgment = False
+                                self.verify_logger.info(
+                                    "Forcing has_judgment=False to trigger retry with acceptance criteria message"
+                                )
+                        except Exception as e:
+                            assert self.verify_logger is not None
+                            self.verify_logger.error(
+                                f"Error checking acceptance_criteria_for_verification_agent: {e}",
+                                exc_info=e,
+                            )
+
                 elif has_true or has_false:
                     fully_done = False
                     has_judgment = True
@@ -870,13 +919,19 @@ class ExecutionLoop:
                     self.verify_logger.info(
                         f"No FULLY_DONE judgment found, retrying ({judgment_retry_count}/{max_judgment_retries})"
                     )
-                    retry_message = (
-                        "You did not provide a clear FULLY_DONE judgment in your last response. "
-                        "Please review the execute phase output and provide a clear judgment:\n\n"
-                        "- Say 'FULLY_DONE = TRUE' if all goals in the work plan are accomplished\n"
-                        "- Say 'FULLY_DONE = FALSE' if any goals remain incomplete\n\n"
-                        "Please respond with your judgment now."
-                    )
+
+                    if self._acceptance_criteria_retry_message:
+                        retry_message = self._acceptance_criteria_retry_message
+                        self._acceptance_criteria_retry_message = None
+                    else:
+                        retry_message = (
+                            "You did not provide a clear FULLY_DONE judgment in your last response. "
+                            "Please review the execute phase output and provide a clear judgment:\n\n"
+                            "- Say 'FULLY_DONE = TRUE' if all goals in the work plan are accomplished\n"
+                            "- Say 'FULLY_DONE = FALSE' if any goals remain incomplete\n\n"
+                            "Please respond with your judgment now."
+                        )
+
                     feedback_messages.clear()
                     await self.verify_agent.send(retry_message)
                     continue

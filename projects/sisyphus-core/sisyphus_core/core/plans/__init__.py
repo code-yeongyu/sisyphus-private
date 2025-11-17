@@ -15,3 +15,14 @@ from sisyphus_core.core.plans.models import Todo as Todo
 from sisyphus_core.core.plans.models import TodoStatus as TodoStatus
 from sisyphus_core.core.plans.models import VerificationItem as VerificationItem
 from sisyphus_core.core.plans.models import WorkPlan as WorkPlan
+from sisyphus_core.core.plans.operations import find_todo_by_id as find_todo_by_id
+from sisyphus_core.core.plans.operations import get_current_task as get_current_task
+from sisyphus_core.core.plans.operations import (
+    mark_current_task_acceptance_criterion as mark_current_task_acceptance_criterion,
+)
+from sisyphus_core.core.plans.operations import (
+    mark_todo_acceptance_criterion as mark_todo_acceptance_criterion,
+)
+from sisyphus_core.core.plans.operations import (
+    mark_verification_agent_checklist as mark_verification_agent_checklist,
+)

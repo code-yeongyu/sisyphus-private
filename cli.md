@@ -56,10 +56,11 @@ Usage: sisyphus-speckit plan [OPTIONS] COMMAND [ARGS]...
  Plan management commands
 
 Commands:
-  lint     Validate YAML plan structure
-  init     Initialize new plan YAML template
-  graph    Display plan dependency graph
-  export   Export WorkPlan YAML to Markdown format
+  lint                        Validate YAML plan structure
+  init                        Initialize new plan YAML template
+  graph                       Display plan dependency graph
+  export                      Export WorkPlan YAML to Markdown format
+  accept-as-verification-agent Mark verification agent checklist as verified
 ```
 
 ---
@@ -261,6 +262,104 @@ sisyphus-speckit plan export .sisyphus/tasks/feature.yaml -o feature.md
 
 ---
 
+### `sisyphus-speckit plan accept-as-verification-agent`
+
+Verification agent의 acceptance criteria 체크리스트 항목을 검증 완료로 표시합니다.
+
+#### 사용법
+
+```bash
+sisyphus-speckit plan accept-as-verification-agent [OPTIONS]
+```
+
+#### 옵션
+
+- `--id TEXT`: 체크리스트 ID (필수)
+- `--evidence TEXT`: 검증 증거 (필수)
+- `--cwd TEXT`: 작업 디렉터리
+
+#### 설명
+
+YAML plan의 `acceptance_criteria_for_verification_agent` 섹션에 정의된 체크리스트를 검증합니다.
+이는 verify agent가 전체 작업을 검증한 후 체크해야 하는 최종 acceptance criteria입니다.
+
+#### 출력 예시
+
+**성공 시:**
+```bash
+sisyphus-speckit plan accept-as-verification-agent \
+  --id checklist-type-safety \
+  --evidence "Ran basedpyright, 0 errors reported. All 47 functions have complete type annotations."
+```
+
+```
+✓ 검증 완료: checklist-type-safety
+증거: Ran basedpyright, 0 errors reported. All 47 functions have complete type annotations.
+```
+
+**체크리스트 ID를 찾을 수 없을 때:**
+```
+✗ 오류: 체크리스트 ID 'checklist-invalid'를 찾을 수 없습니다.
+```
+
+**현재 plan이 없을 때:**
+```
+✗ 오류: 현재 활성화된 작업 계획이 없습니다.
+```
+
+**acceptance_criteria_for_verification_agent가 없을 때:**
+```
+✗ 오류: 이 계획에는 verification agent acceptance criteria가 없습니다.
+```
+
+---
+
+### `sisyphus-speckit plan mark-fully-done`
+
+Work plan을 fully done 상태로 마킹하고 완료 증거를 기록합니다.
+
+#### 사용법
+
+```bash
+sisyphus-speckit plan mark-fully-done [OPTIONS]
+```
+
+#### 옵션
+
+- `--evidence TEXT`: 완료 증거 (필수)
+- `--cwd TEXT`: 작업 디렉터리
+
+#### 설명
+
+작업 계획의 모든 작업이 완료되고 최종 검증까지 끝났을 때, `execution.fully_done_at` 타임스탬프와 `fully_done_evidence`를 설정합니다.
+이는 단순히 `execution.completed`와는 다르게, 모든 후속 검증과 정리 작업까지 완전히 끝났음을 의미합니다.
+
+#### 출력 예시
+
+**성공 시:**
+```bash
+sisyphus-speckit plan mark-fully-done \
+  --evidence "All tasks completed, all tests pass, documentation updated, PR reviewed and merged"
+```
+
+```
+✓ WorkPlan 'test-plan' fully done 마킹 완료
+증거: All tasks completed, all tests pass, documentation updated, PR reviewed and merged
+완료 시각: 2025-11-17T10:51:36.123456+00:00
+```
+
+**현재 plan이 없을 때:**
+```
+✗ 오류: 현재 활성화된 작업 계획이 없습니다.
+```
+
+**work_plans가 없을 때:**
+```
+✗ 오류: 작업 계획에 work_plans가 없습니다.
+```
+
+---
+
 ## Task 탐색 및 실행
 
 ### `sisyphus-speckit task`
@@ -278,6 +377,7 @@ Commands:
   next       Display next pending task
   previous   Display previous task in DFS order
   continue   Continue work: complete current task and move to next
+  accept     Mark current task's acceptance criterion as verified
   verify     Verification management commands
 ```
 
@@ -428,6 +528,54 @@ sisyphus-speckit task previous [OPTIONS]
 
 ---
 
+### `sisyphus-speckit task accept`
+
+현재 task의 acceptance criteria를 증거와 함께 검증 완료로 표시합니다.
+
+#### 사용법
+
+```bash
+sisyphus-speckit task accept [OPTIONS]
+```
+
+#### 옵션
+
+- `--id TEXT`: Acceptance criterion ID (필수)
+- `--evidence TEXT`: 검증 증거 (필수)
+- `--cwd TEXT`: 작업 디렉터리
+
+#### 설명
+
+현재 진행 중인 task의 `acceptance_criteria` 항목을 검증합니다.
+각 task는 완료 조건으로 acceptance criteria를 가질 수 있으며, 이를 모두 검증해야 `task continue`로 다음 작업으로 넘어갈 수 있습니다.
+
+#### 출력 예시
+
+**성공 시:**
+```bash
+sisyphus-speckit task accept \
+  --id criterion-type-safety \
+  --evidence "All functions have type hints. Ran basedpyright with 0 errors."
+```
+
+```
+✓ 검증 완료: criterion-type-safety
+증거: All functions have type hints. Ran basedpyright with 0 errors.
+```
+
+**현재 task가 없을 때:**
+```
+✗ 오류: 현재 진행 중인 작업이 없습니다.
+sisyphus-speckit task continue를 실행하여 작업을 시작하세요.
+```
+
+**Criterion ID를 찾을 수 없을 때:**
+```
+✗ 오류: Acceptance criterion 'invalid-id'를 현재 작업에서 찾을 수 없습니다.
+```
+
+---
+
 ### `sisyphus-speckit task continue`
 
 현재 task를 완료하고 다음 task로 이동하거나, 첫 task를 시작합니다.
@@ -473,22 +621,27 @@ sisyphus-speckit task continue [OPTIONS]
 
 **검증 미완료 시 (에러):**
 ```
-다음 작업으로 넘어갈 수 없습니다.
-현재 작업: Implement JWT service
-  - 하위 작업: 1/2 완료
-  - 검증: 1/3 완료
+✗ 작업 완료 불가능 - 다음 검증이 누락되었습니다:
 
-미완료 검증 항목:
-  ○ [1] 유닛 테스트 통과 확인
-      pytest tests/test_jwt.py 실행 결과 모두 PASS
-  ○ [2] 코드 품질 검증
-      타입 힌트 완성도 및 에러 핸들링 확인
+Deterministic Bash 검증 미완료:
+  • [verify-001] '유닛 테스트 통과'
 
-완료 조건을 만족한 후 다시 시도하세요.
+명령어: sisyphus-speckit task verify bash
 
-🤖 Orchestrator 안내:
-당신이 직접 검증하고, 실패하거나 아쉬운 점이 있다면
-sisyphus-executor를 다시 호출하여 시키세요.
+수동 검증 미완료:
+  • [verify-002] '코드 품질 검증'
+
+명령어: sisyphus-speckit task verify manual --evidence <증거>
+
+Acceptance Criteria 검증 미완료:
+  • criterion-type-safety
+
+명령어: sisyphus-speckit task accept --id <criterion-id> --evidence <증거>
+
+LLM Judge 검증 미완료:
+  • [verify-003] 'Integration 테스트'
+
+명령어: sisyphus-speckit task verify llm
 ```
 
 **모든 작업 완료:**

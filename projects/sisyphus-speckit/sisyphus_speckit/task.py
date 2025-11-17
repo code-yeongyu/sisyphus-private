@@ -27,6 +27,7 @@ from sisyphus_core.core.plans.models import (
     TodoStatus,
     WorkPlan,
 )
+from sisyphus_core.core.plans.operations import mark_current_task_acceptance_criterion
 from sisyphus_core.core.status.manager import StatusManager
 from sisyphus_core.core.task_manager import TaskManager
 from sisyphus_core.utils.common import resolve_cwd
@@ -537,37 +538,67 @@ def continue_work(
             raise typer.Exit(1)
 
         # CRITICAL: Validate 4 conditions BEFORE marking task as completed
-        errors: list[str] = []
+        deterministic_bash_errors: list[str] = []
+        manual_verification_errors: list[str] = []
+        acceptance_criteria_errors: list[str] = []
+        llm_judge_errors: list[str] = []
 
         # 1. deterministic_bash 모두 verified_at 존재
         for verify_item in current_task.verification_spec:
             for bash in verify_item.deterministic_bash:
                 if not bash.verified_at:
-                    errors.append(f"[{verify_item.id}] '{bash.description}' - deterministic bash 검증 미완료")
+                    deterministic_bash_errors.append(f"[{verify_item.id}] '{bash.description}'")
 
         # 2. manual 검증 모두 통과 (orchestrator_manually_verified)
         for verify_item in current_task.verification_spec:
             if not verify_item.orchestrator_manually_verified:
-                errors.append(f"[{verify_item.id}] '{verify_item.title}' - 수동 검증 미완료")
+                manual_verification_errors.append(f"[{verify_item.id}] '{verify_item.title}'")
 
-        # 3. acceptance_criteria_for_verification_agent 모든 checklists checked_at 존재
-        for criteria in work_plan.acceptance_criteria_for_verification_agent:
-            for checklist in criteria.checklists:
-                if not checklist.checked_at:
-                    errors.append(f"Acceptance '{checklist.title}' - 체크 미완료")
+        # 3. current task의 acceptance_criteria 모두 verified_at 존재
+        for criterion in current_task.acceptance_criteria:
+            if not criterion.verified_at:
+                acceptance_criteria_errors.append(criterion.id)
 
         # 4. llm_judge 검증 모두 통과 (빈 리스트는 통과)
         for verify_item in current_task.verification_spec:
             for llm_judge in verify_item.llm_judge:
                 if not verify_item.verified:
-                    errors.append(f"[{verify_item.id}] '{verify_item.title}' - LLM Judge 검증 미완료")
+                    llm_judge_errors.append(f"[{verify_item.id}] '{verify_item.title}'")
                     break
 
-        if errors:
+        has_errors = (
+            deterministic_bash_errors or manual_verification_errors or acceptance_criteria_errors or llm_judge_errors
+        )
+
+        if has_errors:
             console.print("[red]✗ 작업 완료 불가능 - 다음 검증이 누락되었습니다:[/red]\n")
-            for error in errors:
-                console.print(f"  [yellow]• {error}[/yellow]")
-            console.print()
+
+            if deterministic_bash_errors:
+                console.print("[bold yellow]Deterministic Bash 검증 미완료:[/bold yellow]")
+                for error in deterministic_bash_errors:
+                    console.print(f"  [yellow]• {error}[/yellow]")
+                console.print("\n[cyan]명령어:[/cyan] sisyphus-speckit task verify bash\n")
+
+            if manual_verification_errors:
+                console.print("[bold yellow]수동 검증 미완료:[/bold yellow]")
+                for error in manual_verification_errors:
+                    console.print(f"  [yellow]• {error}[/yellow]")
+                console.print("\n[cyan]명령어:[/cyan] sisyphus-speckit task verify manual --evidence <증거>\n")
+
+            if acceptance_criteria_errors:
+                console.print("[bold yellow]Acceptance Criteria 검증 미완료:[/bold yellow]")
+                for criterion_id in acceptance_criteria_errors:
+                    console.print(f"  [yellow]• {criterion_id}[/yellow]")
+                console.print(
+                    "\n[cyan]명령어:[/cyan] sisyphus-speckit task accept --id <criterion-id> --evidence <증거>\n"
+                )
+
+            if llm_judge_errors:
+                console.print("[bold yellow]LLM Judge 검증 미완료:[/bold yellow]")
+                for error in llm_judge_errors:
+                    console.print(f"  [yellow]• {error}[/yellow]")
+                console.print("\n[cyan]명령어:[/cyan] sisyphus-speckit task verify llm\n")
+
             raise typer.Exit(1)
 
         current_task.status = TodoStatus.completed
@@ -606,7 +637,7 @@ def task_accept(
     evidence: str = typer.Option(..., "--evidence", help="Evidence of completion"),
     cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
-    """Mark acceptance criteria checklist as completed with evidence."""
+    """Mark current task's acceptance criteria as completed with evidence."""
 
     async def _accept() -> None:
         working_dir = resolve_cwd(cwd)
@@ -628,23 +659,14 @@ def task_accept(
 
         work_plan = plan_doc.work_plans[0]
 
-        found = False
-        for criteria in work_plan.acceptance_criteria_for_verification_agent:
-            for checklist in criteria.checklists:
-                if checklist.id == criterion_id:
-                    checklist.checked_at = datetime.now(UTC).isoformat()
-                    checklist.checked_evidence = evidence
-                    found = True
-                    break
-            if found:
-                break
+        success, message = mark_current_task_acceptance_criterion(work_plan, criterion_id, evidence)
 
-        if not found:
-            console.print(f"[red]❌ Acceptance criterion ID를 찾을 수 없습니다: {criterion_id}[/red]")
+        if not success:
+            console.print(f"[red]❌ {message}[/red]")
             raise typer.Exit(1)
 
         await save_plan(plan_path, plan_doc)
-        console.print(f"[green]✓ Acceptance criterion '{criterion_id}' 마킹 완료[/green]")
+        console.print(f"[green]✓ {message}[/green]")
         console.print(f"[cyan]증거:[/cyan] {evidence}")
 
     _run_async(_accept())

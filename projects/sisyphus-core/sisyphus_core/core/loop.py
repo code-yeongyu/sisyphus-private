@@ -140,7 +140,17 @@ class ExecutionLoop:
             # No plan set or plan file not found → use defaults
             if self.status_manager:
                 try:
-                    self._current_plan_id = await self.status_manager.get_plan_id()
+                    # MockStatusManager has get_plan_id() for testing
+                    if hasattr(self.status_manager, "get_plan_id"):
+                        self._current_plan_id = await self.status_manager.get_plan_id()  # type: ignore
+                    else:
+                        status = await self.status_manager.get()
+                        if status.current_plan:
+                            plan_path = Path(status.current_plan.plan_path)
+                            plan = await load_plan(plan_path)
+                            self._current_plan_id = plan.work_plans[0].id if plan.work_plans else "default"
+                        else:
+                            self._current_plan_id = "default"
                 except Exception:
                     self._current_plan_id = "default"
             else:
@@ -281,8 +291,6 @@ class ExecutionLoop:
                             status_file = await self.status_manager.get()
                             if status_file.current_plan and status_file.current_plan.plan_path:
                                 plan_path_for_failure_prompt = Path(status_file.current_plan.plan_path)
-                        elif self.task_validator and self.task_validator.todolist_path:
-                            plan_path_for_failure_prompt = self.task_validator.todolist_path
 
                         if plan_path_for_failure_prompt:
                             plan_doc = await load_plan(plan_path_for_failure_prompt)
@@ -418,27 +426,31 @@ class ExecutionLoop:
                             # RetryRequiredError handling (sleep_until_reset) already done in error class
                             # Loop will continue to retry verify phase
 
-                if self.task_validator:
-                    plan_doc = await load_plan(self.task_validator.todolist_path)
+                if self.status_manager:
+                    try:
+                        plan_path = await self._resolve_plan_path_from_status()
+                        plan_doc = await load_plan(plan_path)
 
-                    for work_plan in plan_doc.work_plans:
-                        work_plan.execution.completed = fully_done
+                        for work_plan in plan_doc.work_plans:
+                            work_plan.execution.completed = fully_done
 
-                        if not fully_done and work_plan.work_mode.current_task_id:
+                            if not fully_done and work_plan.work_mode.current_task_id:
 
-                            def find_and_reset_task(todos: list[Todo]) -> bool:
-                                for todo in todos:
-                                    if todo.id == work_plan.work_mode.current_task_id:
-                                        if todo.status == TodoStatus.completed:
-                                            todo.status = TodoStatus.in_progress
+                                def find_and_reset_task(todos: list[Todo]) -> bool:
+                                    for todo in todos:
+                                        if todo.id == work_plan.work_mode.current_task_id:
+                                            if todo.status == TodoStatus.completed:
+                                                todo.status = TodoStatus.in_progress
+                                                return True
+                                        if todo.children and find_and_reset_task(todo.children):
                                             return True
-                                    if todo.children and find_and_reset_task(todo.children):
-                                        return True
-                                return False
+                                    return False
 
-                            find_and_reset_task(work_plan.todos)
+                                find_and_reset_task(work_plan.todos)
 
-                    await save_plan(self.task_validator.todolist_path, plan_doc)
+                        await save_plan(plan_path, plan_doc)
+                    except (ValueError, FileNotFoundError):
+                        pass
 
                 if fully_done:
                     self._consecutive_execute_count = 0
@@ -474,14 +486,15 @@ class ExecutionLoop:
         await self.execute_agent.initialize()
 
         if not self._current_plan_id and self.status_manager:
+            # MockStatusManager has get_plan_id() for testing
             if hasattr(self.status_manager, "get_plan_id"):
-                self._current_plan_id = await self.status_manager.get_plan_id()
+                self._current_plan_id = await self.status_manager.get_plan_id()  # type: ignore
             else:
                 status = await self.status_manager.get()
                 if status.current_plan:
                     plan_path = Path(status.current_plan.plan_path)
                     plan = await load_plan(plan_path)
-                    self._current_plan_id = plan.work_plans[0].id
+                    self._current_plan_id = plan.work_plans[0].id if plan.work_plans else "default"
 
         if not self._current_plan_id:
             raise ValueError("plan_id is required for session management")
@@ -689,14 +702,15 @@ class ExecutionLoop:
         await self.verify_agent.initialize()
 
         if not self._current_plan_id and self.status_manager:
+            # MockStatusManager has get_plan_id() for testing
             if hasattr(self.status_manager, "get_plan_id"):
-                self._current_plan_id = await self.status_manager.get_plan_id()
+                self._current_plan_id = await self.status_manager.get_plan_id()  # type: ignore
             else:
                 status = await self.status_manager.get()
                 if status.current_plan:
                     plan_path = Path(status.current_plan.plan_path)
                     plan = await load_plan(plan_path)
-                    self._current_plan_id = plan.work_plans[0].id
+                    self._current_plan_id = plan.work_plans[0].id if plan.work_plans else "default"
 
         agent_type = type(self.verify_agent).__name__.lower().replace("agent", "")
 
@@ -748,9 +762,10 @@ class ExecutionLoop:
                     fully_done = True
                     has_judgment = True
 
-                    if self.task_validator and self.task_validator.todolist_path:
+                    if self.status_manager:
                         try:
-                            plan_doc = await load_plan(self.task_validator.todolist_path)
+                            plan_path = await self._resolve_plan_path_from_status()
+                            plan_doc = await load_plan(plan_path)
                             unchecked_items: list[str] = []
 
                             for work_plan in plan_doc.work_plans:

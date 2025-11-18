@@ -43,6 +43,8 @@ async def test_verify__if_no_feedback_history__uses_original_prompt() -> None:
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
+    loop.state.set_plan_id("test-plan")
+
     original_verify_prompt = "Please verify the work."
 
     # when
@@ -89,6 +91,8 @@ async def test_verify__if_feedback_history_exists__prepends_history_section() ->
         task_validator=task_validator,  # type: ignore[arg-type]
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
+
+    loop.state.set_plan_id("test-plan")
 
     original_verify_prompt = "Please verify the work."
 
@@ -141,6 +145,8 @@ async def test_verify__if_multiple_feedbacks__includes_all_in_history() -> None:
         task_validator=task_validator,  # type: ignore[arg-type]
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
+
+    loop.state.set_plan_id("test-plan")
 
     original_verify_prompt = "Please verify the work."
 

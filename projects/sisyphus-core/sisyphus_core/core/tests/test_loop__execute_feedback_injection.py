@@ -46,6 +46,8 @@ async def test_execute__if_no_feedback_history__uses_original_extra() -> None:
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
+    loop.state.set_plan_id("test-plan")
+
     # when
     await loop._run_unified_mode(
         execute_prompt="Do the task",
@@ -79,7 +81,7 @@ async def test_execute__if_feedback_history_exists__appends_feedback_section() -
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
-    task_validator.completion_sequence = [False, True, False, True]
+    task_validator.completion_sequence = [False, False, True, False, True]
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
@@ -90,6 +92,8 @@ async def test_execute__if_feedback_history_exists__appends_feedback_section() -
         task_validator=task_validator,  # type: ignore[arg-type]
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
+
+    loop.state.set_plan_id("test-plan")
 
     # when
     await loop._run_unified_mode(
@@ -145,6 +149,8 @@ async def test_execute__if_multiple_feedbacks__includes_all_with_correct_numberi
         task_validator=task_validator,  # type: ignore[arg-type]
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
+
+    loop.state.set_plan_id("test-plan")
 
     # when
     await loop._run_unified_mode(

@@ -100,6 +100,8 @@ async def test_unified__if_task_incomplete__skips_verify_and_retries_execute(tes
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
+    loop.state.set_plan_id("test-plan")
+
     # when
     await loop._run_unified_mode("execute prompt", None, "verify prompt", None)
 
@@ -137,6 +139,8 @@ async def test_unified__if_task_complete_and_fully_done__exits_loop(test_plan_fi
         task_validator=task_validator,  # type: ignore[arg-type]
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
+
+    loop.state.set_plan_id("test-plan")
 
     # when
     await loop._run_unified_mode("execute prompt", None, "verify prompt", None)
@@ -183,6 +187,8 @@ async def test_unified__if_task_complete_but_not_fully_done__continues_with_feed
         task_validator=task_validator,  # type: ignore[arg-type]
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
+
+    loop.state.set_plan_id("test-plan")
 
     # when
     await loop._run_unified_mode("execute prompt", None, "verify prompt", None)

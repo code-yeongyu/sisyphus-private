@@ -43,6 +43,8 @@ async def test_execute_phase__if_sdk_exception__deletes_session_and_retries() ->
         status_manager=MockStatusManager("default"),  # type: ignore
     )
 
+    loop.state.set_plan_id("default")
+
     # when
     retry_count = 0
     max_retries = 3
@@ -51,7 +53,7 @@ async def test_execute_phase__if_sdk_exception__deletes_session_and_retries() ->
     while retry_count < max_retries:
         should_retry = False
         try:
-            await loop._execute_phase(prompt="Test prompt", extra=None)
+            await loop.phase_orchestrator.execute_phase(prompt="Test prompt", extra=None)
             success = True
             break
         except* RetryRequiredError:
@@ -93,6 +95,8 @@ async def test_execute_phase__if_sdk_exception_3_times__exits_phase() -> None:
         status_manager=MockStatusManager("default"),  # type: ignore
     )
 
+    loop.state.set_plan_id("default")
+
     # when
     retry_count = 0
     max_retries = 5
@@ -101,13 +105,13 @@ async def test_execute_phase__if_sdk_exception_3_times__exits_phase() -> None:
     while retry_count < max_retries:
         should_retry = False
         try:
-            await loop._execute_phase(prompt="Test prompt", extra=None)
+            await loop.phase_orchestrator.execute_phase(prompt="Test prompt", extra=None)
             break
         except* RetryRequiredError:
             retry_count += 1
             should_retry = True
 
-        if loop._should_exit_execute_phase:
+        if loop.state.should_exit_execute_phase():
             final_exception_raised = True
             break
 
@@ -150,7 +154,7 @@ async def test_verify_phase__if_sdk_exception__deletes_session_and_retries() -> 
     while retry_count < max_retries:
         should_retry = False
         try:
-            await loop._verify_phase(prompt="Test prompt", extra=None)
+            await loop.phase_orchestrator.verify_phase(prompt="Test prompt", extra=None)
             success = True
             break
         except* RetryRequiredError:

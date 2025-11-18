@@ -44,6 +44,8 @@ async def test_feedback_loop__scenario_1_immediate_success() -> None:
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
+    loop.state.set_plan_id("test-plan")
+
     # when
     await loop._run_unified_mode(
         execute_prompt="Do the work",
@@ -71,7 +73,7 @@ async def test_feedback_loop__scenario_2_task_incomplete_retry() -> None:
     session_store = MockSessionStore()
     logger_factory = MockLoggerFactory()
     task_validator = MockTaskValidator()
-    task_validator.completion_sequence = [False, False, False, True]
+    task_validator.completion_sequence = [False, False, False, False, True]
 
     loop = ExecutionLoop(
         execute_agent=execute_agent,  # type: ignore[arg-type]
@@ -82,6 +84,8 @@ async def test_feedback_loop__scenario_2_task_incomplete_retry() -> None:
         task_validator=task_validator,  # type: ignore[arg-type]
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
+
+    loop.state.set_plan_id("test-plan")
 
     # when
     await loop._run_unified_mode(
@@ -138,6 +142,8 @@ async def test_feedback_loop__scenario_3_verify_feedback_iteration() -> None:
         task_validator=task_validator,  # type: ignore[arg-type]
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
+
+    loop.state.set_plan_id("test-plan")
 
     # when
     await loop._run_unified_mode(

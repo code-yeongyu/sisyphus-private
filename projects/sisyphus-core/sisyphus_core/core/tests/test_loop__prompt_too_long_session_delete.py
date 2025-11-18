@@ -170,6 +170,8 @@ async def test_execution_loop__if_prompt_too_long_error__deletes_session(tmp_pat
         status_manager=MockStatusManager(),
     )
 
+    loop.state.set_plan_id("test-plan")
+
     # when
     await loop.run()
 
@@ -209,6 +211,8 @@ async def test_execution_loop__if_prompt_too_long_error__starts_new_session(
         task_validator=MockTaskValidator(all_complete=False, todolist_path=test_plan_file),
         status_manager=MockStatusManager(),
     )
+
+    loop.state.set_plan_id("test-plan")
 
     # when
     await loop.run()

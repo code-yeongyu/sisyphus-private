@@ -42,8 +42,10 @@ async def test_verify_phase__if_fully_done_true_in_message__returns_true_and_fee
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
+    loop.state.set_plan_id("test-plan")
+
     # when
-    feedback, fully_done = await loop._verify_phase("test prompt", None)
+    feedback, fully_done = await loop.phase_orchestrator.verify_phase("test prompt", None)
 
     # then
     assert fully_done is True
@@ -78,8 +80,10 @@ async def test_verify_phase__if_fully_done_false__returns_false_and_feedback() -
         status_manager=MockStatusManager(),  # type: ignore
     )
 
+    loop.state.set_plan_id("test-plan")
+
     # when
-    feedback, fully_done = await loop._verify_phase("test prompt", None)
+    feedback, fully_done = await loop.phase_orchestrator.verify_phase("test prompt", None)
 
     # then
     assert fully_done is False
@@ -114,8 +118,10 @@ async def test_verify_phase__if_multiple_messages__concatenates_with_newlines() 
         status_manager=MockStatusManager(),  # type: ignore
     )
 
+    loop.state.set_plan_id("test-plan")
+
     # when
-    feedback, fully_done = await loop._verify_phase("test prompt", None)
+    feedback, fully_done = await loop.phase_orchestrator.verify_phase("test prompt", None)
 
     # then
     assert "First message\n\nSecond message" == feedback
@@ -148,8 +154,10 @@ async def test_verify_phase__if_no_assistant_messages__returns_empty_string() ->
         status_manager=MockStatusManager(),  # type: ignore
     )
 
+    loop.state.set_plan_id("test-plan")
+
     # when
-    feedback, fully_done = await loop._verify_phase("test prompt", None)
+    feedback, fully_done = await loop.phase_orchestrator.verify_phase("test prompt", None)
 
     # then
     assert feedback == ""

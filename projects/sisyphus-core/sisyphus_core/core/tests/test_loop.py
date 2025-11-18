@@ -49,12 +49,11 @@ class MockAgent:
 
     def stream(self) -> AsyncIterator[AgentMessage]:
         async def _generator() -> AsyncIterator[AgentMessage]:
-            if self.response_sequence and not self._messages_consumed:
-                session_idx = self.session_count - 1
-                if 0 <= session_idx < len(self.response_sequence):
-                    for msg in self.response_sequence[session_idx]:
+            if self.response_sequence:
+                if self.message_index < len(self.response_sequence):
+                    for msg in self.response_sequence[self.message_index]:
                         yield msg
-                    self._messages_consumed = True
+                    self.message_index += 1
             elif not self._messages_consumed:
                 for msg in self.messages_to_return:
                     yield msg
@@ -304,13 +303,15 @@ async def test_execution_loop_execute_and_verify() -> None:
         status_manager=MockStatusManager(),  # type: ignore
     )
 
-    original_execute = loop._execute_phase
+    loop.state.set_plan_id("test-plan")
+
+    original_execute = loop.phase_orchestrator.execute_phase
 
     async def patched_execute_phase(prompt: str, extra: str | None = None) -> None:
         task_validator._all_complete = True
         await original_execute(prompt, extra)
 
-    loop._execute_phase = patched_execute_phase  # type: ignore[method-assign]
+    loop.phase_orchestrator.execute_phase = patched_execute_phase  # type: ignore[method-assign]
 
     # when
     await loop.run()
@@ -444,9 +445,11 @@ async def test_execution_loop_with_task_validator_incomplete() -> None:
         status_manager=MockStatusManager(),  # type: ignore[arg-type]
     )
 
+    loop.state.set_plan_id("test-plan")
+
     iteration_count = 0
 
-    original_run = loop._execute_phase
+    original_run = loop.phase_orchestrator.execute_phase
 
     async def patched_execute_phase(prompt: str, extra: str | None = None) -> None:
         nonlocal iteration_count
@@ -455,7 +458,7 @@ async def test_execution_loop_with_task_validator_incomplete() -> None:
             validator._all_complete = True
         await original_run(prompt, extra)
 
-    loop._execute_phase = patched_execute_phase  # type: ignore[method-assign]
+    loop.phase_orchestrator.execute_phase = patched_execute_phase  # type: ignore[method-assign]
 
     # when
     await loop.run()
@@ -584,8 +587,10 @@ async def test_verify_phase__if_middle_message_has_true_but_last_has_false__retu
         task_validator=task_validator,  # type: ignore[arg-type]
     )
 
+    loop.state.set_plan_id("test-plan")
+
     # when
-    feedback, fully_done = await loop._verify_phase(
+    feedback, fully_done = await loop.phase_orchestrator.verify_phase(
         prompt="Test prompt",
         extra=None,
     )
@@ -629,8 +634,10 @@ async def test_verify_phase__if_no_judgment__retries_until_found() -> None:
         task_validator=task_validator,  # type: ignore[arg-type]
     )
 
+    loop.state.set_plan_id("test-plan")
+
     # when
-    feedback, fully_done = await loop._verify_phase(
+    feedback, fully_done = await loop.phase_orchestrator.verify_phase(
         prompt="Test prompt",
         extra=None,
     )
@@ -662,8 +669,10 @@ async def test_verify_phase__if_max_retries_exceeded__defaults_to_false() -> Non
         task_validator=task_validator,  # type: ignore[arg-type]
     )
 
+    loop.state.set_plan_id("test-plan")
+
     # when
-    feedback, fully_done = await loop._verify_phase(
+    feedback, fully_done = await loop.phase_orchestrator.verify_phase(
         prompt="Test prompt",
         extra=None,
     )

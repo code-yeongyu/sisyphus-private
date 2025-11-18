@@ -46,6 +46,8 @@ async def test_execute_phase__after_resume__continues_phase(
         status_manager=MockStatusManager(),  # type: ignore
     )
 
+    loop.state.set_plan_id("test-plan")
+
     async def simulate_interrupt_and_resume() -> None:
         await anyio.sleep(0.05)
         loop.request_interrupt()
@@ -53,7 +55,7 @@ async def test_execute_phase__after_resume__continues_phase(
         loop.clear_interrupt()
 
     async with anyio.create_task_group() as tg:
-        tg.start_soon(loop._execute_phase, "test prompt", None)
+        tg.start_soon(loop.phase_orchestrator.execute_phase, "test prompt", None)
         tg.start_soon(simulate_interrupt_and_resume)
 
     assert "resumed message" in mock_execute_agent.sent_messages
@@ -85,7 +87,9 @@ async def test_execute_phase__normal_completion__ends_phase(
         status_manager=MockStatusManager(),  # type: ignore
     )
 
-    await loop._execute_phase("test prompt", None)
+    loop.state.set_plan_id("test-plan")
+
+    await loop.phase_orchestrator.execute_phase("test prompt", None)
 
     assert mock_execute_agent.closed
     assert len(mock_ui.messages) == 2
@@ -116,6 +120,8 @@ async def test_execute_phase__multiple_resumes__continues_each_time(
         task_validator=task_validator,  # type: ignore
         status_manager=MockStatusManager(),  # type: ignore
     )
+
+    loop.state.set_plan_id("test-plan")
 
     async def simulate_multiple_interrupts() -> None:
         await anyio.sleep(0.05)
@@ -159,6 +165,8 @@ async def test_verify_phase__after_resume__continues_phase(
         task_validator=task_validator,  # type: ignore
     )
 
+    loop.state.set_plan_id("test-plan")
+
     async def simulate_interrupt_and_resume() -> None:
         await anyio.sleep(0.05)
         loop.request_interrupt()
@@ -166,7 +174,7 @@ async def test_verify_phase__after_resume__continues_phase(
         loop.clear_interrupt()
 
     async with anyio.create_task_group() as tg:
-        tg.start_soon(lambda: loop._verify_phase("test prompt", None))
+        tg.start_soon(lambda: loop.phase_orchestrator.verify_phase("test prompt", None))
         tg.start_soon(simulate_interrupt_and_resume)
 
     assert "resumed message" in mock_verify_agent.sent_messages
@@ -196,7 +204,9 @@ async def test_verify_phase__normal_completion__ends_phase(
         task_validator=task_validator,  # type: ignore
     )
 
-    feedback, fully_done = await loop._verify_phase("test prompt", None)
+    loop.state.set_plan_id("test-plan")
+
+    feedback, fully_done = await loop.phase_orchestrator.verify_phase("test prompt", None)
 
     assert mock_verify_agent.closed
     assert len(mock_ui.messages) == 2

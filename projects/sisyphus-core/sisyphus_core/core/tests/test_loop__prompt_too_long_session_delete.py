@@ -11,7 +11,7 @@ import pytest
 
 from sisyphus_core.core.loop import ExecutionLoop
 from sisyphus_core.core.session import SessionStore
-from sisyphus_core.core.tests.test_loop import MockAgent
+from sisyphus_core.core.tests.test_loop import MockAgent, MockStatusManager
 from sisyphus_core.utils.errors import PromptTooLongError
 from sisyphus_core.utils.types import AgentMessage
 
@@ -167,6 +167,7 @@ async def test_execution_loop__if_prompt_too_long_error__deletes_session(tmp_pat
         session_store=session_store,
         logger_factory=logger_factory,
         task_validator=MockTaskValidator(all_complete=False, todolist_path=test_plan_file),
+        status_manager=MockStatusManager(),
     )
 
     # when
@@ -206,6 +207,7 @@ async def test_execution_loop__if_prompt_too_long_error__starts_new_session(
         session_store=session_store,
         logger_factory=logger_factory,
         task_validator=MockTaskValidator(all_complete=False, todolist_path=test_plan_file),
+        status_manager=MockStatusManager(),
     )
 
     # when

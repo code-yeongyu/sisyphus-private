@@ -136,9 +136,15 @@ class ExecutionLoop:
         try:
             plan_path = await self._resolve_plan_path_from_status()
             execute_prompt, verify_prompt, resolved_plan_path = await self._initialize_from_plan(plan_path)
-        except ValueError:
-            # No plan set → use defaults
-            self._current_plan_id = "default"
+        except (ValueError, FileNotFoundError):
+            # No plan set or plan file not found → use defaults
+            if self.status_manager:
+                try:
+                    self._current_plan_id = await self.status_manager.get_plan_id()
+                except Exception:
+                    self._current_plan_id = "default"
+            else:
+                self._current_plan_id = "default"
             # execute_prompt, verify_prompt already initialized above
 
         await self._run_unified_mode(execute_prompt, execute_extra, verify_prompt, verify_extra)

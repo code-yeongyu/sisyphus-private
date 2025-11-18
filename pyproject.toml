@@ -3,12 +3,16 @@ name = "sisyphus-workspace"
 version = "0.1.0"
 requires-python = ">=3.12"
 description = "Sisyphus monorepo workspace"
+dependencies = [
+    "sisyphus-speckit",
+]
 
 [tool.uv.workspace]
 members = ["projects/*"]
 
 [tool.uv.sources]
 sisyphus-core = { workspace = true }
+sisyphus-speckit = { workspace = true }
 
 [dependency-groups]
 dev = [

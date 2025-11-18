@@ -120,7 +120,7 @@ def _display_verification_guidance(current_task: Todo) -> None:
             "[bold]sisyphus-speckit task verify manual-mark <verify-id> --evidence '...'[/bold]"
         )
 
-    console.print("\n  [cyan]●[/cyan] 전체 검증 상태 확인: [bold]sisyphus-speckit task verify status[/bold]")
+    console.print("\n  [cyan]●[/cyan] 전체 검증 상태 확인: [bold]sisyphus-speckit plan status[/bold]")
 
 
 def _display_verification_status_table(

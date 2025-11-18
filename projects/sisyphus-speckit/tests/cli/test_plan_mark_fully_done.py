@@ -108,7 +108,7 @@ def test_mark_fully_done__if_valid_evidence__marks_fully_done(tmp_path: Path) ->
     result = runner.invoke(
         plan_app,
         [
-            "mark-fully-done",
+            "mark fully-done",
             "--evidence",
             "All tasks completed, all tests pass, documentation updated, PR reviewed and merged",
             "--cwd",
@@ -141,7 +141,7 @@ def test_mark_fully_done__if_no_current_plan__returns_error(tmp_path: Path) -> N
     result = runner.invoke(
         plan_app,
         [
-            "mark-fully-done",
+            "mark fully-done",
             "--evidence",
             "test evidence",
             "--cwd",
@@ -185,7 +185,7 @@ def test_mark_fully_done__if_no_work_plans__returns_error(tmp_path: Path) -> Non
     result = runner.invoke(
         plan_app,
         [
-            "mark-fully-done",
+            "mark fully-done",
             "--evidence",
             "test evidence",
             "--cwd",

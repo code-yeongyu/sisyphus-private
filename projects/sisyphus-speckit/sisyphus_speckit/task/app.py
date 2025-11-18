@@ -13,7 +13,6 @@ from sisyphus_speckit.task.verify.llm import verify_llm
 from sisyphus_speckit.task.verify.llm_mark import verify_llm_mark
 from sisyphus_speckit.task.verify.manual import verify_manual
 from sisyphus_speckit.task.verify.manual_mark import verify_manual_mark
-from sisyphus_speckit.task.verify.status import verify_status
 
 task_app = typer.Typer(name="task", help="Task navigation and verification commands")
 verify_app = typer.Typer(name="verify", help="Verification management commands")
@@ -32,4 +31,3 @@ verify_app.command(name="llm")(verify_llm)
 verify_app.command(name="llm-mark")(verify_llm_mark)
 verify_app.command(name="manual")(verify_manual)
 verify_app.command(name="manual-mark")(verify_manual_mark)
-verify_app.command(name="status")(verify_status)

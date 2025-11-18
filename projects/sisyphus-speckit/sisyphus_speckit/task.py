@@ -76,7 +76,8 @@ def _format_task_display(
     lines = []
     lines.append(f"[bold cyan]작업 ID:[/bold cyan] {task.id}")
     lines.append(f"[bold cyan]제목:[/bold cyan] {task.title}")
-    lines.append(f"[bold cyan]상태:[/bold cyan] {task.status.value}")
+    if task.status:
+        lines.append(f"[bold cyan]상태:[/bold cyan] {task.status.value}")
 
     if task.description:
         lines.append(f"[bold cyan]설명:[/bold cyan] {task.description}")
@@ -94,7 +95,12 @@ def _format_task_display(
     if show_children and task.children:
         lines.append(f"[bold cyan]하위 작업:[/bold cyan] {len(task.children)}개")
         for child in task.children:
-            lines.append(f"  - [{child.status.value}] {child.id}: {child.title}")
+            if child.verification_spec:
+                all_verified = all(v.verified for v in child.verification_spec)
+                status_display = "완료" if all_verified else "미완료"
+            else:
+                status_display = "완료"
+            lines.append(f"  - [{status_display}] {child.id}: {child.title}")
 
     if show_verification and task.verification_spec:
         verified_count = sum(1 for v in task.verification_spec if v.verified)
@@ -178,10 +184,6 @@ def _display_verification_status_table(
                 collect_verifications(todo.children, prefix=f"{prefix}{todo.title} > ")
 
     collect_verifications(work_plan.todos)
-
-    if not all_verifications:
-        console.print("[yellow]검증 항목이 없습니다.[/yellow]")
-        return
 
     verified_count = sum(1 for _, _, item in all_verifications if item.verified)
     total_count = len(all_verifications)
@@ -455,7 +457,7 @@ def continue_work(
             collect_all_todos(work_plan.todos)
 
             if len(all_todos) > 0:
-                all_completed = all(t.status == TodoStatus.completed for t in all_todos)
+                all_completed = all(t.computed_status == TodoStatus.completed for t in all_todos)
 
                 all_verified = True
                 for todo in all_todos:
@@ -485,7 +487,9 @@ def continue_work(
                 completed = report.children_summary["completed"]
                 total = sum(report.children_summary.values())
                 console.print(f"[yellow]❌ 하위 작업 미완료: {completed}/{total} 완료[/yellow]")
-                console.print("[dim]   → 모든 하위 작업을 완료한 후 다시 시도하세요[/dim]\n")
+                console.print(
+                    "[dim]   → 모든 하위 작업을 완료한 후, 검증항목을 모두 통과 시킨 후 다시 시도하세요[/dim]\n"
+                )
 
             if current_task.verification_spec:
                 console.print("[bold yellow]📋 검증 순서 (반드시 순차적으로 진행):[/bold yellow]")

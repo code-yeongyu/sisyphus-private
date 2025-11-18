@@ -213,13 +213,14 @@ work_plans:
 class MockStatusManager:
     """Mock StatusManager for testing."""
 
-    def __init__(self, plan_id: str = "test-plan") -> None:
+    def __init__(self, plan_id: str = "test-plan", plan_path: str | None = None) -> None:
         self.plan_id = plan_id
+        self._plan_path = plan_path or ".sisyphus/tasks/test-plan.yaml"
 
     async def get(self) -> StatusFile:
         return StatusFile(
             current_plan=CurrentPlan(
-                plan_path=".sisyphus/tasks/test-plan.yaml",
+                plan_path=self._plan_path,
                 plan_root=".sisyphus/tasks",
                 updated_at="2025-11-10T00:00:00Z",
             )

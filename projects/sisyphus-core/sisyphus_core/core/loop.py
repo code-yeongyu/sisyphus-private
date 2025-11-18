@@ -249,9 +249,9 @@ class ExecutionLoop:
 
         if self.task_validator:
             content = self.task_validator.read_content()
-            goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
-            checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
-            if goals_accomplished and checkboxes_completed:
+            goals = await self.task_validator.check_all_goals_accomplished(content)
+            checkboxes = await self.task_validator.check_all_checkboxes_completed(content)
+            if goals and checkboxes:
                 await self.ui.show_status("✅ All tasks already completed. Starting Verify phase...")
 
         while True:
@@ -334,13 +334,13 @@ class ExecutionLoop:
         Returns:
             True if should verify, False otherwise
         """
-        # Force verify after 10 consecutive executes
-        if self.state.check_force_verify():
+        should_verify = self.state.check_force_verify()
+
+        if should_verify:
             await self.ui.show_status(
                 f"⚠️  Execute phase repeated {self.state._consecutive_execute_count} times consecutively. "
                 f"Forcing Verify phase to break potential infinite loop."
             )
-            return True
 
         # Check execution.completed from plan
         if self.status_manager:
@@ -350,21 +350,22 @@ class ExecutionLoop:
                     plan_path_obj = Path(status.current_plan.plan_path)
                     plan_doc = await load_plan(plan_path_obj)
                     if plan_doc.work_plans:
-                        return plan_doc.work_plans[0].execution.completed
+                        execution_completed = plan_doc.work_plans[0].execution.completed
+                        should_verify = should_verify or execution_completed
             except Exception:
                 # Fallback to task_validator
                 if self.task_validator:
                     content = self.task_validator.read_content()
                     goals = await self.task_validator.check_all_goals_accomplished(content)
                     checkboxes = await self.task_validator.check_all_checkboxes_completed(content)
-                    return goals and checkboxes
+                    should_verify = should_verify or (goals and checkboxes)
         elif self.task_validator:
             content = self.task_validator.read_content()
             goals = await self.task_validator.check_all_goals_accomplished(content)
             checkboxes = await self.task_validator.check_all_checkboxes_completed(content)
-            return goals and checkboxes
+            should_verify = should_verify or (goals and checkboxes)
 
-        return False
+        return should_verify
 
     async def _build_execute_prompt(
         self,

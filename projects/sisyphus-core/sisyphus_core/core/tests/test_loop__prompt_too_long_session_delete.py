@@ -116,16 +116,17 @@ class MockUI:
 
 
 class MockTaskValidator:
-    def __init__(self, all_complete: bool = False, todolist_path: Path | None = None) -> None:
+    def __init__(self, all_complete: bool = False, todolist_path: Path | None = None, complete_after: int = 6) -> None:
         self._all_complete = all_complete
         self.call_count = 0
         self.todolist_path = todolist_path or Path(".sisyphus/tasks/test-plan.yaml")
+        self.complete_after = complete_after
 
     def read_content(self) -> str:
         return "mock content"
 
     async def check_all_goals_accomplished(self, content: str | None = None) -> bool:
-        if self.call_count >= 2:
+        if self.call_count >= self.complete_after:
             return True
         return self._all_complete
 
@@ -166,7 +167,7 @@ async def test_execution_loop__if_prompt_too_long_error__deletes_session(tmp_pat
         ui=ui,
         session_store=session_store,
         logger_factory=logger_factory,
-        task_validator=MockTaskValidator(all_complete=False, todolist_path=test_plan_file),
+        task_validator=MockTaskValidator(all_complete=False, todolist_path=test_plan_file, complete_after=6),
         status_manager=MockStatusManager(),
     )
 
@@ -208,7 +209,7 @@ async def test_execution_loop__if_prompt_too_long_error__starts_new_session(
         ui=ui,
         session_store=session_store,
         logger_factory=logger_factory,
-        task_validator=MockTaskValidator(all_complete=False, todolist_path=test_plan_file),
+        task_validator=MockTaskValidator(all_complete=False, todolist_path=test_plan_file, complete_after=4),
         status_manager=MockStatusManager(),
     )
 

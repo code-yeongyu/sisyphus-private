@@ -146,6 +146,8 @@ async def test_verify_phase__if_sdk_exception__deletes_session_and_retries() -> 
         status_manager=MockStatusManager("default"),  # type: ignore[arg-type]
     )
 
+    loop.state.set_plan_id("default")
+
     # when
     retry_count = 0
     max_retries = 3

@@ -134,7 +134,7 @@ async def test_execute_phase__multiple_resumes__continues_each_time(
         loop.clear_interrupt()
 
     async with anyio.create_task_group() as tg:
-        tg.start_soon(loop._execute_phase, "test prompt", None)
+        tg.start_soon(loop.phase_orchestrator.execute_phase, "test prompt", None)
         tg.start_soon(simulate_multiple_interrupts)
 
     assert "resume 1" in mock_execute_agent.sent_messages

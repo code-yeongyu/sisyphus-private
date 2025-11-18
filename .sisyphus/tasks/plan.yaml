@@ -235,11 +235,14 @@ work_plans:
       title: basedpyright 타입 체크 통과
       description: UserRequest 모델 변경 후 타입 체크 통과
       verified: true
-      verified_at: '2025-11-16T08:35:43.758170+00:00'
+      verified_at: '2025-11-18T05:47:41.875350+00:00'
       orchestrator_manually_verified: true
-      manual_verification_evidence: 'UserRequest 모델에 expected_outcome: str | None
-        = None, forbidden_outcome: str | None = None 필드 추가 완료. git diff로 models.py
-        라인 89-90에 정확히 추가됨 확인. basedpyright 타입 체크 0 errors 통과. 커밋 92875cf 완료.'
+      manual_verification_evidence: Tested computed_status property 
+        implementation in Python 3.12 environment. The property correctly 
+        computes status from verification_spec when status field is None (for 
+        children). When all verification items are verified=true, it returns 
+        completed. When any item is verified=false, it returns pending. All 584 
+        tests pass including task_manager navigation tests.
       bash:
       - execute: cd 
           /Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-core && uv 

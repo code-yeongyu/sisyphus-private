@@ -132,118 +132,75 @@ class ExecutionLoop:
         verify_prompt = ""
         resolved_plan_path: str | None = None
 
-        # Priority 1: Try status_manager first (if available)
-        if self.status_manager:
-            try:
-                status_file = await self.status_manager.get()
-                if status_file.current_plan and status_file.current_plan.plan_path:
-                    plan_path = Path(status_file.current_plan.plan_path)
-                    resolved_plan_path = str(plan_path)
-                    plan_doc = await load_plan(plan_path)
-
-                    if not plan_doc.work_plans:
-                        self._current_plan_id = "default"
-                    else:
-                        self._current_plan_id = plan_doc.work_plans[0].id
-
-                    uncompleted_todos = []
-                    for plan in plan_doc.work_plans:
-                        for todo in plan.todos:
-                            if todo.status != "completed":
-                                uncompleted_todos.append(f"  - [{todo.id}] {todo.title}")
-
-                    todo_summary = "\n".join(uncompleted_todos[:10]) if uncompleted_todos else "All tasks completed"
-                    if len(uncompleted_todos) > 10:
-                        todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
-
-                    execute_prompt = build_execute_prompt(resolved_plan_path, todo_summary)
-                    verify_prompt = build_verify_prompt(resolved_plan_path)
-                else:
-                    # status.json exists but no current_plan → fallback to task_validator
-                    if self.task_validator and self.task_validator.todolist_path:
-                        resolved_plan_path = str(self.task_validator.todolist_path)
-                        plan_doc = await load_plan(self.task_validator.todolist_path)
-
-                        if not plan_doc.work_plans:
-                            self._current_plan_id = "default"
-                        else:
-                            self._current_plan_id = plan_doc.work_plans[0].id
-
-                        uncompleted_todos = []
-                        for plan in plan_doc.work_plans:
-                            for todo in plan.todos:
-                                if todo.status != "completed":
-                                    uncompleted_todos.append(f"  - [{todo.id}] {todo.title}")
-
-                        todo_summary = (
-                            "\n".join(uncompleted_todos[:10]) if uncompleted_todos else "All tasks completed"
-                        )
-                        if len(uncompleted_todos) > 10:
-                            todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
-
-                        execute_prompt = build_execute_prompt(resolved_plan_path, todo_summary)
-                        verify_prompt = build_verify_prompt(resolved_plan_path)
-                    else:
-                        self._current_plan_id = "default"
-            except Exception:
-                # If status.json read fails, fallback to task_validator
-                if self.task_validator and self.task_validator.todolist_path:
-                    try:
-                        resolved_plan_path = str(self.task_validator.todolist_path)
-                        plan_doc = await load_plan(self.task_validator.todolist_path)
-
-                        if not plan_doc.work_plans:
-                            self._current_plan_id = "default"
-                        else:
-                            self._current_plan_id = plan_doc.work_plans[0].id
-
-                        uncompleted_todos = []
-                        for plan in plan_doc.work_plans:
-                            for todo in plan.todos:
-                                if todo.status != "completed":
-                                    uncompleted_todos.append(f"  - [{todo.id}] {todo.title}")
-
-                        todo_summary = (
-                            "\n".join(uncompleted_todos[:10]) if uncompleted_todos else "All tasks completed"
-                        )
-                        if len(uncompleted_todos) > 10:
-                            todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
-
-                        execute_prompt = build_execute_prompt(resolved_plan_path, todo_summary)
-                        verify_prompt = build_verify_prompt(resolved_plan_path)
-                    except Exception:
-                        self._current_plan_id = "default"
-                else:
-                    self._current_plan_id = "default"
-        # Priority 2: Fallback to task_validator (backward compatibility)
-        elif self.task_validator and self.task_validator.todolist_path:
-            try:
-                resolved_plan_path = str(self.task_validator.todolist_path)
-                plan_doc = await load_plan(self.task_validator.todolist_path)
-
-                if not plan_doc.work_plans:
-                    self._current_plan_id = "default"
-                else:
-                    self._current_plan_id = plan_doc.work_plans[0].id
-
-                uncompleted_todos = []
-                for plan in plan_doc.work_plans:
-                    for todo in plan.todos:
-                        if todo.status != "completed":
-                            uncompleted_todos.append(f"  - [{todo.id}] {todo.title}")
-
-                todo_summary = "\n".join(uncompleted_todos[:10]) if uncompleted_todos else "All tasks completed"
-                if len(uncompleted_todos) > 10:
-                    todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
-
-                execute_prompt = build_execute_prompt(resolved_plan_path, todo_summary)
-                verify_prompt = build_verify_prompt(resolved_plan_path)
-            except Exception:
-                self._current_plan_id = "default"
-        else:
+        # Single source: status_manager only
+        try:
+            plan_path = await self._resolve_plan_path_from_status()
+            execute_prompt, verify_prompt, resolved_plan_path = await self._initialize_from_plan(plan_path)
+        except ValueError:
+            # No plan set → use defaults
             self._current_plan_id = "default"
+            # execute_prompt, verify_prompt already initialized above
 
         await self._run_unified_mode(execute_prompt, execute_extra, verify_prompt, verify_extra)
+
+    async def _resolve_plan_path_from_status(self) -> Path:
+        """Resolve plan path from status_manager (single source of truth).
+
+        Returns:
+            Path: Resolved plan path
+
+        Raises:
+            ValueError: If status_manager is None or current_plan is not set
+        """
+        if not self.status_manager:
+            raise ValueError(
+                "status_manager is required. "
+                "task_validator.todolist_path fallback has been removed in v3.0. "
+                "Please set status_manager in ExecutionLoop initialization."
+            )
+
+        status_file = await self.status_manager.get()
+        if not status_file.current_plan or not status_file.current_plan.plan_path:
+            raise ValueError(
+                "current_plan is not set in status.json. "
+                "Please run 'sisyphus-speckit plan init' or set current plan first."
+            )
+
+        return Path(status_file.current_plan.plan_path)
+
+    async def _initialize_from_plan(
+        self,
+        plan_path: Path,
+    ) -> tuple[str, str, str]:
+        """Initialize plan context from plan path (DRY - used once).
+
+        Args:
+            plan_path: Path to YAML plan file
+
+        Returns:
+            Tuple of (execute_prompt, verify_prompt, resolved_plan_path_str)
+        """
+        plan_doc = await load_plan(plan_path)
+
+        if not plan_doc.work_plans:
+            self._current_plan_id = "default"
+        else:
+            self._current_plan_id = plan_doc.work_plans[0].id
+
+        uncompleted_todos = []
+        for plan in plan_doc.work_plans:
+            for todo in plan.todos:
+                if todo.status != "completed":
+                    uncompleted_todos.append(f"  - [{todo.id}] {todo.title}")
+
+        todo_summary = "\n".join(uncompleted_todos[:10]) if uncompleted_todos else "All tasks completed"
+        if len(uncompleted_todos) > 10:
+            todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
+
+        execute_prompt = build_execute_prompt(str(plan_path), todo_summary)
+        verify_prompt = build_verify_prompt(str(plan_path))
+
+        return (execute_prompt, verify_prompt, str(plan_path))
 
     async def _run_unified_mode(
         self,

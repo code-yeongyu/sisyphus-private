@@ -104,7 +104,7 @@ work_plans:
     orchestrator_manually_verified: false
     manual_verification_evidence: ''
     bash:
-    - execute: sisyphus-speckit plan mark fully-done --help
+    - execute: sisyphus-speckit plan "mark fully-done" --help
       expected_stdout: Usage
       expected_exit_code: 0
     llm_judge: []

@@ -56,8 +56,8 @@ async def test_claude__if_result_message_has_prompt_too_long_error__raises_promp
 
     mock_sdk_client.receive_response = mock_receive
 
-    with patch("sisyphus.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
-        with patch("sisyphus.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
+    with patch("sisyphus_core.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
+        with patch("sisyphus_core.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
             await agent.initialize()
             await agent.start_session()
 
@@ -93,8 +93,8 @@ async def test_claude__if_assistant_message_mentions_prompt_too_long__yields_nor
 
     mock_sdk_client.receive_response = mock_receive
 
-    with patch("sisyphus.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
-        with patch("sisyphus.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
+    with patch("sisyphus_core.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
+        with patch("sisyphus_core.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
             await agent.initialize()
             await agent.start_session()
 
@@ -129,8 +129,8 @@ async def test_claude__if_result_message_has_other_sdk_error__raises_runtime_err
 
     mock_sdk_client.receive_response = mock_receive
 
-    with patch("sisyphus.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
-        with patch("sisyphus.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
+    with patch("sisyphus_core.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
+        with patch("sisyphus_core.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
             await agent.initialize()
             await agent.start_session()
 

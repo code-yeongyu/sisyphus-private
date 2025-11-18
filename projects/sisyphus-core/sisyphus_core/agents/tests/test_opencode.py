@@ -114,7 +114,7 @@ async def test_server_auto_start() -> None:
     mock_process = Mock(spec=anyio.abc.Process)
 
     with patch(
-        "sisyphus.agents.opencode.ProcessManager.run_with_timeout",
+        "sisyphus_core.agents.opencode.ProcessManager.run_with_timeout",
         return_value=mock_process,
     ) as mock_run:
         # when
@@ -137,7 +137,7 @@ async def test_server_start_failure() -> None:
     agent._auto_port = 4096
 
     with patch(
-        "sisyphus.agents.opencode.ProcessManager.run_with_timeout",
+        "sisyphus_core.agents.opencode.ProcessManager.run_with_timeout",
         side_effect=Exception("Connection refused"),
     ):
         # when / then
@@ -530,7 +530,7 @@ async def test_close_cleanup() -> None:
     agent._client = mock_client
     agent._process = mock_process
 
-    with patch("sisyphus.agents.opencode.ProcessManager.terminate_gracefully") as mock_terminate:
+    with patch("sisyphus_core.agents.opencode.ProcessManager.terminate_gracefully") as mock_terminate:
         # when
         await agent.close()
 

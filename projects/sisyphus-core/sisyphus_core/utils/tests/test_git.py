@@ -20,7 +20,7 @@ pytestmark = [pytest.mark.anyio]
 
 def test_run_git_command__if_command_succeeds__returns_tuple() -> None:
     # given
-    with patch("sisyphus.utils.git.subprocess.run") as mock_run:
+    with patch("sisyphus_core.utils.git.subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout="master",
@@ -39,7 +39,7 @@ def test_run_git_command__if_command_succeeds__returns_tuple() -> None:
 
 def test_run_git_command__if_git_not_found__returns_error_code() -> None:
     # given
-    with patch("sisyphus.utils.git.subprocess.run") as mock_run:
+    with patch("sisyphus_core.utils.git.subprocess.run") as mock_run:
         mock_run.side_effect = FileNotFoundError()
 
         # when
@@ -53,7 +53,7 @@ def test_run_git_command__if_git_not_found__returns_error_code() -> None:
 
 def test_detect_base_branch__if_origin_main_exists__returns_origin_main() -> None:
     # given
-    with patch("sisyphus.utils.git.subprocess.run") as mock_run:
+    with patch("sisyphus_core.utils.git.subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout="refs/remotes/origin/main",
@@ -69,7 +69,7 @@ def test_detect_base_branch__if_origin_main_exists__returns_origin_main() -> Non
 
 def test_detect_base_branch__if_no_branch_exists__returns_none() -> None:
     # given
-    with patch("sisyphus.utils.git.subprocess.run") as mock_run:
+    with patch("sisyphus_core.utils.git.subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(
             returncode=1,
             stdout="",
@@ -85,7 +85,7 @@ def test_detect_base_branch__if_no_branch_exists__returns_none() -> None:
 
 def test_is_on_main_branch__if_on_main__returns_true() -> None:
     # given
-    with patch("sisyphus.utils.git.subprocess.run") as mock_run:
+    with patch("sisyphus_core.utils.git.subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout="main",
@@ -101,7 +101,7 @@ def test_is_on_main_branch__if_on_main__returns_true() -> None:
 
 def test_is_on_main_branch__if_on_master__returns_true() -> None:
     # given
-    with patch("sisyphus.utils.git.subprocess.run") as mock_run:
+    with patch("sisyphus_core.utils.git.subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout="master",
@@ -117,7 +117,7 @@ def test_is_on_main_branch__if_on_master__returns_true() -> None:
 
 def test_is_on_main_branch__if_on_feature_branch__returns_false() -> None:
     # given
-    with patch("sisyphus.utils.git.subprocess.run") as mock_run:
+    with patch("sisyphus_core.utils.git.subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout="feature-branch",
@@ -175,7 +175,7 @@ def test_find_commits_with_files__if_commits_found__returns_list() -> None:
         "abc123\x1fAdd feature\x1f\nai-todolist.md\nsessions/test.json\x00\x00"
         "def456\x1fAnother commit\x1f\nlogs/test.log\x00"
     )
-    with patch("sisyphus.utils.git.subprocess.run") as mock_run:
+    with patch("sisyphus_core.utils.git.subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout=mock_stdout,
@@ -198,7 +198,7 @@ def test_find_commits_with_files__if_commits_found__returns_list() -> None:
 
 def test_find_commits_with_files__if_no_commits__returns_empty_list() -> None:
     # given
-    with patch("sisyphus.utils.git.subprocess.run") as mock_run:
+    with patch("sisyphus_core.utils.git.subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(
             returncode=1,
             stdout="",
@@ -214,7 +214,7 @@ def test_find_commits_with_files__if_no_commits__returns_empty_list() -> None:
 
 def test_find_commits_with_files__if_no_files_match__returns_empty_list() -> None:
     # given
-    with patch("sisyphus.utils.git.subprocess.run") as mock_run:
+    with patch("sisyphus_core.utils.git.subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout="abc123\x1fAdd feature\x1f\x00README.md\x00\x00",

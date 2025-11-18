@@ -190,13 +190,34 @@ class Todo(BaseModel):
     id: str
     title: str
     description: str | None = None
-    status: TodoStatus
+    status: TodoStatus | None = None
     children: list[Todo] | None = None
     references: list[ReferenceItem] = []
     verification_spec: list[VerificationItem] = []
     parallel: bool = False
     parallelable_and_safe_evidence: str | None = None
     acceptance_criteria: list[AcceptanceCriteriaItem] = []
+
+    @property
+    def computed_status(self) -> TodoStatus:
+        """Compute status from verification_spec.
+
+        Rules:
+        - If status field exists (not None): use it (for parent tasks)
+        - If status is None (children): compute from verification_spec
+          - All verified → completed
+          - No verification_spec → completed (leaf node without verification)
+          - Any unverified → pending
+        """
+        if self.status is not None:
+            return self.status
+
+        # status=None → compute from verification_spec
+        if not self.verification_spec:
+            return TodoStatus.completed
+
+        all_verified = all(v.verified for v in self.verification_spec)
+        return TodoStatus.completed if all_verified else TodoStatus.pending
 
 
 class AcceptanceCriteriaChecklist(BaseModel):
@@ -268,7 +289,6 @@ class WorkPlan(BaseModel):
             for checklist in criteria.checklists:
                 checklist.checked_at = None
                 checklist.checked_evidence = None
-
 
     def set_fully_done_at(self, value: str | None) -> None:
         """Set fully_done_at and automatically reset acceptance criteria if value is None.

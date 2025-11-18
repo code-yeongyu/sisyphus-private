@@ -237,7 +237,7 @@ def build_verify_prompt(plan_path: str) -> str:
         "**VERIFICATION WORKFLOW - 3 SEQUENTIAL PHASES**:\n\n"
         "You MUST complete these phases IN ORDER. Do NOT skip or reorder them:\n\n"
         "**PHASE 1: plan verify-final** → Verify all final_verification items\n"
-        "**PHASE 2: plan mark-fully-done** → Mark the entire plan as fully done with evidence\n"
+        "**PHASE 2: plan mark fully-done** → Mark the entire plan as fully done with evidence\n"
         "**PHASE 3: plan accept-as-verification-agent** → Accept all acceptance criteria checklists\n\n"
         "Each phase builds on the previous one. If ANY phase fails, stop and report FULLY_DONE = FALSE.\n\n"
         "---\n\n"
@@ -427,7 +427,7 @@ def build_verify_prompt(plan_path: str) -> str:
         "If you are absolutely certain that ALL work is genuinely complete and working:\n"
         "→ **FIRST**, run this command to mark the plan as fully done:\n"
         "   ```bash\n"
-        '   sisyphus-speckit plan mark-fully-done --evidence "<comprehensive completion evidence>"\n'
+        '   sisyphus-speckit plan mark fully-done --evidence "<comprehensive completion evidence>"\n'
         "   ```\n"
         "   Evidence should include: all tasks completed, tests passed, documentation updated, etc.\n"
         "→ **THEN**, after the command completes successfully, say `FULLY_DONE = TRUE` as the final message\n\n"

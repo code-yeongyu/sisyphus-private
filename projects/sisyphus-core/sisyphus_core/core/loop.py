@@ -137,25 +137,8 @@ class ExecutionLoop:
             plan_path = await self._resolve_plan_path_from_status()
             execute_prompt, verify_prompt, resolved_plan_path = await self._initialize_from_plan(plan_path)
         except (ValueError, FileNotFoundError):
-            # No plan set or plan file not found → use defaults
-            if self.status_manager:
-                try:
-                    # MockStatusManager has get_plan_id() for testing
-                    if hasattr(self.status_manager, "get_plan_id"):
-                        self._current_plan_id = await self.status_manager.get_plan_id()  # type: ignore
-                    else:
-                        status = await self.status_manager.get()
-                        if status.current_plan:
-                            plan_path = Path(status.current_plan.plan_path)
-                            plan = await load_plan(plan_path)
-                            self._current_plan_id = plan.work_plans[0].id if plan.work_plans else "default"
-                        else:
-                            self._current_plan_id = "default"
-                except Exception:
-                    self._current_plan_id = "default"
-            else:
-                self._current_plan_id = "default"
-            # execute_prompt, verify_prompt already initialized above
+            if not self._current_plan_id:
+                self._current_plan_id = await self._resolve_plan_id()
 
         await self._run_unified_mode(execute_prompt, execute_extra, verify_prompt, verify_extra)
 
@@ -217,6 +200,30 @@ class ExecutionLoop:
         verify_prompt = build_verify_prompt(str(plan_path))
 
         return (execute_prompt, verify_prompt, str(plan_path))
+
+    async def _resolve_plan_id(self) -> str:
+        """Resolve plan ID from status_manager (single source of truth).
+
+        Returns:
+            str: Plan ID or "default" if not available
+        """
+        if not self.status_manager:
+            return "default"
+
+        # MockStatusManager support (testing)
+        if hasattr(self.status_manager, "get_plan_id"):
+            return await self.status_manager.get_plan_id()  # type: ignore
+
+        try:
+            status = await self.status_manager.get()
+            if status.current_plan:
+                plan_path = Path(status.current_plan.plan_path)
+                plan = await load_plan(plan_path)
+                return plan.work_plans[0].id if plan.work_plans else "default"
+        except Exception:
+            pass
+
+        return "default"
 
     async def _run_unified_mode(
         self,
@@ -485,16 +492,8 @@ class ExecutionLoop:
 
         await self.execute_agent.initialize()
 
-        if not self._current_plan_id and self.status_manager:
-            # MockStatusManager has get_plan_id() for testing
-            if hasattr(self.status_manager, "get_plan_id"):
-                self._current_plan_id = await self.status_manager.get_plan_id()  # type: ignore
-            else:
-                status = await self.status_manager.get()
-                if status.current_plan:
-                    plan_path = Path(status.current_plan.plan_path)
-                    plan = await load_plan(plan_path)
-                    self._current_plan_id = plan.work_plans[0].id if plan.work_plans else "default"
+        if not self._current_plan_id:
+            self._current_plan_id = await self._resolve_plan_id()
 
         if not self._current_plan_id:
             raise ValueError("plan_id is required for session management")
@@ -701,16 +700,8 @@ class ExecutionLoop:
 
         await self.verify_agent.initialize()
 
-        if not self._current_plan_id and self.status_manager:
-            # MockStatusManager has get_plan_id() for testing
-            if hasattr(self.status_manager, "get_plan_id"):
-                self._current_plan_id = await self.status_manager.get_plan_id()  # type: ignore
-            else:
-                status = await self.status_manager.get()
-                if status.current_plan:
-                    plan_path = Path(status.current_plan.plan_path)
-                    plan = await load_plan(plan_path)
-                    self._current_plan_id = plan.work_plans[0].id if plan.work_plans else "default"
+        if not self._current_plan_id:
+            self._current_plan_id = await self._resolve_plan_id()
 
         agent_type = type(self.verify_agent).__name__.lower().replace("agent", "")
 

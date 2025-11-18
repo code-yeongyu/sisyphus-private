@@ -598,6 +598,11 @@ def continue_work(
             await save_plan(plan_path, plan_doc)
 
             console.print("[green]모든 작업이 완료되었습니다! 🎉[/green]")
+            console.print("[cyan]Execution phase가 완료되었습니다. Verify phase로 전환됩니다.[/cyan]")
+            console.print("[dim]Verify phase에서는 다음 단계가 순차적으로 진행됩니다:[/dim]")
+            console.print("[dim]  1. plan verify-final - 최종 검증 수행[/dim]")
+            console.print("[dim]  2. plan mark-fully-done - 완료 마킹[/dim]")
+            console.print("[dim]  3. plan accept-as-verification-agent - 검증 승인[/dim]")
             return
 
         next_task.status = TodoStatus.in_progress

@@ -537,10 +537,10 @@ def continue_work(
 
             raise typer.Exit(1)
 
-        # CRITICAL: Validate 4 conditions BEFORE marking task as completed
+        # CRITICAL: Validate 3 conditions BEFORE marking task as completed
+        # Note: acceptance_criteria is NOT checked here - it's only for verification agent
         deterministic_bash_errors: list[str] = []
         manual_verification_errors: list[str] = []
-        acceptance_criteria_errors: list[str] = []
         llm_judge_errors: list[str] = []
 
         # 1. deterministic_bash 모두 verified_at 존재
@@ -554,21 +554,14 @@ def continue_work(
             if not verify_item.orchestrator_manually_verified:
                 manual_verification_errors.append(f"[{verify_item.id}] '{verify_item.title}'")
 
-        # 3. current task의 acceptance_criteria 모두 verified_at 존재
-        for criterion in current_task.acceptance_criteria:
-            if not criterion.verified_at:
-                acceptance_criteria_errors.append(criterion.id)
-
-        # 4. llm_judge 검증 모두 통과 (빈 리스트는 통과)
+        # 3. llm_judge 검증 모두 통과 (빈 리스트는 통과)
         for verify_item in current_task.verification_spec:
             for llm_judge in verify_item.llm_judge:
                 if not verify_item.verified:
                     llm_judge_errors.append(f"[{verify_item.id}] '{verify_item.title}'")
                     break
 
-        has_errors = (
-            deterministic_bash_errors or manual_verification_errors or acceptance_criteria_errors or llm_judge_errors
-        )
+        has_errors = deterministic_bash_errors or manual_verification_errors or llm_judge_errors
 
         if has_errors:
             console.print("[red]✗ 작업 완료 불가능 - 다음 검증이 누락되었습니다:[/red]\n")
@@ -584,14 +577,6 @@ def continue_work(
                 for error in manual_verification_errors:
                     console.print(f"  [yellow]• {error}[/yellow]")
                 console.print("\n[cyan]명령어:[/cyan] sisyphus-speckit task verify manual --evidence <증거>\n")
-
-            if acceptance_criteria_errors:
-                console.print("[bold yellow]Acceptance Criteria 검증 미완료:[/bold yellow]")
-                for criterion_id in acceptance_criteria_errors:
-                    console.print(f"  [yellow]• {criterion_id}[/yellow]")
-                console.print(
-                    "\n[cyan]명령어:[/cyan] sisyphus-speckit task accept --id <criterion-id> --evidence <증거>\n"
-                )
 
             if llm_judge_errors:
                 console.print("[bold yellow]LLM Judge 검증 미완료:[/bold yellow]")

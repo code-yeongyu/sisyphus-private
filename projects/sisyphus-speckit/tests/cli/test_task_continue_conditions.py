@@ -1,10 +1,12 @@
-"""Tests for task continue 4-condition validation.
+"""Tests for task continue 3-condition validation.
 
-Tests that task continue validates all 4 conditions before proceeding:
+Tests that task continue validates all 3 conditions before proceeding:
 1. deterministic_bash all have verified_at
 2. manual verification all passed
 3. llm_judge verification all passed
-4. acceptance_criteria_for_verification_agent all checklists have checked_at
+
+Note: acceptance_criteria_for_verification_agent is NOT checked in task continue.
+It is only validated by the verification agent in the loop phase.
 """
 
 from __future__ import annotations
@@ -397,9 +399,8 @@ async def test_continue__if_llm_judge_empty__allows_continue() -> None:
         assert verify_item.orchestrator_manually_verified is True
 
 
-async def test_continue__if_acceptance_criteria_not_checked__returns_error() -> None:
-    """Test that task continue fails when acceptance_criteria checklists are not checked."""
-    # given
+async def test_continue__if_acceptance_criteria_not_checked__allows_continue() -> None:
+    """Test that task continue ignores acceptance_criteria_for_verification_agent."""
     with TemporaryDirectory() as tmp_dir:
         working_dir = Path(tmp_dir)
         sisyphus_dir = working_dir / ".sisyphus"
@@ -491,15 +492,8 @@ async def test_continue__if_acceptance_criteria_not_checked__returns_error() -> 
                             id="no-naive-type-hints",
                             title="No naive type hints",
                             content="All functions must have proper type hints",
-                            checked_at=None,  # NOT CHECKED
+                            checked_at=None,
                             checked_evidence=None,
-                        ),
-                        AcceptanceCriteriaChecklist(
-                            id="proper-error-handling",
-                            title="Proper error handling",
-                            content="All errors must be caught and handled",
-                            checked_at=datetime.now(UTC).isoformat(),
-                            checked_evidence="Checked",
                         ),
                     ],
                 ),
@@ -518,18 +512,19 @@ async def test_continue__if_acceptance_criteria_not_checked__returns_error() -> 
 
         await save_plan(plan_path, plan_doc)
 
-        # when
         loaded_plan = await load_plan(plan_path)
         work_plan_loaded = loaded_plan.work_plans[0]
+        todo_loaded = work_plan_loaded.todos[0]
+        verify_item = todo_loaded.verification_spec[0]
         acceptance_criteria = work_plan_loaded.acceptance_criteria_for_verification_agent[0]
 
-        # then - first checklist not checked
         assert acceptance_criteria.checklists[0].checked_at is None
-        assert acceptance_criteria.checklists[1].checked_at is not None
+        assert verify_item.deterministic_bash[0].verified_at is not None
+        assert verify_item.orchestrator_manually_verified is True
 
 
 async def test_continue__if_all_conditions_met__allows_continue() -> None:
-    """Test that task continue succeeds when all 4 conditions are met."""
+    """Test that task continue succeeds when all 3 conditions are met."""
     # given
     with TemporaryDirectory() as tmp_dir:
         working_dir = Path(tmp_dir)
@@ -647,10 +642,8 @@ async def test_continue__if_all_conditions_met__allows_continue() -> None:
         work_plan_loaded = loaded_plan.work_plans[0]
         todo_loaded = work_plan_loaded.todos[0]
         verify_item = todo_loaded.verification_spec[0]
-        criteria = work_plan_loaded.acceptance_criteria_for_verification_agent[0]
 
-        # then - All 4 conditions are met
+        # then
         assert verify_item.deterministic_bash[0].verified_at is not None
         assert verify_item.orchestrator_manually_verified is True
         assert verify_item.llm_judge == []
-        assert criteria.checklists[0].checked_at is not None

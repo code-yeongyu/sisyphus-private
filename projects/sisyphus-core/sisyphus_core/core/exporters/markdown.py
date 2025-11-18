@@ -39,7 +39,7 @@ class MarkdownExporter:
     @staticmethod
     def _format_todo(todo: Todo, lines: list[str], indent: int) -> None:
         prefix = "   " * indent
-        checkbox = "[x]" if todo.status == TodoStatus.completed else "[ ]"
+        checkbox = "[x]" if todo.computed_status == TodoStatus.completed else "[ ]"
         lines.append(f"{prefix}- {checkbox} {todo.id}. {todo.title}")
 
         if todo.children:

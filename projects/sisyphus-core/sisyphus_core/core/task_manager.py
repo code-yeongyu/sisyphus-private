@@ -8,7 +8,7 @@ from sisyphus_core.core.plans.models import PlanDocument, ReferenceItem, Todo, T
 @dataclass
 class CompletionReport:
     task_id: str
-    task_status: TodoStatus
+    task_status: TodoStatus | None
     all_children_completed: bool
     children_summary: dict[str, int]
     all_verifications_completed: bool
@@ -64,7 +64,7 @@ class TaskManager:
         if current is None:
             raise ValueError(f"작업 ID를 찾을 수 없습니다: {current_id}")
 
-        match current.status:
+        match current.computed_status:
             case TodoStatus.in_progress:
                 if current.children:
                     first_child_pending = self._find_first_pending(current.children)
@@ -72,18 +72,18 @@ class TaskManager:
                         return first_child_pending
 
                 next_sibling = self._find_next_sibling(current_id)
-                if next_sibling and next_sibling.status == TodoStatus.pending:
+                if next_sibling and next_sibling.computed_status == TodoStatus.pending:
                     return next_sibling
 
             case TodoStatus.completed:
                 next_sibling = self._find_next_sibling(current_id)
-                if next_sibling and next_sibling.status == TodoStatus.pending:
+                if next_sibling and next_sibling.computed_status == TodoStatus.pending:
                     return next_sibling
 
                 parent = self._find_parent(current_id)
                 if parent:
                     parent_next = self._find_next_sibling(parent.id)
-                    if parent_next and parent_next.status == TodoStatus.pending:
+                    if parent_next and parent_next.computed_status == TodoStatus.pending:
                         return parent_next
 
         return None
@@ -137,7 +137,7 @@ class TaskManager:
 
     def _find_first_pending(self, todos: list[Todo]) -> Todo | None:
         for todo in todos:
-            if todo.status == TodoStatus.pending:
+            if todo.computed_status == TodoStatus.pending:
                 return todo
             if todo.children:
                 child = self._find_first_pending(todo.children)
@@ -247,10 +247,24 @@ class TaskManager:
             raise ValueError(f"작업 ID를 찾을 수 없습니다: {task_id}")
 
         descendants = self.get_all_descendants(task_id)
+
+        completed_count = 0
+        pending_count = 0
+
+        for d in descendants:
+            if not d.verification_spec:
+                completed_count += 1
+            else:
+                all_verified = all(v.verified for v in d.verification_spec)
+                if all_verified:
+                    completed_count += 1
+                else:
+                    pending_count += 1
+
         children_summary = {
-            "completed": sum(1 for d in descendants if d.status == TodoStatus.completed),
-            "in_progress": sum(1 for d in descendants if d.status == TodoStatus.in_progress),
-            "pending": sum(1 for d in descendants if d.status == TodoStatus.pending),
+            "completed": completed_count,
+            "in_progress": 0,
+            "pending": pending_count,
         }
         all_children_completed = len(descendants) == 0 or children_summary["completed"] == len(descendants)
 

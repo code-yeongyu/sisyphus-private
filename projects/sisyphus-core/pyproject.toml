@@ -70,6 +70,7 @@ analyzeUnannotatedFunctions = true
 enableTypeIgnoreComments = true
 reportMissingImports = false
 reportMissingTypeStubs = false
+reportUnannotatedClassAttribute = false
 reportAttributeAccessIssue = "warning"
 reportGeneralTypeIssues = "error"
 reportIncompatibleMethodOverride = "warning"

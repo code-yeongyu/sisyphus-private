@@ -56,7 +56,7 @@ class ExecutionLoop:
         ui: UIProtocol,
         session_store: SessionStore,
         logger_factory: LoggerFactory,
-        verify_agent: Agent,
+        verify_agent: Agent | None,
         task_validator: TaskValidatorProtocol,
         working_directory: Path | None = None,
         status_manager: StatusManager | None = None,
@@ -73,28 +73,28 @@ class ExecutionLoop:
             working_directory: Optional execution working directory
             status_manager: Optional status manager for tracking current plan
         """
-        self.execute_agent = execute_agent
-        self.verify_agent = verify_agent
-        self.ui = ui
-        self.session_store = session_store
-        self.logger_factory = logger_factory
-        self.task_validator = task_validator
-        self.working_directory = working_directory
-        self.status_manager = status_manager
+        self.execute_agent: Agent = execute_agent
+        self.verify_agent: Agent | None = verify_agent
+        self.ui: UIProtocol = ui
+        self.session_store: SessionStore = session_store
+        self.logger_factory: LoggerFactory = logger_factory
+        self.task_validator: TaskValidatorProtocol = task_validator
+        self.working_directory: Path | None = working_directory
+        self.status_manager: StatusManager | None = status_manager
 
         print(f"DEBUG ExecutionLoop.__init__: verify_agent={verify_agent}", file=sys.stderr)
 
         self.execute_logger: logging.Logger | None = None
         self.verify_logger: logging.Logger | None = None
 
-        self._interrupt_flag = False
+        self._interrupt_flag: bool = False
         self._current_cancel_scope: anyio.CancelScope | None = None
         self._resume_event: anyio.Event | None = None
-        self._resumed_once = False
+        self._resumed_once: bool = False
         self._consecutive_execute_count: int = 0
         self._execute_resume_fail_count: int = 0
         self._sdk_exception_count: int = 0
-        self._should_exit_execute_phase = False
+        self._should_exit_execute_phase: bool = False
         self._current_plan_id: str = ""
         self._acceptance_criteria_retry_message: str | None = None
 

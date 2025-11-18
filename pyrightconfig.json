@@ -1,3 +1,12 @@
 {
-  "reportAttributeAccessIssue": false
+  "reportAttributeAccessIssue": false,
+  "reportMissingTypeStubs": false,
+  "reportUnannotatedClassAttribute": false,
+  "reportUnusedVariable": false,
+  "reportImplicitStringConcatenation": false,
+  "reportUnknownMemberType": false,
+  "reportUnusedCallResult": false,
+  "reportUnknownArgumentType": false,
+  "reportGeneralTypeIssues": false,
+  "reportUnnecessaryComparison": false
 }

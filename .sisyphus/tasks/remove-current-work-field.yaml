@@ -1,0 +1,721 @@
+version: '3.0'
+metadata:
+  created_at: '2025-11-18T04:48:27+00:00'
+  updated_at: '2025-11-18T04:48:27+00:00'
+work_plans:
+- id: remove-current-work-field
+  name: Remove current_work field and use current_work_ids
+  depends_on: []
+  user_request:
+    original: please remove current_work, and let those other references to reference it from reading current_work_ids
+    created_at: '2025-11-18T04:48:27+00:00'
+    additional:
+    - "Expected Outcome: current_work 필드가 코드베이스에서 완전히 제거되고, current_work_ids만 사용됨"
+    - "Forbidden Outcomes: 기존 테스트 깨짐, 스키마 검증 실패, 런타임 에러 발생"
+    - "Special Concerns: plan_linter의 v2.1 호환성 유지, 기존 YAML 예시 파일 업데이트"
+  objectives:
+    core: WorkPlan 모델에서 중복된 current_work 필드를 제거하고 current_work_ids를 단일 진실 공급원으로 사용
+    detailed:
+    - goal: models.py에서 current_work 필드 제거
+      measurable: WorkPlan 클래스에 current_work 필드가 존재하지 않음
+    - goal: plan_linter에서 current_work 검증 로직 제거
+      measurable: linter가 current_work 필드를 검증하거나 요구하지 않음
+    - goal: 모든 테스트 파일 업데이트
+      measurable: pytest가 에러 없이 통과함
+  background:
+    current_situation: |
+      현재 WorkPlan 모델에는 current_work (str)와 current_work_ids (list[str]) 두 필드가 모두 존재합니다.
+      - current_work: 사람이 읽는 현재 작업 상태 메시지
+      - current_work_ids: 현재 작업 중인 Todo ID 집합
+
+      실제 내비게이션 로직은 work_mode.current_task_id만 사용하고, current_work는 코어 로직에서 갱신되지 않습니다.
+      current_work는 스키마 호환성과 가시성 목적으로만 존재합니다.
+    reason_for_change: |
+      중복 필드 current_work를 제거하여 데이터 모델을 단순화합니다.
+      current_work_ids를 단일 진실 공급원으로 사용하여 혼란을 줄입니다.
+    changes_to_make: |
+      현재 상태: WorkPlan에 current_work + current_work_ids 모두 존재
+      → 변경 후: current_work 필드 완전 제거, current_work_ids만 유지
+
+      영향받는 파일들:
+      - models.py: current_work 필드 삭제
+      - plan_linter.py: current_work 검증 로직 제거
+      - 테스트 파일들: current_work 참조 제거
+      - YAML 예시/문서: current_work 필드 제거
+  required_background:
+    description: |
+      Tech Stack: Python 3.13, uv, Pydantic v2
+
+      현재 아키텍처:
+      - WorkPlan (Pydantic BaseModel): projects/sisyphus-core/sisyphus_core/core/plans/models.py:240-241
+      - PlanLinter: projects/sisyphus-core/sisyphus_core/core/plan_linter.py
+      - 테스트: projects/sisyphus-speckit/tests/, projects/sisyphus-core/tests/
+
+      중요 제약사항:
+      - linter는 v2.1 포맷 검증 로직도 가지고 있음 (status.current_work 검증)
+      - YAML 예시 파일들은 current_work: "" 포함
+      - 모든 수정 후 pytest 통과 필수
+    file_structure: null
+    references:
+    - ref_id: models-location
+      uri: null
+      inline: |
+        WorkPlan 모델 위치: projects/sisyphus-core/sisyphus_core/core/plans/models.py
+
+        현재 정의 (line 240-241):
+        ```python
+        current_work: str = ""
+        current_work_ids: list[str] = []
+        ```
+    - ref_id: linter-validation
+      uri: null
+      inline: |
+        plan_linter.py에서 current_work 검증 위치:
+
+        1. Line 127: allowed_fields에 "current_work" 포함
+        2. Line 185-186: current_work 타입 검증
+        3. Line 782: v2.1 status.current_work allowed_fields
+        4. Line 785: status.current_work required 검증
+        5. Line 820-821: status.current_work 타입 검증
+  workflow:
+    dependency_diagram: |
+      Task 1 (models.py 수정)
+         ↓
+      Task 2 (plan_linter.py 수정 - WorkPlan)
+         ↓
+      Task 3 (plan_linter.py 수정 - v2.1 status)
+         ↓
+      Task 4 (초기 smoke test - 핵심 변경 검증)
+         ↓
+      Task 5 (핵심 변경사항 커밋)
+         ↓
+      Task 6 (테스트 파일 수정)
+         ↓
+      Task 7 (YAML 예시 파일 수정)
+         ↓
+      Task 8 (문서 수정)
+         ↓
+      Task 9 (문서 업데이트 커밋)
+         ↓
+      Task 10 (전체 pytest 실행 및 검증)
+         ↓
+      Task 11 (최종 검색으로 잔여 참조 확인)
+         ↓
+      Task 12 (최종 정리 커밋)
+    critical_path:
+    - '1'
+    - '2'
+    - '3'
+    - '4'
+    - '5'
+    - '6'
+    - '10'
+  success_vision:
+    user_perspective: []
+    business_perspective: []
+    technical_criteria:
+    - category: 코드 정리
+      criteria: current_work 필드가 코드베이스에서 완전히 제거됨
+      command: rg "current_work[^_]" projects/sisyphus-core/sisyphus_core/ --type py
+      expected: 매칭 없음 (또는 주석/문자열만)
+    - category: 테스트 통과
+      criteria: 모든 pytest 테스트가 통과함
+      command: uv run pytest projects/sisyphus-core/tests/ -v
+      expected: 0 failures
+  final_verification:
+  - id: final-1
+    title: current_work 필드 완전 제거 확인
+    category: Completeness
+    description: 코드에서 current_work 필드 참조가 없는지 확인
+    verified: false
+    verified_at: null
+    verification_evidence: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash:
+    - execute: rg "current_work:" projects/ --type yaml | grep -v ".sisyphus/tasks" | wc -l
+      expected_exit_code: 0
+      expected_stdout: "0"
+      notes: YAML 파일에서 current_work 필드가 없어야 함 (작업 계획 제외)
+    llm_judge: []
+  - id: final-2
+    title: 모든 테스트 통과 확인
+    category: Functionality
+    description: pytest가 에러 없이 통과하는지 확인
+    verified: false
+    verified_at: null
+    verification_evidence: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash:
+    - execute: uv run pytest projects/sisyphus-core/tests/core/plans/ -v
+      expected_exit_code: 0
+      notes: 핵심 plan 테스트가 통과해야 함
+    llm_judge: []
+  todos:
+  - id: '1'
+    title: models.py에서 current_work 필드 제거
+    description: "WorkPlan 클래스에서 current_work: str = \"\" 라인 삭제"
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        파일: projects/sisyphus-core/sisyphus_core/core/plans/models.py
+        위치: Line 240
+
+        제거할 코드:
+        ```python
+        current_work: str = ""
+        ```
+
+        유지할 코드:
+        ```python
+        current_work_ids: list[str] = []
+        ```
+    verification_spec:
+    - id: verify-1-1
+      title: current_work 필드 제거 확인
+      description: models.py에 current_work 필드가 없는지 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: rg "current_work:" projects/sisyphus-core/sisyphus_core/core/plans/models.py
+        expected_exit_code: 1
+        notes: 매칭 없으면 exit code 1 (정상)
+      llm_judge: []
+    parallel: false
+    parallelable_and_safe_evidence: null
+    acceptance_criteria: []
+  - id: '2'
+    title: plan_linter.py에서 WorkPlan current_work 검증 제거
+    description: allowed_fields와 타입 검증 로직에서 current_work 제거
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        파일: projects/sisyphus-core/sisyphus_core/core/plan_linter.py
+
+        수정 위치 1 (Line 127): allowed_fields에서 제거
+        Before:
+        ```python
+        allowed_fields = {
+            ...
+            "current_work",
+            "current_work_ids",
+            ...
+        }
+        ```
+        After:
+        ```python
+        allowed_fields = {
+            ...
+            "current_work_ids",
+            ...
+        }
+        ```
+
+        수정 위치 2 (Line 185-186): 타입 검증 제거
+        Before:
+        ```python
+        if "current_work" in plan:
+            self._check_type(plan["current_work"], f"{path}.current_work", "string")
+        ```
+        After: (이 if 블록 전체 삭제)
+    verification_spec:
+    - id: verify-2-1
+      title: WorkPlan current_work 검증 로직 제거 확인
+      description: linter에서 current_work 검증이 제거되었는지 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: rg '"current_work"' projects/sisyphus-core/sisyphus_core/core/plan_linter.py | grep -v current_work_ids | wc -l
+        expected_stdout: "0"
+        expected_exit_code: 0
+        notes: current_work_ids 제외하고 current_work 참조가 없어야 함
+      llm_judge: []
+    parallel: false
+    parallelable_and_safe_evidence: null
+    acceptance_criteria: []
+  - id: '3'
+    title: plan_linter.py에서 v2.1 status.current_work 검증 제거
+    description: v2.1 포맷의 status.current_work 관련 검증 로직 제거
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        파일: projects/sisyphus-core/sisyphus_core/core/plan_linter.py
+
+        수정 위치 1 (Line 782): allowed_fields에서 제거
+        Before:
+        ```python
+        allowed_fields = {"execution", "work_mode", "current_work"}
+        ```
+        After:
+        ```python
+        allowed_fields = {"execution", "work_mode"}
+        ```
+
+        수정 위치 2 (Line 785): required 검증에서 제거
+        Before:
+        ```python
+        self._validate_nested_required(status, "status", ["execution", "work_mode", "current_work"])
+        ```
+        After:
+        ```python
+        self._validate_nested_required(status, "status", ["execution", "work_mode"])
+        ```
+
+        수정 위치 3 (Line 820-821): 타입 검증 제거
+        Before:
+        ```python
+        if "current_work" in status:
+            self._check_type(status["current_work"], "status.current_work", "string")
+        ```
+        After: (이 if 블록 전체 삭제)
+    verification_spec:
+    - id: verify-3-1
+      title: v2.1 status current_work 검증 제거 확인
+      description: status 섹션 검증에서 current_work가 제거되었는지 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: rg 'status\.current_work' projects/sisyphus-core/sisyphus_core/core/plan_linter.py | wc -l
+        expected_stdout: "0"
+        expected_exit_code: 0
+        notes: status.current_work 참조가 없어야 함
+      llm_judge: []
+    parallel: false
+    parallelable_and_safe_evidence: null
+    acceptance_criteria: []
+  - id: '4'
+    title: 초기 smoke test - 핵심 변경 검증
+    description: models.py와 plan_linter.py 수정 후 기본 기능이 작동하는지 smoke test 실행
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        핵심 변경사항(Task 1-3) 후 기본 동작 확인:
+
+        실행할 간단한 테스트:
+        1. WorkPlan 모델 import 테스트
+        2. Plan linter 기본 검증 테스트
+
+        목적: 테스트 파일 대량 수정 전에 핵심 로직이 깨지지 않았는지 조기 확인
+    verification_spec:
+    - id: verify-4-1
+      title: 모델 import와 기본 linter 테스트 통과
+      description: 핵심 변경사항이 기본 기능을 깨뜨리지 않았는지 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run python -c "from sisyphus_core.core.plans.models import WorkPlan; print('OK')"
+        expected_exit_code: 0
+        expected_stdout: "OK"
+        notes: WorkPlan 모델이 정상적으로 import되는지 확인
+      - execute: uv run pytest projects/sisyphus-core/tests/core/plans/test_models.py::test_work_plan__with_current_work_ids__stores_list -v
+        expected_exit_code: 0
+        notes: current_work_ids 관련 테스트가 통과하는지 확인
+      llm_judge: []
+    parallel: false
+    parallelable_and_safe_evidence: null
+    acceptance_criteria: []
+  - id: '5'
+    title: 핵심 변경사항 커밋
+    description: models.py와 plan_linter.py 수정사항을 커밋
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        커밋 대상:
+        - projects/sisyphus-core/sisyphus_core/core/plans/models.py
+        - projects/sisyphus-core/sisyphus_core/core/plan_linter.py
+
+        커밋 메시지 형식:
+        ```
+        refactor(core): remove current_work field from WorkPlan model
+
+        - Remove current_work field from WorkPlan (models.py)
+        - Remove current_work validation from plan_linter
+        - current_work_ids is now the single source of truth
+
+        🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+        Co-Authored-By: Claude <noreply@anthropic.com>
+        ```
+    verification_spec:
+    - id: verify-5-1
+      title: 커밋 생성 확인
+      description: 핵심 변경사항이 커밋되었는지 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: git log -1 --oneline
+        expected_exit_code: 0
+        notes: 최근 커밋 확인
+      llm_judge: []
+    parallel: false
+    parallelable_and_safe_evidence: null
+    acceptance_criteria: []
+  - id: '6'
+    title: 테스트 파일에서 current_work 참조 제거
+    description: 모든 테스트 파일에서 current_work= 인자 제거
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        영향받는 테스트 파일들:
+        - projects/sisyphus-speckit/tests/cli/test_task_continue_conditions.py
+        - projects/sisyphus-speckit/tests/cli/test_task_verify_status_display.py
+        - projects/sisyphus-speckit/tests/cli/test_task_continue_work_errors.py
+        - projects/sisyphus-core/tests/core/plans/test_models.py
+        - 기타 테스트 파일들
+
+        수정 패턴:
+        Before:
+        ```python
+        WorkPlan(
+            ...
+            current_work="test-1",
+            current_work_ids=["test-1"],
+            ...
+        )
+        ```
+        After:
+        ```python
+        WorkPlan(
+            ...
+            current_work_ids=["test-1"],
+            ...
+        )
+        ```
+
+        YAML 테스트 데이터에서도 current_work: "" 라인 제거
+    verification_spec:
+    - id: verify-6-1
+      title: 테스트 코드에서 current_work 제거 확인
+      description: Python 테스트 파일에서 current_work 사용이 없는지 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: rg 'current_work\s*=' projects/sisyphus-speckit/tests/ --type py | wc -l
+        expected_stdout: "0"
+        expected_exit_code: 0
+        notes: 테스트 파일에서 current_work 할당이 없어야 함
+      llm_judge: []
+    parallel: false
+    parallelable_and_safe_evidence: null
+    acceptance_criteria: []
+  - id: '7'
+    title: YAML 예시 파일에서 current_work 필드 제거
+    description: 모든 YAML 예시 파일에서 current_work 필드 제거
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        영향받는 파일들:
+        - projects/sisyphus-core/sisyphus_core/examples/multi-file/backend.yaml
+        - projects/sisyphus-cli/sisyphus/examples/multi-file/backend.yaml
+        - example-new-plan.yaml (루트)
+        - plan.yaml (루트)
+
+        수정 패턴:
+        Before:
+        ```yaml
+        work_mode:
+          parallel_requested: false
+          current_task_id: null
+        current_work: ''
+        current_work_ids: []
+        ```
+        After:
+        ```yaml
+        work_mode:
+          parallel_requested: false
+          current_task_id: null
+        current_work_ids: []
+        ```
+    verification_spec:
+    - id: verify-7-1
+      title: YAML 예시에서 current_work 제거 확인
+      description: 예시 YAML 파일들에 current_work가 없는지 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: rg 'current_work:' projects/sisyphus-core/sisyphus_core/examples/ --type yaml | wc -l
+        expected_stdout: "0"
+        expected_exit_code: 0
+        notes: 예시 파일에 current_work 필드가 없어야 함
+      llm_judge: []
+    parallel: false
+    parallelable_and_safe_evidence: null
+    acceptance_criteria: []
+  - id: '8'
+    title: 문서에서 current_work 필드 제거
+    description: skill.md 등 문서에서 current_work 필드 제거
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        영향받는 파일:
+        - sisyphus-setup-dot-claude/skills/sisyphus-plan/skill.md
+
+        Line 1548 근처:
+        Before:
+        ```yaml
+        current_work: ''      # REQUIRED, string
+        ```
+        After: (이 라인 삭제)
+
+        Line 1583 근처:
+        Before:
+        ```
+        - `current_work`: string (default: "")
+        ```
+        After: (이 라인 삭제)
+    verification_spec:
+    - id: verify-8-1
+      title: 문서에서 current_work 제거 확인
+      description: 문서 파일에서 current_work 필드 설명이 없는지 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: rg 'current_work:' sisyphus-setup-dot-claude/skills/sisyphus-plan/skill.md | wc -l
+        expected_stdout: "0"
+        expected_exit_code: 0
+        notes: skill.md에 current_work 필드 언급이 없어야 함
+      llm_judge: []
+    parallel: false
+    parallelable_and_safe_evidence: null
+    acceptance_criteria: []
+  - id: '9'
+    title: 문서 업데이트 커밋
+    description: 테스트, YAML 예시, 문서 수정사항을 커밋
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        커밋 대상:
+        - 테스트 파일들
+        - YAML 예시 파일들
+        - skill.md
+
+        커밋 메시지 형식:
+        ```
+        refactor(tests,docs): remove current_work references from tests and docs
+
+        - Update all test files to remove current_work parameter
+        - Remove current_work from YAML example files
+        - Update documentation to reflect current_work_ids only
+
+        🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+        Co-Authored-By: Claude <noreply@anthropic.com>
+        ```
+    verification_spec:
+    - id: verify-9-1
+      title: 문서 업데이트 커밋 확인
+      description: 문서/테스트 수정사항이 커밋되었는지 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: git log -1 --oneline
+        expected_exit_code: 0
+        notes: 최근 커밋 확인
+      llm_judge: []
+    parallel: false
+    parallelable_and_safe_evidence: null
+    acceptance_criteria: []
+  - id: '10'
+    title: 전체 pytest 실행 및 검증
+    description: 모든 수정 후 전체 테스트가 통과하는지 검증
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        실행할 테스트:
+        1. Core 테스트: uv run pytest projects/sisyphus-core/tests/core/plans/ -v
+        2. Linter 테스트: uv run pytest projects/sisyphus-core/tests/test_plan_linter.py -v
+        3. Speckit 테스트: uv run pytest projects/sisyphus-speckit/tests/ -v
+
+        모든 테스트가 PASSED 상태여야 함
+        FAILED가 있으면 원인 파악 후 수정 필요
+    verification_spec:
+    - id: verify-10-1
+      title: Core plan 테스트 통과
+      description: sisyphus-core의 plan 관련 테스트가 통과하는지 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run pytest projects/sisyphus-core/tests/core/plans/test_models.py -v
+        expected_exit_code: 0
+        notes: 모델 테스트가 통과해야 함
+      llm_judge: []
+    - id: verify-10-2
+      title: Linter 테스트 통과
+      description: plan_linter 테스트가 통과하는지 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run pytest projects/sisyphus-core/tests/ -k linter -v
+        expected_exit_code: 0
+        notes: Linter 테스트가 통과해야 함
+      llm_judge: []
+    parallel: false
+    parallelable_and_safe_evidence: null
+    acceptance_criteria: []
+  - id: '11'
+    title: 최종 검색으로 잔여 current_work 참조 확인
+    description: 전체 코드베이스에서 current_work 참조가 완전히 제거되었는지 확인
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        실행할 검색:
+        1. Python 파일: rg "current_work" projects/ --type py -l
+        2. YAML 파일: rg "current_work:" projects/ --type yaml -l
+        3. 문서 파일: rg "current_work" sisyphus-setup-dot-claude/ -l
+
+        예상 결과:
+        - .sisyphus/tasks/ 경로의 작업 계획 파일만 매칭
+        - 다른 모든 위치에서는 매칭 없음
+    verification_spec:
+    - id: verify-11-1
+      title: Python 코드에서 current_work 잔여 확인
+      description: Python 파일에서 current_work 참조가 없는지 최종 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash: []
+      llm_judge:
+      - by: orchestrator-agent
+        context_commands:
+        - rg "current_work" projects/sisyphus-core/sisyphus_core/ --type py -l
+        - rg "current_work" projects/sisyphus-speckit/ --type py -l
+        instruction: |
+          다음 기준으로 current_work 잔여 참조를 확인하세요:
+
+          1. Python 파일에서 current_work 필드 사용이 있는가?
+          2. YAML 파일에서 current_work: 필드가 있는가? (.sisyphus/tasks 제외)
+          3. 문서에서 current_work 필드 설명이 있는가?
+
+          각 항목에 대해 PASS/FAIL 판정 후 최종 결과 제공
+    parallel: false
+    parallelable_and_safe_evidence: null
+    acceptance_criteria: []
+  - id: '12'
+    title: 최종 정리 커밋
+    description: 모든 작업 완료 후 최종 상태를 커밋
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        최종 검증 후 커밋
+
+        커밋 메시지 형식:
+        ```
+        refactor(core): complete current_work field removal
+
+        All references to current_work field have been removed.
+        current_work_ids is now the single source of truth for tracking active work.
+
+        Changes:
+        - Removed current_work from WorkPlan model
+        - Updated plan_linter validation
+        - Updated all tests and examples
+        - Updated documentation
+
+        🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+        Co-Authored-By: Claude <noreply@anthropic.com>
+        ```
+    verification_spec:
+    - id: verify-12-1
+      title: 최종 커밋 확인
+      description: 모든 변경사항이 커밋되었는지 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: git status --porcelain | wc -l
+        expected_stdout: "0"
+        expected_exit_code: 0
+        notes: 커밋되지 않은 변경사항이 없어야 함
+      llm_judge: []
+    parallel: false
+    parallelable_and_safe_evidence: null
+    acceptance_criteria: []
+  references: []
+  execution:
+    started: false
+    completed: false
+    started_at: null
+    completed_at: null
+    fully_done_at: null
+  work_mode:
+    parallel_requested: false
+    current_task_id: null
+  current_work: ''
+  current_work_ids: []
+  acceptance_criteria_for_verification_agent: []
+  fully_done_evidence: null

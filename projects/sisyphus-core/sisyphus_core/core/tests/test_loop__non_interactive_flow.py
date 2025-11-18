@@ -86,6 +86,7 @@ async def test_unified__if_task_incomplete__skips_verify_and_retries_execute(tes
         (False, False),  # Initial check
         (False, False),  # Skip_execute check (iteration==1)
         (False, False),  # After first execute (incomplete, retry)
+        (False, False),  # Skip_execute check (iteration==2)
         (True, True),  # After second execute (complete, verify)
     ]
 
@@ -103,7 +104,7 @@ async def test_unified__if_task_incomplete__skips_verify_and_retries_execute(tes
     await loop._run_unified_mode("execute prompt", None, "verify prompt", None)
 
     # then
-    assert task_validator.check_call_count == 4
+    assert task_validator.check_call_count == 5
     assert len(execute_agent.sent_messages) == 2
     assert len(verify_agent.sent_messages) == 1
 
@@ -169,6 +170,7 @@ async def test_unified__if_task_complete_but_not_fully_done__continues_with_feed
         (False, False),  # Initial check
         (False, False),  # Skip_execute check (iteration==1)
         (True, True),  # After first execute -> verify
+        (False, False),  # Skip_execute check (iteration==2, incomplete after verify feedback)
         (True, True),  # After second execute -> verify (with feedback)
     ]
 
@@ -186,7 +188,7 @@ async def test_unified__if_task_complete_but_not_fully_done__continues_with_feed
     await loop._run_unified_mode("execute prompt", None, "verify prompt", None)
 
     # then
-    assert task_validator.check_call_count == 4
+    assert task_validator.check_call_count == 5
     assert len(execute_agent.sent_messages) == 2
     assert len(verify_agent.sent_messages) == 2
 

@@ -1,9 +1,9 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2025-11-03 22:27:26 KST
-**Commit:** 60cc0c4
+**Generated:** 2025-11-18 17:24:07 KST
+**Commit:** b90db35
 **Branch:** master
-**Repo:** https://github.com/code-yeongyu/sisyphus.git
+**Repo:** https://github.com/code-yeongyu/sisyphus-private.git
 
 ## OVERVIEW
 

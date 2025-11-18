@@ -33,31 +33,10 @@ def continue_work(
         status = await status_manager.get()
 
         if status.current_plan is None:
-            tasks_dir = working_dir / ".sisyphus" / "tasks"
-            yaml_files = list(tasks_dir.glob("*.yaml")) if tasks_dir.exists() else []
+            console.print("[red]현재 작업 계획이 없습니다.[/red]")
+            raise typer.Exit(1)
 
-            if len(yaml_files) == 1:
-                plan_path = yaml_files[0]
-                relative_path = plan_path.relative_to(working_dir)
-                await status_manager.set_current(
-                    plan_path=str(relative_path),
-                    plan_root=str(tasks_dir.relative_to(working_dir)),
-                )
-                console.print(f"[green]작업 계획 자동 선택:[/green] {relative_path}")
-            elif len(yaml_files) == 0:
-                console.print("[red]현재 활성화된 작업 계획이 없습니다.[/red]")
-                console.print("[yellow]다음 명령으로 계획을 활성화하세요:[/yellow]")
-                console.print("  sisyphus-speckit plan init")
-                raise typer.Exit(1)
-            else:
-                console.print("[red]현재 활성화된 작업 계획이 없습니다.[/red]")
-                console.print("[yellow]여러 작업 계획이 있습니다. 다음 명령으로 하나를 선택하세요:[/yellow]")
-                for yaml_file in yaml_files:
-                    console.print(f"  - {yaml_file.relative_to(working_dir)}")
-                console.print("\n  sisyphus-speckit plan init <plan-file>")
-                raise typer.Exit(1)
-        else:
-            plan_path = working_dir / status.current_plan.plan_path
+        plan_path = working_dir / status.current_plan.plan_path
         plan_doc = await load_plan(plan_path)
 
         if not plan_doc.work_plans:

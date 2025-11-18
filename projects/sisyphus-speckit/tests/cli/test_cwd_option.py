@@ -439,7 +439,7 @@ def test_task_continue__with_cwd_option__resolves_path(tmp_path: Path) -> None:
 
     # then
     assert result.exit_code == 1
-    assert "현재 활성화된 작업 계획이 없습니다" in result.stdout or "No active plan" in result.stdout
+    assert "현재 작업 계획이 없습니다" in result.stdout or "No active plan" in result.stdout
 
 
 def test_resolve_cwd__with_none__returns_current_directory() -> None:

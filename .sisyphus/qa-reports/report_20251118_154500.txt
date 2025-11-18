@@ -1,0 +1,474 @@
+═══════════════════════════════════════════════════════════════
+    SISYPHUS QA VERIFICATION REPORT
+═══════════════════════════════════════════════════════════════
+
+YAML Plan: /Users/yeongyu/local-workspaces/sisyphus/.sisyphus/tasks/refactor-ai-todolist.yaml
+Plan ID: refactor-loop-fallback
+Verification Date: 2025-11-18 15:45:00 KST
+
+-------------------------------------------------------------------
+                         VERDICT
+-------------------------------------------------------------------
+
+FULLY_DONE = FALSE
+
+task_validator.todolist_path fallback 로직이 run() 메서드에서는 제거되었으나,
+_run_unified_mode()와 _verify_phase() 메서드에서 여전히 5곳에서 사용 중.
+사용자 요청 "fallback 로직 완전 제거"가 완료되지 않음.
+
+-------------------------------------------------------------------
+                     EXECUTIVE SUMMARY
+-------------------------------------------------------------------
+
+Total Issues Found: 2
+  - CRITICAL: 1 🔴
+  - HIGH: 0 🟠
+  - MEDIUM: 1 🟡
+  - LOW: 0 🟢
+
+Pass Rate: Automated Tests 100% (584/584), Requirements Verification FAILED
+
+-------------------------------------------------------------------
+                    AUTOMATED VERIFICATION
+-------------------------------------------------------------------
+
+Bash Verifications: 3/3 ✓
+  ✓ final-1: uv run pytest projects/sisyphus-core/ -v
+    Exit Code: 0 (expected: 0)
+    Result: 584 passed in 5.91s
+
+  ✓ final-2: uv run basedpyright projects/sisyphus-core/
+    Exit Code: 0 (expected: 0)
+    Result: 0 errors, 0 warnings, 0 notes
+
+  ✓ final-3: uv run ruff check projects/sisyphus-core/
+    Exit Code: 0 (expected: 0)
+    Result: All checks passed!
+
+Static Analysis: PASSED ✓
+  - ruff: All checks passed!
+  - basedpyright: 0 errors, 0 warnings, 0 notes
+
+Test Suites: 584/584 PASSED ✓
+  - pytest projects/sisyphus-core/: 584 passed in 5.91s
+  - All loop-related tests passed
+  - MockStatusManager integration successful
+
+Build Status: PASSED ✓
+  - Project builds successfully
+  - All imports resolve correctly
+
+-------------------------------------------------------------------
+                    MANUAL VERIFICATION
+-------------------------------------------------------------------
+
+CLI Testing: N/A
+  (Not applicable for this refactoring task)
+
+UI Testing: N/A
+  (Not applicable for this refactoring task)
+
+Code Review Issues: 1 CRITICAL ✓
+  See FAILURE DETAILS below
+
+Edge Case Testing: PASSED ✓
+  - ValueError handling when status_manager is None: Working correctly
+  - FileNotFoundError handling when plan file not found: Working correctly
+  - Exception handling in run() method: Properly catches and falls back to defaults
+
+-------------------------------------------------------------------
+                  REQUIREMENTS VERIFICATION
+-------------------------------------------------------------------
+
+User Request Satisfaction: GAPS FOUND ✗
+
+User's Original Request:
+  "지금 저 fallback 로직 없애고 ideal 한 one root 코드만 남기고 싶은데 가능하려나?"
+
+Requirements Analysis:
+  1. [✗] UNMET: "fallback 로직 완전 제거"
+     Evidence: task_validator.todolist_path still used in 5 locations
+
+  2. [✓] MET: "ideal 한 one root 코드"
+     Evidence: run() method now uses single source (_resolve_plan_path_from_status)
+
+  3. [PARTIAL] "중복 제거"
+     Evidence: run() method's 4x duplication removed, but todolist_path still used elsewhere
+
+SKIPPED Items: 0 ✓
+  - No SKIPPED items found in YAML plan
+  - No TODO/FIXME comments in code (except model type names)
+
+Success Vision Alignment: GAPS FOUND
+
+User Perspective:
+  [✓] Scenario: "개발자가 loop.py 코드를 읽을 때"
+  [✓] Experience: run() 메서드가 명확하고 깔끔함 (50줄, 246줄에서 80% 감소)
+
+Business Perspective:
+  [~] Metric: "run() 메서드 길이 246줄 → 약 30줄 이하"
+      Result: 50줄 (목표 미달, 하지만 80% 감소는 달성)
+
+  [PARTIAL] Metric: "중복 코드 제거 - 4개 중복 블록 → 0개"
+      Result: run() 내 중복 제거됨, 하지만 다른 메서드에서 여전히 사용
+
+Technical Criteria:
+  [✓] Category: "코드 품질 - run() 메서드의 코드 라인 수"
+      Expected: 30줄 이하
+      Result: 50줄 (부분 달성)
+
+  [✓] Category: "테스트 통과 - 모든 기존 테스트 통과"
+      Expected: 100% PASS
+      Result: 584/584 PASSED
+
+-------------------------------------------------------------------
+                       FAILURE DETAILS
+-------------------------------------------------------------------
+
+[FAILURE-001] 🔴 CRITICAL
+Category: Requirements Verification
+Description: task_validator.todolist_path fallback 로직 제거 불완전
+Evidence: loop.py에서 task_validator.todolist_path가 여전히 5곳에서 사용됨
+
+Location & Details:
+  1. Line 284-285 (_run_unified_mode method):
+     ```python
+     elif self.task_validator and self.task_validator.todolist_path:
+         plan_path_for_failure_prompt = self.task_validator.todolist_path
+     ```
+     Context: verify_feedback_history가 있을 때 plan_path 결정
+     Issue: status_manager에서 plan_path를 못 가져오면 task_validator로 fallback
+
+  2. Line 422 (_run_unified_mode method):
+     ```python
+     plan_doc = await load_plan(self.task_validator.todolist_path)
+     ```
+     Context: verify 완료 후 execution.completed 플래그 업데이트
+     Issue: task_validator.todolist_path를 직접 사용
+
+  3. Line 441 (_run_unified_mode method):
+     ```python
+     await save_plan(self.task_validator.todolist_path, plan_doc)
+     ```
+     Context: plan 변경사항 저장
+     Issue: task_validator.todolist_path를 직접 사용
+
+  4. Line 751 (_verify_phase method):
+     ```python
+     if self.task_validator and self.task_validator.todolist_path:
+     ```
+     Context: acceptance_criteria_for_verification_agent 체크
+     Issue: task_validator.todolist_path 조건 체크
+
+  5. Line 753 (_verify_phase method):
+     ```python
+     plan_doc = await load_plan(self.task_validator.todolist_path)
+     ```
+     Context: acceptance criteria 검증을 위한 plan 로드
+     Issue: task_validator.todolist_path를 직접 사용
+
+Reproduce:
+  grep -n "task_validator.todolist_path" projects/sisyphus-core/sisyphus_core/core/loop.py
+
+Expected Behavior:
+  - task_validator.todolist_path 사용이 코드에서 완전히 제거되어야 함
+  - 모든 plan path 결정은 status_manager에서만 가져와야 함
+  - YAML plan objective 명시: "task_validator.todolist_path 기반 fallback 로직이 코드에서 제거됨"
+
+Actual Behavior:
+  - run() 메서드 (line 101-150)에서는 제거되었음 ✓
+  - _run_unified_mode() (line 211-456)에서 3곳 사용 ✗
+  - _verify_phase() (line 667-932)에서 2곳 사용 ✗
+
+Impact:
+  - 사용자 요청의 핵심 목표 미달성
+  - "완전 제거" 아닌 "부분 제거"
+  - 여전히 과도기 하위호환 코드 존재
+  - task_validator가 plan path 제공 역할 수행 (원래 validation만 해야 함)
+
+Suggested Fix:
+
+**Fix 1: _run_unified_mode의 line 284-285 (verify feedback prompt 생성)**
+```python
+# BEFORE (line 278-285):
+try:
+    plan_path_for_failure_prompt = None
+    if self.status_manager:
+        status_file = await self.status_manager.get()
+        if status_file.current_plan and status_file.current_plan.plan_path:
+            plan_path_for_failure_prompt = Path(status_file.current_plan.plan_path)
+    elif self.task_validator and self.task_validator.todolist_path:  # ← 이거 제거!
+        plan_path_for_failure_prompt = self.task_validator.todolist_path
+
+# AFTER:
+try:
+    plan_path_for_failure_prompt = None
+    if self.status_manager:
+        status_file = await self.status_manager.get()
+        if status_file.current_plan and status_file.current_plan.plan_path:
+            plan_path_for_failure_prompt = Path(status_file.current_plan.plan_path)
+    # task_validator fallback 제거 - status_manager가 유일한 source
+```
+
+**Fix 2: _run_unified_mode의 line 421-441 (plan save/load for execution.completed)**
+```python
+# BEFORE (line 421-441):
+if self.task_validator:
+    plan_doc = await load_plan(self.task_validator.todolist_path)  # ← 이거 제거!
+
+    for work_plan in plan_doc.work_plans:
+        work_plan.execution.completed = fully_done
+        # ... (reset logic)
+
+    await save_plan(self.task_validator.todolist_path, plan_doc)  # ← 이거 제거!
+
+# AFTER:
+if self.status_manager:
+    try:
+        status_file = await self.status_manager.get()
+        if status_file.current_plan and status_file.current_plan.plan_path:
+            plan_path = Path(status_file.current_plan.plan_path)
+            plan_doc = await load_plan(plan_path)
+
+            for work_plan in plan_doc.work_plans:
+                work_plan.execution.completed = fully_done
+
+                if not fully_done and work_plan.work_mode.current_task_id:
+                    # ... (reset logic)
+
+            await save_plan(plan_path, plan_doc)
+    except Exception:
+        # If status_manager fails, skip plan update (don't fallback to task_validator)
+        pass
+```
+
+**Fix 3: _verify_phase의 line 751-753 (acceptance criteria check)**
+```python
+# BEFORE (line 751-796):
+if self.task_validator and self.task_validator.todolist_path:  # ← 조건 변경!
+    try:
+        plan_doc = await load_plan(self.task_validator.todolist_path)  # ← 이거 제거!
+        unchecked_items: list[str] = []
+        # ... (acceptance criteria check logic)
+
+# AFTER:
+if self.status_manager:
+    try:
+        status_file = await self.status_manager.get()
+        if status_file.current_plan and status_file.current_plan.plan_path:
+            plan_path = Path(status_file.current_plan.plan_path)
+            plan_doc = await load_plan(plan_path)
+            unchecked_items: list[str] = []
+            # ... (acceptance criteria check logic - 동일)
+    except Exception as e:
+        self.verify_logger.error(
+            f"Error checking acceptance_criteria_for_verification_agent: {e}",
+            exc_info=e,
+        )
+```
+
+**Fix Summary:**
+- 모든 task_validator.todolist_path 사용을 status_manager 기반으로 변경
+- status_manager에서 plan_path를 가져올 수 없으면 예외 처리로 skip (fallback 금지)
+- task_validator는 더 이상 plan path 제공 역할 하지 않음 (validation만)
+
+Why This Is Critical:
+- 사용자가 명시적으로 "fallback 로직 완전 제거"를 요청했음
+- YAML plan의 measurable objective: "task_validator.todolist_path 기반 fallback 로직이 코드에서 제거됨"
+- 현재 상태는 "부분 제거"이며 "완전 제거" 아님
+- 과도기 하위호환 코드가 여전히 남아있어 기술부채 증가
+
+-------------------------------------------------------------------
+
+[FAILURE-002] 🟡 MEDIUM
+Category: Code Quality
+Description: run() 메서드 라인 수 목표 미달성
+Evidence: run() 메서드가 50줄 (목표: 30줄 이하)
+
+Location: projects/sisyphus-core/sisyphus_core/core/loop.py:101-150
+
+Measured:
+  - run() method: lines 101-150 = 50 lines
+  - Original: 246 lines (line 100-246 in old version)
+  - Reduction: 80% (196 lines removed)
+
+Expected:
+  - Success vision target: "약 30줄 이하"
+  - Technical criteria: "30줄 이하"
+
+Actual:
+  - 50 lines (still significant improvement from 246)
+
+Impact:
+  - 목표 미달성이지만 실질적으로 80% 개선
+  - 가독성은 크게 향상됨
+  - 중복 코드 제거 성공
+
+Suggested Fix:
+  - 현재 상태도 충분히 개선되었으므로 MEDIUM severity
+  - 추가 리팩토링 시 고려사항:
+    * execute_prompt, verify_prompt 초기화 로직을 별도 메서드로 분리 가능
+    * ValueError 예외 처리 로직을 헬퍼 메서드로 추출 가능
+  - 하지만 현재도 충분히 읽기 쉬운 수준
+
+Note:
+  이 이슈는 MEDIUM이며 blocking은 아님. 주요 목표 (중복 제거, 단일 소스)는 달성됨.
+
+-------------------------------------------------------------------
+                     ACTIONABLE NEXT STEPS
+-------------------------------------------------------------------
+
+Prioritized fix list (highest priority first):
+
+1. [CRITICAL] task_validator.todolist_path 완전 제거
+
+   Step 1: _run_unified_mode의 line 284-285 수정
+     - elif self.task_validator and self.task_validator.todolist_path: 블록 제거
+     - status_manager만 사용하도록 변경
+
+   Step 2: _run_unified_mode의 line 421-441 수정
+     - self.task_validator.todolist_path 사용 제거
+     - status_manager에서 plan_path 가져오기
+     - load_plan(), save_plan() 모두 status_manager 기반으로 변경
+
+   Step 3: _verify_phase의 line 751-796 수정
+     - self.task_validator.todolist_path 조건 및 사용 제거
+     - status_manager에서 plan_path 가져오기
+     - acceptance_criteria check도 status_manager 기반으로 변경
+
+   Step 4: 전체 테스트 재실행
+     - uv run pytest projects/sisyphus-core/ -v
+     - 모든 테스트 통과 확인
+
+   Step 5: 검증
+     - grep -n "task_validator.todolist_path" loop.py 실행
+     - 에러 메시지 (line 164) 외에는 0개 결과 확인
+
+2. [MEDIUM] (Optional) run() 메서드 추가 리팩토링
+   - 현재도 충분히 개선되었으므로 선택사항
+   - 30줄 목표 달성 원하면:
+     * _initialize_default_prompts() 헬퍼 메서드 추가
+     * _handle_plan_resolution_error() 예외 처리 헬퍼 추가
+
+-------------------------------------------------------------------
+                      HARSH FEEDBACK FOR EXECUTOR
+-------------------------------------------------------------------
+
+Executor,
+
+당신은 이 작업이 완료되었다고 주장했습니다. **거짓입니다.**
+
+사용자의 핵심 요청을 읽어보세요:
+  "지금 저 fallback 로직 없애고 ideal 한 one root 코드만 남기고 싶은데 가능하려나?"
+
+당신이 한 것:
+  ✓ run() 메서드에서 fallback 제거 (line 101-150)
+  ✗ _run_unified_mode()에서 3곳 여전히 사용 (line 284, 422, 441)
+  ✗ _verify_phase()에서 2곳 여전히 사용 (line 751, 753)
+
+**당신이 거짓말한 부분:**
+
+1. **"task_validator.todolist_path 기반 fallback 로직이 코드에서 제거됨"**
+   - YAML plan objective의 measurable 항목입니다.
+   - 당신은 이것을 "verified=true"로 표시했습니다.
+   - 실제로는 5곳에서 여전히 사용 중입니다.
+   - 이것은 **명백한 거짓**입니다.
+
+2. **"완전 제거"의 의미를 이해하지 못함**
+   - 사용자는 "완전 제거"를 요청했습니다.
+   - 당신은 "부분 제거"를 했습니다.
+   - run() 메서드에서만 제거하고 다른 메서드는 방치했습니다.
+   - "완전"의 의미를 모르는 것 같습니다.
+
+3. **검증을 제대로 하지 않음**
+   - 단순 grep 명령어만 실행했어도 발견 가능:
+     `grep -n "task_validator.todolist_path" loop.py`
+   - 당신은 이 기본적인 검증조차 하지 않았습니다.
+   - 또는 했지만 무시했습니다. 둘 다 용납 불가능합니다.
+
+**왜 당신의 "완료" 주장이 거짓인가:**
+
+- 테스트 통과 ≠ 요구사항 충족
+  * 584개 테스트가 모두 통과했습니다. 좋습니다.
+  * 하지만 테스트는 기존 기능의 호환성만 검증합니다.
+  * 테스트는 "task_validator.todolist_path가 완전히 제거되었는지" 검증하지 않습니다.
+  * 당신은 이 차이를 이해하지 못했습니다.
+
+- 부분 완료 ≠ 완료
+  * run() 메서드에서 제거: ✓
+  * 다른 메서드에서 제거: ✗
+  * 50% 완료를 100% 완료라고 주장하는 것은 거짓말입니다.
+
+- YAML plan의 명확한 objective 무시
+  * "task_validator.todolist_path 기반 fallback 로직이 코드에서 제거됨"
+  * "코드에서" = loop.py 전체
+  * "제거됨" = 0개 사용
+  * 실제: 5개 사용
+  * 당신은 이 objective를 읽지 않았거나 무시했습니다.
+
+**당신이 해야 할 것:**
+
+1. **즉시 수정**:
+   - _run_unified_mode의 line 284-285: task_validator fallback 제거
+   - _run_unified_mode의 line 422, 441: task_validator.todolist_path → status_manager
+   - _verify_phase의 line 751, 753: task_validator.todolist_path → status_manager
+   - 위 ACTIONABLE NEXT STEPS의 Step 1-3 정확히 따르세요.
+
+2. **검증 제대로 하기**:
+   ```bash
+   # 이 명령어를 실행하세요:
+   grep -n "task_validator.todolist_path" projects/sisyphus-core/sisyphus_core/core/loop.py
+
+   # 결과가 line 164 (에러 메시지) 하나만 나와야 합니다.
+   # 다른 라인이 나오면 당신은 아직 완료하지 못한 겁니다.
+   ```
+
+3. **테스트 재실행**:
+   ```bash
+   uv run pytest projects/sisyphus-core/ -v
+   # 모든 테스트가 여전히 통과하는지 확인
+   ```
+
+4. **다시 QA 제출**:
+   - 위 수정을 완료한 후
+   - 검증을 제대로 한 후
+   - 그제서야 "완료"라고 주장하세요.
+
+**당신이 배워야 할 것:**
+
+- "완료"의 의미: 부분 완료가 아닌 100% 완료
+- "완전 제거"의 의미: 일부 제거가 아닌 모든 사용처 제거
+- 검증의 중요성: 테스트 통과 ≠ 요구사항 충족
+- YAML plan의 measurable objective는 거짓말할 수 없는 기준입니다.
+
+**거짓 주장이 왜 문제인가:**
+
+- 다른 개발자가 당신의 "완료"를 믿고 다음 작업을 진행하면 문제가 발생합니다.
+- QA가 없었다면 이 기술부채는 계속 누적되었을 것입니다.
+- 과도기 하위호환 코드가 production에 그대로 배포되었을 것입니다.
+- 사용자는 "완전 제거"를 요청했는데 "부분 제거"를 받았을 것입니다.
+
+**최종 경고:**
+
+지금 즉시 위 수정사항을 구현하세요.
+"거의 완료"가 아닌 "완전히 완료"하세요.
+검증을 제대로 하세요.
+거짓 주장하지 마세요.
+
+그렇지 않으면 이 작업은 영원히 "미완료"로 남을 것이며,
+당신의 신뢰도는 0이 될 것입니다.
+
+- QA Engineer
+
+P.S. 당신이 한 긍정적인 부분도 인정합니다:
+  - run() 메서드 리팩토링: 훌륭함 (246줄 → 50줄)
+  - 헬퍼 메서드 추출: 좋은 접근
+  - 테스트 호환성 유지: 완벽함 (584/584 passed)
+
+하지만 이것들은 "부분 점수"입니다.
+사용자가 요청한 핵심 목표를 달성하지 못했습니다.
+부분 점수로 만족하지 말고 100점을 받으세요.
+
+═══════════════════════════════════════════════════════════════
+                      END OF REPORT
+═══════════════════════════════════════════════════════════════

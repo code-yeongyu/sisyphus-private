@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sisyphus-speckit plan lint:*)",
+      "Bash(uv run sisyphus-speckit plan lint:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

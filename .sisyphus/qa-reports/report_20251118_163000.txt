@@ -1,0 +1,362 @@
+═══════════════════════════════════════════════════════════════
+    SISYPHUS QA VERIFICATION REPORT
+═══════════════════════════════════════════════════════════════
+
+YAML Plan: /Users/yeongyu/local-workspaces/sisyphus/.sisyphus/tasks/refactor-ai-todolist.yaml
+Plan ID: refactor-loop-fallback
+Verification Date: 2025-11-18 16:30:00 KST
+
+-------------------------------------------------------------------
+                         VERDICT
+-------------------------------------------------------------------
+
+FULLY_DONE = FALSE
+
+리팩토링 자체는 성공했으나, LLM이 작성한 코드에 CRITICAL한 안티패턴 2개가 존재합니다.
+이 패턴들은 디버깅을 매우 어렵게 만들고, 프로덕션 환경에서 심각한 문제를 일으킬 수 있습니다.
+
+-------------------------------------------------------------------
+                     EXECUTIVE SUMMARY
+-------------------------------------------------------------------
+
+Total Issues Found: 2
+  - CRITICAL: 2 🔴
+  - HIGH: 0 🟠
+  - MEDIUM: 0 🟡
+  - LOW: 0 🟢
+
+Pass Rate: 584/584 tests (100%)
+Static Analysis: PASSED (ruff + basedpyright)
+
+핵심 리팩토링 목표는 달성됨:
+✅ task_validator.todolist_path fallback 로직 제거
+✅ status_manager 단일 소스로 변경
+✅ 헬퍼 메서드 추가 (DRY 원칙)
+✅ 전체 테스트 통과
+
+하지만 코드 품질 이슈 발견:
+❌ LLM 안티패턴: Nested try-except + Bare Exception
+❌ Silent failure 패턴 (에러 로깅 없음)
+
+-------------------------------------------------------------------
+                    AUTOMATED VERIFICATION
+-------------------------------------------------------------------
+
+Bash Verifications: 3/3 ✓
+
+1. pytest projects/sisyphus-core/ -v
+   Status: PASSED
+   Result: 584/584 tests passed (100%)
+   
+2. basedpyright projects/sisyphus-core/
+   Status: PASSED
+   Result: 0 errors, warnings는 기존 코드 스타일 이슈
+
+3. ruff check projects/sisyphus-core/
+   Status: PASSED
+   Result: All checks passed!
+
+Static Analysis: PASSED
+Test Suites: PASSED (584/584)
+Build Status: PASSED
+
+-------------------------------------------------------------------
+                    MANUAL VERIFICATION
+-------------------------------------------------------------------
+
+Code Review Issues: 2 CRITICAL
+
+✅ Fallback Logic Removal:
+- task_validator.todolist_path 사용 완전 제거됨
+- Line 174에 에러 메시지로만 남음 (정상)
+- grep 확인 완료
+
+✅ Helper Methods Added:
+- _resolve_plan_path_from_status() 추가 (Line 162-185)
+- _initialize_from_plan() 추가 (Line 187-219)
+
+✅ run() Method Simplified:
+- 기존: ~246 lines (중복 4번)
+- 현재: ~60 lines (Line 100-160)
+- 목표 달성 (30줄 이하 목표는 미달이지만 크게 개선됨)
+
+Edge Case Testing: PASSED
+- ValueError handling: 정상 동작 (default로 fallback)
+- FileNotFoundError handling: 정상 동작
+- MockStatusManager 호환: hasattr() 패턴으로 처리
+
+-------------------------------------------------------------------
+                       FAILURE DETAILS
+-------------------------------------------------------------------
+
+[LLM-ANTIPATTERN-001] 🔴 CRITICAL
+Category: Code Quality - Defensive Programming Gone Wrong
+Type: Nested Try-Except with Bare Exception
+Location: projects/sisyphus-core/sisyphus_core/core/loop.py:139-158
+Description: except 블록 내에서 또 다른 try-except 사용, bare Exception catch
+Evidence:
+```python
+except (ValueError, FileNotFoundError):
+    # No plan set or plan file not found → use defaults
+    if self.status_manager:
+        try:  # ← NESTED TRY-EXCEPT
+            # MockStatusManager has get_plan_id() for testing
+            if hasattr(self.status_manager, "get_plan_id"):
+                self._current_plan_id = await self.status_manager.get_plan_id()
+            else:
+                status = await self.status_manager.get()
+                if status.current_plan:
+                    plan_path = Path(status.current_plan.plan_path)
+                    plan = await load_plan(plan_path)
+                    self._current_plan_id = plan.work_plans[0].id if plan.work_plans else "default"
+                else:
+                    self._current_plan_id = "default"
+        except Exception:  # ← BARE EXCEPTION CATCH
+            self._current_plan_id = "default"
+```
+
+Impact:
+- 모든 에러를 조용히 삼켜버림 (디버깅 불가능)
+- 실제 문제 (예: status.json 손상, 권한 문제)를 숨김
+- 로그도 없이 "default"로 fallback → 문제 추적 불가
+
+Suggested Fix:
+```python
+except (ValueError, FileNotFoundError):
+    # No plan set or plan file not found → use defaults
+    self._current_plan_id = "default"
+    if self.status_manager:
+        # MockStatusManager compatibility
+        if hasattr(self.status_manager, "get_plan_id"):
+            try:
+                self._current_plan_id = await self.status_manager.get_plan_id()
+            except Exception as e:
+                self.execute_logger.warning(f"Failed to get plan_id from MockStatusManager: {e}")
+        else:
+            try:
+                status = await self.status_manager.get()
+                if status.current_plan and status.current_plan.plan_path:
+                    plan_path = Path(status.current_plan.plan_path)
+                    plan = await load_plan(plan_path)
+                    self._current_plan_id = plan.work_plans[0].id if plan.work_plans else "default"
+            except Exception as e:
+                self.execute_logger.warning(f"Failed to get plan_id from status_manager: {e}")
+```
+
+Why This Is LLM Code:
+- 전형적인 "defensive programming" 과잉
+- 인간은 이렇게 복잡하게 중첩하지 않음
+- 에러를 숨기는 것이 "안전"하다고 잘못 판단
+
+
+[LLM-ANTIPATTERN-002] 🔴 CRITICAL
+Category: Code Quality - Silent Failure Pattern
+Type: Bare Exception with pass
+Location: projects/sisyphus-core/sisyphus_core/core/loop.py:288-313
+Description: 복잡한 로직을 try로 감싸고 모든 에러를 pass로 무시
+Evidence:
+```python
+if verify_feedback_history:
+    try:
+        plan_path_for_failure_prompt = None
+        if self.status_manager:
+            status_file = await self.status_manager.get()
+            if status_file.current_plan and status_file.current_plan.plan_path:
+                plan_path_for_failure_prompt = Path(status_file.current_plan.plan_path)
+
+        if plan_path_for_failure_prompt:
+            plan_doc = await load_plan(plan_path_for_failure_prompt)
+            uncompleted_todos = []
+            for plan in plan_doc.work_plans:
+                for todo in plan.todos:
+                    if todo.status != "completed":
+                        uncompleted_todos.append(f"  - [{todo.id}] {todo.title}")
+            
+            todo_summary = "\n".join(uncompleted_todos[:10]) if uncompleted_todos else "All tasks completed"
+            if len(uncompleted_todos) > 10:
+                todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
+            
+            current_execute_prompt = build_verification_failure_prompt(
+                str(plan_path_for_failure_prompt), todo_summary
+            )
+    except Exception:
+        pass  # ← SILENTLY SWALLOWING ALL ERRORS
+```
+
+Impact:
+- 26줄의 복잡한 로직이 실패해도 아무 표시 없음
+- load_plan() 실패, YAML 파싱 에러 등을 완전히 숨김
+- verification_failure_prompt가 빌드되지 않아도 사용자는 모름
+- 디버깅 시 왜 프롬프트가 바뀌지 않는지 원인 파악 불가
+
+Suggested Fix:
+```python
+if verify_feedback_history:
+    try:
+        if self.status_manager:
+            status_file = await self.status_manager.get()
+            if status_file.current_plan and status_file.current_plan.plan_path:
+                plan_path = Path(status_file.current_plan.plan_path)
+                plan_doc = await load_plan(plan_path)
+                uncompleted_todos = [
+                    f"  - [{todo.id}] {todo.title}"
+                    for plan in plan_doc.work_plans
+                    for todo in plan.todos
+                    if todo.status != "completed"
+                ]
+                
+                todo_summary = "\n".join(uncompleted_todos[:10]) if uncompleted_todos else "All tasks completed"
+                if len(uncompleted_todos) > 10:
+                    todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
+                
+                current_execute_prompt = build_verification_failure_prompt(str(plan_path), todo_summary)
+    except Exception as e:
+        # Log but don't fail - verification_failure_prompt is optional
+        self.execute_logger.debug(f"Could not build verification_failure_prompt: {e}")
+```
+
+Why This Is LLM Code:
+- "Just wrap everything in try-except and it's safe" 사고방식
+- pass로 에러를 무시하는 것이 "graceful degradation"이라고 착각
+- 실제로는 디버깅을 불가능하게 만드는 코드
+
+
+-------------------------------------------------------------------
+                  REQUIREMENTS VERIFICATION
+-------------------------------------------------------------------
+
+User Request Satisfaction: SATISFIED ✅
+
+사용자 요청: "지금 저 fallback 로직 없애고 ideal한 one root 코드만 남기고 싶은데 가능하려나?"
+
+검증 결과:
+✅ fallback 로직 제거됨 (task_validator.todolist_path 사용 0곳)
+✅ status_manager = single source of truth
+✅ 중복 코드 4번 → 헬퍼 메서드로 통합
+✅ run() 메서드 간소화 (246줄 → 60줄)
+
+SKIPPED Items: 0 ✅
+- 모든 todo 완료됨
+- YAML에서 skip/SKIP 키워드 검색 결과 없음
+
+Success Vision Alignment: ALIGNED ✅
+
+User Perspective:
+✅ "run() 메서드가 명확하고 이해하기 쉬우며, 중복 없이 깔끔한 구조"
+   → 60줄로 간소화, 헬퍼 메서드로 분리
+
+Business Perspective:
+✅ "코드 복잡도 감소: run() 메서드 246줄 → 약 30줄 이하"
+   → 60줄 (목표 30줄은 미달이지만 76% 감소로 크게 개선)
+✅ "중복 코드 제거: 4개 중복 블록 → 0개"
+   → 완전히 제거됨
+
+Technical Criteria:
+✅ "모든 기존 테스트 통과"
+   → 584/584 PASSED
+✅ "basedpyright 0 errors"
+   → PASSED
+✅ "ruff 0 errors"
+   → PASSED
+
+-------------------------------------------------------------------
+                     ACTIONABLE NEXT STEPS
+-------------------------------------------------------------------
+
+CRITICAL 이슈 수정 필요 (우선순위 순):
+
+1. [CRITICAL] Line 139-158: Nested try-except 패턴 제거
+   - 중첩된 try-except 제거
+   - bare Exception을 구체적 예외로 변경
+   - 에러 로깅 추가 (self.execute_logger.warning)
+   - 단순화: 조건 분기 감소
+
+2. [CRITICAL] Line 288-313: Silent failure 패턴 제거
+   - except Exception: pass → except Exception as e: self.execute_logger.debug(...)
+   - 에러가 발생해도 사용자가 알 수 있도록 최소한의 로깅 추가
+   - 코드 단순화: 불필요한 None 체크 제거
+
+권장사항:
+- 두 패턴 모두 수정 후 다시 pytest 실행
+- 에러 로깅 추가로 인한 테스트 실패 확인
+- 필요 시 테스트 코드에 로거 mock 추가
+
+-------------------------------------------------------------------
+                      HARSH FEEDBACK FOR EXECUTOR
+-------------------------------------------------------------------
+
+Executor,
+
+You successfully completed the main refactoring task, but you introduced TWO CRITICAL LLM ANTI-PATTERNS that make debugging impossible. Here's what went wrong:
+
+**What You Did Right:**
+1. ✅ Removed task_validator.todolist_path fallback completely
+2. ✅ Added helper methods (_resolve_plan_path_from_status, _initialize_from_plan)
+3. ✅ Simplified run() method from 246 lines to 60 lines
+4. ✅ All 584 tests pass
+5. ✅ Type checker and linter pass
+
+**What You Did WRONG:**
+
+1. **NESTED TRY-EXCEPT HELL** (Line 139-158):
+   You wrapped an except block with ANOTHER try-except that catches ALL exceptions and silently sets `self._current_plan_id = "default"`. 
+   
+   **Why This Is Terrible:**
+   - If status.json is corrupted, NO ERROR MESSAGE
+   - If permissions fail, NO ERROR MESSAGE
+   - If load_plan() crashes, NO ERROR MESSAGE
+   - Just silently falls back to "default" and the user never knows why
+   
+   **This is NOT defensive programming. This is HIDING BUGS.**
+
+2. **SILENT FAILURE WITH PASS** (Line 288-313):
+   You wrapped 26 lines of complex logic in try-except and used `pass` to ignore ALL errors.
+   
+   **Why This Is Terrible:**
+   - verification_failure_prompt fails to build? User never knows
+   - YAML parsing error? Ignored
+   - File not found? Ignored
+   - The feedback loop will use wrong prompt and user has NO IDEA why
+   
+   **This is NOT graceful degradation. This is SILENT CORRUPTION.**
+
+**Why These Are LLM Mistakes:**
+
+No human developer would write this. This is classic LLM behavior:
+- "Wrap everything in try-except and it's safe"
+- "Catch Exception and ignore it to prevent crashes"
+- "Don't log errors because it's just a fallback"
+
+**In reality:**
+- Silent failures make debugging IMPOSSIBLE
+- Production issues become NIGHTMARES
+- You're not preventing crashes, you're HIDING THE REAL PROBLEMS
+
+**What You MUST Do:**
+
+1. Remove nested try-except (Line 139-158)
+   - Simplify the logic
+   - Log errors with self.execute_logger.warning(f"...")
+   - Let specific errors propagate if they're critical
+
+2. Fix silent failure (Line 288-313)
+   - Replace `except Exception: pass` with logging
+   - Use `self.execute_logger.debug(f"Could not build verification_failure_prompt: {e}")`
+   - This is optional feature, but failures should be VISIBLE
+
+3. Test again
+   - Run pytest to ensure nothing breaks
+   - Check logs to verify warnings appear
+   - Verify error messages are helpful
+
+**Bottom Line:**
+
+You did 90% of the work correctly. But the 10% you got wrong (LLM defensive programming) makes the code DANGEROUS in production. Silent failures are WORSE than crashes because you can't debug what you can't see.
+
+Fix these two patterns and the refactoring will be EXCELLENT instead of just GOOD.
+
+- QA Engineer
+
+═══════════════════════════════════════════════════════════════
+                      END OF REPORT
+═══════════════════════════════════════════════════════════════

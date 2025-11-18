@@ -132,13 +132,14 @@ class ExecutionLoop:
         verify_prompt = ""
         resolved_plan_path: str | None = None
 
-        # Single source: status_manager only
         try:
             plan_path = await self._resolve_plan_path_from_status()
             execute_prompt, verify_prompt, resolved_plan_path = await self._initialize_from_plan(plan_path)
         except (ValueError, FileNotFoundError):
             if not self._current_plan_id:
                 self._current_plan_id = await self._resolve_plan_id()
+            if not verify_prompt:
+                verify_prompt = build_verify_prompt("(plan path unavailable)")
 
         await self._run_unified_mode(execute_prompt, execute_extra, verify_prompt, verify_extra)
 
@@ -275,13 +276,14 @@ class ExecutionLoop:
                 )
 
             skip_execute = False
-            if iteration == 1 and self.task_validator:
+            if self.task_validator:
                 content = self.task_validator.read_content()
                 goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
                 checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
                 if goals_accomplished and checkboxes_completed:
                     skip_execute = True
-                    await self.ui.show_status("✅ All tasks already completed. Skipping Execute phase...")
+                    if iteration == 1:
+                        await self.ui.show_status("✅ All tasks already completed. Skipping Execute phase...")
 
             should_retry_execute = False
             skip_count_and_retry = False
@@ -371,7 +373,7 @@ class ExecutionLoop:
                 try:
                     status = await self.status_manager.get()
                     if status.current_plan and status.current_plan.plan_path:
-                        plan_path_obj = Path(status.current_plan.plan_root) / status.current_plan.plan_path
+                        plan_path_obj = Path(status.current_plan.plan_path)
                         plan_doc = await load_plan(plan_path_obj)
                         if plan_doc.work_plans:
                             execution_completed = plan_doc.work_plans[0].execution.completed

@@ -92,7 +92,7 @@ work_plans:
     orchestrator_manually_verified: false
     manual_verification_evidence: ''
     bash:
-    - execute: sisyphus-speckit plan mark completed --help
+    - execute: sisyphus-speckit plan "mark completed" --help
       expected_stdout: Usage
       expected_exit_code: 0
     llm_judge: []
@@ -428,21 +428,14 @@ work_plans:
       verified: true
       verified_at: '2025-11-18T16:21:28.261262+00:00'
       orchestrator_manually_verified: true
-      manual_verification_evidence: |-
-        Req3 완료: cli.md 문서를 업데이트하여 명령어 이름을 'mark-fully-done'에서 'mark fully-done'으로 변경했습니다.
-
-        실제 구현은 이미 공백을 사용하고 있었습니다 (projects/sisyphus-speckit/sisyphus_speckit/plan/app.py:24):
-        plan_app.command(name="mark fully-done")(mark_fully_done_command)
-
-        Typer는 공백을 포함한 명령어명을 완전히 지원합니다. 이전 evidence는 부정확했습니다.
-
-        변경된 3개 위치 (Lines 317, 324, 341):
-        - Section header: ### sisyphus-speckit plan mark fully-done
-        - Usage: sisyphus-speckit plan mark fully-done [OPTIONS]
-        - Example: sisyphus-speckit plan mark fully-done \
-
-        검증: grep "mark-fully-done" cli.md → 0 matches
-        커밋: 658e1c0 "docs: update mark-fully-done to mark fully-done in cli.md"
+      manual_verification_evidence: "Req3 완료: cli.md 문서를 업데이트하여 명령어 이름을 'mark-fully-done'에서
+        'mark fully-done'으로 변경했습니다.\n\n실제 구현은 이미 공백을 사용하고 있었습니다 (projects/sisyphus-speckit/sisyphus_speckit/plan/app.py:24):\n\
+        plan_app.command(name=\"mark fully-done\")(mark_fully_done_command)\n\nTyper는
+        공백을 포함한 명령어명을 완전히 지원합니다. 이전 evidence는 부정확했습니다.\n\n변경된 3개 위치 (Lines 317, 324,
+        341):\n- Section header: ### sisyphus-speckit plan mark fully-done\n- Usage:
+        sisyphus-speckit plan mark fully-done [OPTIONS]\n- Example: sisyphus-speckit
+        plan mark fully-done \\\n\n검증: grep \"mark-fully-done\" cli.md → 0 matches\n\
+        커밋: 658e1c0 \"docs: update mark-fully-done to mark fully-done in cli.md\""
       bash:
       - execute: git log -1 --oneline
         expected_stdout: 'refactor(plan): rename mark-fully-done'
@@ -704,6 +697,7 @@ work_plans:
     started: true
     completed: false
     started_at: '2025-11-18T15:42:49.750675+00:00'
+    completed_at: '2025-11-19T02:42:00+09:00'
   work_mode:
     parallel_requested: false
   current_work: ''

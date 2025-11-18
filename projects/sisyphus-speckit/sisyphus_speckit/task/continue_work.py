@@ -87,11 +87,10 @@ def continue_work(
                             all_verified = False
                             break
 
-                if all_completed and all_verified and not work_plan.execution.completed:
-                    work_plan.execution.completed = True
-                    work_plan.execution.completed_at = datetime.now(UTC).isoformat()
-                    await save_plan(plan_path, plan_doc)
+                if all_completed and all_verified:
                     console.print("[green]모든 작업이 완료되었습니다! 🎉[/green]")
+                    console.print("[yellow]다음 명령으로 plan을 완료 처리하세요:[/yellow]")
+                    console.print("[cyan]  sisyphus-speckit plan mark completed[/cyan]")
                     return
 
             console.print("[yellow]진행 중인 작업이 없습니다.[/yellow]")
@@ -215,18 +214,13 @@ def continue_work(
         next_task = task_manager.get_next_task(current_task.id)
 
         if next_task is None:
-            work_plan.execution.completed = True
-            work_plan.execution.completed_at = datetime.now(UTC).isoformat()
             work_plan.work_mode.current_task_id = None
 
             await save_plan(plan_path, plan_doc)
 
             console.print("[green]모든 작업이 완료되었습니다! 🎉[/green]")
-            console.print("[cyan]Execution phase가 완료되었습니다. Verify phase로 전환됩니다.[/cyan]")
-            console.print("[dim]Verify phase에서는 다음 단계가 순차적으로 진행됩니다:[/dim]")
-            console.print("[dim]  1. plan verify-final - 최종 검증 수행[/dim]")
-            console.print("[dim]  2. plan mark-fully-done - 완료 마킹[/dim]")
-            console.print("[dim]  3. plan accept-as-verification-agent - 검증 승인[/dim]")
+            console.print("[yellow]다음 명령으로 plan을 완료 처리하세요:[/yellow]")
+            console.print("[cyan]  sisyphus-speckit plan mark completed[/cyan]")
             return
 
         next_task.status = TodoStatus.in_progress

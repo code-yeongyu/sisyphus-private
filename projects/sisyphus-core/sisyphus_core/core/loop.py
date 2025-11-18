@@ -388,7 +388,23 @@ class ExecutionLoop:
                 continue
 
             should_verify = force_verify
-            if self.task_validator:
+
+            if self.status_manager:
+                try:
+                    status = await self.status_manager.get()
+                    if status.current_plan and status.current_plan.plan_path:
+                        plan_path_obj = Path(status.current_plan.plan_root) / status.current_plan.plan_path
+                        plan_doc = await load_plan(plan_path_obj)
+                        if plan_doc.work_plans:
+                            execution_completed = plan_doc.work_plans[0].execution.completed
+                            should_verify = should_verify or execution_completed
+                except Exception:
+                    if self.task_validator:
+                        content = self.task_validator.read_content()
+                        goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
+                        checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)
+                        should_verify = should_verify or (goals_accomplished and checkboxes_completed)
+            elif self.task_validator:
                 content = self.task_validator.read_content()
                 goals_accomplished = await self.task_validator.check_all_goals_accomplished(content)
                 checkboxes_completed = await self.task_validator.check_all_checkboxes_completed(content)

@@ -314,14 +314,14 @@ sisyphus-speckit plan accept-as-verification-agent \
 
 ---
 
-### `sisyphus-speckit plan mark-fully-done`
+### `sisyphus-speckit plan mark fully-done`
 
 Work plan을 fully done 상태로 마킹하고 완료 증거를 기록합니다.
 
 #### 사용법
 
 ```bash
-sisyphus-speckit plan mark-fully-done [OPTIONS]
+sisyphus-speckit plan mark fully-done [OPTIONS]
 ```
 
 #### 옵션
@@ -338,7 +338,7 @@ sisyphus-speckit plan mark-fully-done [OPTIONS]
 
 **성공 시:**
 ```bash
-sisyphus-speckit plan mark-fully-done \
+sisyphus-speckit plan mark fully-done \
   --evidence "All tasks completed, all tests pass, documentation updated, PR reviewed and merged"
 ```
 

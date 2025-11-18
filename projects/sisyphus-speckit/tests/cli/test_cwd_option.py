@@ -5,10 +5,10 @@ import os
 from pathlib import Path
 
 import pytest
+from sisyphus_core.utils.common import resolve_cwd
 from typer.testing import CliRunner
 
 from sisyphus_speckit.cli import app
-from sisyphus_speckit.plan import resolve_cwd
 
 pytestmark = [
     pytest.mark.anyio,

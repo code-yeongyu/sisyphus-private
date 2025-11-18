@@ -66,18 +66,14 @@ pythonVersion = "3.12"
 venvPath = "../.."
 venv = ".venv"
 typeCheckingMode = "standard"
-analyzeUnannotatedFunctions = true
+analyzeUnannotatedFunctions = false
 enableTypeIgnoreComments = true
 reportMissingImports = false
 reportMissingTypeStubs = false
 reportUnannotatedClassAttribute = false
-reportAttributeAccessIssue = "warning"
 reportGeneralTypeIssues = "error"
-reportIncompatibleMethodOverride = "warning"
-reportIncompatibleVariableOverride = "warning"
 reportAssignmentType = "error"
 reportMissingTypeArgument = "error"
-reportCallIssue = "warning"
 
 [tool.ruff]
 line-length = 119

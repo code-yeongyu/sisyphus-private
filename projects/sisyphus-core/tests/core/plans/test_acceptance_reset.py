@@ -7,10 +7,54 @@ import pytest
 from sisyphus_core.core.plans.models import (
     AcceptanceCriteriaChecklist,
     AcceptanceCriteriaForVerificationAgent,
+    Background,
     ExecutionStatus,
+    Objectives,
+    RequiredBackground,
+    SuccessVision,
+    UserRequest,
+    Workflow,
     WorkMode,
     WorkPlan,
 )
+
+
+def _create_user_request() -> UserRequest:
+    """Helper to create UserRequest models."""
+    return UserRequest(original="test", created_at="2025-11-16T10:00:00Z", additional=[])
+
+
+def _create_objectives() -> Objectives:
+    """Helper to create Objectives models."""
+    return Objectives(core="test", detailed=[])
+
+
+def _create_background() -> Background:
+    """Helper to create Background models."""
+    return Background(
+        current_situation="test",
+        reason_for_change="test",
+        changes_to_make="test",
+    )
+
+
+def _create_required_background() -> RequiredBackground:
+    """Helper to create RequiredBackground models."""
+    return RequiredBackground(description="test", file_structure="test", references=[])
+
+
+def _create_workflow() -> Workflow:
+    """Helper to create Workflow models."""
+    return Workflow(dependency_diagram="test", critical_path=[])
+
+
+def _create_success_vision() -> SuccessVision:
+    """Helper to create SuccessVision models."""
+    return SuccessVision(
+        user_perspective=[],
+        business_perspective=[],
+        technical_criteria=[],
+    )
 
 
 @pytest.mark.anyio()
@@ -36,12 +80,12 @@ async def test_acceptance_reset__if_fully_done_at_none__then_criteria_reset() ->
     work_plan = WorkPlan(
         id="test-plan",
         name="Test Plan",
-        user_request={"original": "test", "created_at": "2025-11-16T10:00:00Z", "additional": []},
-        objectives={"core": "test", "detailed": []},
-        background={"current_situation": "test", "reason_for_change": "test", "changes_to_make": "test"},
-        required_background={"description": "test", "file_structure": "test", "references": []},
-        workflow={"dependency_diagram": "test", "critical_path": []},
-        success_vision={"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+        user_request=_create_user_request(),
+        objectives=_create_objectives(),
+        background=_create_background(),
+        required_background=_create_required_background(),
+        workflow=_create_workflow(),
+        success_vision=_create_success_vision(),
         final_verification=[],
         todos=[],
         execution=ExecutionStatus(
@@ -59,12 +103,12 @@ async def test_acceptance_reset__if_fully_done_at_none__then_criteria_reset() ->
     work_plan_reset = WorkPlan(
         id="test-plan",
         name="Test Plan",
-        user_request={"original": "test", "created_at": "2025-11-16T10:00:00Z", "additional": []},
-        objectives={"core": "test", "detailed": []},
-        background={"current_situation": "test", "reason_for_change": "test", "changes_to_make": "test"},
-        required_background={"description": "test", "file_structure": "test", "references": []},
-        workflow={"dependency_diagram": "test", "critical_path": []},
-        success_vision={"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+        user_request=_create_user_request(),
+        objectives=_create_objectives(),
+        background=_create_background(),
+        required_background=_create_required_background(),
+        workflow=_create_workflow(),
+        success_vision=_create_success_vision(),
         final_verification=[],
         todos=[],
         execution=ExecutionStatus(
@@ -104,12 +148,12 @@ async def test_acceptance_reset__if_fully_done_at_not_none__then_criteria_unchan
     work_plan = WorkPlan(
         id="test-plan",
         name="Test Plan",
-        user_request={"original": "test", "created_at": "2025-11-16T10:00:00Z", "additional": []},
-        objectives={"core": "test", "detailed": []},
-        background={"current_situation": "test", "reason_for_change": "test", "changes_to_make": "test"},
-        required_background={"description": "test", "file_structure": "test", "references": []},
-        workflow={"dependency_diagram": "test", "critical_path": []},
-        success_vision={"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+        user_request=_create_user_request(),
+        objectives=_create_objectives(),
+        background=_create_background(),
+        required_background=_create_required_background(),
+        workflow=_create_workflow(),
+        success_vision=_create_success_vision(),
         final_verification=[],
         todos=[],
         execution=ExecutionStatus(
@@ -149,12 +193,12 @@ async def test_acceptance_reset__if_multiple_checklists__then_all_reset() -> Non
     work_plan = WorkPlan(
         id="test-plan",
         name="Test Plan",
-        user_request={"original": "test", "created_at": "2025-11-16T10:00:00Z", "additional": []},
-        objectives={"core": "test", "detailed": []},
-        background={"current_situation": "test", "reason_for_change": "test", "changes_to_make": "test"},
-        required_background={"description": "test", "file_structure": "test", "references": []},
-        workflow={"dependency_diagram": "test", "critical_path": []},
-        success_vision={"user_perspective": [], "business_perspective": [], "technical_criteria": []},
+        user_request=_create_user_request(),
+        objectives=_create_objectives(),
+        background=_create_background(),
+        required_background=_create_required_background(),
+        workflow=_create_workflow(),
+        success_vision=_create_success_vision(),
         final_verification=[],
         todos=[],
         execution=ExecutionStatus(

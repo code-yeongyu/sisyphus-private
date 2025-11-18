@@ -1,4 +1,5 @@
 """Test depends_on file path resolution for different path formats."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -7,10 +8,10 @@ from tempfile import TemporaryDirectory
 import pytest
 
 from sisyphus_core.core.plan_linter import PlanLinter
-from sisyphus_core.core.plans.models import PlanDocument
+from sisyphus_core.core.plans.models import Metadata, PlanDocument
 
 
-@pytest.mark.anyio
+@pytest.mark.anyio()
 async def test_resolve_depends_on_path__if_absolute_path__then_return_as_is() -> None:
     """Given: depends_on with absolute path (/absolute/path/to/file.yml).
     When: resolve_depends_on_path is called.
@@ -19,7 +20,11 @@ async def test_resolve_depends_on_path__if_absolute_path__then_return_as_is() ->
     # Given
     depends_on = "/absolute/path/to/file.yml"
     current_plan_path = Path("/project/.sisyphus/tasks/plan.yaml")
-    schema_doc = PlanDocument(version="3.0", metadata={"created_at": "2025-11-16T10:00:00Z"}, work_plans=[])
+    schema_doc = PlanDocument(
+        version="3.0",
+        metadata=Metadata(created_at="2025-11-16T10:00:00Z"),
+        work_plans=[],
+    ).model_dump()
     linter = PlanLinter(schema_doc)
 
     # When
@@ -29,7 +34,7 @@ async def test_resolve_depends_on_path__if_absolute_path__then_return_as_is() ->
     assert result == Path("/absolute/path/to/file.yml")
 
 
-@pytest.mark.anyio
+@pytest.mark.anyio()
 async def test_resolve_depends_on_path__if_relative_with_dot_slash__then_resolve_from_parent() -> None:
     """Given: depends_on with relative path (./subdir/file.yml).
     When: resolve_depends_on_path is called.
@@ -44,7 +49,11 @@ async def test_resolve_depends_on_path__if_relative_with_dot_slash__then_resolve
 
         current_plan_path = tasks_dir / "plan.yaml"
         depends_on = "./other_file.yml"
-        schema_doc = PlanDocument(version="3.0", metadata={"created_at": "2025-11-16T10:00:00Z"}, work_plans=[])
+        schema_doc = PlanDocument(
+            version="3.0",
+            metadata=Metadata(created_at="2025-11-16T10:00:00Z"),
+            work_plans=[],
+        ).model_dump()
         linter = PlanLinter(schema_doc)
 
         # When
@@ -55,7 +64,7 @@ async def test_resolve_depends_on_path__if_relative_with_dot_slash__then_resolve
         assert result == expected
 
 
-@pytest.mark.anyio
+@pytest.mark.anyio()
 async def test_resolve_depends_on_path__if_relative_with_double_dot__then_resolve_from_parent() -> None:
     """Given: depends_on with relative path (../other_dir/file.yml).
     When: resolve_depends_on_path is called.
@@ -71,7 +80,11 @@ async def test_resolve_depends_on_path__if_relative_with_double_dot__then_resolv
 
         current_plan_path = tasks_dir / "plan.yaml"
         depends_on = "../other/file.yml"
-        schema_doc = PlanDocument(version="3.0", metadata={"created_at": "2025-11-16T10:00:00Z"}, work_plans=[])
+        schema_doc = PlanDocument(
+            version="3.0",
+            metadata=Metadata(created_at="2025-11-16T10:00:00Z"),
+            work_plans=[],
+        ).model_dump()
         linter = PlanLinter(schema_doc)
 
         # When
@@ -82,7 +95,7 @@ async def test_resolve_depends_on_path__if_relative_with_double_dot__then_resolv
         assert result == expected
 
 
-@pytest.mark.anyio
+@pytest.mark.anyio()
 async def test_resolve_depends_on_path__if_plan_in_tasks_dir_and_filename_only__then_no_duplicate() -> None:
     """Given: Plan file already in .sisyphus/tasks/ directory, depends_on is filename only.
     When: resolve_depends_on_path is called.
@@ -97,7 +110,11 @@ async def test_resolve_depends_on_path__if_plan_in_tasks_dir_and_filename_only__
 
         current_plan_path = tasks_dir / "plan.yaml"
         depends_on = "foobar.yml"
-        schema_doc = PlanDocument(version="3.0", metadata={"created_at": "2025-11-16T10:00:00Z"}, work_plans=[])
+        schema_doc = PlanDocument(
+            version="3.0",
+            metadata=Metadata(created_at="2025-11-16T10:00:00Z"),
+            work_plans=[],
+        ).model_dump()
         linter = PlanLinter(schema_doc)
 
         # When
@@ -109,7 +126,7 @@ async def test_resolve_depends_on_path__if_plan_in_tasks_dir_and_filename_only__
         assert str(result).count(".sisyphus/tasks") == 1, f"Duplicate .sisyphus/tasks found in {result}"
 
 
-@pytest.mark.anyio
+@pytest.mark.anyio()
 async def test_resolve_depends_on_path__if_plan_not_in_tasks_dir_and_filename_only__then_add_tasks_path() -> None:
     """Given: Plan file NOT in .sisyphus/tasks/ directory, depends_on is filename only.
     When: resolve_depends_on_path is called.
@@ -126,7 +143,11 @@ async def test_resolve_depends_on_path__if_plan_not_in_tasks_dir_and_filename_on
 
         current_plan_path = other_dir / "plan.yaml"
         depends_on = "foobar.yml"
-        schema_doc = PlanDocument(version="3.0", metadata={"created_at": "2025-11-16T10:00:00Z"}, work_plans=[])
+        schema_doc = PlanDocument(
+            version="3.0",
+            metadata=Metadata(created_at="2025-11-16T10:00:00Z"),
+            work_plans=[],
+        ).model_dump()
         linter = PlanLinter(schema_doc)
 
         # When
@@ -137,7 +158,7 @@ async def test_resolve_depends_on_path__if_plan_not_in_tasks_dir_and_filename_on
         assert result == expected
 
 
-@pytest.mark.anyio
+@pytest.mark.anyio()
 async def test_resolve_depends_on_path__if_deeply_nested_tasks_dir__then_still_check_correct_parent() -> None:
     """Given: Plan file in deeply nested tasks directory (e.g., /a/b/.sisyphus/tasks/).
     When: resolve_depends_on_path is called with filename only.
@@ -152,7 +173,11 @@ async def test_resolve_depends_on_path__if_deeply_nested_tasks_dir__then_still_c
 
         current_plan_path = tasks_dir / "plan.yaml"
         depends_on = "foobar.yml"
-        schema_doc = PlanDocument(version="3.0", metadata={"created_at": "2025-11-16T10:00:00Z"}, work_plans=[])
+        schema_doc = PlanDocument(
+            version="3.0",
+            metadata=Metadata(created_at="2025-11-16T10:00:00Z"),
+            work_plans=[],
+        ).model_dump()
         linter = PlanLinter(schema_doc)
 
         # When

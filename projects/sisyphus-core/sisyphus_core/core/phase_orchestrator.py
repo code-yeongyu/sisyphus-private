@@ -85,11 +85,11 @@ class PhaseOrchestrator:
         if not self.status_manager:
             raise ValueError("status_manager is required to resolve plan path")
 
-        status = await self.status_manager.read_status()
+        status = await self.status_manager.get()
         if not status or not status.current_plan:
             raise ValueError("No current plan found in status")
 
-        return Path(status.current_plan)
+        return Path(status.current_plan.plan_path)
 
     async def execute_phase(
         self,

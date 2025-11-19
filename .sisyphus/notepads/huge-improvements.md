@@ -148,3 +148,67 @@ def test_plan_schema__validates_schema_structure(tmp_path: Path) -> None:
    - Rich Table 출력
 
 소요 시간: 약 20분
+
+[2025-11-19 14:35] - Task 2.1: plan list 기능 테스트 작성
+
+### WORK CONTEXT & HISTORY
+- Task 2 (plan list 명령어 구현)이 완료됨
+- Task 2.1은 plan list 명령어의 테스트 작성
+- list.py가 이미 구현되어 있으므로 테스트만 작성
+
+### IMPLEMENTATION DECISIONS
+- pytest fixture 패턴 활용
+  - tmp_path: 임시 YAML 파일 생성
+  - capsys: 콘솔 출력 캡처
+  - PlanInfo TypedDict 타입 힌트로 타입 안전성 확보
+- BDD 패턴 (given/when/then) 사용으로 테스트 가독성 확보
+- 테스트 함수명 패턴: test_{func_name}__if_{condition}__{result}
+- 12개의 테스트 케이스 작성 (trio + asyncio 통합)
+
+### TECHNICAL DISCOVERIES
+- YAML 형식으로 저장된 테스트 파일은 JSON과 달리 로더가 인식 불가능
+- TypedDict를 명시적으로 타입 힌트하면 basedpyright 타입 에러 해결됨
+- pytest.mark.anyio 마커로 비동기 테스트 실행 (asyncio/trio 양쪽 모두 테스트)
+- capsys fixture는 Rich 테이블 출력도 캡처 가능
+
+### PROBLEMS FOR NEXT TASKS
+- 없음. Task 2.1 완료됨.
+
+### VERIFICATION RESULTS
+- 총 12개 테스트 모두 통과 (12 passed in 0.16s)
+- 테스트 케이스:
+  1. test_list_plans__if_directory_exists__prints_table - PASSED
+  2. test_list_plans__if_filter_status__filters_correctly - PASSED
+  3. test_list_plans__if_sort_option__sorts_correctly - PASSED
+  4. test_list_plans__calculates_status_correctly[asyncio] - PASSED
+  5. test_list_plans__checks_dependencies_satisfied[asyncio] - PASSED
+  6. test_list_plans__reads_current_plan_from_status_json[asyncio] - PASSED
+  7. test_list_plans__returns_none_if_status_json_not_exists[asyncio] - PASSED
+  8-12. [trio 버전] - 모두 PASSED
+
+### LEARNINGS
+- pytest fixture로 재사용 가능한 테스트 데이터 생성 가능
+- TypedDict 타입 힌트: PlanInfo = {...} 형식으로 명시적 타입 선언
+- asyncio 테스트: @pytest.mark.anyio() 데코레이터 사용
+- Rich 콘솔 출력: capsys로 캡처 가능
+- 프로젝트 규칙: BDD 주석(given/when/then)은 필수 문서화
+
+### IMPLEMENTATION DETAILS
+파일 생성:
+- `/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/tests/plan/test_list.py`
+
+테스트 구조:
+- 7개 동기 테스트
+- 4개 비동기 테스트 (asyncio/trio 각각)
+- 총 12개 테스트 케이스
+
+테스트 커버리지:
+1. 테이블 출력 검증
+2. 필터링 기능 검증
+3. 정렬 기능 검증
+4. 상태 계산 로직 검증
+5. 의존성 확인 로직 검증
+6. status.json 읽기 검증
+7. 빈 디렉토리 처리 검증
+
+소요 시간: 약 15분

@@ -340,7 +340,7 @@ work_plans:
   - id: '2'
     title: plan list 명령어 구현
     description: "sisyphus-speckit plan list 명령어를 구현하여\n모든 plan을 테이블로 표시 (name/filepath/status/dependency/created_at)\n"
-    status: in_progress
+    status: completed
     references:
     - inline: "Implementation Requirements:\n1. .sisyphus/tasks/ 디렉토리의 모든 YAML 파일
         스캔\n2. 각 plan의 메타데이터 수집\n3. Rich Table로 포맷팅하여 출력\n4. Filter/Sort 옵션 지원\n\n\
@@ -377,9 +377,14 @@ work_plans:
       title: plan list 명령어 실행 확인
       description: 명령어가 테이블을 출력하는지 확인
       verified: true
-      verified_at: '2025-11-19T05:31:23.210484+00:00'
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified_at: '2025-11-19T05:32:05.924393+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: "Task 2 (plan list 명령어 구현) 완료 검증:\n구현 파일: projects/sisyphus-speckit/sisyphus_speckit/plan/list.py
+        생성 완료\n등록 파일: projects/sisyphus-speckit/sisyphus_speckit/plan/app.py 수정 (command
+        등록)\n커밋: 996ee98 'feat: implement plan list command'\n명령어 테스트: uv run sisyphus-speckit
+        plan list 성공 (exit code 0)\n출력 확인: Rich Table 포맷으로 5개 컬럼 표시 (Name/File Path/Status/Dependencies/Created
+        At)\nStatus 계산 로직 동작: '작업 가능' 상태 정확히 표시\n테이블 출력 성공: Available Plans 제목과 함께
+        정상 출력\n모든 기능 요구사항 충족 확인"
       bash:
       - execute: uv run sisyphus-speckit plan list
         expected_exit_code: 0
@@ -410,7 +415,7 @@ work_plans:
   - id: '2.1'
     title: plan list 기능 테스트 작성
     description: plan list 명령어의 동작을 검증하는 테스트 작성
-    status: pending
+    status: in_progress
     references:
     - inline: "Test Requirements:\n1. 테이블 출력 테스트\n2. Filter 동작 테스트\n3. Sort 동작 테스트\n\
         4. Status 계산 테스트\n\nFile: projects/sisyphus-speckit/tests/plan/test_list.py
@@ -423,7 +428,8 @@ work_plans:
     - id: verify-2.1-1
       title: 테스트 통과
       description: plan list 테스트가 모두 통과하는지 확인
-      verified: false
+      verified: true
+      verified_at: '2025-11-19T05:36:14.397071+00:00'
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
@@ -1304,7 +1310,7 @@ work_plans:
     started_at: '2025-11-19T05:17:43.000299+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '2'
+    current_task_id: '2.1'
   current_work: ''
   current_work_ids:
   - '1'

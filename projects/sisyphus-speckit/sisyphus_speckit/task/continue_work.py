@@ -90,7 +90,7 @@ def continue_work(
                 if all_completed and all_verified:
                     console.print("[green]모든 작업이 완료되었습니다! 🎉[/green]")
                     console.print("[yellow]다음 명령으로 plan을 완료 처리하세요:[/yellow]")
-                    console.print("[cyan]  sisyphus-speckit plan mark completed[/cyan]")
+                    console.print('[cyan]  sisyphus-speckit plan "mark completed"[/cyan]')
                     return
 
             console.print("[yellow]진행 중인 작업이 없습니다.[/yellow]")
@@ -220,7 +220,7 @@ def continue_work(
 
             console.print("[green]모든 작업이 완료되었습니다! 🎉[/green]")
             console.print("[yellow]다음 명령으로 plan을 완료 처리하세요:[/yellow]")
-            console.print("[cyan]  sisyphus-speckit plan mark completed[/cyan]")
+            console.print('[cyan]  sisyphus-speckit plan "mark completed"[/cyan]')
             return
 
         next_task.status = TodoStatus.in_progress

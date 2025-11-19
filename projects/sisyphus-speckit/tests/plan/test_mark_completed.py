@@ -89,7 +89,7 @@ def test_mark_completed__if_all_todos_completed__sets_execution_completed_true(t
     result = runner.invoke(
         plan_app,
         [
-            "mark-completed",
+            "mark completed",
             "--cwd",
             str(tmp_path),
         ],
@@ -178,7 +178,7 @@ def test_mark_completed__if_todos_incomplete__exits_with_error_code(tmp_path: Pa
     result = runner.invoke(
         plan_app,
         [
-            "mark-completed",
+            "mark completed",
             "--cwd",
             str(tmp_path),
         ],
@@ -263,7 +263,7 @@ def test_mark_completed__if_todos_incomplete__shows_guidance_message(tmp_path: P
     result = runner.invoke(
         plan_app,
         [
-            "mark-completed",
+            "mark completed",
             "--cwd",
             str(tmp_path),
         ],
@@ -288,7 +288,7 @@ def test_mark_completed__if_no_current_plan__exits_with_error(tmp_path: Path) ->
     result = runner.invoke(
         plan_app,
         [
-            "mark-completed",
+            "mark completed",
             "--cwd",
             str(tmp_path),
         ],

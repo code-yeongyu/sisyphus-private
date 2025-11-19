@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 import anyio
 import typer
 from sisyphus_core.core.plans.loader import load_plan, save_plan
@@ -58,6 +60,7 @@ def mark_completed_command(
         if all_todos_completed:
             # Mark as completed
             work_plan.execution.completed = True
+            work_plan.execution.completed_at = datetime.now(UTC).isoformat()
             await save_plan(plan_path, plan_doc)
             console.print("[green]✓ 모든 작업이 완료되었습니다![/green]")
             console.print(f"[cyan]완료 시각:[/cyan] {work_plan.execution.completed_at}")
@@ -74,9 +77,7 @@ def mark_completed_command(
             current_task = task_manager.get_current_task()
             if current_task is not None:
                 console.print("[bold cyan]현재 작업:[/bold cyan]")
-                display = _format_task_display(
-                    current_task, show_children=False, show_verification=True
-                )
+                display = _format_task_display(current_task, show_children=False, show_verification=True)
                 console.print(display)
                 _display_remaining_verifications(task_manager)
 

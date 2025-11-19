@@ -857,3 +857,38 @@ def show_current(...) -> None:
 
 소요 시간: 약 8분
 
+
+[2025-11-19 15:35] - Task 8.1: task current shortcut 테스트 작성
+
+### DISCOVERED ISSUES
+- None
+
+### IMPLEMENTATION DECISIONS
+- Followed existing test patterns from test_show.py and test_status.py
+- Used BDD pattern (#given #when #then) consistently throughout all tests
+- Created comprehensive test coverage for current command functionality:
+  - Task info display
+  - Verification spec display
+  - References display
+  - Tip message content
+  - Guidance message when no task started
+  - Task hierarchy with children
+  - All required fields validation
+  - Bash verification details
+  - Inline reference content
+
+### PROBLEMS FOR NEXT TASKS
+- None
+
+### VERIFICATION RESULTS
+- Type checking: Fixed type error at line 243 by adding explicit None check before accessing task.children[0]
+- Static analysis: All BDD comments and test docstrings are necessary and follow project conventions
+
+### LEARNINGS
+- Test pattern: Use minimal_work_plan fixture from conftest.py
+- Test pattern: Use BDD comments (#given #when #then) in all test functions
+- Test pattern: Add descriptive docstrings explaining test purpose
+- Type safety: Always check for None before subscripting optional types (e.g., task.children)
+- Convention: Test file structure follows class-based organization (TestCurrentCommand)
+
+소요 시간: ~10분

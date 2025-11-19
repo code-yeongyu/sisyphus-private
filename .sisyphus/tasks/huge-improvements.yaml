@@ -1219,7 +1219,7 @@ work_plans:
   - id: '8'
     title: task current를 task show의 shortcut으로 변경
     description: "task current 명령어를 task show {current_task_id}의 shortcut으로 변경\n"
-    status: in_progress
+    status: completed
     references:
     - inline: "Implementation Requirements:\n1. 기존 task current 명령어를 show_task 함수
         호출로 변경\n2. 현재 task_id를 가져와서 show_task에 전달\n3. 출력 마지막에 \"검증 스펙 상세는 'sisyphus-speckit
@@ -1278,7 +1278,7 @@ work_plans:
   - id: '8.1'
     title: task current shortcut 테스트 작성
     description: task current shortcut 기능 테스트 작성
-    status: pending
+    status: in_progress
     references:
     - inline: "Test Requirements:\n1. current가 현재 task 정보 출력 테스트\n2. 안내 메시지 포함 테스트\n\
         \nFile: projects/sisyphus-speckit/tests/task/test_current.py (기존 확장 또는 신규)\n"
@@ -1286,7 +1286,8 @@ work_plans:
     - id: verify-8.1-1
       title: 테스트 통과
       description: task current 테스트 통과 확인
-      verified: false
+      verified: true
+      verified_at: '2025-11-19T06:36:34.262409+00:00'
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
@@ -1442,7 +1443,7 @@ work_plans:
     started_at: '2025-11-19T05:17:43.000299+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '8'
+    current_task_id: '8.1'
   current_work: ''
   current_work_ids:
   - '1'

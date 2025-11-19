@@ -415,7 +415,7 @@ work_plans:
   - id: '2.1'
     title: plan list 기능 테스트 작성
     description: plan list 명령어의 동작을 검증하는 테스트 작성
-    status: in_progress
+    status: completed
     references:
     - inline: "Test Requirements:\n1. 테이블 출력 테스트\n2. Filter 동작 테스트\n3. Sort 동작 테스트\n\
         4. Status 계산 테스트\n\nFile: projects/sisyphus-speckit/tests/plan/test_list.py
@@ -429,9 +429,18 @@ work_plans:
       title: 테스트 통과
       description: plan list 테스트가 모두 통과하는지 확인
       verified: true
-      verified_at: '2025-11-19T05:36:14.397071+00:00'
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified_at: '2025-11-19T05:36:48.685363+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: "Task 2.1 (plan list 기능 테스트) 완료 검증:\n테스트 파일: projects/sisyphus-speckit/tests/plan/test_list.py
+        생성 (441 lines)\n테스트 함수 12개 모두 구현 완료\npytest 실행 결과: 12 passed in 0.15s (100%
+        통과)\n테스트 항목:\n  - test_list_plans__if_directory_exists__prints_table: PASSED\n\
+        \  - test_list_plans__if_filter_status__filters_correctly: PASSED\n  - test_list_plans__if_sort_option__sorts_correctly:
+        PASSED\n  - test_list_plans__calculates_status_correctly: PASSED (x2 anyio)\n\
+        \  - test_list_plans__checks_dependencies_satisfied: PASSED (x2 anyio)\n \
+        \ - test_list_plans__reads_current_plan_from_status_json: PASSED (x2 anyio)\n\
+        \  - test_list_plans__returns_none_if_status_json_not_exists: PASSED (x2 anyio)\n\
+        \  - test_list_plans__handles_empty_directory: PASSED\n커밋: 7bfbec0 'test:
+        add plan list command tests'\n모든 테스트 통과, #given #when #then 패턴 준수 확인"
       bash:
       - execute: uv run pytest projects/sisyphus-speckit/tests/plan/test_list.py
           -v
@@ -449,7 +458,7 @@ work_plans:
   - id: '2.2'
     title: plan list 작업 커밋
     description: plan list 구현 및 테스트 완료 후 커밋
-    status: pending
+    status: completed
     references:
     - inline: "Commit Message Format:\n```\nfeat(plan): add plan list command with
         filter/sort\n\n- Implement list_plans function with Rich Table\n- Support
@@ -460,9 +469,15 @@ work_plans:
     - id: verify-2.2-1
       title: 커밋 생성 확인
       description: plan list 작업이 커밋되었는지 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-19T05:37:12.694432+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: "Task 2.2 (plan list 작업 커밋) 완료 검증:\n커밋 2개 생성 완료:\n\
+        \  1. 996ee98 'feat: implement plan list command' - list.py 구현 및 app.py 등록\n\
+        \  2. 7bfbec0 'test: add plan list command tests' - test_list.py 12개 테스트 추가\n\
+        모든 파일 커밋됨:\n  - projects/sisyphus-speckit/sisyphus_speckit/plan/list.py\n\
+        \  - projects/sisyphus-speckit/sisyphus_speckit/plan/app.py\n  - projects/sisyphus-speckit/tests/plan/test_list.py\n\
+        git log 확인 완료, 최신 커밋: 7bfbec0"
       bash:
       - execute: git log -1 --oneline
         expected_exit_code: 0
@@ -478,7 +493,7 @@ work_plans:
     title: plan status 명령어 구현 (--path 옵션 지원)
     description: "sisyphus-speckit plan status --path {filepath} 명령어를 구현하여\n특정 plan의
       완료 여부, todo 개수, 진행률, progress bar 출력\n"
-    status: pending
+    status: in_progress
     references:
     - inline: "NOTE: 기존 plan status 명령어가 이미 존재하므로 --path 옵션을 추가하여\n특정 파일을 지정할 수 있도록
         개선하는 작업입니다.\n\nFile: projects/sisyphus-speckit/sisyphus_speckit/plan/status.py
@@ -511,7 +526,8 @@ work_plans:
     - id: verify-3-1
       title: plan status 개선 확인
       description: --path 옵션과 progress bar가 동작하는지 확인
-      verified: false
+      verified: true
+      verified_at: '2025-11-19T05:41:17.487288+00:00'
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
@@ -1310,7 +1326,7 @@ work_plans:
     started_at: '2025-11-19T05:17:43.000299+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '2.1'
+    current_task_id: '3'
   current_work: ''
   current_work_ids:
   - '1'

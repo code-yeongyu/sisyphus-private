@@ -212,3 +212,87 @@ def test_plan_schema__validates_schema_structure(tmp_path: Path) -> None:
 7. 빈 디렉토리 처리 검증
 
 소요 시간: 약 15분
+
+[2025-11-19 14:40] - Task 3: plan status 명령어 구현 (--path 옵션 지원)
+
+### WORK CONTEXT & HISTORY
+- Task 1 & 2 (plan schema, plan list) 완료됨
+- Task 3은 기존 plan status 명령어를 개선하는 작업
+- 현재 구현: status.py는 현재 plan의 검증 상태만 표시
+- 요구사항: --path 옵션, progress bar, 진행률 계산, fully_done 표시
+
+### IMPLEMENTATION DECISIONS
+- --path 옵션으로 특정 plan 파일 지정 가능하도록 개선
+- 두 가지 모드:
+  1. --path 옵션 사용: 특정 파일의 plan 로드
+  2. --path 옵션 미사용: 현재 활성화된 plan 로드 (기존 동작)
+- Todo 타입을 정확히 지정하여 type safety 확보 (list[Todo])
+- Rich Progress 컴포넌트 사용으로 progress bar 시각화
+- 기존 _display_verification_status_table 함수 활용하여 검증 상태 표시
+
+### TECHNICAL DISCOVERIES
+- Todo 모델은 computed_status 프로퍼티로 완료 여부 판단
+- children 필드가 None이 아니면 하위 todos 재귀적으로 처리
+- typer.Option은 positional arguments 방식 사용 (param_decls 아님)
+- Path 타입은 typer와 pathlib에서 모두 사용 가능
+
+### PROBLEMS FOR NEXT TASKS
+- 없음. Task 3 완료됨.
+
+### VERIFICATION RESULTS
+- Manual test 1: `sisyphus-speckit plan status --path .sisyphus/tasks/huge-improvements.yaml`
+  - ✓ Plan name 출력
+  - ✓ Total Tasks: 27
+  - ✓ Completed: 6
+  - ✓ Progress: 22.2%
+  - ✓ Fully Done: No
+  - ✓ Progress Bar 시각화
+  - ✓ 검증 상태 테이블 표시
+  
+- Manual test 2: `sisyphus-speckit plan status` (현재 plan)
+  - ✓ 동일한 정보 출력
+  - ✓ 기존 동작 유지됨
+  
+- Test Suite: `uv run pytest projects/sisyphus-speckit/tests/plan/ -v`
+  - ✓ 25 passed in 0.55s
+  - ✓ 기존 테스트 모두 통과
+  
+- Type Checking: `uv run basedpyright --level error`
+  - ✓ 0 errors, 0 warnings, 0 notes
+  
+- Linting: `uv run ruff check`
+  - ✓ All checks passed!
+
+### LEARNINGS
+- Rich Progress 컴포넌트 사용: TextColumn, BarColumn으로 구성
+- Path 타입 처리: is_absolute() 체크하여 상대/절대 경로 구분
+- 재귀 함수: children 필드가 None일 수 있으므로 체크 필수
+- Typer Option 문법: 첫 번째 인자는 기본값, 이후는 옵션 이름들
+
+### IMPLEMENTATION DETAILS
+
+파일 수정:
+- `/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/plan/status.py`
+
+핵심 구현:
+1. _count_all_todos(todos: list[Todo]) -> int
+   - todos 재귀적으로 순회하여 전체 개수 계산
+   
+2. _count_completed_todos(todos: list[Todo]) -> int
+   - todo.computed_status.value == "completed" 조건으로 완료된 todos 계산
+   - children도 재귀적으로 처리
+   
+3. status() 함수 개선
+   - path 옵션 추가 (Path | None)
+   - path가 있으면: Path 검증 후 load_plan() 사용하여 로드
+   - path가 없으면: _load_current_plan() 사용하여 현재 plan 로드
+   - 진행률 계산: (completed_todos / total_todos * 100)
+   - Rich Progress로 progress bar 표시
+   - 기존 _display_verification_status_table() 호출하여 검증 상태 표시
+
+Commands Working:
+- sisyphus-speckit plan status --path {filepath}
+- sisyphus-speckit plan status (현재 plan)
+- sisyphus-speckit plan status --help (옵션 확인)
+
+소요 시간: 약 5분

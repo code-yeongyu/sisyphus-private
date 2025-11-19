@@ -782,3 +782,78 @@ TestLintFixIntegration (4개 테스트):
    - assert parent.children is not None 추가 (type narrowing)
 
 소요 시간: 약 5분
+
+[2025-11-19 15:27] - Task 8: task current를 task show의 shortcut으로 변경
+
+### WORK CONTEXT & HISTORY
+- Task 1-7 (plan schema, list, status, overview, lint --fix, task status, task show 개선) 완료됨
+- Task 8은 task current 명령어를 task show의 shortcut으로 변경
+- 기존 current.py는 현재 task를 간단하게 Panel로 표시했음
+- show.py는 상세한 task 정보를 표시했음
+
+### IMPLEMENTATION DECISIONS
+- show.py의 내부 로직을 `_show_task_impl` 함수로 추출하여 재사용 가능하게 함
+- _show_task_impl 함수는 async 함수로 작업 세부 정보를 표시
+- current.py의 show_current 함수는 _show_task_impl을 호출하도록 변경
+- 출력 마지막에 "💡 Tip: 검증 스펙 상세는 'sisyphus-speckit task status' 실행" 메시지 추가
+
+### TECHNICAL DISCOVERIES
+- show.py의 로직을 함수로 추출하면 current.py와 show.py가 동일한 로직 재사용 가능
+- _show_task_impl은 Todo, WorkPlan, Path 파라미터를 받아 task 상세 정보 표시
+- TYPE_CHECKING 블록으로 WorkPlan import를 type-only로 처리하여 순환 참조 방지
+
+### PROBLEMS FOR NEXT TASKS
+- 없음. Task 8 완료됨.
+
+### VERIFICATION RESULTS
+- Type checking: basedpyright 0 errors, 0 warnings, 0 notes ✓
+- Linting: ruff all checks passed ✓
+- Manual test: `uv run sisyphus-speckit task current` 실행 성공
+  - Task 8의 상세 정보 출력됨
+  - 안내 메시지 "💡 Tip: 검증 스펙 상세는 'sisyphus-speckit task status' 실행" 출력됨
+- Test suite: plan 63개 + task 21개 = 84개 모두 통과 ✓
+
+### LEARNINGS
+- async 함수 재사용: 공통 로직을 별도 async 함수로 추출하면 코드 재사용성 높음
+- TYPE_CHECKING 블록: 순환 참조 방지 및 type-only imports 처리
+- _format_task_display: 기존 헬퍼 함수가 task 표시에 유용함
+
+### IMPLEMENTATION DETAILS
+
+파일 수정:
+- `/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/task/show.py`
+  - TYPE_CHECKING 블록에서 WorkPlan import 추가
+  - _show_task_impl(task: Todo, work_plan: WorkPlan, working_dir: Path) 함수 추출 (async 함수)
+  - show_task 함수 리팩토링하여 _show_task_impl 호출
+
+- `/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/task/current.py`
+  - _show_task_impl import 추가
+  - show_current 함수에서 _show_task_impl 호출
+  - 안내 메시지 추가: "💡 Tip: 검증 스펙 상세는 'sisyphus-speckit task status' 실행"
+
+핵심 변경 사항:
+```python
+# show.py에서 로직 추출
+async def _show_task_impl(task: Todo, work_plan: WorkPlan, working_dir: Path) -> None:
+    # Task 기본 정보 표시
+    # Verification specs 표시
+    # Children 표시
+    # References 표시
+    # Plan file 정보 표시
+
+# show_task 리팩토링
+def show_task(...) -> None:
+    async def _show() -> None:
+        ...
+        await _show_task_impl(task, work_plan, working_dir)
+
+# current.py 변경
+def show_current(...) -> None:
+    async def _current() -> None:
+        ...
+        await _show_task_impl(current_task, work_plan, working_dir)
+        console.print("\n[dim]💡 Tip: 검증 스펙 상세는 'sisyphus-speckit task status' 실행[/dim]")
+```
+
+소요 시간: 약 8분
+

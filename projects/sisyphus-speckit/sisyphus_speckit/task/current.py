@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import typer
-from rich.panel import Panel
 from sisyphus_core.utils.common import resolve_cwd
 
-from sisyphus_speckit.task._helpers import _format_task_display, _load_current_plan, _run_async, console
+from sisyphus_speckit.task._helpers import _load_current_plan, _run_async, console
+from sisyphus_speckit.task.show import _show_task_impl
 
 
 def show_current(
@@ -25,7 +25,8 @@ def show_current(
             console.print("다음 명령으로 작업을 시작하세요: [cyan]sisyphus-speckit task continue[/cyan]")
             return
 
-        display = _format_task_display(current_task)
-        console.print(Panel(display, title="현재 작업", border_style="green"))
+        await _show_task_impl(current_task, work_plan, working_dir)
+
+        console.print("\n[dim]💡 Tip: 검증 스펙 상세는 'sisyphus-speckit task status' 실행[/dim]")
 
     _run_async(_current())

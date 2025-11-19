@@ -8,6 +8,7 @@ from sisyphus_speckit.task.current import show_current
 from sisyphus_speckit.task.next import show_next
 from sisyphus_speckit.task.previous import show_previous
 from sisyphus_speckit.task.show import show_task
+from sisyphus_speckit.task.status import task_status
 from sisyphus_speckit.task.verify.bash import verify_bash
 from sisyphus_speckit.task.verify.llm import verify_llm
 from sisyphus_speckit.task.verify.llm_mark import verify_llm_mark
@@ -25,6 +26,7 @@ task_app.command(name="next")(show_next)
 task_app.command(name="previous")(show_previous)
 task_app.command(name="continue")(continue_work)
 task_app.command(name="accept")(task_accept)
+task_app.command(name="status")(task_status)
 
 verify_app.command(name="bash")(verify_bash)
 verify_app.command(name="llm")(verify_llm)

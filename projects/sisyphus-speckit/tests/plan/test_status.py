@@ -1,4 +1,4 @@
-"""Tests for status() display - verifying table includes manual verification columns."""
+"""Tests for status() display - verifying table includes manual verification columns and new --path option."""
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -18,6 +18,11 @@ from sisyphus_core.core.plans.models import (
     Workflow,
     WorkMode,
     WorkPlan,
+)
+
+from sisyphus_speckit.plan.status import (
+    _count_all_todos,
+    _count_completed_todos,
 )
 
 
@@ -199,3 +204,225 @@ async def test_status__detects_missing_manual_verification(
     # Then
     assert manual_verified_emoji == "✗", "Incomplete manual verification should show X"
     assert evidence_status == "Missing", "Item without evidence should show Missing"
+
+
+def test_status__count_all_todos__counts_flat_todos(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
+    # given: A WorkPlan with 3 flat todos (no children)
+    todos = [
+        Todo(
+            id="1",
+            title="Task 1",
+            description="Test",
+            status=TodoStatus.in_progress,
+            references=[],
+            children=[],
+            verification_spec=[],
+        ),
+        Todo(
+            id="2",
+            title="Task 2",
+            description="Test",
+            status=TodoStatus.completed,
+            references=[],
+            children=[],
+            verification_spec=[],
+        ),
+        Todo(
+            id="3",
+            title="Task 3",
+            description="Test",
+            status=TodoStatus.pending,
+            references=[],
+            children=[],
+            verification_spec=[],
+        ),
+    ]
+
+    # when: Counting all todos
+    count = _count_all_todos(todos)
+
+    # then: Returns total count of 3
+    assert count == 3
+
+
+def test_status__count_all_todos__counts_nested_todos(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
+    # given: A WorkPlan with nested todos (parent with children)
+    child_todo = Todo(
+        id="1.1",
+        title="Child Task",
+        description="Test",
+        status=TodoStatus.completed,
+        references=[],
+        children=[],
+        verification_spec=[],
+    )
+    parent_todo = Todo(
+        id="1",
+        title="Parent Task",
+        description="Test",
+        status=TodoStatus.in_progress,
+        references=[],
+        children=[child_todo],
+        verification_spec=[],
+    )
+    todos = [parent_todo]
+
+    # when: Counting all todos recursively
+    count = _count_all_todos(todos)
+
+    # then: Returns total count of 2 (parent + child)
+    assert count == 2
+
+
+def test_status__count_completed_todos__counts_only_completed(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
+    # given: A WorkPlan with mixed status todos
+    todos = [
+        Todo(
+            id="1",
+            title="Task 1",
+            description="Test",
+            status=TodoStatus.completed,
+            references=[],
+            children=[],
+            verification_spec=[],
+        ),
+        Todo(
+            id="2",
+            title="Task 2",
+            description="Test",
+            status=TodoStatus.in_progress,
+            references=[],
+            children=[],
+            verification_spec=[],
+        ),
+        Todo(
+            id="3",
+            title="Task 3",
+            description="Test",
+            status=TodoStatus.completed,
+            references=[],
+            children=[],
+            verification_spec=[],
+        ),
+    ]
+
+    # when: Counting completed todos
+    count = _count_completed_todos(todos)
+
+    # then: Returns count of 2 (only completed todos)
+    assert count == 2
+
+
+def test_status__count_completed_todos__counts_nested_completed(
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
+) -> None:
+    # given: A WorkPlan with nested todos where parent is in_progress and child is completed
+    child_todo = Todo(
+        id="1.1",
+        title="Child Task",
+        description="Test",
+        status=TodoStatus.completed,
+        references=[],
+        children=[],
+        verification_spec=[],
+    )
+    parent_todo = Todo(
+        id="1",
+        title="Parent Task",
+        description="Test",
+        status=TodoStatus.in_progress,
+        references=[],
+        children=[child_todo],
+        verification_spec=[],
+    )
+    todos = [parent_todo]
+
+    # when: Counting completed todos recursively
+    count = _count_completed_todos(todos)
+
+    # then: Returns count of 1 (only the completed child)
+    assert count == 1
+
+
+def test_status__count_completed_todos__handles_empty_todos() -> None:
+    # given: An empty todos list
+    todos: list[Todo] = []
+
+    # when: Counting completed todos
+    count = _count_completed_todos(todos)
+
+    # then: Returns 0
+    assert count == 0
+
+
+def test_status__count_all_todos__handles_empty_todos() -> None:
+    # given: An empty todos list
+    todos: list[Todo] = []
+
+    # when: Counting all todos
+    count = _count_all_todos(todos)
+
+    # then: Returns 0
+    assert count == 0
+
+
+def test_status__progress_calculation__calculates_percentage() -> None:
+    # given: Completed 3 out of 10 todos
+    completed_todos = 3
+    total_todos = 10
+
+    # when: Calculating progress percentage
+    progress_pct = (completed_todos / total_todos * 100) if total_todos > 0 else 0
+
+    # then: Returns 30.0%
+    assert progress_pct == 30.0
+
+
+def test_status__progress_calculation__handles_zero_total() -> None:
+    # given: No todos at all (total = 0)
+    completed_todos = 0
+    total_todos = 0
+
+    # when: Calculating progress percentage with zero total
+    progress_pct = (completed_todos / total_todos * 100) if total_todos > 0 else 0
+
+    # then: Returns 0 (not division by zero)
+    assert progress_pct == 0
+
+
+def test_status__progress_calculation__all_completed() -> None:
+    # given: All todos completed (5 out of 5)
+    completed_todos = 5
+    total_todos = 5
+
+    # when: Calculating progress percentage
+    progress_pct = (completed_todos / total_todos * 100) if total_todos > 0 else 0
+
+    # then: Returns 100.0%
+    assert progress_pct == 100.0

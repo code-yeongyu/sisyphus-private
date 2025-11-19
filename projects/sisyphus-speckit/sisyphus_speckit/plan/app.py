@@ -10,6 +10,7 @@ from sisyphus_speckit.plan.lint import lint_plan
 from sisyphus_speckit.plan.list import list_plans
 from sisyphus_speckit.plan.mark_completed import mark_completed_command
 from sisyphus_speckit.plan.mark_fully_done import mark_fully_done_command
+from sisyphus_speckit.plan.overview import plan_overview
 from sisyphus_speckit.plan.schema import plan_schema
 from sisyphus_speckit.plan.status import status
 from sisyphus_speckit.plan.verify_final import verify_final_plan
@@ -27,3 +28,4 @@ plan_app.command(name="mark fully-done")(mark_fully_done_command)
 plan_app.command(name="schema")(plan_schema)
 plan_app.command(name="status")(status)
 plan_app.command(name="list")(list_plans)
+plan_app.command(name="overview")(plan_overview)

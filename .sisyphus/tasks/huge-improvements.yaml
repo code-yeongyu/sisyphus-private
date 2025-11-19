@@ -1150,7 +1150,7 @@ work_plans:
   - id: '7.1'
     title: task show 확장 테스트 작성
     description: task show 확장 기능 테스트 작성
-    status: in_progress
+    status: completed
     references:
     - inline: "Test Requirements:\n1. Verification spec 출력 테스트\n2. Children 재귀 출력
         테스트\n3. References resolve 테스트\n4. Relative path 테스트\n\nFile: projects/sisyphus-speckit/tests/task/test_show.py
@@ -1184,7 +1184,7 @@ work_plans:
   - id: '7.2'
     title: task show 확장 작업 커밋
     description: task show 확장 완료 후 커밋
-    status: pending
+    status: in_progress
     references:
     - inline: "Commit Message:\n```\nfeat(task): enhance task show with detailed output\n\
         \n- Add detailed verification spec display\n- Add recursive sub-task (children)
@@ -1428,7 +1428,7 @@ work_plans:
     started_at: '2025-11-19T05:17:43.000299+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '7.1'
+    current_task_id: '7.2'
   current_work: ''
   current_work_ids:
   - '1'

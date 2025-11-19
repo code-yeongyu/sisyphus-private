@@ -612,3 +612,81 @@ def test_work_plan__without_new_fields__defaults_empty() -> None:
     assert work_plan.current_work_ids == []
     assert work_plan.acceptance_criteria_for_verification_agent == []
     assert work_plan.fully_done_evidence is None
+
+
+def test_work_plan__has_no_current_work_field() -> None:
+    # Given: WorkPlan model class
+    # When: checking for current_work field in model_fields
+    # Then: current_work should not exist (removed in favor of current_work_ids)
+    assert "current_work" not in WorkPlan.model_fields
+
+
+def test_work_plan__has_current_work_ids_field() -> None:
+    # Given: WorkPlan model class
+    # When: checking for current_work_ids field
+    # Then: current_work_ids should exist as a list field
+    assert "current_work_ids" in WorkPlan.model_fields
+    field_info = WorkPlan.model_fields["current_work_ids"]
+    assert field_info.annotation == list[str]
+
+
+def test_work_plan__current_work_ids_defaults_to_empty_list() -> None:
+    # Given: WorkPlan with minimal required fields
+    # When: creating WorkPlan without specifying current_work_ids
+    work_plan = WorkPlan(
+        id="test-plan",
+        name="Test Plan",
+        user_request=UserRequest(
+            original="Test",
+            created_at="2025-11-19T10:00:00Z",
+        ),
+        objectives=Objectives(core="Test objective"),
+        background=Background(
+            current_situation="Current",
+            reason_for_change="Change",
+            changes_to_make="Changes",
+        ),
+        required_background=RequiredBackground(description="Background"),
+        workflow=Workflow(dependency_diagram="Diagram"),
+        success_vision=SuccessVision(),
+        final_verification=[],
+        todos=[],
+    )
+
+    # Then: current_work_ids should default to empty list
+    assert work_plan.current_work_ids == []
+    assert isinstance(work_plan.current_work_ids, list)
+
+
+def test_work_plan__current_work_ids_accepts_multiple_items() -> None:
+    # Given: WorkPlan with multiple current work items
+    work_ids = ["task-1", "task-2", "task-3"]
+
+    # When: creating WorkPlan with multiple current_work_ids
+    work_plan = WorkPlan(
+        id="test-plan-multi",
+        name="Test Plan Multi",
+        user_request=UserRequest(
+            original="Test",
+            created_at="2025-11-19T10:00:00Z",
+        ),
+        objectives=Objectives(core="Test objective"),
+        background=Background(
+            current_situation="Current",
+            reason_for_change="Change",
+            changes_to_make="Changes",
+        ),
+        required_background=RequiredBackground(description="Background"),
+        workflow=Workflow(dependency_diagram="Diagram"),
+        success_vision=SuccessVision(),
+        final_verification=[],
+        todos=[],
+        current_work_ids=work_ids,
+    )
+
+    # Then: current_work_ids should contain all items in order
+    assert work_plan.current_work_ids == work_ids
+    assert len(work_plan.current_work_ids) == 3
+    assert work_plan.current_work_ids[0] == "task-1"
+    assert work_plan.current_work_ids[1] == "task-2"
+    assert work_plan.current_work_ids[2] == "task-3"

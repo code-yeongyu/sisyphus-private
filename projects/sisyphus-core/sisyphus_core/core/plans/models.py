@@ -258,7 +258,6 @@ class WorkPlan(BaseModel):
         default_factory=lambda: ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None)
     )
     work_mode: WorkMode = Field(default_factory=lambda: WorkMode(parallel_requested=False, current_task_id=None))
-    current_work: str = ""
     current_work_ids: list[str] = []
     acceptance_criteria_for_verification_agent: list[AcceptanceCriteriaForVerificationAgent] = []
     fully_done_evidence: str | None = None

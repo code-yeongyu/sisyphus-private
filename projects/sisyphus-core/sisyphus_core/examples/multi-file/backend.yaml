@@ -257,7 +257,6 @@ work_plans:
       parallel_requested: false
       current_task_id: null
 
-    current_work: ""
     current_work_ids: ["1", "2", "3"]
 
     acceptance_criteria_for_verification_agent:

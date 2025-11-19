@@ -892,3 +892,32 @@ def show_current(...) -> None:
 - Convention: Test file structure follows class-based organization (TestCurrentCommand)
 
 소요 시간: ~10분
+
+[2025-11-19 15:46] - Task 9.1: current_work 제거 테스트 작성
+
+### DISCOVERED ISSUES
+- 없음 (이전 Task 9가 이미 current_work 필드를 제거했음)
+
+### IMPLEMENTATION DECISIONS
+- 기존 test_models.py 파일에 4개의 새 테스트 함수 추가
+- BDD 패턴(#given #when #then) 준수하여 프로젝트 컨벤션 유지
+- 테스트 범위:
+  1. test_work_plan__has_no_current_work_field: current_work 필드가 존재하지 않음을 검증
+  2. test_work_plan__has_current_work_ids_field: current_work_ids 필드가 list[str] 타입으로 존재함을 검증
+  3. test_work_plan__current_work_ids_defaults_to_empty_list: 기본값이 빈 리스트임을 검증
+  4. test_work_plan__current_work_ids_accepts_multiple_items: 여러 항목을 저장 가능함을 검증
+
+### PROBLEMS FOR NEXT TASKS
+- 없음
+
+### VERIFICATION RESULTS
+- 실행 명령어: uv run pytest projects/sisyphus-core/tests/core/plans/test_models*.py -v
+- 결과: 31 passed in 0.07s (모든 테스트 통과)
+- 새로 추가된 4개 테스트 모두 성공적으로 통과
+
+### LEARNINGS
+- WorkPlan 모델의 current_work 필드는 이미 제거되어 current_work_ids로 대체됨
+- 기존 test_models.py 파일에 current_work_ids 관련 테스트가 일부 있었으나, current_work 필드 제거를 명시적으로 검증하는 테스트는 없었음
+- Pydantic model_fields를 사용하여 필드 존재 여부와 타입을 검증하는 패턴 확인
+
+소요 시간: 약 3분

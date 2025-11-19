@@ -124,7 +124,6 @@ class PlanLinter:
             "references",
             "execution",
             "work_mode",
-            "current_work",
             "current_work_ids",
             "acceptance_criteria_for_verification_agent",
             "fully_done_evidence",
@@ -182,8 +181,8 @@ class PlanLinter:
             self._validate_execution_in_plan(plan["execution"], f"{path}.execution")
         if "work_mode" in plan:
             self._validate_work_mode_in_plan(plan["work_mode"], f"{path}.work_mode")
-        if "current_work" in plan:
-            self._check_type(plan["current_work"], f"{path}.current_work", "string")
+        if "current_work_ids" in plan:
+            self._check_type(plan["current_work_ids"], f"{path}.current_work_ids", "list")
 
     def _validate_user_request_in_plan(self, user_req: Any, path: str) -> None:
         """Validate user_request within a work plan."""

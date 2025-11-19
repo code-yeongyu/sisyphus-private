@@ -132,7 +132,6 @@ async def test_continue__if_deterministic_bash_not_verified__returns_error() -> 
                 fully_done_at="2025-11-16T10:00:00+00:00",
             ),
             work_mode=WorkMode(parallel_requested=False),
-            current_work="test-1",
             current_work_ids=["test-1"],
             acceptance_criteria_for_verification_agent=[
                 AcceptanceCriteriaForVerificationAgent(
@@ -258,7 +257,6 @@ async def test_continue__if_manual_verification_not_passed__returns_error() -> N
                 fully_done_at="2025-11-16T10:00:00+00:00",
             ),
             work_mode=WorkMode(parallel_requested=False),
-            current_work="test-1",
             current_work_ids=["test-1"],
             acceptance_criteria_for_verification_agent=[],
             fully_done_evidence=None,
@@ -370,7 +368,6 @@ async def test_continue__if_llm_judge_empty__allows_continue() -> None:
                 fully_done_at="2025-11-16T10:00:00+00:00",
             ),
             work_mode=WorkMode(parallel_requested=False),
-            current_work="test-1",
             current_work_ids=["test-1"],
             acceptance_criteria_for_verification_agent=[],
             fully_done_evidence=None,
@@ -481,7 +478,6 @@ async def test_continue__if_acceptance_criteria_not_checked__allows_continue() -
                 fully_done_at="2025-11-16T10:00:00+00:00",
             ),
             work_mode=WorkMode(parallel_requested=False),
-            current_work="test-1",
             current_work_ids=["test-1"],
             acceptance_criteria_for_verification_agent=[
                 AcceptanceCriteriaForVerificationAgent(
@@ -606,7 +602,6 @@ async def test_continue__if_all_conditions_met__allows_continue() -> None:
                 fully_done_at="2025-11-16T10:00:00+00:00",
             ),
             work_mode=WorkMode(parallel_requested=False),
-            current_work="test-1",
             current_work_ids=["test-1"],
             acceptance_criteria_for_verification_agent=[
                 AcceptanceCriteriaForVerificationAgent(

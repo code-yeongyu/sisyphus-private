@@ -94,7 +94,6 @@ async def test_verify_status__collects_all_verifications_from_todos(
         references=[],
         execution=ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None),
         work_mode=WorkMode(parallel_requested=False),
-        current_work="",
     )
 
     # When - Collect all verifications (simulating verify_status logic)

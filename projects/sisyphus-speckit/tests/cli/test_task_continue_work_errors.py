@@ -82,7 +82,6 @@ async def test_continue_work__if_manual_incomplete__error_mentions_manual_verifi
         references=[],
         execution=ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None),
         work_mode=WorkMode(parallel_requested=False),
-        current_work="",
     )
     plan_doc = PlanDocument(
         version="3.0",
@@ -167,7 +166,6 @@ async def test_continue_work__if_all_verifications_incomplete__report_shows_coun
         references=[],
         execution=ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None),
         work_mode=WorkMode(parallel_requested=False),
-        current_work="",
     )
     plan_doc = PlanDocument(
         version="3.0",
@@ -256,7 +254,6 @@ async def test_continue_work__if_mixed_state__report_shows_breakdown(
         references=[],
         execution=ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None),
         work_mode=WorkMode(parallel_requested=False),
-        current_work="",
     )
     plan_doc = PlanDocument(
         version="3.0",

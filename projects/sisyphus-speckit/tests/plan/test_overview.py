@@ -143,7 +143,6 @@ def minimal_work_plan(
             completed_at=None,
         ),
         work_mode=WorkMode(parallel_requested=False),
-        current_work="",
     )
 
 
@@ -196,7 +195,6 @@ def test_overview__if_all_fields_present__displays_all_sections(
             completed_at=None,
         ),
         work_mode=WorkMode(parallel_requested=False),
-        current_work="",
     )
 
     # when: Simulating overview display (verifying all fields are accessible)
@@ -253,7 +251,6 @@ def test_overview__if_path_option_provided__loads_specific_plan(
             completed_at=None,
         ),
         work_mode=WorkMode(parallel_requested=False),
-        current_work="",
     )
 
     # when: Verifying path can be provided (simulate --path option)
@@ -291,7 +288,6 @@ def test_overview__if_plan_has_no_todos__displays_zero_progress(
             completed_at=None,
         ),
         work_mode=WorkMode(parallel_requested=False),
-        current_work="",
     )
 
     # when: Calculating progress
@@ -390,7 +386,6 @@ def test_overview__if_acceptance_criteria_missing__handles_gracefully(
             completed_at=None,
         ),
         work_mode=WorkMode(parallel_requested=False),
-        current_work="",
     )
 
     # when: Checking if acceptance_criteria exists
@@ -489,7 +484,6 @@ def test_overview__multiple_additional_requirements_displayed(
             completed_at=None,
         ),
         work_mode=WorkMode(parallel_requested=False),
-        current_work="",
     )
 
     # when: Accessing additional requirements
@@ -531,7 +525,6 @@ def test_overview__final_verification_table_accessible(
             completed_at=None,
         ),
         work_mode=WorkMode(parallel_requested=False),
-        current_work="",
     )
 
     # when: Accessing final_verification

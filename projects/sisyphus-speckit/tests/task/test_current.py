@@ -50,7 +50,6 @@ class TestCurrentCommand:
             references=[],
             execution=ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None),
             work_mode=WorkMode(parallel_requested=False),
-            current_work="",
         )
 
     @pytest.fixture()

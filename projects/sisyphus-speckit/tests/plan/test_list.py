@@ -101,7 +101,6 @@ def minimal_work_plan(
         references=[],
         execution=ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None),
         work_mode=WorkMode(parallel_requested=False),
-        current_work="",
     )
 
 
@@ -134,7 +133,6 @@ def test_list_plans__if_directory_exists__prints_table(tmp_path: Path, capsys: p
         references=[],
         execution=ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None),
         work_mode=WorkMode(parallel_requested=False),
-        current_work="",
     )
 
     # YAML 파일 생성
@@ -189,7 +187,6 @@ def test_list_plans__if_filter_status__filters_correctly(tmp_path: Path, capsys:
         references=[],
         execution=ExecutionStatus(started=False, completed=False, started_at=None, completed_at=None),
         work_mode=WorkMode(parallel_requested=False),
-        current_work="",
     )
 
     plan_file = plan_dir / "test.yaml"

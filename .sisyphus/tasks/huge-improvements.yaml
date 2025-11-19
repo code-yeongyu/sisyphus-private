@@ -7,179 +7,102 @@ work_plans:
   name: Sisyphus-Speckit CLI 개선사항 구현
   depends_on: []
   user_request:
-    original: |
-      아래의 기능들을 원합니다:
-      1. sisyphus-speckit plan schema 의 구현
-      - yaml spec 으로도 사용할 수 있는 형식으로써 json 형식의 스키마를 출력
-
-      2. sisyphus-speckit plan list 의 구현
-      - 현재 available 한 plan 목록을 name / filepath / status / dependency / created at 으로 테이블로 보여주는 것
-      - 상태는 현재 작업중(status.json 참조하여서), 작업 가능(dependency 가 없거나 all resolved & all completed), 작업 완료 됨(fully_done = True with evidence)
-      - filter, sort 필요
-          - 필터, sort 는 모든것들에 대해서 제공되어야 하며
-          - 기본값은 필터는 따로 없고 의존성없고, 상태가 지금 당장 시작 할 수 있는 상황이고(진행중인것은 그 밑으로, 완료된것은 맨 밑으로), created at 이걸 합친 기준으로 정렬을 만들어 주었으면 함
-
-      3. sisyphus-speckit plan status --path {filepath} 의 구현
-      - completed / fully done 여부 등을 출력해주어야 함
-      - 몇개의 todo 가 있고, 몇개가 체크되어있고, 그래서 몇퍼센트 구현되었는지, 현재 plan 자체의 현황을 출력해야함
-      - progress bar 와 함께
-
-      4. sisyphus-speckit plan overview --path {filepath} 의 구현
-      - 당연히도 sisyphus work 와 동일하게 여러개일 경우일때에 지정받게하거나 하는 그런 그 로직 그대로 있어야 하고, 말 그대로 오버뷰를 출력해야하는데, 여기서 오버뷰라 함은:
-          - 사실상 todo 목록을 제외하고 모든 것. (그러나 이렇게 코딩하면 절대로 안되고, 실제로 필드명 하나하나 나열해야함)
-          - 그리고 몇개의 todo 가 있고, 몇개가 체크되어있고, 그래서 몇퍼센트 구현되었는지도 출력해야 함 (진행도 느낌으로, 가능하면 progress bar 같은것도 출력해줬으면 함)
-          - final verification 이나 acceptance criteria 에 대한 상세한 내용들도 출력 할 수 있어야 함
-          - 여기에서 출력되는 것의 기준은 "그래서 정말 한눈으로 특정 plan 의 오버뷰를 다 볼 수 있나?" 여야 함
-          - overview 는 좀 더 status 의 확장 버전에 가까움
-
-
-      4. sisyphus-speckit plan lint --fix 의 추가
-      - --fix fixes all the multiline texts into pipeline (|) texts, no new line thing]
-      - nullable 혹은 '' 여도 상관없는, 단순히 그저 필드가 필요한 - evidence 필드 같은것들은 적절한 위치에 알아서 추가해주는 기능도 있어야 함
-
-      5. sisyphus-speckit task status 의 구현
-      - 현재 작업 자체에 대한 정보.
-      - 그리고 verification status 들도 - 이걸 보고서 마킹에 활용 할 수 있을만큼 그 안의 세부 설명들 모두와 id 같은것들을 모두 표시해줄 수 있어야 함
-      - 현재의 verification 과 관련한 내용들을 더 많이 출력해야 함. 모든 verification 내용을 다 출력해야함
-      - 그 외 현재 'task' 의 상태를 제대로 보여주는 것을 목표로.
-      - continuable (task continue 했을 때 다음단계로 넘어갈 조건이 되는지) 에 대한 값도 출력 할 수 있어야 함
-
-      6. sisyphus-speckit task show 가 더 많은 내용을 다루도록 변경
-      - 어떤 검증사항이 어떻게 되어있고 되고있는지에 관하여
-      - 그리고 또한 실제 path 도 relative path 로 출력해야 함
-      - 하위작업들에 대한 내용도 모조리 자세히 출력해야함.
-      - 또한 참조도 다 resolve 해서 가져와서 제대로 출력해야 함
-
-      7. sisyphus-speckit task current 가 sisyphus-speckit task show {current task id} 의 shortcut 이 되도록 변경
-      - 실제로 코드에서 그렇게 참조하도록 변경되어야 함
-      - 검증 스펙이나 이런거 더 자세히 알고 싶으면 'sisyphus-speckit task status' 를 실행하라고도 해야함
-
-      8. 작업계획서의 current_work 의 제거 및 관련 참조를 모두 current_work_ids 를 통해 접근해서 가져오도록 변경. 그리고 실제로 current_work_ids 사용하도록 변경
-
-      9. speckit 의 verify 도 그렇고 시스템 전반에서 multiline text 에는 pipeline 을 사용해야 함. sisyphus-speckit plan lint --fix 를 한번씩 하고 저장시키면 좋을 듯. 따라서 이 fix 자체는 별도의 컴포넌트여야 함
+    original: "아래의 기능들을 원합니다:\n1. sisyphus-speckit plan schema 의 구현\n- yaml spec 으로도
+      사용할 수 있는 형식으로써 json 형식의 스키마를 출력\n\n2. sisyphus-speckit plan list 의 구현\n- 현재
+      available 한 plan 목록을 name / filepath / status / dependency / created at 으로 테이블로
+      보여주는 것\n- 상태는 현재 작업중(status.json 참조하여서), 작업 가능(dependency 가 없거나 all resolved
+      & all completed), 작업 완료 됨(fully_done = True with evidence)\n- filter, sort 필요\n\
+      \    - 필터, sort 는 모든것들에 대해서 제공되어야 하며\n    - 기본값은 필터는 따로 없고 의존성없고, 상태가 지금 당장
+      시작 할 수 있는 상황이고(진행중인것은 그 밑으로, 완료된것은 맨 밑으로), created at 이걸 합친 기준으로 정렬을 만들어 주었으면
+      함\n\n3. sisyphus-speckit plan status --path {filepath} 의 구현\n- completed / fully
+      done 여부 등을 출력해주어야 함\n- 몇개의 todo 가 있고, 몇개가 체크되어있고, 그래서 몇퍼센트 구현되었는지, 현재 plan 자체의
+      현황을 출력해야함\n- progress bar 와 함께\n\n4. sisyphus-speckit plan overview --path {filepath}
+      의 구현\n- 당연히도 sisyphus work 와 동일하게 여러개일 경우일때에 지정받게하거나 하는 그런 그 로직 그대로 있어야 하고,
+      말 그대로 오버뷰를 출력해야하는데, 여기서 오버뷰라 함은:\n    - 사실상 todo 목록을 제외하고 모든 것. (그러나 이렇게 코딩하면
+      절대로 안되고, 실제로 필드명 하나하나 나열해야함)\n    - 그리고 몇개의 todo 가 있고, 몇개가 체크되어있고, 그래서 몇퍼센트
+      구현되었는지도 출력해야 함 (진행도 느낌으로, 가능하면 progress bar 같은것도 출력해줬으면 함)\n    - final verification
+      이나 acceptance criteria 에 대한 상세한 내용들도 출력 할 수 있어야 함\n    - 여기에서 출력되는 것의 기준은 \"\
+      그래서 정말 한눈으로 특정 plan 의 오버뷰를 다 볼 수 있나?\" 여야 함\n    - overview 는 좀 더 status 의 확장
+      버전에 가까움\n\n\n4. sisyphus-speckit plan lint --fix 의 추가\n- --fix fixes all the
+      multiline texts into pipeline (|) texts, no new line thing]\n- nullable 혹은 ''
+      여도 상관없는, 단순히 그저 필드가 필요한 - evidence 필드 같은것들은 적절한 위치에 알아서 추가해주는 기능도 있어야 함\n\n\
+      5. sisyphus-speckit task status 의 구현\n- 현재 작업 자체에 대한 정보.\n- 그리고 verification
+      status 들도 - 이걸 보고서 마킹에 활용 할 수 있을만큼 그 안의 세부 설명들 모두와 id 같은것들을 모두 표시해줄 수 있어야 함\n\
+      - 현재의 verification 과 관련한 내용들을 더 많이 출력해야 함. 모든 verification 내용을 다 출력해야함\n- 그
+      외 현재 'task' 의 상태를 제대로 보여주는 것을 목표로.\n- continuable (task continue 했을 때 다음단계로
+      넘어갈 조건이 되는지) 에 대한 값도 출력 할 수 있어야 함\n\n6. sisyphus-speckit task show 가 더 많은 내용을
+      다루도록 변경\n- 어떤 검증사항이 어떻게 되어있고 되고있는지에 관하여\n- 그리고 또한 실제 path 도 relative path 로
+      출력해야 함\n- 하위작업들에 대한 내용도 모조리 자세히 출력해야함.\n- 또한 참조도 다 resolve 해서 가져와서 제대로 출력해야
+      함\n\n7. sisyphus-speckit task current 가 sisyphus-speckit task show {current
+      task id} 의 shortcut 이 되도록 변경\n- 실제로 코드에서 그렇게 참조하도록 변경되어야 함\n- 검증 스펙이나 이런거 더
+      자세히 알고 싶으면 'sisyphus-speckit task status' 를 실행하라고도 해야함\n\n8. 작업계획서의 current_work
+      의 제거 및 관련 참조를 모두 current_work_ids 를 통해 접근해서 가져오도록 변경. 그리고 실제로 current_work_ids
+      사용하도록 변경\n\n9. speckit 의 verify 도 그렇고 시스템 전반에서 multiline text 에는 pipeline 을
+      사용해야 함. sisyphus-speckit plan lint --fix 를 한번씩 하고 저장시키면 좋을 듯. 따라서 이 fix 자체는
+      별도의 컴포넌트여야 함\n"
     created_at: '2025-11-19T04:53:40.692031+00:00'
     additional:
-    - |
-      Expected Outcome: 모든 sisyphus-speckit plan/task 명령어가 에러 없이 실행되고 예상 출력을 제공.
-      각 기능이 Rich 포맷으로 깔끔하게 표시되며, 사용자가 plan과 task 상태를 한눈에 파악 가능.
-      기존 코드 패턴(Typer, Rich, Pydantic)과 일관성 유지.
-    - |
-      Forbidden Outcomes:
-      1. 타입 안정성 유지 - Any 타입 사용 금지, 모든 파라미터 타입 힌트 필수
-      2. 기존 기능 파괴 금지 - 현재 동작하는 모든 명령어 그대로 동작
-      3. 성능 저하 금지 - 명령어 실행 속도가 현재보다 느려지면 안 됨
-      4. fallback/migration/하위호환 코드 생성 금지
-      5. 요청한 내용 외 추가 작업 금지
-    - |
-      Special Concerns:
-      1. status.json 건드리는 것 절대 금지 - 이걸 건드리지 말고 현재 YAML 스펙 내에서 다 다뤄지도록 할 것
-      2. current_work_ids 구현 제대로 - 여러개 multiple로 바뀌는 점 감안
-      3. YAML 스키마 호환성 - 기존 .sisyphus/tasks/*.yaml 파일들과의 호환성 유지 필수
-      4. CLI 인터페이스 일관성 - 기존 명령어 인터페이스 패턴과 일관되게 유지
+    - "Expected Outcome: 모든 sisyphus-speckit plan/task 명령어가 에러 없이 실행되고 예상 출력을 제공.\n\
+      각 기능이 Rich 포맷으로 깔끔하게 표시되며, 사용자가 plan과 task 상태를 한눈에 파악 가능.\n기존 코드 패턴(Typer, Rich,
+      Pydantic)과 일관성 유지.\n"
+    - "Forbidden Outcomes:\n1. 타입 안정성 유지 - Any 타입 사용 금지, 모든 파라미터 타입 힌트 필수\n2. 기존 기능
+      파괴 금지 - 현재 동작하는 모든 명령어 그대로 동작\n3. 성능 저하 금지 - 명령어 실행 속도가 현재보다 느려지면 안 됨\n4. fallback/migration/하위호환
+      코드 생성 금지\n5. 요청한 내용 외 추가 작업 금지\n"
+    - "Special Concerns:\n1. status.json 건드리는 것 절대 금지 - 이걸 건드리지 말고 현재 YAML 스펙 내에서
+      다 다뤄지도록 할 것\n2. current_work_ids 구현 제대로 - 여러개 multiple로 바뀌는 점 감안\n3. YAML 스키마
+      호환성 - 기존 .sisyphus/tasks/*.yaml 파일들과의 호환성 유지 필수\n4. CLI 인터페이스 일관성 - 기존 명령어 인터페이스
+      패턴과 일관되게 유지\n"
   objectives:
-    core: |
-      sisyphus-speckit CLI의 plan 및 task 관련 명령어를 확장하여 사용자가
-      작업 계획과 진행 상황을 더 직관적이고 상세하게 파악할 수 있도록 개선
+    core: "sisyphus-speckit CLI의 plan 및 task 관련 명령어를 확장하여 사용자가\n작업 계획과 진행 상황을 더 직관적이고
+      상세하게 파악할 수 있도록 개선\n"
     detailed:
     - goal: plan 관리 기능 강화
-      measurable: |
-        schema, list, status, overview, lint --fix 명령어 5개 추가 구현,
-        모두 정상 동작 및 예상 출력 제공
+      measurable: "schema, list, status, overview, lint --fix 명령어 5개 추가 구현,\n모두 정상
+        동작 및 예상 출력 제공\n"
     - goal: task 조회 기능 개선
-      measurable: |
-        task status 신규 구현, task show 기능 확장, task current를 shortcut으로 변경,
-        모든 검증사항 및 하위작업 상세 출력
+      measurable: "task status 신규 구현, task show 기능 확장, task current를 shortcut으로 변경,\n\
+        모든 검증사항 및 하위작업 상세 출력\n"
     - goal: 내부 데이터 모델 정리
-      measurable: |
-        current_work 필드 제거, current_work_ids로 전면 전환,
-        모든 참조 코드 수정 완료
+      measurable: "current_work 필드 제거, current_work_ids로 전면 전환,\n모든 참조 코드 수정 완료\n"
     - goal: YAML 포맷 일관성 확보
-      measurable: |
-        multiline 텍스트 모두 pipeline(|) 형식으로 변환,
-        lint --fix 기능으로 자동화
+      measurable: "multiline 텍스트 모두 pipeline(|) 형식으로 변환,\nlint --fix 기능으로 자동화\n"
   background:
-    current_situation: |
-      sisyphus-speckit은 plan과 task를 관리하는 CLI 도구로,
-      현재 기본적인 init, lint, graph, show, verify 등의 명령어만 제공.
-      사용자가 여러 plan의 상태를 한눈에 보거나, 특정 plan/task의 진행률을
-      파악하기 어려움. 또한 current_work와 current_work_ids가 혼재되어 사용.
-    reason_for_change: |
-      1. 사용자가 전체 plan 목록과 각 plan의 상태를 빠르게 파악할 수 없음
-      2. task 검증 상태를 확인하기 위해 YAML 파일을 직접 열어봐야 함
-      3. 내부 데이터 모델의 일관성 부족 (current_work vs current_work_ids)
-      4. YAML 포맷의 일관성 부족 (multiline 텍스트 처리 방식 불일치)
-    changes_to_make: |
-      1. plan schema, list, status, overview 명령어 신규 추가
-      2. plan lint에 --fix 옵션 추가 (multiline 자동 변환)
-      3. task status 신규 추가, task show 기능 확장
-      4. task current를 task show의 shortcut으로 변경
-      5. current_work 필드 완전 제거, current_work_ids로 통합
-      6. multiline 텍스트를 모두 pipeline(|) 형식으로 통일
+    current_situation: "sisyphus-speckit은 plan과 task를 관리하는 CLI 도구로,\n현재 기본적인 init,
+      lint, graph, show, verify 등의 명령어만 제공.\n사용자가 여러 plan의 상태를 한눈에 보거나, 특정 plan/task의
+      진행률을\n파악하기 어려움. 또한 current_work와 current_work_ids가 혼재되어 사용.\n"
+    reason_for_change: "1. 사용자가 전체 plan 목록과 각 plan의 상태를 빠르게 파악할 수 없음\n2. task 검증 상태를
+      확인하기 위해 YAML 파일을 직접 열어봐야 함\n3. 내부 데이터 모델의 일관성 부족 (current_work vs current_work_ids)\n\
+      4. YAML 포맷의 일관성 부족 (multiline 텍스트 처리 방식 불일치)\n"
+    changes_to_make: "1. plan schema, list, status, overview 명령어 신규 추가\n2. plan lint에
+      --fix 옵션 추가 (multiline 자동 변환)\n3. task status 신규 추가, task show 기능 확장\n4. task
+      current를 task show의 shortcut으로 변경\n5. current_work 필드 완전 제거, current_work_ids로
+      통합\n6. multiline 텍스트를 모두 pipeline(|) 형식으로 통일\n"
   required_background:
-    description: |
-      Tech Stack:
-      - Python 3.12+
-      - Typer 0.15+ (CLI 프레임워크)
-      - Rich 13+ (콘솔 출력)
-      - Pydantic 2.0+ (데이터 모델)
-      - ruamel.yaml 0.18+ (YAML 파싱)
-      - sisyphus-core (공유 모델 및 유틸)
-
-      Project Structure:
-      - projects/sisyphus-speckit/sisyphus_speckit/
-        - cli.py (진입점)
-        - plan/ (plan 관련 명령어들)
-        - task/ (task 관련 명령어들)
-      - projects/sisyphus-core/sisyphus_core/
-        - core/plans/models.py (Pydantic 모델 정의)
-        - core/plan_linter.py (lint 검증 로직)
-        - core/task_manager.py (task 네비게이션)
-
-      Code Conventions:
-      - 모든 함수 파라미터에 타입 힌트 필수 (ruff ANN001)
-      - Double quotes only (ruff flake8-quotes)
-      - Line length 119
-      - Protocol 사용 (ABC 대신)
-      - anyio 사용 (asyncio 직접 사용 금지)
-      - Given-When-Then 테스트 구조
-      - imports는 항상 파일 상단
-      - pytest.mark.anyio 필수 (async 테스트)
-
-      CRITICAL CONSTRAINTS:
-      - status.json 절대 건드리지 않기
-      - 기존 명령어 인터페이스 유지
-      - YAML 스키마 호환성 보장
-      - 타입 안전성 유지 (Any 타입 금지)
-    file_structure: null
+    description: "Tech Stack:\n- Python 3.12+\n- Typer 0.15+ (CLI 프레임워크)\n- Rich 13+
+      (콘솔 출력)\n- Pydantic 2.0+ (데이터 모델)\n- ruamel.yaml 0.18+ (YAML 파싱)\n- sisyphus-core
+      (공유 모델 및 유틸)\n\nProject Structure:\n- projects/sisyphus-speckit/sisyphus_speckit/\n\
+      \  - cli.py (진입점)\n  - plan/ (plan 관련 명령어들)\n  - task/ (task 관련 명령어들)\n- projects/sisyphus-core/sisyphus_core/\n\
+      \  - core/plans/models.py (Pydantic 모델 정의)\n  - core/plan_linter.py (lint 검증
+      로직)\n  - core/task_manager.py (task 네비게이션)\n\nCode Conventions:\n- 모든 함수 파라미터에
+      타입 힌트 필수 (ruff ANN001)\n- Double quotes only (ruff flake8-quotes)\n- Line length
+      119\n- Protocol 사용 (ABC 대신)\n- anyio 사용 (asyncio 직접 사용 금지)\n- Given-When-Then
+      테스트 구조\n- imports는 항상 파일 상단\n- pytest.mark.anyio 필수 (async 테스트)\n\nCRITICAL
+      CONSTRAINTS:\n- status.json 절대 건드리지 않기\n- 기존 명령어 인터페이스 유지\n- YAML 스키마 호환성 보장\n\
+      - 타입 안전성 유지 (Any 타입 금지)\n"
     references:
     - ref_id: typer-docs
       uri: https://typer.tiangolo.com/
-      inline: null
     - ref_id: rich-docs
       uri: https://rich.readthedocs.io/
-      inline: null
     - ref_id: pydantic-docs
       uri: https://docs.pydantic.dev/2.0/
-      inline: null
   workflow:
-    dependency_diagram: |
-      Task 1 (plan schema) - 독립 실행 가능
-         ↓
-      Task 2 (plan list) - Task 1과 독립
-         ↓
-      Task 3 (plan status) - Task 2와 독립
-         ↓
-      Task 4 (plan overview) - Task 3 기반 확장
-         ↓
-      Task 5 (plan lint --fix) - Task 1-4와 독립, multiline 처리 핵심
-         ↓
-      Task 6 (task status) - 독립 실행 가능
-         ↓
-      Task 7 (task show 개선) - Task 6과 독립
-         ↓
-      Task 8 (task current shortcut화) - Task 7 완료 후
-         ↓
-      Task 9 (current_work 제거) - Task 8 완료 후, current_work_ids 전환
+    dependency_diagram: "Task 1 (plan schema) - 독립 실행 가능\n   ↓\nTask 2 (plan list)
+      - Task 1과 독립\n   ↓\nTask 3 (plan status) - Task 2와 독립\n   ↓\nTask 4 (plan overview)
+      - Task 3 기반 확장\n   ↓\nTask 5 (plan lint --fix) - Task 1-4와 독립, multiline 처리
+      핵심\n   ↓\nTask 6 (task status) - 독립 실행 가능\n   ↓\nTask 7 (task show 개선) - Task
+      6과 독립\n   ↓\nTask 8 (task current shortcut화) - Task 7 완료 후\n   ↓\nTask 9 (current_work
+      제거) - Task 8 완료 후, current_work_ids 전환\n"
     critical_path:
     - '1'
     - '5'
@@ -187,32 +110,23 @@ work_plans:
   success_vision:
     user_perspective:
     - scenario: 개발자가 여러 plan 중 어떤 것을 시작할지 결정
-      experience: |
-        sisyphus-speckit plan list를 실행하면 모든 plan이 테이블로 표시되며,
-        각 plan의 상태(작업 가능/진행중/완료)가 색상으로 구분되어 한눈에 파악 가능
+      experience: "sisyphus-speckit plan list를 실행하면 모든 plan이 테이블로 표시되며,\n각 plan의 상태(작업
+        가능/진행중/완료)가 색상으로 구분되어 한눈에 파악 가능\n"
     - scenario: 개발자가 특정 plan의 진행률 확인
-      experience: |
-        sisyphus-speckit plan status --path {file}을 실행하면
-        progress bar와 함께 완료된 todo 개수와 퍼센트가 표시됨
+      experience: "sisyphus-speckit plan status --path {file}을 실행하면\nprogress bar와
+        함께 완료된 todo 개수와 퍼센트가 표시됨\n"
     - scenario: 개발자가 현재 task의 검증 상태 확인
-      experience: |
-        sisyphus-speckit task status를 실행하면 모든 verification spec이
-        ID와 함께 상세히 표시되어 마킹 작업에 활용 가능
+      experience: "sisyphus-speckit task status를 실행하면 모든 verification spec이\nID와 함께
+        상세히 표시되어 마킹 작업에 활용 가능\n"
     business_perspective:
     - metric: CLI 사용성 향상
-      target: |
-        사용자가 YAML 파일을 직접 열지 않고도 CLI 명령어만으로
-        모든 plan/task 상태 파악 가능
+      target: "사용자가 YAML 파일을 직접 열지 않고도 CLI 명령어만으로\n모든 plan/task 상태 파악 가능\n"
     - metric: 개발 속도 향상
-      target: |
-        plan/task 조회 시간 50% 단축 (YAML 파일 직접 읽기 대비)
+      target: "plan/task 조회 시간 50% 단축 (YAML 파일 직접 읽기 대비)\n"
     technical_criteria:
     - category: CLI 기능 완성도
-      criteria: |
-        신규 명령어 9개 모두 구현 및 정상 동작
-        (schema, list, status, overview, lint --fix, task status,
-         task show 확장, task current shortcut, current_work 제거)
-      command: null
+      criteria: "신규 명령어 9개 모두 구현 및 정상 동작\n(schema, list, status, overview, lint --fix,
+        task status,\n task show 확장, task current shortcut, current_work 제거)\n"
       expected: 모든 명령어 실행 시 에러 없이 예상 출력 생성
     - category: 타입 안전성
       criteria: basedpyright 타입 체크 통과, Any 타입 사용 없음
@@ -226,28 +140,19 @@ work_plans:
   - id: final-cli-commands
     title: 모든 신규 CLI 명령어 정상 동작
     category: Functionality
-    description: |
-      9개 기능(plan schema/list/status/overview/lint --fix,
-      task status/show 확장/current shortcut/current_work 제거) 모두 동작
+    description: "9개 기능(plan schema/list/status/overview/lint --fix,\ntask status/show
+      확장/current shortcut/current_work 제거) 모두 동작\n"
     verified: false
-    verified_at: null
-    verification_evidence: null
     orchestrator_manually_verified: false
     manual_verification_evidence: ''
     bash:
     - execute: uv run sisyphus-speckit plan schema --help
-      expected_stdout: null
-      expected_stderr: null
       expected_exit_code: 0
       notes: schema 명령어 존재 확인
     - execute: uv run sisyphus-speckit plan list --help
-      expected_stdout: null
-      expected_stderr: null
       expected_exit_code: 0
       notes: list 명령어 존재 확인
     - execute: uv run sisyphus-speckit task status --help
-      expected_stdout: null
-      expected_stderr: null
       expected_exit_code: 0
       notes: task status 명령어 존재 확인
     llm_judge:
@@ -255,110 +160,58 @@ work_plans:
       context_commands:
       - uv run sisyphus-speckit plan --help
       - uv run sisyphus-speckit task --help
-      instruction: |
-        다음 명령어들이 모두 등록되어 있고 도움말이 제대로 표시되는지 확인:
-        1. plan schema
-        2. plan list
-        3. plan status
-        4. plan overview
-        5. plan lint (--fix 옵션 포함)
-        6. task status
-        7. task show (기능 확장)
-        8. task current (shortcut 변경)
-
-        Success: 모든 명령어가 help에 나타나고 실행 가능
-        Failure: 하나라도 누락되거나 실행 불가
+      instruction: "다음 명령어들이 모두 등록되어 있고 도움말이 제대로 표시되는지 확인:\n1. plan schema\n2. plan
+        list\n3. plan status\n4. plan overview\n5. plan lint (--fix 옵션 포함)\n6. task
+        status\n7. task show (기능 확장)\n8. task current (shortcut 변경)\n\nSuccess: 모든
+        명령어가 help에 나타나고 실행 가능\nFailure: 하나라도 누락되거나 실행 불가\n"
   - id: final-type-safety
     title: 타입 안전성 및 코드 품질 유지
     category: Code Quality
-    description: |
-      basedpyright 타입 체크 통과, ruff 린트 통과,
-      Any 타입 사용 없음, 모든 함수 파라미터 타입 힌트 존재
+    description: "basedpyright 타입 체크 통과, ruff 린트 통과,\nAny 타입 사용 없음, 모든 함수 파라미터 타입
+      힌트 존재\n"
     verified: false
-    verified_at: null
-    verification_evidence: null
     orchestrator_manually_verified: false
     manual_verification_evidence: ''
     bash:
     - execute: uv run basedpyright projects/sisyphus-speckit
-      expected_stdout: null
-      expected_stderr: null
       expected_exit_code: 0
       notes: 타입 체크 통과
     - execute: uv run ruff check projects/sisyphus-speckit
-      expected_stdout: null
-      expected_stderr: null
       expected_exit_code: 0
       notes: 린트 통과
     llm_judge: []
   todos:
   - id: '1'
     title: plan schema 명령어 구현
-    description: |
-      sisyphus-speckit plan schema 명령어를 구현하여
-      YAML 스펙을 JSON 스키마 형식으로 출력
-    status: pending
-    children: null
+    description: "sisyphus-speckit plan schema 명령어를 구현하여\nYAML 스펙을 JSON 스키마 형식으로 출력\n"
+    status: in_progress
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Implementation Requirements:
-        1. Pydantic 모델(PlanDocument)을 JSON Schema로 변환
-        2. pydantic의 model_json_schema() 메서드 활용
-        3. Rich JSON 포맷으로 콘솔에 예쁘게 출력
-        4. --output 옵션으로 파일 저장 지원
-
-        File: projects/sisyphus-speckit/sisyphus_speckit/plan/schema.py (신규 생성)
-
-        Reference Pattern:
-        - projects/sisyphus-speckit/sisyphus_speckit/plan/lint.py:15-68
-          (Typer 명령어 구조, Console 사용 패턴)
-        - projects/sisyphus-core/sisyphus_core/core/plans/models.py:1-200
-          (PlanDocument 모델 정의)
-
-        Example Implementation:
-        ```python
-        from sisyphus_core.core.plans.models import PlanDocument
-        from rich.console import Console
-        from rich.syntax import Syntax
-        import json
-        import typer
-
-        console = Console()
-
-        def plan_schema(
-            output: Path | None = typer.Option(None, "--output", "-o"),
-        ) -> None:
-            schema = PlanDocument.model_json_schema()
-            json_str = json.dumps(schema, indent=2, ensure_ascii=False)
-
-            if output:
-                output.write_text(json_str, encoding="utf-8")
-                console.print(f"[green]Schema saved to {output}[/green]")
-            else:
-                syntax = Syntax(json_str, "json", theme="monokai")
-                console.print(syntax)
-        ```
-
-        Register in plan/app.py:
-        ```python
-        from sisyphus_speckit.plan.schema import plan_schema
-        plan_app.command(name="schema")(plan_schema)
-        ```
+    - inline: "Implementation Requirements:\n1. Pydantic 모델(PlanDocument)을 JSON Schema로
+        변환\n2. pydantic의 model_json_schema() 메서드 활용\n3. Rich JSON 포맷으로 콘솔에 예쁘게 출력\n\
+        4. --output 옵션으로 파일 저장 지원\n\nFile: projects/sisyphus-speckit/sisyphus_speckit/plan/schema.py
+        (신규 생성)\n\nReference Pattern:\n- projects/sisyphus-speckit/sisyphus_speckit/plan/lint.py:15-68\n\
+        \  (Typer 명령어 구조, Console 사용 패턴)\n- projects/sisyphus-core/sisyphus_core/core/plans/models.py:1-200\n\
+        \  (PlanDocument 모델 정의)\n\nExample Implementation:\n```python\nfrom sisyphus_core.core.plans.models
+        import PlanDocument\nfrom rich.console import Console\nfrom rich.syntax import
+        Syntax\nimport json\nimport typer\n\nconsole = Console()\n\ndef plan_schema(\n\
+        \    output: Path | None = typer.Option(None, \"--output\", \"-o\"),\n) ->
+        None:\n    schema = PlanDocument.model_json_schema()\n    json_str = json.dumps(schema,
+        indent=2, ensure_ascii=False)\n\n    if output:\n        output.write_text(json_str,
+        encoding=\"utf-8\")\n        console.print(f\"[green]Schema saved to {output}[/green]\"\
+        )\n    else:\n        syntax = Syntax(json_str, \"json\", theme=\"monokai\"\
+        )\n        console.print(syntax)\n```\n\nRegister in plan/app.py:\n```python\n\
+        from sisyphus_speckit.plan.schema import plan_schema\nplan_app.command(name=\"\
+        schema\")(plan_schema)\n```\n"
     verification_spec:
     - id: verify-1-1
       title: plan schema 명령어 실행 확인
       description: 명령어가 JSON 스키마를 출력하는지 확인
-      verified: false
-      verified_at: null
-      verification_evidence: null
+      verified: true
+      verified_at: '2025-11-19T05:21:13.179624+00:00'
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: uv run sisyphus-speckit plan schema
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: 스키마 출력 확인
       llm_judge:
@@ -366,159 +219,85 @@ work_plans:
         context_commands:
         - uv run sisyphus-speckit plan schema
         - cat projects/sisyphus-speckit/sisyphus_speckit/plan/schema.py
-        instruction: |
-          Verify plan schema 명령어 구현:
-
-          CRITERION 1: schema.py 파일 존재 및 함수 정의
-          - Expected: plan_schema 함수가 정의되어 있음
-          - Verify: cat으로 파일 내용 확인
-
-          CRITERION 2: JSON 스키마 출력
-          - Expected: PlanDocument 스키마가 JSON 형식으로 출력됨
-          - Verify: 실행 결과에 "version", "metadata", "work_plans" 키 포함
-
-          CRITERION 3: Rich 포맷 사용
-          - Expected: 색상 및 Syntax 하이라이팅 적용
-          - Verify: 코드에서 Rich Console/Syntax 사용 확인
-
-          CRITERION 4: --output 옵션 지원
-          - Expected: 파일 저장 가능
-          - Verify: 함수 시그니처에 output 파라미터 존재
-
-          FINAL VERDICT: PASS/FAIL
+        instruction: "Verify plan schema 명령어 구현:\n\nCRITERION 1: schema.py 파일 존재 및
+          함수 정의\n- Expected: plan_schema 함수가 정의되어 있음\n- Verify: cat으로 파일 내용 확인\n\n\
+          CRITERION 2: JSON 스키마 출력\n- Expected: PlanDocument 스키마가 JSON 형식으로 출력됨\n\
+          - Verify: 실행 결과에 \"version\", \"metadata\", \"work_plans\" 키 포함\n\nCRITERION
+          3: Rich 포맷 사용\n- Expected: 색상 및 Syntax 하이라이팅 적용\n- Verify: 코드에서 Rich Console/Syntax
+          사용 확인\n\nCRITERION 4: --output 옵션 지원\n- Expected: 파일 저장 가능\n- Verify: 함수
+          시그니처에 output 파라미터 존재\n\nFINAL VERDICT: PASS/FAIL\n"
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-1-1
-      condition: plan_schema 함수가 projects/sisyphus-speckit/sisyphus_speckit/plan/schema.py에 구현됨
-      verified_at: null
-      verification_evidence: null
+      condition: plan_schema 함수가 
+        projects/sisyphus-speckit/sisyphus_speckit/plan/schema.py에 구현됨
     - id: criterion-1-2
       condition: sisyphus-speckit plan schema 실행 시 JSON 스키마 출력
-      verified_at: null
-      verification_evidence: null
     - id: criterion-1-3
       condition: plan/app.py에 schema 명령어 등록됨
-      verified_at: null
-      verification_evidence: null
   - id: '1.1'
     title: plan schema 기능 테스트 작성
     description: plan schema 명령어의 동작을 검증하는 테스트 작성
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Test Requirements:
-        1. 스키마 출력 테스트 (콘솔)
-        2. 파일 저장 테스트 (--output 옵션)
-        3. 스키마 구조 검증 (필수 키 존재)
-
-        File: projects/sisyphus-speckit/tests/plan/test_schema.py (신규 생성)
-
-        Test Pattern Reference:
-        - projects/sisyphus-cli/sisyphus/tests/test_cli_plan_lint.py (기존 테스트 구조)
-
-        Example Test:
-        ```python
-        from sisyphus_speckit.plan.schema import plan_schema
-        from pathlib import Path
-        import json
-
-        def test_plan_schema__if_no_output__prints_to_console(capsys):
-            # given: 출력 파일 없음
-            # when: plan_schema 실행
-            plan_schema(output=None)
-            captured = capsys.readouterr()
-            # then: JSON 스키마 출력
-            assert "version" in captured.out or "PlanDocument" in captured.out
-
-        def test_plan_schema__if_output_file__saves_to_file(tmp_path):
-            # given: 임시 출력 파일
-            output = tmp_path / "schema.json"
-            # when: plan_schema 실행
-            plan_schema(output=output)
-            # then: 파일 생성 및 JSON 유효성
-            assert output.exists()
-            schema = json.loads(output.read_text())
-            assert "$defs" in schema or "properties" in schema
-        ```
+    - inline: "Test Requirements:\n1. 스키마 출력 테스트 (콘솔)\n2. 파일 저장 테스트 (--output 옵션)\n\
+        3. 스키마 구조 검증 (필수 키 존재)\n\nFile: projects/sisyphus-speckit/tests/plan/test_schema.py
+        (신규 생성)\n\nTest Pattern Reference:\n- projects/sisyphus-cli/sisyphus/tests/test_cli_plan_lint.py
+        (기존 테스트 구조)\n\nExample Test:\n```python\nfrom sisyphus_speckit.plan.schema
+        import plan_schema\nfrom pathlib import Path\nimport json\n\ndef test_plan_schema__if_no_output__prints_to_console(capsys):\n\
+        \    # given: 출력 파일 없음\n    # when: plan_schema 실행\n    plan_schema(output=None)\n\
+        \    captured = capsys.readouterr()\n    # then: JSON 스키마 출력\n    assert \"\
+        version\" in captured.out or \"PlanDocument\" in captured.out\n\ndef test_plan_schema__if_output_file__saves_to_file(tmp_path):\n\
+        \    # given: 임시 출력 파일\n    output = tmp_path / \"schema.json\"\n    # when:
+        plan_schema 실행\n    plan_schema(output=output)\n    # then: 파일 생성 및 JSON 유효성\n\
+        \    assert output.exists()\n    schema = json.loads(output.read_text())\n\
+        \    assert \"$defs\" in schema or \"properties\" in schema\n```\n"
     verification_spec:
     - id: verify-1.1-1
       title: 테스트 통과
       description: plan schema 테스트가 모두 통과하는지 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
-      - execute: uv run pytest projects/sisyphus-speckit/tests/plan/test_schema.py -v
-        expected_stdout: null
-        expected_stderr: null
+      - execute: uv run pytest 
+          projects/sisyphus-speckit/tests/plan/test_schema.py -v
         expected_exit_code: 0
         notes: 모든 테스트 통과
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-1.1-1
       condition: test_schema.py 파일 존재
-      verified_at: null
-      verification_evidence: null
     - id: criterion-1.1-2
       condition: 2개 이상의 테스트 케이스 작성
-      verified_at: null
-      verification_evidence: null
     - id: criterion-1.1-3
       condition: pytest 실행 시 모든 테스트 통과
-      verified_at: null
-      verification_evidence: null
   - id: '1.2'
     title: plan schema 작업 커밋
     description: plan schema 구현 및 테스트 완료 후 커밋
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Commit Message Format:
-        ```
-        feat(plan): add plan schema command
-
-        - Implement plan_schema function in plan/schema.py
-        - Output PlanDocument JSON schema with Rich formatting
-        - Support --output option for file export
-        - Add comprehensive tests in tests/plan/test_schema.py
-
-        🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-        Co-Authored-By: Claude <noreply@anthropic.com>
-        ```
-
-        Files to commit:
-        - projects/sisyphus-speckit/sisyphus_speckit/plan/schema.py
-        - projects/sisyphus-speckit/sisyphus_speckit/plan/app.py
-        - projects/sisyphus-speckit/tests/plan/test_schema.py
+    - inline: "Commit Message Format:\n```\nfeat(plan): add plan schema command\n\n\
+        - Implement plan_schema function in plan/schema.py\n- Output PlanDocument
+        JSON schema with Rich formatting\n- Support --output option for file export\n\
+        - Add comprehensive tests in tests/plan/test_schema.py\n\n🤖 Generated with
+        [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n\
+        ```\n\nFiles to commit:\n- projects/sisyphus-speckit/sisyphus_speckit/plan/schema.py\n\
+        - projects/sisyphus-speckit/sisyphus_speckit/plan/app.py\n- projects/sisyphus-speckit/tests/plan/test_schema.py\n"
     verification_spec:
     - id: verify-1.2-1
       title: 커밋 생성 확인
       description: plan schema 작업이 커밋되었는지 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: git log -1 --oneline
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: 최근 커밋 확인
       llm_judge:
@@ -526,129 +305,61 @@ work_plans:
         context_commands:
         - git log -1 --stat
         - git show --name-only
-        instruction: |
-          커밋 검증:
-          1. schema.py, app.py, test_schema.py 파일 포함
-          2. 커밋 메시지에 "feat(plan): add plan schema" 포함
-          3. Co-Authored-By 포함
-
-          PASS: 모든 조건 만족
-          FAIL: 하나라도 미충족
+        instruction: "커밋 검증:\n1. schema.py, app.py, test_schema.py 파일 포함\n2. 커밋 메시지에
+          \"feat(plan): add plan schema\" 포함\n3. Co-Authored-By 포함\n\nPASS: 모든 조건
+          만족\nFAIL: 하나라도 미충족\n"
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-1.2-1
       condition: git commit 생성됨
-      verified_at: null
-      verification_evidence: null
     - id: criterion-1.2-2
       condition: 커밋 메시지 형식 준수
-      verified_at: null
-      verification_evidence: null
   - id: '2'
     title: plan list 명령어 구현
-    description: |
-      sisyphus-speckit plan list 명령어를 구현하여
-      모든 plan을 테이블로 표시 (name/filepath/status/dependency/created_at)
+    description: "sisyphus-speckit plan list 명령어를 구현하여\n모든 plan을 테이블로 표시 (name/filepath/status/dependency/created_at)\n"
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Implementation Requirements:
-        1. .sisyphus/tasks/ 디렉토리의 모든 YAML 파일 스캔
-        2. 각 plan의 메타데이터 수집
-        3. Rich Table로 포맷팅하여 출력
-        4. Filter/Sort 옵션 지원
-
-        Status 계산 로직:
-        - "작업중": status.json의 current_plan_id와 일치
-        - "작업 가능": depends_on이 없거나 모든 의존성이 완료됨
-        - "완료됨": fully_done = True with evidence
-
-        File: projects/sisyphus-speckit/sisyphus_speckit/plan/list.py (신규 생성)
-
-        Reference Pattern:
-        - projects/sisyphus-speckit/sisyphus_speckit/plan/status.py:1-26
-          (현재 plan 로딩 패턴)
-        - projects/sisyphus-core/sisyphus_core/core/plans/loader.py
-          (load_plan 함수 사용)
-
-        Example Implementation Structure:
-        ```python
-        from pathlib import Path
-        from rich.table import Table
-        from rich.console import Console
-        from sisyphus_core.core.plans.loader import load_plan
-        import typer
-
-        console = Console()
-
-        def list_plans(
-            directory: Path = typer.Option(Path(".sisyphus/tasks"), "--dir", "-d"),
-            filter_status: str | None = typer.Option(None, "--filter"),
-            sort_by: str = typer.Option("default", "--sort"),
-        ) -> None:
-            # 1. YAML 파일 스캔
-            yaml_files = list(directory.glob("*.yaml"))
-
-            # 2. 각 plan 메타데이터 수집
-            plans = []
-            for yaml_file in yaml_files:
-                plan_doc = load_plan(yaml_file)
-                for work_plan in plan_doc.work_plans:
-                    status = _calculate_status(work_plan, yaml_file.parent)
-                    plans.append({
-                        "name": work_plan.name,
-                        "filepath": str(yaml_file.relative_to(Path.cwd())),
-                        "status": status,
-                        "dependencies": len(work_plan.depends_on),
-                        "created_at": work_plan.user_request.created_at,
-                    })
-
-            # 3. Filter/Sort 적용
-            if filter_status:
-                plans = [p for p in plans if p["status"] == filter_status]
-
-            if sort_by == "default":
-                # 작업 가능 -> 진행중 -> 완료 순, 그 안에서 created_at 오름차순
-                ...
-
-            # 4. Rich Table 출력
-            table = Table(title="Available Plans")
-            table.add_column("Name")
-            table.add_column("File Path")
-            table.add_column("Status")
-            table.add_column("Dependencies")
-            table.add_column("Created At")
-
-            for plan in plans:
-                table.add_row(...)
-
-            console.print(table)
-        ```
-
-        Register in plan/app.py:
-        ```python
-        from sisyphus_speckit.plan.list import list_plans
-        plan_app.command(name="list")(list_plans)
-        ```
+    - inline: "Implementation Requirements:\n1. .sisyphus/tasks/ 디렉토리의 모든 YAML 파일
+        스캔\n2. 각 plan의 메타데이터 수집\n3. Rich Table로 포맷팅하여 출력\n4. Filter/Sort 옵션 지원\n\n\
+        Status 계산 로직:\n- \"작업중\": status.json의 current_plan_id와 일치\n- \"작업 가능\": depends_on이
+        없거나 모든 의존성이 완료됨\n- \"완료됨\": fully_done = True with evidence\n\nFile: projects/sisyphus-speckit/sisyphus_speckit/plan/list.py
+        (신규 생성)\n\nReference Pattern:\n- projects/sisyphus-speckit/sisyphus_speckit/plan/status.py:1-26\n\
+        \  (현재 plan 로딩 패턴)\n- projects/sisyphus-core/sisyphus_core/core/plans/loader.py\n\
+        \  (load_plan 함수 사용)\n\nExample Implementation Structure:\n```python\nfrom
+        pathlib import Path\nfrom rich.table import Table\nfrom rich.console import
+        Console\nfrom sisyphus_core.core.plans.loader import load_plan\nimport typer\n\
+        \nconsole = Console()\n\ndef list_plans(\n    directory: Path = typer.Option(Path(\"\
+        .sisyphus/tasks\"), \"--dir\", \"-d\"),\n    filter_status: str | None = typer.Option(None,
+        \"--filter\"),\n    sort_by: str = typer.Option(\"default\", \"--sort\"),\n\
+        ) -> None:\n    # 1. YAML 파일 스캔\n    yaml_files = list(directory.glob(\"*.yaml\"\
+        ))\n\n    # 2. 각 plan 메타데이터 수집\n    plans = []\n    for yaml_file in yaml_files:\n\
+        \        plan_doc = load_plan(yaml_file)\n        for work_plan in plan_doc.work_plans:\n\
+        \            status = _calculate_status(work_plan, yaml_file.parent)\n   \
+        \         plans.append({\n                \"name\": work_plan.name,\n    \
+        \            \"filepath\": str(yaml_file.relative_to(Path.cwd())),\n     \
+        \           \"status\": status,\n                \"dependencies\": len(work_plan.depends_on),\n\
+        \                \"created_at\": work_plan.user_request.created_at,\n    \
+        \        })\n\n    # 3. Filter/Sort 적용\n    if filter_status:\n        plans
+        = [p for p in plans if p[\"status\"] == filter_status]\n\n    if sort_by ==
+        \"default\":\n        # 작업 가능 -> 진행중 -> 완료 순, 그 안에서 created_at 오름차순\n    \
+        \    ...\n\n    # 4. Rich Table 출력\n    table = Table(title=\"Available Plans\"\
+        )\n    table.add_column(\"Name\")\n    table.add_column(\"File Path\")\n \
+        \   table.add_column(\"Status\")\n    table.add_column(\"Dependencies\")\n\
+        \    table.add_column(\"Created At\")\n\n    for plan in plans:\n        table.add_row(...)\n\
+        \n    console.print(table)\n```\n\nRegister in plan/app.py:\n```python\nfrom
+        sisyphus_speckit.plan.list import list_plans\nplan_app.command(name=\"list\"\
+        )(list_plans)\n```\n"
     verification_spec:
     - id: verify-2-1
       title: plan list 명령어 실행 확인
       description: 명령어가 테이블을 출력하는지 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: uv run sisyphus-speckit plan list
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: 테이블 출력 확인
       llm_judge:
@@ -656,1330 +367,733 @@ work_plans:
         context_commands:
         - uv run sisyphus-speckit plan list
         - cat projects/sisyphus-speckit/sisyphus_speckit/plan/list.py
-        instruction: |
-          Verify plan list 명령어 구현:
-
-          CRITERION 1: list.py 파일 존재 및 함수 정의
-          - Expected: list_plans 함수 정의
-          - Verify: 파일 내용 확인
-
-          CRITERION 2: 테이블 출력
-          - Expected: Rich Table로 plan 목록 표시
-          - Verify: 실행 결과에 컬럼 헤더 존재
-
-          CRITERION 3: 필수 컬럼 포함
-          - Expected: Name, File Path, Status, Dependencies, Created At
-          - Verify: 테이블에 5개 컬럼 모두 표시
-
-          CRITERION 4: Filter/Sort 옵션
-          - Expected: --filter, --sort 옵션 지원
-          - Verify: 함수 시그니처 확인
-
-          CRITERION 5: Status 계산 로직
-          - Expected: 작업중/작업 가능/완료 상태 표시
-          - Verify: 코드에서 _calculate_status 함수 존재
-
-          FINAL VERDICT: PASS/FAIL
+        instruction: "Verify plan list 명령어 구현:\n\nCRITERION 1: list.py 파일 존재 및 함수
+          정의\n- Expected: list_plans 함수 정의\n- Verify: 파일 내용 확인\n\nCRITERION 2: 테이블
+          출력\n- Expected: Rich Table로 plan 목록 표시\n- Verify: 실행 결과에 컬럼 헤더 존재\n\nCRITERION
+          3: 필수 컬럼 포함\n- Expected: Name, File Path, Status, Dependencies, Created
+          At\n- Verify: 테이블에 5개 컬럼 모두 표시\n\nCRITERION 4: Filter/Sort 옵션\n- Expected:
+          --filter, --sort 옵션 지원\n- Verify: 함수 시그니처 확인\n\nCRITERION 5: Status 계산 로직\n\
+          - Expected: 작업중/작업 가능/완료 상태 표시\n- Verify: 코드에서 _calculate_status 함수 존재\n\
+          \nFINAL VERDICT: PASS/FAIL\n"
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-2-1
       condition: list_plans 함수 구현됨
-      verified_at: null
-      verification_evidence: null
     - id: criterion-2-2
       condition: Rich Table로 출력
-      verified_at: null
-      verification_evidence: null
     - id: criterion-2-3
       condition: Filter/Sort 옵션 동작
-      verified_at: null
-      verification_evidence: null
   - id: '2.1'
     title: plan list 기능 테스트 작성
     description: plan list 명령어의 동작을 검증하는 테스트 작성
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Test Requirements:
-        1. 테이블 출력 테스트
-        2. Filter 동작 테스트
-        3. Sort 동작 테스트
-        4. Status 계산 테스트
-
-        File: projects/sisyphus-speckit/tests/plan/test_list.py (신규 생성)
-
-        Example Test:
-        ```python
-        def test_list_plans__if_directory_exists__prints_table(tmp_path, capsys):
-            # given: 테스트 YAML 파일
-            # when: list_plans 실행
-            # then: 테이블 출력 확인
-            ...
-
-        def test_list_plans__if_filter_status__filters_correctly():
-            # given: 여러 상태의 plan
-            # when: --filter 옵션 사용
-            # then: 필터링된 결과만 표시
-            ...
-        ```
+    - inline: "Test Requirements:\n1. 테이블 출력 테스트\n2. Filter 동작 테스트\n3. Sort 동작 테스트\n\
+        4. Status 계산 테스트\n\nFile: projects/sisyphus-speckit/tests/plan/test_list.py
+        (신규 생성)\n\nExample Test:\n```python\ndef test_list_plans__if_directory_exists__prints_table(tmp_path,
+        capsys):\n    # given: 테스트 YAML 파일\n    # when: list_plans 실행\n    # then:
+        테이블 출력 확인\n    ...\n\ndef test_list_plans__if_filter_status__filters_correctly():\n\
+        \    # given: 여러 상태의 plan\n    # when: --filter 옵션 사용\n    # then: 필터링된 결과만
+        표시\n    ...\n```\n"
     verification_spec:
     - id: verify-2.1-1
       title: 테스트 통과
       description: plan list 테스트가 모두 통과하는지 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
-      - execute: uv run pytest projects/sisyphus-speckit/tests/plan/test_list.py -v
-        expected_stdout: null
-        expected_stderr: null
+      - execute: uv run pytest projects/sisyphus-speckit/tests/plan/test_list.py
+          -v
         expected_exit_code: 0
         notes: 모든 테스트 통과
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-2.1-1
       condition: test_list.py 파일 존재
-      verified_at: null
-      verification_evidence: null
     - id: criterion-2.1-2
       condition: 3개 이상의 테스트 케이스 작성
-      verified_at: null
-      verification_evidence: null
   - id: '2.2'
     title: plan list 작업 커밋
     description: plan list 구현 및 테스트 완료 후 커밋
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Commit Message Format:
-        ```
-        feat(plan): add plan list command with filter/sort
-
-        - Implement list_plans function with Rich Table
-        - Support status calculation (작업중/작업 가능/완료)
-        - Add --filter and --sort options
-        - Include comprehensive tests
-
-        🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-        Co-Authored-By: Claude <noreply@anthropic.com>
-        ```
+    - inline: "Commit Message Format:\n```\nfeat(plan): add plan list command with
+        filter/sort\n\n- Implement list_plans function with Rich Table\n- Support
+        status calculation (작업중/작업 가능/완료)\n- Add --filter and --sort options\n- Include
+        comprehensive tests\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\
+        \nCo-Authored-By: Claude <noreply@anthropic.com>\n```\n"
     verification_spec:
     - id: verify-2.2-1
       title: 커밋 생성 확인
       description: plan list 작업이 커밋되었는지 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: git log -1 --oneline
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: 최근 커밋 확인
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-2.2-1
       condition: git commit 생성됨
-      verified_at: null
-      verification_evidence: null
   - id: '3'
     title: plan status 명령어 구현 (--path 옵션 지원)
-    description: |
-      sisyphus-speckit plan status --path {filepath} 명령어를 구현하여
-      특정 plan의 완료 여부, todo 개수, 진행률, progress bar 출력
+    description: "sisyphus-speckit plan status --path {filepath} 명령어를 구현하여\n특정 plan의
+      완료 여부, todo 개수, 진행률, progress bar 출력\n"
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        NOTE: 기존 plan status 명령어가 이미 존재하므로 --path 옵션을 추가하여
-        특정 파일을 지정할 수 있도록 개선하는 작업입니다.
-
-        File: projects/sisyphus-speckit/sisyphus_speckit/plan/status.py (기존 파일 수정)
-
-        현재 구현:
-        - projects/sisyphus-speckit/sisyphus_speckit/plan/status.py:1-26
-          (현재 plan의 검증 상태만 표시)
-
-        개선사항:
-        1. --path 옵션 추가로 특정 plan 파일 지정 가능
-        2. plan 전체 진행률 계산 (completed todos / total todos)
-        3. Rich Progress Bar 추가
-        4. fully_done 여부 표시
-
-        Example Enhancement:
-        ```python
-        from rich.progress import Progress, BarColumn, TextColumn
-        from pathlib import Path
-        import typer
-
-        def status(
-            path: Path | None = typer.Option(None, "--path", "-p"),
-            cwd: str | None = typer.Option(None, "--cwd"),
-        ) -> None:
-            async def _status() -> None:
-                working_dir = resolve_cwd(cwd)
-
-                if path:
-                    # 특정 파일 지정
-                    plan_doc = await load_plan_from_path(path)
-                    work_plan = plan_doc.work_plans[0]
-                else:
-                    # 현재 plan
-                    plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
-
-                # 진행률 계산
-                total_todos = _count_all_todos(work_plan.todos)
-                completed_todos = _count_completed_todos(work_plan.todos)
-                progress_pct = (completed_todos / total_todos * 100) if total_todos > 0 else 0
-
-                # Progress Bar 출력
-                with Progress(
-                    TextColumn("[bold blue]{task.description}"),
-                    BarColumn(),
-                    TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-                ) as progress:
-                    task = progress.add_task(f"Plan: {work_plan.name}", total=total_todos)
-                    progress.update(task, completed=completed_todos)
-
-                # 상태 정보 출력
-                console.print(f"Total Tasks: {total_todos}")
-                console.print(f"Completed: {completed_todos}")
-                console.print(f"Progress: {progress_pct:.1f}%")
-                console.print(f"Fully Done: {work_plan.execution.fully_done_at is not None}")
-
-                # 검증 상태 테이블 (기존 기능 유지)
-                _display_verification_status_table(work_plan, task_manager, show_current_task=True)
-
-            _run_async(_status())
-        ```
+    - inline: "NOTE: 기존 plan status 명령어가 이미 존재하므로 --path 옵션을 추가하여\n특정 파일을 지정할 수 있도록
+        개선하는 작업입니다.\n\nFile: projects/sisyphus-speckit/sisyphus_speckit/plan/status.py
+        (기존 파일 수정)\n\n현재 구현:\n- projects/sisyphus-speckit/sisyphus_speckit/plan/status.py:1-26\n\
+        \  (현재 plan의 검증 상태만 표시)\n\n개선사항:\n1. --path 옵션 추가로 특정 plan 파일 지정 가능\n2. plan
+        전체 진행률 계산 (completed todos / total todos)\n3. Rich Progress Bar 추가\n4. fully_done
+        여부 표시\n\nExample Enhancement:\n```python\nfrom rich.progress import Progress,
+        BarColumn, TextColumn\nfrom pathlib import Path\nimport typer\n\ndef status(\n\
+        \    path: Path | None = typer.Option(None, \"--path\", \"-p\"),\n    cwd:
+        str | None = typer.Option(None, \"--cwd\"),\n) -> None:\n    async def _status()
+        -> None:\n        working_dir = resolve_cwd(cwd)\n\n        if path:\n   \
+        \         # 특정 파일 지정\n            plan_doc = await load_plan_from_path(path)\n\
+        \            work_plan = plan_doc.work_plans[0]\n        else:\n         \
+        \   # 현재 plan\n            plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)\n\
+        \n        # 진행률 계산\n        total_todos = _count_all_todos(work_plan.todos)\n\
+        \        completed_todos = _count_completed_todos(work_plan.todos)\n     \
+        \   progress_pct = (completed_todos / total_todos * 100) if total_todos >
+        0 else 0\n\n        # Progress Bar 출력\n        with Progress(\n          \
+        \  TextColumn(\"[bold blue]{task.description}\"),\n            BarColumn(),\n\
+        \            TextColumn(\"[progress.percentage]{task.percentage:>3.0f}%\"\
+        ),\n        ) as progress:\n            task = progress.add_task(f\"Plan:
+        {work_plan.name}\", total=total_todos)\n            progress.update(task,
+        completed=completed_todos)\n\n        # 상태 정보 출력\n        console.print(f\"\
+        Total Tasks: {total_todos}\")\n        console.print(f\"Completed: {completed_todos}\"\
+        )\n        console.print(f\"Progress: {progress_pct:.1f}%\")\n        console.print(f\"\
+        Fully Done: {work_plan.execution.fully_done_at is not None}\")\n\n       \
+        \ # 검증 상태 테이블 (기존 기능 유지)\n        _display_verification_status_table(work_plan,
+        task_manager, show_current_task=True)\n\n    _run_async(_status())\n```\n"
     verification_spec:
     - id: verify-3-1
       title: plan status 개선 확인
       description: --path 옵션과 progress bar가 동작하는지 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: uv run sisyphus-speckit plan status --help
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: --path 옵션 확인
       llm_judge:
       - by: orchestrator-agent
         context_commands:
         - cat projects/sisyphus-speckit/sisyphus_speckit/plan/status.py
-        instruction: |
-          Verify plan status 개선:
-
-          CRITERION 1: --path 옵션 추가
-          - Expected: path 파라미터 존재
-          - Verify: 함수 시그니처 확인
-
-          CRITERION 2: Progress Bar 출력
-          - Expected: Rich Progress 사용
-          - Verify: 코드에서 Progress import 및 사용 확인
-
-          CRITERION 3: 진행률 계산
-          - Expected: completed/total 계산 로직
-          - Verify: _count_all_todos, _count_completed_todos 함수 존재
-
-          CRITERION 4: fully_done 표시
-          - Expected: fully_done_at 필드 출력
-          - Verify: 출력 코드 확인
-
-          FINAL VERDICT: PASS/FAIL
+        instruction: "Verify plan status 개선:\n\nCRITERION 1: --path 옵션 추가\n- Expected:
+          path 파라미터 존재\n- Verify: 함수 시그니처 확인\n\nCRITERION 2: Progress Bar 출력\n- Expected:
+          Rich Progress 사용\n- Verify: 코드에서 Progress import 및 사용 확인\n\nCRITERION 3:
+          진행률 계산\n- Expected: completed/total 계산 로직\n- Verify: _count_all_todos, _count_completed_todos
+          함수 존재\n\nCRITERION 4: fully_done 표시\n- Expected: fully_done_at 필드 출력\n-
+          Verify: 출력 코드 확인\n\nFINAL VERDICT: PASS/FAIL\n"
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-3-1
       condition: --path 옵션 동작
-      verified_at: null
-      verification_evidence: null
     - id: criterion-3-2
       condition: Progress bar 표시
-      verified_at: null
-      verification_evidence: null
     - id: criterion-3-3
       condition: 진행률 퍼센트 출력
-      verified_at: null
-      verification_evidence: null
   - id: '3.1'
     title: plan status 기능 테스트 작성
     description: plan status 개선사항 테스트 작성
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Test Requirements:
-        1. --path 옵션으로 특정 파일 지정 테스트
-        2. 진행률 계산 테스트
-        3. Progress bar 출력 테스트
-
-        File: projects/sisyphus-speckit/tests/plan/test_status.py (신규 또는 수정)
+    - inline: "Test Requirements:\n1. --path 옵션으로 특정 파일 지정 테스트\n2. 진행률 계산 테스트\n3.
+        Progress bar 출력 테스트\n\nFile: projects/sisyphus-speckit/tests/plan/test_status.py
+        (신규 또는 수정)\n"
     verification_spec:
     - id: verify-3.1-1
       title: 테스트 통과
       description: plan status 테스트 통과 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
-      - execute: uv run pytest projects/sisyphus-speckit/tests/plan/test_status.py -v
-        expected_stdout: null
-        expected_stderr: null
+      - execute: uv run pytest 
+          projects/sisyphus-speckit/tests/plan/test_status.py -v
         expected_exit_code: 0
         notes: 모든 테스트 통과
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-3.1-1
       condition: test_status.py 파일 존재
-      verified_at: null
-      verification_evidence: null
   - id: '3.2'
     title: plan status 작업 커밋
     description: plan status 개선 완료 후 커밋
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Commit Message:
-        ```
-        feat(plan): enhance plan status with progress bar and --path option
-
-        - Add --path option to specify plan file
-        - Implement progress calculation (completed/total todos)
-        - Add Rich Progress Bar visualization
-        - Display fully_done status
-
-        🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-        Co-Authored-By: Claude <noreply@anthropic.com>
-        ```
+    - inline: "Commit Message:\n```\nfeat(plan): enhance plan status with progress
+        bar and --path option\n\n- Add --path option to specify plan file\n- Implement
+        progress calculation (completed/total todos)\n- Add Rich Progress Bar visualization\n\
+        - Display fully_done status\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\
+        \nCo-Authored-By: Claude <noreply@anthropic.com>\n```\n"
     verification_spec:
     - id: verify-3.2-1
       title: 커밋 생성 확인
       description: plan status 작업 커밋 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: git log -1 --oneline
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: 최근 커밋 확인
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-3.2-1
       condition: git commit 생성됨
-      verified_at: null
-      verification_evidence: null
   - id: '4'
     title: plan overview 명령어 구현
-    description: |
-      sisyphus-speckit plan overview --path {filepath} 명령어를 구현하여
-      plan의 모든 정보(todo 제외)를 상세하게 출력
+    description: "sisyphus-speckit plan overview --path {filepath} 명령어를 구현하여\nplan의
+      모든 정보(todo 제외)를 상세하게 출력\n"
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Implementation Requirements:
-        1. todo 목록 제외한 모든 필드 출력
-        2. objectives, background, required_background, workflow, success_vision 등
-        3. final_verification 상세 출력
-        4. acceptance_criteria 상세 출력
-        5. 진행률 및 Progress bar 포함 (status와 유사)
-
-        File: projects/sisyphus-speckit/sisyphus_speckit/plan/overview.py (신규 생성)
-
-        Example Implementation:
-        ```python
-        from rich.panel import Panel
-        from rich.console import Console
-        from rich.table import Table
-        import typer
-
-        console = Console()
-
-        def plan_overview(
-            path: Path | None = typer.Option(None, "--path", "-p"),
-            cwd: str | None = typer.Option(None, "--cwd"),
-        ) -> None:
-            # 1. Plan 로드
-            if path:
-                plan_doc = load_plan(path)
-                work_plan = plan_doc.work_plans[0]
-            else:
-                # 현재 plan
-                ...
-
-            # 2. Basic Info
-            console.print(Panel(f"[bold]{work_plan.name}[/bold]", title="Plan Overview"))
-
-            # 3. User Request
-            console.print("\n[bold cyan]User Request:[/bold cyan]")
-            console.print(work_plan.user_request.original)
-
-            # 4. Objectives
-            console.print("\n[bold cyan]Objectives:[/bold cyan]")
-            console.print(f"Core: {work_plan.objectives.core}")
-            for obj in work_plan.objectives.detailed:
-                console.print(f"  - {obj.goal}: {obj.measurable}")
-
-            # 5. Background
-            console.print("\n[bold cyan]Background:[/bold cyan]")
-            console.print(f"Current: {work_plan.background.current_situation}")
-            console.print(f"Reason: {work_plan.background.reason_for_change}")
-            console.print(f"Changes: {work_plan.background.changes_to_make}")
-
-            # 6. Success Vision
-            console.print("\n[bold cyan]Success Vision:[/bold cyan]")
-            for scenario in work_plan.success_vision.user_perspective:
-                console.print(f"  - {scenario.scenario}: {scenario.experience}")
-
-            # 7. Final Verification (상세)
-            console.print("\n[bold cyan]Final Verification:[/bold cyan]")
-            table = Table()
-            table.add_column("ID")
-            table.add_column("Title")
-            table.add_column("Category")
-            table.add_column("Verified")
-            for fv in work_plan.final_verification:
-                table.add_row(fv.id, fv.title, fv.category, str(fv.verified))
-            console.print(table)
-
-            # 8. Progress (status와 동일)
-            total_todos = _count_all_todos(work_plan.todos)
-            completed_todos = _count_completed_todos(work_plan.todos)
-            console.print(f"\n[bold cyan]Progress:[/bold cyan]")
-            console.print(f"Total Tasks: {total_todos}, Completed: {completed_todos}")
-            # Progress bar...
-        ```
-
-        Register in plan/app.py:
-        ```python
-        from sisyphus_speckit.plan.overview import plan_overview
-        plan_app.command(name="overview")(plan_overview)
-        ```
+    - inline: "Implementation Requirements:\n1. todo 목록 제외한 모든 필드 출력\n2. objectives,
+        background, required_background, workflow, success_vision 등\n3. final_verification
+        상세 출력\n4. acceptance_criteria 상세 출력\n5. 진행률 및 Progress bar 포함 (status와 유사)\n\
+        \nFile: projects/sisyphus-speckit/sisyphus_speckit/plan/overview.py (신규 생성)\n\
+        \nExample Implementation:\n```python\nfrom rich.panel import Panel\nfrom rich.console
+        import Console\nfrom rich.table import Table\nimport typer\n\nconsole = Console()\n\
+        \ndef plan_overview(\n    path: Path | None = typer.Option(None, \"--path\"\
+        , \"-p\"),\n    cwd: str | None = typer.Option(None, \"--cwd\"),\n) -> None:\n\
+        \    # 1. Plan 로드\n    if path:\n        plan_doc = load_plan(path)\n    \
+        \    work_plan = plan_doc.work_plans[0]\n    else:\n        # 현재 plan\n  \
+        \      ...\n\n    # 2. Basic Info\n    console.print(Panel(f\"[bold]{work_plan.name}[/bold]\"\
+        , title=\"Plan Overview\"))\n\n    # 3. User Request\n    console.print(\"\
+        \\n[bold cyan]User Request:[/bold cyan]\")\n    console.print(work_plan.user_request.original)\n\
+        \n    # 4. Objectives\n    console.print(\"\\n[bold cyan]Objectives:[/bold
+        cyan]\")\n    console.print(f\"Core: {work_plan.objectives.core}\")\n    for
+        obj in work_plan.objectives.detailed:\n        console.print(f\"  - {obj.goal}:
+        {obj.measurable}\")\n\n    # 5. Background\n    console.print(\"\\n[bold cyan]Background:[/bold
+        cyan]\")\n    console.print(f\"Current: {work_plan.background.current_situation}\"\
+        )\n    console.print(f\"Reason: {work_plan.background.reason_for_change}\"\
+        )\n    console.print(f\"Changes: {work_plan.background.changes_to_make}\"\
+        )\n\n    # 6. Success Vision\n    console.print(\"\\n[bold cyan]Success Vision:[/bold
+        cyan]\")\n    for scenario in work_plan.success_vision.user_perspective:\n\
+        \        console.print(f\"  - {scenario.scenario}: {scenario.experience}\"\
+        )\n\n    # 7. Final Verification (상세)\n    console.print(\"\\n[bold cyan]Final
+        Verification:[/bold cyan]\")\n    table = Table()\n    table.add_column(\"\
+        ID\")\n    table.add_column(\"Title\")\n    table.add_column(\"Category\"\
+        )\n    table.add_column(\"Verified\")\n    for fv in work_plan.final_verification:\n\
+        \        table.add_row(fv.id, fv.title, fv.category, str(fv.verified))\n \
+        \   console.print(table)\n\n    # 8. Progress (status와 동일)\n    total_todos
+        = _count_all_todos(work_plan.todos)\n    completed_todos = _count_completed_todos(work_plan.todos)\n\
+        \    console.print(f\"\\n[bold cyan]Progress:[/bold cyan]\")\n    console.print(f\"\
+        Total Tasks: {total_todos}, Completed: {completed_todos}\")\n    # Progress
+        bar...\n```\n\nRegister in plan/app.py:\n```python\nfrom sisyphus_speckit.plan.overview
+        import plan_overview\nplan_app.command(name=\"overview\")(plan_overview)\n\
+        ```\n"
     verification_spec:
     - id: verify-4-1
       title: plan overview 명령어 실행 확인
       description: overview가 모든 정보를 출력하는지 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: uv run sisyphus-speckit plan overview --help
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: overview 명령어 존재 확인
       llm_judge:
       - by: orchestrator-agent
         context_commands:
         - cat projects/sisyphus-speckit/sisyphus_speckit/plan/overview.py
-        instruction: |
-          Verify plan overview 구현:
-
-          CRITERION 1: overview.py 파일 존재
-          - Expected: plan_overview 함수 정의
-          - Verify: 파일 내용 확인
-
-          CRITERION 2: 모든 주요 필드 출력
-          - Expected: objectives, background, success_vision, final_verification 출력
-          - Verify: 코드에서 각 필드 출력 확인
-
-          CRITERION 3: final_verification 상세 출력
-          - Expected: Table 형식으로 ID, Title, Category, Verified 표시
-          - Verify: Table 사용 확인
-
-          CRITERION 4: Progress 정보 포함
-          - Expected: total/completed tasks, progress bar
-          - Verify: _count_todos 함수 호출 확인
-
-          FINAL VERDICT: PASS/FAIL
+        instruction: "Verify plan overview 구현:\n\nCRITERION 1: overview.py 파일 존재\n\
+          - Expected: plan_overview 함수 정의\n- Verify: 파일 내용 확인\n\nCRITERION 2: 모든 주요
+          필드 출력\n- Expected: objectives, background, success_vision, final_verification
+          출력\n- Verify: 코드에서 각 필드 출력 확인\n\nCRITERION 3: final_verification 상세 출력\n\
+          - Expected: Table 형식으로 ID, Title, Category, Verified 표시\n- Verify: Table
+          사용 확인\n\nCRITERION 4: Progress 정보 포함\n- Expected: total/completed tasks,
+          progress bar\n- Verify: _count_todos 함수 호출 확인\n\nFINAL VERDICT: PASS/FAIL\n"
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-4-1
       condition: plan_overview 함수 구현됨
-      verified_at: null
-      verification_evidence: null
     - id: criterion-4-2
       condition: 모든 필드 출력됨
-      verified_at: null
-      verification_evidence: null
   - id: '4.1'
     title: plan overview 기능 테스트 작성
     description: plan overview 테스트 작성
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Test Requirements:
-        1. 모든 필드 출력 테스트
-        2. --path 옵션 테스트
-        3. Progress 계산 테스트
-
-        File: projects/sisyphus-speckit/tests/plan/test_overview.py (신규)
+    - inline: "Test Requirements:\n1. 모든 필드 출력 테스트\n2. --path 옵션 테스트\n3. Progress
+        계산 테스트\n\nFile: projects/sisyphus-speckit/tests/plan/test_overview.py (신규)\n"
     verification_spec:
     - id: verify-4.1-1
       title: 테스트 통과
       description: plan overview 테스트 통과 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
-      - execute: uv run pytest projects/sisyphus-speckit/tests/plan/test_overview.py -v
-        expected_stdout: null
-        expected_stderr: null
+      - execute: uv run pytest 
+          projects/sisyphus-speckit/tests/plan/test_overview.py -v
         expected_exit_code: 0
         notes: 모든 테스트 통과
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-4.1-1
       condition: test_overview.py 파일 존재
-      verified_at: null
-      verification_evidence: null
   - id: '4.2'
     title: plan overview 작업 커밋
     description: plan overview 구현 완료 후 커밋
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Commit Message:
-        ```
-        feat(plan): add plan overview command
-
-        - Implement plan_overview function with comprehensive output
-        - Display all plan fields except todos
-        - Include final_verification and acceptance_criteria details
-        - Add progress bar and statistics
-
-        🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-        Co-Authored-By: Claude <noreply@anthropic.com>
-        ```
+    - inline: "Commit Message:\n```\nfeat(plan): add plan overview command\n\n- Implement
+        plan_overview function with comprehensive output\n- Display all plan fields
+        except todos\n- Include final_verification and acceptance_criteria details\n\
+        - Add progress bar and statistics\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\
+        \nCo-Authored-By: Claude <noreply@anthropic.com>\n```\n"
     verification_spec:
     - id: verify-4.2-1
       title: 커밋 생성 확인
       description: plan overview 작업 커밋 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: git log -1 --oneline
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: 최근 커밋 확인
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-4.2-1
       condition: git commit 생성됨
-      verified_at: null
-      verification_evidence: null
   - id: '5'
     title: plan lint --fix 옵션 추가
-    description: |
-      sisyphus-speckit plan lint --fix 옵션을 추가하여
-      multiline 텍스트를 pipeline(|) 형식으로 자동 변환
+    description: "sisyphus-speckit plan lint --fix 옵션을 추가하여\nmultiline 텍스트를 pipeline(|)
+      형식으로 자동 변환\n"
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Implementation Requirements:
-        1. 기존 lint.py 파일에 --fix 옵션 추가
-        2. multiline 텍스트를 pipeline(|) 형식으로 변환
-        3. evidence 필드 등 nullable 필드를 빈 문자열('')로 추가
-        4. 변환 후 파일 저장
-
-        File: projects/sisyphus-speckit/sisyphus_speckit/plan/lint.py (기존 파일 수정)
-
-        현재 구현:
-        - projects/sisyphus-speckit/sisyphus_speckit/plan/lint.py:15-68
-
-        Enhancement:
-        ```python
-        from ruamel.yaml import YAML
-        from ruamel.yaml.scalarstring import LiteralScalarString
-
-        def lint_plan(
-            file_path: Path = typer.Option(...),
-            fix: bool = typer.Option(False, "--fix"),
-            cwd: str | None = typer.Option(None, "--cwd"),
-        ) -> None:
-            # 기존 lint 로직...
-
-            if fix:
-                # multiline 텍스트를 pipeline(|) 형식으로 변환
-                yaml_data = _fix_multiline_texts(yaml_data)
-
-                # evidence 필드 등 누락된 필수 필드 추가
-                yaml_data = _add_missing_fields(yaml_data)
-
-                # 파일 저장
-                with resolved_path.open("w", encoding="utf-8") as f:
-                    yaml.dump(yaml_data, f)
-
-                console.print(f"[green]✓ Fixed and saved to {resolved_path}[/green]")
-
-        def _fix_multiline_texts(data: dict) -> dict:
-            # 재귀적으로 모든 multiline string을 LiteralScalarString으로 변환
-            if isinstance(data, dict):
-                for key, value in data.items():
-                    if isinstance(value, str) and '\n' in value:
-                        data[key] = LiteralScalarString(value)
-                    elif isinstance(value, (dict, list)):
-                        data[key] = _fix_multiline_texts(value)
-            elif isinstance(data, list):
-                return [_fix_multiline_texts(item) for item in data]
-            return data
-
-        def _add_missing_fields(data: dict) -> dict:
-            # evidence 필드 등 누락된 필수 필드 추가
-            # verification_spec, final_verification 등에서
-            # orchestrator_manually_verified, manual_verification_evidence 추가
-            ...
-        ```
+    - inline: "Implementation Requirements:\n1. 기존 lint.py 파일에 --fix 옵션 추가\n2. multiline
+        텍스트를 pipeline(|) 형식으로 변환\n3. evidence 필드 등 nullable 필드를 빈 문자열('')로 추가\n4.
+        변환 후 파일 저장\n\nFile: projects/sisyphus-speckit/sisyphus_speckit/plan/lint.py
+        (기존 파일 수정)\n\n현재 구현:\n- projects/sisyphus-speckit/sisyphus_speckit/plan/lint.py:15-68\n\
+        \nEnhancement:\n```python\nfrom ruamel.yaml import YAML\nfrom ruamel.yaml.scalarstring
+        import LiteralScalarString\n\ndef lint_plan(\n    file_path: Path = typer.Option(...),\n\
+        \    fix: bool = typer.Option(False, \"--fix\"),\n    cwd: str | None = typer.Option(None,
+        \"--cwd\"),\n) -> None:\n    # 기존 lint 로직...\n\n    if fix:\n        # multiline
+        텍스트를 pipeline(|) 형식으로 변환\n        yaml_data = _fix_multiline_texts(yaml_data)\n\
+        \n        # evidence 필드 등 누락된 필수 필드 추가\n        yaml_data = _add_missing_fields(yaml_data)\n\
+        \n        # 파일 저장\n        with resolved_path.open(\"w\", encoding=\"utf-8\"\
+        ) as f:\n            yaml.dump(yaml_data, f)\n\n        console.print(f\"\
+        [green]✓ Fixed and saved to {resolved_path}[/green]\")\n\ndef _fix_multiline_texts(data:
+        dict) -> dict:\n    # 재귀적으로 모든 multiline string을 LiteralScalarString으로 변환\n\
+        \    if isinstance(data, dict):\n        for key, value in data.items():\n\
+        \            if isinstance(value, str) and '\\n' in value:\n             \
+        \   data[key] = LiteralScalarString(value)\n            elif isinstance(value,
+        (dict, list)):\n                data[key] = _fix_multiline_texts(value)\n\
+        \    elif isinstance(data, list):\n        return [_fix_multiline_texts(item)
+        for item in data]\n    return data\n\ndef _add_missing_fields(data: dict)
+        -> dict:\n    # evidence 필드 등 누락된 필수 필드 추가\n    # verification_spec, final_verification
+        등에서\n    # orchestrator_manually_verified, manual_verification_evidence 추가\n\
+        \    ...\n```\n"
     verification_spec:
     - id: verify-5-1
       title: plan lint --fix 동작 확인
       description: --fix 옵션이 multiline을 변환하는지 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: uv run sisyphus-speckit plan lint --help
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: --fix 옵션 확인
       llm_judge:
       - by: orchestrator-agent
         context_commands:
         - cat projects/sisyphus-speckit/sisyphus_speckit/plan/lint.py
-        instruction: |
-          Verify plan lint --fix 구현:
-
-          CRITERION 1: --fix 옵션 추가
-          - Expected: fix 파라미터 존재
-          - Verify: 함수 시그니처 확인
-
-          CRITERION 2: multiline 변환 로직
-          - Expected: _fix_multiline_texts 함수 존재
-          - Verify: LiteralScalarString 사용 확인
-
-          CRITERION 3: 누락 필드 추가 로직
-          - Expected: _add_missing_fields 함수 존재
-          - Verify: evidence 필드 추가 확인
-
-          CRITERION 4: 파일 저장
-          - Expected: yaml.dump 호출
-          - Verify: 저장 로직 확인
-
-          FINAL VERDICT: PASS/FAIL
+        instruction: "Verify plan lint --fix 구현:\n\nCRITERION 1: --fix 옵션 추가\n- Expected:
+          fix 파라미터 존재\n- Verify: 함수 시그니처 확인\n\nCRITERION 2: multiline 변환 로직\n- Expected:
+          _fix_multiline_texts 함수 존재\n- Verify: LiteralScalarString 사용 확인\n\nCRITERION
+          3: 누락 필드 추가 로직\n- Expected: _add_missing_fields 함수 존재\n- Verify: evidence
+          필드 추가 확인\n\nCRITERION 4: 파일 저장\n- Expected: yaml.dump 호출\n- Verify: 저장 로직
+          확인\n\nFINAL VERDICT: PASS/FAIL\n"
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-5-1
       condition: --fix 옵션 동작
-      verified_at: null
-      verification_evidence: null
     - id: criterion-5-2
       condition: multiline 변환 성공
-      verified_at: null
-      verification_evidence: null
   - id: '5.1'
     title: plan lint --fix 기능 테스트 작성
     description: lint --fix 테스트 작성
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Test Requirements:
-        1. multiline 변환 테스트
-        2. 누락 필드 추가 테스트
-        3. 파일 저장 테스트
-
-        File: projects/sisyphus-speckit/tests/plan/test_lint_fix.py (신규 또는 기존 test_lint.py 확장)
+    - inline: "Test Requirements:\n1. multiline 변환 테스트\n2. 누락 필드 추가 테스트\n3. 파일 저장
+        테스트\n\nFile: projects/sisyphus-speckit/tests/plan/test_lint_fix.py (신규 또는
+        기존 test_lint.py 확장)\n"
     verification_spec:
     - id: verify-5.1-1
       title: 테스트 통과
       description: lint --fix 테스트 통과 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
-      - execute: uv run pytest projects/sisyphus-speckit/tests/plan/test_lint*.py -v
-        expected_stdout: null
-        expected_stderr: null
+      - execute: uv run pytest 
+          projects/sisyphus-speckit/tests/plan/test_lint*.py -v
         expected_exit_code: 0
         notes: 모든 테스트 통과
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-5.1-1
       condition: lint --fix 테스트 존재
-      verified_at: null
-      verification_evidence: null
   - id: '5.2'
     title: plan lint --fix 작업 커밋
     description: lint --fix 구현 완료 후 커밋
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Commit Message:
-        ```
-        feat(plan): add --fix option to plan lint
-
-        - Add --fix flag to automatically fix YAML formatting
-        - Convert multiline texts to pipeline (|) format
-        - Add missing evidence fields automatically
-        - Save fixed YAML to file
-
-        🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-        Co-Authored-By: Claude <noreply@anthropic.com>
-        ```
+    - inline: "Commit Message:\n```\nfeat(plan): add --fix option to plan lint\n\n\
+        - Add --fix flag to automatically fix YAML formatting\n- Convert multiline
+        texts to pipeline (|) format\n- Add missing evidence fields automatically\n\
+        - Save fixed YAML to file\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\
+        \nCo-Authored-By: Claude <noreply@anthropic.com>\n```\n"
     verification_spec:
     - id: verify-5.2-1
       title: 커밋 생성 확인
       description: lint --fix 작업 커밋 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: git log -1 --oneline
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: 최근 커밋 확인
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-5.2-1
       condition: git commit 생성됨
-      verified_at: null
-      verification_evidence: null
   - id: '6'
     title: task status 명령어 구현
-    description: |
-      sisyphus-speckit task status 명령어를 구현하여
-      현재 task의 모든 검증 상태를 상세히 출력
+    description: "sisyphus-speckit task status 명령어를 구현하여\n현재 task의 모든 검증 상태를 상세히 출력\n"
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Implementation Requirements:
-        1. 현재 task 정보 출력
-        2. 모든 verification_spec 상세 출력 (ID, title, description 포함)
-        3. continuable 여부 출력 (다음 단계로 넘어갈 수 있는지)
-        4. acceptance_criteria 출력
-
-        File: projects/sisyphus-speckit/sisyphus_speckit/task/status.py (신규 생성)
-
-        NOTE: 기존 plan/status.py와 혼동하지 말 것. 이것은 task의 status입니다.
-
-        Example Implementation:
-        ```python
-        from rich.table import Table
-        from rich.panel import Panel
-        import typer
-
-        def task_status(
-            cwd: str | None = typer.Option(None, "--cwd"),
-        ) -> None:
-            async def _task_status() -> None:
-                working_dir = resolve_cwd(cwd)
-                plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
-
-                current_task = task_manager.get_current_task()
-                if not current_task:
-                    console.print("[red]No current task[/red]")
-                    return
-
-                # 1. Task 기본 정보
-                console.print(Panel(f"[bold]{current_task.title}[/bold]", title=f"Task {current_task.id}"))
-                console.print(f"Status: {current_task.status}")
-                console.print(f"Description: {current_task.description}")
-
-                # 2. Verification Spec 상세 출력
-                console.print("\n[bold cyan]Verification Specifications:[/bold cyan]")
-                for vspec in current_task.verification_spec:
-                    console.print(f"\n[yellow]ID: {vspec.id}[/yellow]")
-                    console.print(f"Title: {vspec.title}")
-                    console.print(f"Description: {vspec.description}")
-                    console.print(f"Verified: {vspec.verified}")
-
-                    if vspec.bash:
-                        console.print("  Bash Checks:")
-                        for bash in vspec.bash:
-                            console.print(f"    - {bash.execute}")
-
-                    if vspec.llm_judge:
-                        console.print("  LLM Judge:")
-                        for llm in vspec.llm_judge:
-                            console.print(f"    - By: {llm.by}")
-
-                # 3. Acceptance Criteria
-                if current_task.acceptance_criteria:
-                    console.print("\n[bold cyan]Acceptance Criteria:[/bold cyan]")
-                    table = Table()
-                    table.add_column("ID")
-                    table.add_column("Condition")
-                    table.add_column("Verified")
-                    for ac in current_task.acceptance_criteria:
-                        table.add_row(ac.id, ac.condition, str(ac.verified_at is not None))
-                    console.print(table)
-
-                # 4. Continuable 여부
-                can_continue = task_manager.can_continue_to_next()
-                console.print(f"\n[bold cyan]Continuable:[/bold cyan] {can_continue}")
-                if not can_continue:
-                    console.print("[yellow]Complete current task verifications to continue[/yellow]")
-
-            _run_async(_task_status())
-        ```
-
-        Register in task/app.py:
-        ```python
-        from sisyphus_speckit.task.status import task_status
-        task_app.command(name="status")(task_status)
-        ```
+    - inline: "Implementation Requirements:\n1. 현재 task 정보 출력\n2. 모든 verification_spec
+        상세 출력 (ID, title, description 포함)\n3. continuable 여부 출력 (다음 단계로 넘어갈 수 있는지)\n\
+        4. acceptance_criteria 출력\n\nFile: projects/sisyphus-speckit/sisyphus_speckit/task/status.py
+        (신규 생성)\n\nNOTE: 기존 plan/status.py와 혼동하지 말 것. 이것은 task의 status입니다.\n\nExample
+        Implementation:\n```python\nfrom rich.table import Table\nfrom rich.panel
+        import Panel\nimport typer\n\ndef task_status(\n    cwd: str | None = typer.Option(None,
+        \"--cwd\"),\n) -> None:\n    async def _task_status() -> None:\n        working_dir
+        = resolve_cwd(cwd)\n        plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)\n\
+        \n        current_task = task_manager.get_current_task()\n        if not current_task:\n\
+        \            console.print(\"[red]No current task[/red]\")\n            return\n\
+        \n        # 1. Task 기본 정보\n        console.print(Panel(f\"[bold]{current_task.title}[/bold]\"\
+        , title=f\"Task {current_task.id}\"))\n        console.print(f\"Status: {current_task.status}\"\
+        )\n        console.print(f\"Description: {current_task.description}\")\n\n\
+        \        # 2. Verification Spec 상세 출력\n        console.print(\"\\n[bold cyan]Verification
+        Specifications:[/bold cyan]\")\n        for vspec in current_task.verification_spec:\n\
+        \            console.print(f\"\\n[yellow]ID: {vspec.id}[/yellow]\")\n    \
+        \        console.print(f\"Title: {vspec.title}\")\n            console.print(f\"\
+        Description: {vspec.description}\")\n            console.print(f\"Verified:
+        {vspec.verified}\")\n\n            if vspec.bash:\n                console.print(\"\
+        \  Bash Checks:\")\n                for bash in vspec.bash:\n            \
+        \        console.print(f\"    - {bash.execute}\")\n\n            if vspec.llm_judge:\n\
+        \                console.print(\"  LLM Judge:\")\n                for llm
+        in vspec.llm_judge:\n                    console.print(f\"    - By: {llm.by}\"\
+        )\n\n        # 3. Acceptance Criteria\n        if current_task.acceptance_criteria:\n\
+        \            console.print(\"\\n[bold cyan]Acceptance Criteria:[/bold cyan]\"\
+        )\n            table = Table()\n            table.add_column(\"ID\")\n   \
+        \         table.add_column(\"Condition\")\n            table.add_column(\"\
+        Verified\")\n            for ac in current_task.acceptance_criteria:\n   \
+        \             table.add_row(ac.id, ac.condition, str(ac.verified_at is not
+        None))\n            console.print(table)\n\n        # 4. Continuable 여부\n\
+        \        can_continue = task_manager.can_continue_to_next()\n        console.print(f\"\
+        \\n[bold cyan]Continuable:[/bold cyan] {can_continue}\")\n        if not can_continue:\n\
+        \            console.print(\"[yellow]Complete current task verifications to
+        continue[/yellow]\")\n\n    _run_async(_task_status())\n```\n\nRegister in
+        task/app.py:\n```python\nfrom sisyphus_speckit.task.status import task_status\n\
+        task_app.command(name=\"status\")(task_status)\n```\n"
     verification_spec:
     - id: verify-6-1
       title: task status 명령어 실행 확인
       description: task status가 검증 상태를 상세히 출력하는지 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: uv run sisyphus-speckit task status --help
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: task status 명령어 존재 확인
       llm_judge:
       - by: orchestrator-agent
         context_commands:
         - cat projects/sisyphus-speckit/sisyphus_speckit/task/status.py
-        instruction: |
-          Verify task status 구현:
-
-          CRITERION 1: status.py 파일 존재
-          - Expected: task_status 함수 정의
-          - Verify: 파일 내용 확인
-
-          CRITERION 2: Verification Spec 상세 출력
-          - Expected: 각 vspec의 ID, title, description, verified 출력
-          - Verify: 출력 코드 확인
-
-          CRITERION 3: Bash/LLM Judge 상세
-          - Expected: bash.execute, llm.by 등 상세 정보 출력
-          - Verify: 각 필드 출력 확인
-
-          CRITERION 4: Acceptance Criteria 테이블
-          - Expected: Table로 ID, Condition, Verified 표시
-          - Verify: Table 사용 확인
-
-          CRITERION 5: Continuable 표시
-          - Expected: can_continue 값 출력
-          - Verify: task_manager.can_continue_to_next() 호출 확인
-
-          FINAL VERDICT: PASS/FAIL
+        instruction: "Verify task status 구현:\n\nCRITERION 1: status.py 파일 존재\n- Expected:
+          task_status 함수 정의\n- Verify: 파일 내용 확인\n\nCRITERION 2: Verification Spec
+          상세 출력\n- Expected: 각 vspec의 ID, title, description, verified 출력\n- Verify:
+          출력 코드 확인\n\nCRITERION 3: Bash/LLM Judge 상세\n- Expected: bash.execute, llm.by
+          등 상세 정보 출력\n- Verify: 각 필드 출력 확인\n\nCRITERION 4: Acceptance Criteria 테이블\n\
+          - Expected: Table로 ID, Condition, Verified 표시\n- Verify: Table 사용 확인\n\n\
+          CRITERION 5: Continuable 표시\n- Expected: can_continue 값 출력\n- Verify: task_manager.can_continue_to_next()
+          호출 확인\n\nFINAL VERDICT: PASS/FAIL\n"
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-6-1
       condition: task_status 함수 구현됨
-      verified_at: null
-      verification_evidence: null
     - id: criterion-6-2
       condition: 모든 verification spec 상세 출력
-      verified_at: null
-      verification_evidence: null
   - id: '6.1'
     title: task status 기능 테스트 작성
     description: task status 테스트 작성
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Test Requirements:
-        1. 검증 상태 출력 테스트
-        2. Continuable 계산 테스트
-        3. Acceptance criteria 출력 테스트
-
-        File: projects/sisyphus-speckit/tests/task/test_status.py (신규)
+    - inline: "Test Requirements:\n1. 검증 상태 출력 테스트\n2. Continuable 계산 테스트\n3. Acceptance
+        criteria 출력 테스트\n\nFile: projects/sisyphus-speckit/tests/task/test_status.py
+        (신규)\n"
     verification_spec:
     - id: verify-6.1-1
       title: 테스트 통과
       description: task status 테스트 통과 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
-      - execute: uv run pytest projects/sisyphus-speckit/tests/task/test_status.py -v
-        expected_stdout: null
-        expected_stderr: null
+      - execute: uv run pytest 
+          projects/sisyphus-speckit/tests/task/test_status.py -v
         expected_exit_code: 0
         notes: 모든 테스트 통과
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-6.1-1
       condition: test_status.py 파일 존재
-      verified_at: null
-      verification_evidence: null
   - id: '6.2'
     title: task status 작업 커밋
     description: task status 구현 완료 후 커밋
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Commit Message:
-        ```
-        feat(task): add task status command
-
-        - Implement task_status function with detailed verification output
-        - Display all verification specs with IDs and descriptions
-        - Show acceptance criteria in table format
-        - Add continuable status indicator
-
-        🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-        Co-Authored-By: Claude <noreply@anthropic.com>
-        ```
+    - inline: "Commit Message:\n```\nfeat(task): add task status command\n\n- Implement
+        task_status function with detailed verification output\n- Display all verification
+        specs with IDs and descriptions\n- Show acceptance criteria in table format\n\
+        - Add continuable status indicator\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\
+        \nCo-Authored-By: Claude <noreply@anthropic.com>\n```\n"
     verification_spec:
     - id: verify-6.2-1
       title: 커밋 생성 확인
       description: task status 작업 커밋 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: git log -1 --oneline
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: 최근 커밋 확인
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-6.2-1
       condition: git commit 생성됨
-      verified_at: null
-      verification_evidence: null
   - id: '7'
     title: task show 기능 확장
-    description: |
-      기존 task show 명령어를 확장하여 더 많은 정보 출력
-      (검증사항, relative path, 하위작업, 참조 resolve)
+    description: "기존 task show 명령어를 확장하여 더 많은 정보 출력\n(검증사항, relative path, 하위작업, 참조
+      resolve)\n"
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Enhancement Requirements:
-        1. 검증사항 상세 출력 (어떤 검증이 어떻게 되어있는지)
-        2. Relative path 출력 (절대 경로 대신)
-        3. 하위작업(children) 상세 출력
-        4. 참조(references) resolve하여 출력
-
-        File: projects/sisyphus-speckit/sisyphus_speckit/task/show.py (기존 파일 수정)
-
-        현재 구현:
-        - projects/sisyphus-speckit/sisyphus_speckit/task/show.py:1-32
-
-        Enhancement:
-        ```python
-        def show_task(
-            task_id: str = typer.Argument(...),
-            rich: bool = typer.Option(False, "--rich"),
-            cwd: str | None = typer.Option(None, "--cwd"),
-        ) -> None:
-            async def _show() -> None:
-                working_dir = resolve_cwd(cwd)
-                plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
-
-                task = task_manager.find_todo_by_id(task_id)
-                if task is None:
-                    console.print(f"[red]작업 ID를 찾을 수 없습니다: {task_id}[/red]")
-                    raise typer.Exit(1)
-
-                # 기존 기본 정보 출력...
-
-                # 1. Verification Spec 상세 (기존보다 더 자세히)
-                if task.verification_spec:
-                    console.print("\n[bold cyan]Verification Specifications:[/bold cyan]")
-                    for vspec in task.verification_spec:
-                        console.print(f"  [{vspec.id}] {vspec.title}")
-                        console.print(f"    Status: {'✓ Verified' if vspec.verified else '✗ Not Verified'}")
-                        if vspec.bash:
-                            console.print(f"    Bash checks: {len(vspec.bash)}")
-                        if vspec.llm_judge:
-                            console.print(f"    LLM judges: {len(vspec.llm_judge)}")
-
-                # 2. Children (하위작업) 상세
-                if task.children:
-                    console.print("\n[bold cyan]Sub-tasks:[/bold cyan]")
-                    _display_children_recursively(task.children, indent=1)
-
-                # 3. References (resolve하여 출력)
-                if task.references:
-                    console.print("\n[bold cyan]References:[/bold cyan]")
-                    for ref in task.references:
-                        if ref.ref_id:
-                            # resolve global reference
-                            global_ref = _resolve_reference(ref.ref_id, work_plan.references)
-                            if global_ref:
-                                console.print(f"  - [{ref.ref_id}]: {global_ref.uri or global_ref.inline[:100]}")
-                        elif ref.uri:
-                            console.print(f"  - URI: {ref.uri}")
-                        elif ref.inline:
-                            console.print(f"  - Inline: {ref.inline[:100]}...")
-
-                # 4. File Path (relative)
-                plan_file_path = task_manager.get_plan_file_path()  # 절대 경로
-                relative_path = plan_file_path.relative_to(Path.cwd())
-                console.print(f"\n[bold cyan]Plan File:[/bold cyan] {relative_path}")
-
-            _run_async(_show())
-
-        def _display_children_recursively(children, indent=0):
-            for child in children:
-                prefix = "  " * indent
-                console.print(f"{prefix}- [{child.id}] {child.title} ({child.status})")
-                if child.children:
-                    _display_children_recursively(child.children, indent+1)
-
-        def _resolve_reference(ref_id, global_refs):
-            for ref in global_refs:
-                if ref.ref_id == ref_id:
-                    return ref
-            return None
-        ```
+    - inline: "Enhancement Requirements:\n1. 검증사항 상세 출력 (어떤 검증이 어떻게 되어있는지)\n2. Relative
+        path 출력 (절대 경로 대신)\n3. 하위작업(children) 상세 출력\n4. 참조(references) resolve하여 출력\n\
+        \nFile: projects/sisyphus-speckit/sisyphus_speckit/task/show.py (기존 파일 수정)\n\
+        \n현재 구현:\n- projects/sisyphus-speckit/sisyphus_speckit/task/show.py:1-32\n\
+        \nEnhancement:\n```python\ndef show_task(\n    task_id: str = typer.Argument(...),\n\
+        \    rich: bool = typer.Option(False, \"--rich\"),\n    cwd: str | None =
+        typer.Option(None, \"--cwd\"),\n) -> None:\n    async def _show() -> None:\n\
+        \        working_dir = resolve_cwd(cwd)\n        plan_doc, work_plan, task_manager
+        = await _load_current_plan(working_dir)\n\n        task = task_manager.find_todo_by_id(task_id)\n\
+        \        if task is None:\n            console.print(f\"[red]작업 ID를 찾을 수 없습니다:
+        {task_id}[/red]\")\n            raise typer.Exit(1)\n\n        # 기존 기본 정보
+        출력...\n\n        # 1. Verification Spec 상세 (기존보다 더 자세히)\n        if task.verification_spec:\n\
+        \            console.print(\"\\n[bold cyan]Verification Specifications:[/bold
+        cyan]\")\n            for vspec in task.verification_spec:\n             \
+        \   console.print(f\"  [{vspec.id}] {vspec.title}\")\n                console.print(f\"\
+        \    Status: {'✓ Verified' if vspec.verified else '✗ Not Verified'}\")\n \
+        \               if vspec.bash:\n                    console.print(f\"    Bash
+        checks: {len(vspec.bash)}\")\n                if vspec.llm_judge:\n      \
+        \              console.print(f\"    LLM judges: {len(vspec.llm_judge)}\")\n\
+        \n        # 2. Children (하위작업) 상세\n        if task.children:\n           \
+        \ console.print(\"\\n[bold cyan]Sub-tasks:[/bold cyan]\")\n            _display_children_recursively(task.children,
+        indent=1)\n\n        # 3. References (resolve하여 출력)\n        if task.references:\n\
+        \            console.print(\"\\n[bold cyan]References:[/bold cyan]\")\n  \
+        \          for ref in task.references:\n                if ref.ref_id:\n \
+        \                   # resolve global reference\n                    global_ref
+        = _resolve_reference(ref.ref_id, work_plan.references)\n                 \
+        \   if global_ref:\n                        console.print(f\"  - [{ref.ref_id}]:
+        {global_ref.uri or global_ref.inline[:100]}\")\n                elif ref.uri:\n\
+        \                    console.print(f\"  - URI: {ref.uri}\")\n            \
+        \    elif ref.inline:\n                    console.print(f\"  - Inline: {ref.inline[:100]}...\"\
+        )\n\n        # 4. File Path (relative)\n        plan_file_path = task_manager.get_plan_file_path()\
+        \  # 절대 경로\n        relative_path = plan_file_path.relative_to(Path.cwd())\n\
+        \        console.print(f\"\\n[bold cyan]Plan File:[/bold cyan] {relative_path}\"\
+        )\n\n    _run_async(_show())\n\ndef _display_children_recursively(children,
+        indent=0):\n    for child in children:\n        prefix = \"  \" * indent\n\
+        \        console.print(f\"{prefix}- [{child.id}] {child.title} ({child.status})\"\
+        )\n        if child.children:\n            _display_children_recursively(child.children,
+        indent+1)\n\ndef _resolve_reference(ref_id, global_refs):\n    for ref in
+        global_refs:\n        if ref.ref_id == ref_id:\n            return ref\n \
+        \   return None\n```\n"
     verification_spec:
     - id: verify-7-1
       title: task show 확장 확인
       description: task show가 확장된 정보를 출력하는지 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: uv run sisyphus-speckit task show --help
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: task show 명령어 확인
       llm_judge:
       - by: orchestrator-agent
         context_commands:
         - cat projects/sisyphus-speckit/sisyphus_speckit/task/show.py
-        instruction: |
-          Verify task show 확장:
-
-          CRITERION 1: Verification Spec 상세 출력
-          - Expected: 각 vspec의 ID, title, verified 상태 출력
-          - Verify: verification_spec 출력 코드 확인
-
-          CRITERION 2: Children 재귀 출력
-          - Expected: 하위작업을 재귀적으로 출력
-          - Verify: _display_children_recursively 함수 존재
-
-          CRITERION 3: References resolve
-          - Expected: ref_id를 global references에서 resolve
-          - Verify: _resolve_reference 함수 존재
-
-          CRITERION 4: Relative path 출력
-          - Expected: plan 파일 경로를 relative로 출력
-          - Verify: relative_to(Path.cwd()) 사용 확인
-
-          FINAL VERDICT: PASS/FAIL
+        instruction: "Verify task show 확장:\n\nCRITERION 1: Verification Spec 상세 출력\n\
+          - Expected: 각 vspec의 ID, title, verified 상태 출력\n- Verify: verification_spec
+          출력 코드 확인\n\nCRITERION 2: Children 재귀 출력\n- Expected: 하위작업을 재귀적으로 출력\n- Verify:
+          _display_children_recursively 함수 존재\n\nCRITERION 3: References resolve\n\
+          - Expected: ref_id를 global references에서 resolve\n- Verify: _resolve_reference
+          함수 존재\n\nCRITERION 4: Relative path 출력\n- Expected: plan 파일 경로를 relative로
+          출력\n- Verify: relative_to(Path.cwd()) 사용 확인\n\nFINAL VERDICT: PASS/FAIL\n"
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-7-1
       condition: 검증사항 상세 출력
-      verified_at: null
-      verification_evidence: null
     - id: criterion-7-2
       condition: 하위작업 재귀 출력
-      verified_at: null
-      verification_evidence: null
     - id: criterion-7-3
       condition: 참조 resolve 출력
-      verified_at: null
-      verification_evidence: null
   - id: '7.1'
     title: task show 확장 테스트 작성
     description: task show 확장 기능 테스트 작성
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Test Requirements:
-        1. Verification spec 출력 테스트
-        2. Children 재귀 출력 테스트
-        3. References resolve 테스트
-        4. Relative path 테스트
-
-        File: projects/sisyphus-speckit/tests/task/test_show.py (기존 확장 또는 신규)
+    - inline: "Test Requirements:\n1. Verification spec 출력 테스트\n2. Children 재귀 출력
+        테스트\n3. References resolve 테스트\n4. Relative path 테스트\n\nFile: projects/sisyphus-speckit/tests/task/test_show.py
+        (기존 확장 또는 신규)\n"
     verification_spec:
     - id: verify-7.1-1
       title: 테스트 통과
       description: task show 테스트 통과 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
-      - execute: uv run pytest projects/sisyphus-speckit/tests/task/test_show.py -v
-        expected_stdout: null
-        expected_stderr: null
+      - execute: uv run pytest projects/sisyphus-speckit/tests/task/test_show.py
+          -v
         expected_exit_code: 0
         notes: 모든 테스트 통과
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-7.1-1
       condition: test_show.py 테스트 존재
-      verified_at: null
-      verification_evidence: null
   - id: '7.2'
     title: task show 확장 작업 커밋
     description: task show 확장 완료 후 커밋
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Commit Message:
-        ```
-        feat(task): enhance task show with detailed output
-
-        - Add detailed verification spec display
-        - Add recursive sub-task (children) output
-        - Resolve and display references
-        - Show relative file path instead of absolute
-
-        🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-        Co-Authored-By: Claude <noreply@anthropic.com>
-        ```
+    - inline: "Commit Message:\n```\nfeat(task): enhance task show with detailed output\n\
+        \n- Add detailed verification spec display\n- Add recursive sub-task (children)
+        output\n- Resolve and display references\n- Show relative file path instead
+        of absolute\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\
+        \nCo-Authored-By: Claude <noreply@anthropic.com>\n```\n"
     verification_spec:
     - id: verify-7.2-1
       title: 커밋 생성 확인
       description: task show 확장 작업 커밋 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: git log -1 --oneline
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: 최근 커밋 확인
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-7.2-1
       condition: git commit 생성됨
-      verified_at: null
-      verification_evidence: null
   - id: '8'
     title: task current를 task show의 shortcut으로 변경
-    description: |
-      task current 명령어를 task show {current_task_id}의 shortcut으로 변경
+    description: "task current 명령어를 task show {current_task_id}의 shortcut으로 변경\n"
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Implementation Requirements:
-        1. 기존 task current 명령어를 show_task 함수 호출로 변경
-        2. 현재 task_id를 가져와서 show_task에 전달
-        3. 출력 마지막에 "검증 스펙 상세는 'sisyphus-speckit task status' 실행" 안내 추가
-
-        File: projects/sisyphus-speckit/sisyphus_speckit/task/current.py (기존 파일 수정)
-
-        현재 구현을 확인하고 수정 필요.
-
-        Example Enhancement:
-        ```python
-        from sisyphus_speckit.task.show import show_task
-
-        def current_task(
-            rich: bool = typer.Option(False, "--rich"),
-            cwd: str | None = typer.Option(None, "--cwd"),
-        ) -> None:
-            async def _current() -> None:
-                working_dir = resolve_cwd(cwd)
-                plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
-
-                current_task_obj = task_manager.get_current_task()
-                if not current_task_obj:
-                    console.print("[red]현재 작업이 없습니다[/red]")
-                    raise typer.Exit(1)
-
-                current_task_id = current_task_obj.id
-
-                # task show 호출 (show_task 함수를 재사용)
-                # 하지만 show_task는 async가 아니므로 직접 로직 복사하거나
-                # show_task 내부 로직을 공통 함수로 추출
-
-                # 방법 1: show_task 로직 재사용
-                await _show_task_impl(current_task_obj, work_plan)
-
-                # 안내 메시지 추가
-                console.print("\n[dim]💡 Tip: 검증 스펙 상세는 'sisyphus-speckit task status' 실행[/dim]")
-
-            _run_async(_current())
-        ```
-
-        Alternative: show_task 내부 로직을 _show_task_impl로 추출하여 재사용
+    - inline: "Implementation Requirements:\n1. 기존 task current 명령어를 show_task 함수
+        호출로 변경\n2. 현재 task_id를 가져와서 show_task에 전달\n3. 출력 마지막에 \"검증 스펙 상세는 'sisyphus-speckit
+        task status' 실행\" 안내 추가\n\nFile: projects/sisyphus-speckit/sisyphus_speckit/task/current.py
+        (기존 파일 수정)\n\n현재 구현을 확인하고 수정 필요.\n\nExample Enhancement:\n```python\nfrom
+        sisyphus_speckit.task.show import show_task\n\ndef current_task(\n    rich:
+        bool = typer.Option(False, \"--rich\"),\n    cwd: str | None = typer.Option(None,
+        \"--cwd\"),\n) -> None:\n    async def _current() -> None:\n        working_dir
+        = resolve_cwd(cwd)\n        plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)\n\
+        \n        current_task_obj = task_manager.get_current_task()\n        if not
+        current_task_obj:\n            console.print(\"[red]현재 작업이 없습니다[/red]\")\n\
+        \            raise typer.Exit(1)\n\n        current_task_id = current_task_obj.id\n\
+        \n        # task show 호출 (show_task 함수를 재사용)\n        # 하지만 show_task는 async가
+        아니므로 직접 로직 복사하거나\n        # show_task 내부 로직을 공통 함수로 추출\n\n        # 방법 1:
+        show_task 로직 재사용\n        await _show_task_impl(current_task_obj, work_plan)\n\
+        \n        # 안내 메시지 추가\n        console.print(\"\\n[dim]💡 Tip: 검증 스펙 상세는 'sisyphus-speckit
+        task status' 실행[/dim]\")\n\n    _run_async(_current())\n```\n\nAlternative:
+        show_task 내부 로직을 _show_task_impl로 추출하여 재사용\n"
     verification_spec:
     - id: verify-8-1
       title: task current shortcut 확인
       description: task current가 show를 호출하는지 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: uv run sisyphus-speckit task current --help
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: task current 명령어 확인
       llm_judge:
@@ -1987,311 +1101,190 @@ work_plans:
         context_commands:
         - cat projects/sisyphus-speckit/sisyphus_speckit/task/current.py
         - cat projects/sisyphus-speckit/sisyphus_speckit/task/show.py
-        instruction: |
-          Verify task current shortcut 변경:
-
-          CRITERION 1: show_task 로직 재사용
-          - Expected: current에서 show_task 함수 또는 공통 로직 호출
-          - Verify: import 또는 _show_task_impl 호출 확인
-
-          CRITERION 2: 현재 task_id 가져오기
-          - Expected: task_manager.get_current_task() 호출
-          - Verify: current_task_id 추출 확인
-
-          CRITERION 3: 안내 메시지
-          - Expected: "sisyphus-speckit task status" 안내 출력
-          - Verify: console.print에 Tip 메시지 확인
-
-          FINAL VERDICT: PASS/FAIL
+        instruction: "Verify task current shortcut 변경:\n\nCRITERION 1: show_task 로직
+          재사용\n- Expected: current에서 show_task 함수 또는 공통 로직 호출\n- Verify: import 또는
+          _show_task_impl 호출 확인\n\nCRITERION 2: 현재 task_id 가져오기\n- Expected: task_manager.get_current_task()
+          호출\n- Verify: current_task_id 추출 확인\n\nCRITERION 3: 안내 메시지\n- Expected:
+          \"sisyphus-speckit task status\" 안내 출력\n- Verify: console.print에 Tip 메시지
+          확인\n\nFINAL VERDICT: PASS/FAIL\n"
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-8-1
       condition: task current가 show 로직 재사용
-      verified_at: null
-      verification_evidence: null
     - id: criterion-8-2
       condition: task status 안내 메시지 출력
-      verified_at: null
-      verification_evidence: null
   - id: '8.1'
     title: task current shortcut 테스트 작성
     description: task current shortcut 기능 테스트 작성
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Test Requirements:
-        1. current가 현재 task 정보 출력 테스트
-        2. 안내 메시지 포함 테스트
-
-        File: projects/sisyphus-speckit/tests/task/test_current.py (기존 확장 또는 신규)
+    - inline: "Test Requirements:\n1. current가 현재 task 정보 출력 테스트\n2. 안내 메시지 포함 테스트\n\
+        \nFile: projects/sisyphus-speckit/tests/task/test_current.py (기존 확장 또는 신규)\n"
     verification_spec:
     - id: verify-8.1-1
       title: 테스트 통과
       description: task current 테스트 통과 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
-      - execute: uv run pytest projects/sisyphus-speckit/tests/task/test_current.py -v
-        expected_stdout: null
-        expected_stderr: null
+      - execute: uv run pytest 
+          projects/sisyphus-speckit/tests/task/test_current.py -v
         expected_exit_code: 0
         notes: 모든 테스트 통과
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-8.1-1
       condition: test_current.py 테스트 존재
-      verified_at: null
-      verification_evidence: null
   - id: '8.2'
     title: task current shortcut 작업 커밋
     description: task current shortcut 변경 완료 후 커밋
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Commit Message:
-        ```
-        refactor(task): convert task current to show shortcut
-
-        - Refactor task current to reuse task show logic
-        - Add tip message to check task status for details
-        - Maintain backward compatibility
-
-        🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-        Co-Authored-By: Claude <noreply@anthropic.com>
-        ```
+    - inline: "Commit Message:\n```\nrefactor(task): convert task current to show
+        shortcut\n\n- Refactor task current to reuse task show logic\n- Add tip message
+        to check task status for details\n- Maintain backward compatibility\n\n🤖 Generated
+        with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude
+        <noreply@anthropic.com>\n```\n"
     verification_spec:
     - id: verify-8.2-1
       title: 커밋 생성 확인
       description: task current 작업 커밋 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: git log -1 --oneline
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: 최근 커밋 확인
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-8.2-1
       condition: git commit 생성됨
-      verified_at: null
-      verification_evidence: null
   - id: '9'
     title: current_work 필드 제거 및 current_work_ids 전환
-    description: |
-      WorkPlan 모델에서 current_work 필드를 완전히 제거하고
-      모든 참조를 current_work_ids로 변경
+    description: "WorkPlan 모델에서 current_work 필드를 완전히 제거하고\n모든 참조를 current_work_ids로
+      변경\n"
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        CRITICAL: status.json은 절대 건드리지 않습니다.
-        YAML 스펙 내에서만 current_work_ids 사용하도록 변경합니다.
-
-        Implementation Requirements:
-        1. models.py에서 current_work 필드 제거
-        2. 모든 코드에서 current_work 참조를 current_work_ids로 변경
-        3. current_work_ids가 list[str]임을 감안한 로직 수정
-
-        Files to modify:
-        - projects/sisyphus-core/sisyphus_core/core/plans/models.py
-        - projects/sisyphus-speckit/ 내 current_work 참조하는 모든 파일
-
-        Steps:
-        1. Grep으로 current_work 참조 찾기
-        2. 각 파일에서 current_work → current_work_ids[0] 또는 적절한 로직으로 변경
-        3. models.py에서 current_work 필드 삭제
-
-        Example:
-        ```python
-        # Before
-        current_task_id = work_plan.current_work
-
-        # After
-        current_task_id = work_plan.current_work_ids[0] if work_plan.current_work_ids else None
-        ```
-
-        Grep command to find references:
-        ```bash
-        grep -r "current_work" projects/sisyphus-speckit --exclude-dir=__pycache__
-        grep -r "current_work" projects/sisyphus-core --exclude-dir=__pycache__
-        ```
+    - inline: "CRITICAL: status.json은 절대 건드리지 않습니다.\nYAML 스펙 내에서만 current_work_ids
+        사용하도록 변경합니다.\n\nImplementation Requirements:\n1. models.py에서 current_work
+        필드 제거\n2. 모든 코드에서 current_work 참조를 current_work_ids로 변경\n3. current_work_ids가
+        list[str]임을 감안한 로직 수정\n\nFiles to modify:\n- projects/sisyphus-core/sisyphus_core/core/plans/models.py\n\
+        - projects/sisyphus-speckit/ 내 current_work 참조하는 모든 파일\n\nSteps:\n1. Grep으로
+        current_work 참조 찾기\n2. 각 파일에서 current_work → current_work_ids[0] 또는 적절한 로직으로
+        변경\n3. models.py에서 current_work 필드 삭제\n\nExample:\n```python\n# Before\ncurrent_task_id
+        = work_plan.current_work\n\n# After\ncurrent_task_id = work_plan.current_work_ids[0]
+        if work_plan.current_work_ids else None\n```\n\nGrep command to find references:\n\
+        ```bash\ngrep -r \"current_work\" projects/sisyphus-speckit --exclude-dir=__pycache__\n\
+        grep -r \"current_work\" projects/sisyphus-core --exclude-dir=__pycache__\n\
+        ```\n"
     verification_spec:
     - id: verify-9-1
       title: current_work 제거 확인
       description: current_work 필드가 완전히 제거되었는지 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
-      - execute: grep -r "current_work[^_]" projects/sisyphus-core/sisyphus_core/core/plans/models.py
-        expected_stdout: null
-        expected_stderr: null
+      - execute: grep -r "current_work[^_]" 
+          projects/sisyphus-core/sisyphus_core/core/plans/models.py
         expected_exit_code: 1
         notes: current_work 필드가 없어야 함 (exit code 1 = no match)
       llm_judge:
       - by: orchestrator-agent
         context_commands:
         - cat projects/sisyphus-core/sisyphus_core/core/plans/models.py
-        - grep -r "current_work" projects/sisyphus-speckit --exclude-dir=__pycache__ || true
-        instruction: |
-          Verify current_work 제거:
-
-          CRITERION 1: models.py에서 current_work 필드 제거
-          - Expected: WorkPlan 모델에 current_work 필드 없음
-          - Verify: models.py 내용 확인
-
-          CRITERION 2: 모든 참조가 current_work_ids로 변경
-          - Expected: current_work 사용 코드 없음
-          - Verify: grep 결과 확인
-
-          CRITERION 3: current_work_ids list 처리
-          - Expected: current_work_ids[0] 또는 적절한 로직 사용
-          - Verify: 코드에서 list indexing 확인
-
-          FINAL VERDICT: PASS/FAIL
+        - grep -r "current_work" projects/sisyphus-speckit 
+          --exclude-dir=__pycache__ || true
+        instruction: "Verify current_work 제거:\n\nCRITERION 1: models.py에서 current_work
+          필드 제거\n- Expected: WorkPlan 모델에 current_work 필드 없음\n- Verify: models.py
+          내용 확인\n\nCRITERION 2: 모든 참조가 current_work_ids로 변경\n- Expected: current_work
+          사용 코드 없음\n- Verify: grep 결과 확인\n\nCRITERION 3: current_work_ids list 처리\n\
+          - Expected: current_work_ids[0] 또는 적절한 로직 사용\n- Verify: 코드에서 list indexing
+          확인\n\nFINAL VERDICT: PASS/FAIL\n"
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-9-1
       condition: models.py에서 current_work 필드 제거됨
-      verified_at: null
-      verification_evidence: null
     - id: criterion-9-2
       condition: 모든 current_work 참조가 current_work_ids로 변경됨
-      verified_at: null
-      verification_evidence: null
   - id: '9.1'
     title: current_work 제거 테스트 작성
     description: current_work_ids 사용 테스트 작성
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Test Requirements:
-        1. current_work_ids list 처리 테스트
-        2. 빈 리스트 처리 테스트
-        3. 여러 개의 current_work_ids 처리 테스트
-
-        File: projects/sisyphus-core/tests/plans/test_models_current_work_ids.py (신규)
+    - inline: "Test Requirements:\n1. current_work_ids list 처리 테스트\n2. 빈 리스트 처리 테스트\n\
+        3. 여러 개의 current_work_ids 처리 테스트\n\nFile: projects/sisyphus-core/tests/plans/test_models_current_work_ids.py
+        (신규)\n"
     verification_spec:
     - id: verify-9.1-1
       title: 테스트 통과
       description: current_work_ids 테스트 통과 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
-      - execute: uv run pytest projects/sisyphus-core/tests/plans/test_models*.py -v
-        expected_stdout: null
-        expected_stderr: null
+      - execute: uv run pytest 
+          projects/sisyphus-core/tests/plans/test_models*.py -v
         expected_exit_code: 0
         notes: 모든 테스트 통과
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-9.1-1
       condition: current_work_ids 테스트 존재
-      verified_at: null
-      verification_evidence: null
   - id: '9.2'
     title: current_work 제거 작업 커밋
     description: current_work 제거 및 current_work_ids 전환 완료 후 커밋
     status: pending
-    children: null
     references:
-    - ref_id: null
-      uri: null
-      inline: |
-        Commit Message:
-        ```
-        refactor(core): remove current_work field, use current_work_ids
-
-        - Remove current_work field from WorkPlan model
-        - Convert all references to use current_work_ids list
-        - Add proper list handling for multiple current tasks
-        - Maintain backward compatibility where possible
-
-        🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-        Co-Authored-By: Claude <noreply@anthropic.com>
-        ```
+    - inline: "Commit Message:\n```\nrefactor(core): remove current_work field, use
+        current_work_ids\n\n- Remove current_work field from WorkPlan model\n- Convert
+        all references to use current_work_ids list\n- Add proper list handling for
+        multiple current tasks\n- Maintain backward compatibility where possible\n\
+        \n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By:
+        Claude <noreply@anthropic.com>\n```\n"
     verification_spec:
     - id: verify-9.2-1
       title: 커밋 생성 확인
       description: current_work 제거 작업 커밋 확인
       verified: false
-      verified_at: null
-      verification_evidence: null
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
       - execute: git log -1 --oneline
-        expected_stdout: null
-        expected_stderr: null
         expected_exit_code: 0
         notes: 최근 커밋 확인
       llm_judge: []
       deterministic_bash: []
       orchestrator_judge: []
     parallel: false
-    parallelable_and_safe_evidence: null
     acceptance_criteria:
     - id: criterion-9.2-1
       condition: git commit 생성됨
-      verified_at: null
-      verification_evidence: null
   references: []
   execution:
-    started: false
+    started: true
     completed: false
-    started_at: null
-    completed_at: null
-    fully_done_at: null
+    started_at: '2025-11-19T05:17:43.000299+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: null
+    current_task_id: '1'
   current_work: ''
   current_work_ids:
   - '1'
   - '2'
   acceptance_criteria_for_verification_agent: []
-  fully_done_evidence: null

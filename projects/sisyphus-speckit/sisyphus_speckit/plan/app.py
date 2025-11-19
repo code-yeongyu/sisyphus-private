@@ -9,6 +9,7 @@ from sisyphus_speckit.plan.init import init_plan
 from sisyphus_speckit.plan.lint import lint_plan
 from sisyphus_speckit.plan.mark_completed import mark_completed_command
 from sisyphus_speckit.plan.mark_fully_done import mark_fully_done_command
+from sisyphus_speckit.plan.schema import plan_schema
 from sisyphus_speckit.plan.status import status
 from sisyphus_speckit.plan.verify_final import verify_final_plan
 
@@ -22,4 +23,5 @@ plan_app.command(name="export")(export_plan)
 plan_app.command(name="accept-as-verification-agent")(accept_as_verification_agent)
 plan_app.command(name="mark completed")(mark_completed_command)
 plan_app.command(name="mark fully-done")(mark_fully_done_command)
+plan_app.command(name="schema")(plan_schema)
 plan_app.command(name="status")(status)

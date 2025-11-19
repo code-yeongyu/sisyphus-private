@@ -995,7 +995,7 @@ work_plans:
   - id: '6.1'
     title: task status 기능 테스트 작성
     description: task status 테스트 작성
-    status: in_progress
+    status: completed
     references:
     - inline: "Test Requirements:\n1. 검증 상태 출력 테스트\n2. Continuable 계산 테스트\n3. Acceptance
         criteria 출력 테스트\n\nFile: projects/sisyphus-speckit/tests/task/test_status.py
@@ -1029,7 +1029,7 @@ work_plans:
   - id: '6.2'
     title: task status 작업 커밋
     description: task status 구현 완료 후 커밋
-    status: pending
+    status: in_progress
     references:
     - inline: "Commit Message:\n```\nfeat(task): add task status command\n\n- Implement
         task_status function with detailed verification output\n- Display all verification
@@ -1406,7 +1406,7 @@ work_plans:
     started_at: '2025-11-19T05:17:43.000299+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '6.1'
+    current_task_id: '6.2'
   current_work: ''
   current_work_ids:
   - '1'

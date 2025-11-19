@@ -573,3 +573,153 @@ TestLintFixIntegration (4개 테스트):
 - YAML 통합: 파일 로드/저장, 멀티라인 변환, 빈 파일, 복잡한 구조
 
 소요 시간: 약 15분
+
+[2025-11-19 15:09] - Task 6: task status 명령어 구현
+
+### WORK CONTEXT & HISTORY
+- Task 1-5 (plan schema, list, status, overview, lint --fix) 완료됨
+- Task 6은 task status 명령어 신규 구현
+- 이것은 plan/status.py (plan-level 상태)와 다른 task/status.py (task-level 상태)
+
+### IMPLEMENTATION DECISIONS
+- async 함수를 사용하고 _run_async로 감싸기 (기존 task 패턴 따름)
+- Rich Panel, Table 사용하여 계층적 정보 표시
+- 4가지 섹션 구분:
+  1. Task 기본 정보 (Panel)
+  2. Verification Spec 상세 출력 (Table + 상세 정보)
+  3. Acceptance Criteria (Table)
+  4. Continuable 여부 (can_complete 플래그)
+- task_manager.check_task_completion()으로 완료 여부 판단
+
+### TECHNICAL DISCOVERIES
+- LLMJudgeVerification 모델에는 criteria가 없고 instruction 필드 사용
+- BashVerification에는 execute, expected_exit_code, notes 필드
+- CompletionReport의 can_complete 필드로 다음 단계 가능 여부 판단
+- task_manager.check_task_completion()은 CompletionReport 반환
+
+### PROBLEMS FOR NEXT TASKS
+- 없음. Task 6 완료됨.
+
+### VERIFICATION RESULTS
+- 명령어 help: `uv run sisyphus-speckit task status --help` ✓
+- 명령어 실행: `uv run sisyphus-speckit task status` ✓
+  - Task Information Panel 출력됨
+  - Verification Specifications 테이블 표시됨
+  - Detailed Verification Information 섹션 표시됨
+  - Bash Checks 세부사항 표시됨
+  - LLM Judge 정보 표시됨 (By, Instruction)
+  - Acceptance Criteria 테이블 표시됨
+  - Continuable 여부 표시됨
+  - 필요한 작업 목록 표시됨
+- 기존 테스트: `uv run pytest projects/sisyphus-speckit/tests/plan/ -v`
+  - 63 passed in 0.28s ✓
+- Type checking: `uv run basedpyright projects/sisyphus-speckit --level error`
+  - 0 errors, 0 warnings, 0 notes ✓
+- Linting: `uv run ruff check projects/sisyphus-speckit/sisyphus_speckit/task/status.py`
+  - All checks passed! ✓
+
+### LEARNINGS
+- LLMJudgeVerification: instruction 필드로 크기가 긴 텍스트 저장 (필요시 [0:100] 슬라이싱)
+- BashVerification: execute, expected_exit_code, notes 필드로 세부정보 저장
+- CompletionReport: 다양한 완료 상태 정보 포함 (children, verifications, manual)
+- Rich Table: 다중 컬럼과 색상 코드로 시각적 테이블 표시 가능
+- task_manager.check_task_completion(): Task ID 기반으로 완료 보고서 생성
+
+### IMPLEMENTATION DETAILS
+
+파일 생성:
+- `/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/task/status.py`
+
+파일 수정:
+- `/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/task/app.py`
+  - task_status import 추가
+  - task_app.command(name="status")(task_status) 등록
+
+핵심 구현:
+1. task_status() 메인 함수
+   - --cwd 옵션 지원
+   - async _task_status() 내부 함수 정의
+
+2. _task_status() 구현:
+   - _load_current_plan()으로 현재 plan 로드
+   - task_manager.get_current_task()로 현재 task 획득
+   - Task 기본 정보 Panel 출력
+   - verification_spec 테이블 및 상세정보 출력
+   - acceptance_criteria 테이블 출력
+   - check_task_completion()으로 완료 보고서 획득
+   - can_complete 플래그로 continuable 여부 판단
+   - 필요한 작업 목록 출력 (children, verifications, manual)
+
+소요 시간: 약 12분
+
+
+[2025-11-19 15:15] - Task 6.1: task status 기능 테스트 작성
+
+### DISCOVERED ISSUES
+- VerificationItem 모델은 최소 하나의 검증 타입(bash, llm_judge, deterministic_bash, orchestrator_judge) 필수
+- LLMJudgeBy enum 값: ORCHESTRATOR, EXTERNAL (문자열 "claude", "gpt-5" 아님)
+- AcceptanceCriteria 클래스명은 AcceptanceCriteriaItem이 정확한 모델명
+
+### IMPLEMENTATION DECISIONS
+- BDD 패턴 (#given #when #then) 사용으로 테스트 가독성 확보
+- 13개 테스트 케이스 작성:
+  - 검증 상태 출력 테스트 (verification spec table)
+  - bash/llm_judge 상세 정보 추출 테스트
+  - acceptance criteria 출력 테스트
+  - continuable 계산 테스트 (모든 검증 완료/미완료/수동검증 미완료)
+  - 검증 타입 식별 테스트
+
+### TECHNICAL DISCOVERIES
+- VerificationItem이 bash=[], llm_judge=[] 모두 비어있으면 validation error 발생
+  → 최소 하나의 검증 타입 필수
+- LLMJudgeBy.ORCHESTRATOR.value == "orchestrator-agent" (enum 인스턴스 비교 필요)
+- conftest.py에 shared fixtures가 이미 정의되어 있어 중복 정의 제거 가능
+- sisyphus-core 모델들은 pydantic v2 기반으로 strict validation
+
+### PROBLEMS FOR NEXT TASKS
+- 없음. Task 6.1 완료됨.
+
+### VERIFICATION RESULTS
+- 테스트 실행: 13 passed in 0.03s (100% 통과)
+- Type checking: 0 errors, 0 warnings, 0 notes (basedpyright)
+- Linting: All checks passed! (ruff)
+
+### LEARNINGS
+- pytest fixture 패턴: conftest.py에서 shared fixtures 사용 가능
+- BDD 패턴: #given, #when, #then 주석은 프로젝트 필수 규칙
+- Enum 비교: enum 인스턴스끼리 비교해야 함 (문자열과 비교 불가)
+- VerificationItem validation: bash, llm_judge 등 최소 하나의 검증 타입 필수
+- Model 이름 정확성: AcceptanceCriteria (X) → AcceptanceCriteriaItem (O)
+
+### IMPLEMENTATION DETAILS
+
+파일 생성:
+- `/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/tests/task/test_status.py`
+
+테스트 구조:
+```
+총 13개 테스트:
+1. test_status__verification_spec_table__displays_all_verification_items
+2. test_status__verification_spec_table__extracts_bash_details
+3. test_status__verification_spec_table__extracts_llm_judge_details
+4. test_status__acceptance_criteria_table__displays_all_criteria
+5. test_status__acceptance_criteria__handles_missing_criteria
+6. test_status__continuable__calculates_when_all_verifications_complete
+7. test_status__continuable__detects_incomplete_verifications
+8. test_status__continuable__detects_missing_manual_verification
+9. test_status__continuable__handles_no_verification_spec
+10. test_status__detailed_verification_info__formats_bash_check_details
+11. test_status__detailed_verification_info__formats_llm_judge_details
+12. test_status__verification_output__handles_bash_verification_type
+13. test_status__verification_output__handles_mixed_verification_types
+```
+
+테스트 커버리지:
+- verification_spec 테이블 출력 (ID, title, description, verified status)
+- bash/llm_judge 상세 정보 추출
+- acceptance_criteria 테이블 출력 (verified_at 필드로 검증 상태 판단)
+- continuable 계산 로직 (모든 검증 완료, 수동검증 완료 여부)
+- 검증 타입 식별 (bash, llm, 혼합)
+
+소요 시간: 약 30분 (모델 분석, 타입 에러 수정, 테스트 작성)
+

@@ -915,7 +915,7 @@ work_plans:
   - id: '6'
     title: task status 명령어 구현
     description: "sisyphus-speckit task status 명령어를 구현하여\n현재 task의 모든 검증 상태를 상세히 출력\n"
-    status: in_progress
+    status: completed
     references:
     - inline: "Implementation Requirements:\n1. 현재 task 정보 출력\n2. 모든 verification_spec
         상세 출력 (ID, title, description 포함)\n3. continuable 여부 출력 (다음 단계로 넘어갈 수 있는지)\n\
@@ -995,7 +995,7 @@ work_plans:
   - id: '6.1'
     title: task status 기능 테스트 작성
     description: task status 테스트 작성
-    status: pending
+    status: in_progress
     references:
     - inline: "Test Requirements:\n1. 검증 상태 출력 테스트\n2. Continuable 계산 테스트\n3. Acceptance
         criteria 출력 테스트\n\nFile: projects/sisyphus-speckit/tests/task/test_status.py
@@ -1004,9 +1004,16 @@ work_plans:
     - id: verify-6.1-1
       title: 테스트 통과
       description: task status 테스트 통과 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-19T06:16:24.469159+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'task status 테스트가 완벽하게 작성되었음을 확인했다. test_status.py
+        파일에 13개의 테스트가 생성되어 모든 요구사항을 커버한다: 1) 검증 상태 출력 테스트 (3개) - 모든 verification item
+        출력, bash 상세 정보 추출, llm_judge 상세 정보 추출, 2) Acceptance Criteria 출력 테스트 (2개)
+        - 모든 criteria 출력, 빈 criteria 처리, 3) Continuable 계산 테스트 (4개) - 모든 검증 완료, 일부
+        미완료, 수동검증 미완료, 검증 항목 없음, 4) 상세 검증 정보 포맷팅 테스트 (2개) - bash/llm_judge 상세정보, 5)
+        검증 타입 식별 테스트 (2개) - bash/혼합 타입. 모든 테스트가 BDD 패턴(#given #when #then)을 준수하며,
+        pytest 실행 결과 13/13 passed in 0.02s로 전부 통과했다.'
       bash:
       - execute: uv run pytest 
           projects/sisyphus-speckit/tests/task/test_status.py -v
@@ -1399,7 +1406,7 @@ work_plans:
     started_at: '2025-11-19T05:17:43.000299+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '6'
+    current_task_id: '6.1'
   current_work: ''
   current_work_ids:
   - '1'

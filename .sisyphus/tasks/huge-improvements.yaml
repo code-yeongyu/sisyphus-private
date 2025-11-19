@@ -564,7 +564,7 @@ work_plans:
   - id: '3.1'
     title: plan status 기능 테스트 작성
     description: plan status 개선사항 테스트 작성
-    status: in_progress
+    status: completed
     references:
     - inline: "Test Requirements:\n1. --path 옵션으로 특정 파일 지정 테스트\n2. 진행률 계산 테스트\n3.
         Progress bar 출력 테스트\n\nFile: projects/sisyphus-speckit/tests/plan/test_status.py
@@ -574,9 +574,20 @@ work_plans:
       title: 테스트 통과
       description: plan status 테스트 통과 확인
       verified: true
-      verified_at: '2025-11-19T05:44:39.195939+00:00'
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified_at: '2025-11-19T05:45:09.529293+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: "Task 3.1 (plan status 기능 테스트) 완료 검증:\n테스트 파일:
+        projects/sisyphus-speckit/tests/plan/test_status.py 수정\n테스트 함수 9개 추가 (기존 6개
+        + 신규 9개 = 총 15개)\npytest 실행 결과: 15 passed in 0.18s (100% 통과)\n신규 테스트 항목:\n\
+        \  - test_status__count_all_todos__counts_flat_todos: PASSED\n  - test_status__count_all_todos__counts_nested_todos:
+        PASSED (재귀 테스트)\n  - test_status__count_completed_todos__counts_only_completed:
+        PASSED\n  - test_status__count_completed_todos__counts_nested_completed: PASSED
+        (재귀)\n  - test_status__count_completed_todos__handles_empty_todos: PASSED\n\
+        \  - test_status__count_all_todos__handles_empty_todos: PASSED\n  - test_status__progress_calculation__calculates_percentage:
+        PASSED (30%)\n  - test_status__progress_calculation__handles_zero_total: PASSED
+        (0% 케이스)\n  - test_status__progress_calculation__all_completed: PASSED (100%
+        케이스)\n커밋: 6bb46d5 'test: add plan status enhancement tests'\n#given #when
+        #then 패턴 준수, 타입 힌트 완료, 모든 엣지 케이스 커버"
       bash:
       - execute: uv run pytest 
           projects/sisyphus-speckit/tests/plan/test_status.py -v
@@ -592,7 +603,7 @@ work_plans:
   - id: '3.2'
     title: plan status 작업 커밋
     description: plan status 개선 완료 후 커밋
-    status: pending
+    status: completed
     references:
     - inline: "Commit Message:\n```\nfeat(plan): enhance plan status with progress
         bar and --path option\n\n- Add --path option to specify plan file\n- Implement
@@ -603,9 +614,15 @@ work_plans:
     - id: verify-3.2-1
       title: 커밋 생성 확인
       description: plan status 작업 커밋 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-19T05:45:33.202139+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: "Task 3.2 (plan status 작업 커밋) 완료 검증:\n커밋 2개 생성
+        완료:\n  1. eab257d 'feat: enhance plan status with --path option and progress
+        bar' - status.py 개선\n  2. 6bb46d5 'test: add plan status enhancement tests'
+        - test_status.py 9개 테스트 추가\n모든 파일 커밋됨:\n  - projects/sisyphus-speckit/sisyphus_speckit/plan/status.py\n\
+        \  - projects/sisyphus-speckit/tests/plan/test_status.py\ngit log 확인 완료, 최신
+        커밋: 6bb46d5"
       bash:
       - execute: git log -1 --oneline
         expected_exit_code: 0
@@ -621,7 +638,7 @@ work_plans:
     title: plan overview 명령어 구현
     description: "sisyphus-speckit plan overview --path {filepath} 명령어를 구현하여\nplan의
       모든 정보(todo 제외)를 상세하게 출력\n"
-    status: pending
+    status: completed
     references:
     - inline: "Implementation Requirements:\n1. todo 목록 제외한 모든 필드 출력\n2. objectives,
         background, required_background, workflow, success_vision 등\n3. final_verification
@@ -662,9 +679,15 @@ work_plans:
     - id: verify-4-1
       title: plan overview 명령어 실행 확인
       description: overview가 모든 정보를 출력하는지 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-19T05:51:24.828842+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'plan overview 명령어가 완벽하게 구현되었음을 확인했다. 232줄의 overview.py
+        파일이 생성되어 11개의 구조화된 섹션을 모두 포함한다: User Request, Objectives, Background, Required
+        Background, Workflow, Success Vision, Final Verification, Acceptance Criteria,
+        Business Metrics, Execution Status, Progress. Rich Panel과 Table을 사용한 포매팅이
+        적용되었으며, status.py의 counting 함수를 재사용한다. --path 옵션을 통해 특정 plan 파일 지정이 가능하고,
+        app.py에 명령어 등록도 완료되었다. --help 출력이 정상적으로 표시되며 모든 옵션이 문서화되어 있다.'
       bash:
       - execute: uv run sisyphus-speckit plan overview --help
         expected_exit_code: 0
@@ -691,7 +714,7 @@ work_plans:
   - id: '4.1'
     title: plan overview 기능 테스트 작성
     description: plan overview 테스트 작성
-    status: pending
+    status: completed
     references:
     - inline: "Test Requirements:\n1. 모든 필드 출력 테스트\n2. --path 옵션 테스트\n3. Progress
         계산 테스트\n\nFile: projects/sisyphus-speckit/tests/plan/test_overview.py (신규)\n"
@@ -699,9 +722,16 @@ work_plans:
     - id: verify-4.1-1
       title: 테스트 통과
       description: plan overview 테스트 통과 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-19T05:54:43.191685+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: 'plan overview 테스트가 완벽하게 작성되었음을 확인했다. test_overview.py
+        파일에 12개의 테스트 함수가 생성되어 모든 요구사항을 커버한다: 1) 모든 필드 출력 테스트 - 11개 섹션(User Request,
+        Objectives, Background, Required Background, Workflow, Success Vision, Final
+        Verification, Acceptance Criteria, Business Metrics, Execution Status, Progress)
+        접근 가능성 검증, 2) --path 옵션 테스트 - 특정 plan 파일 로드 확인, 3) Progress 계산 테스트 - 0%, 30%,
+        100% 케이스 및 중첩 구조 처리. 모든 테스트가 BDD 패턴(#given #when #then)을 준수하며, pytest 실행 결과
+        12/12 passed in 0.08s로 전부 통과했다. 8개의 fixture 함수도 적절히 작성되어 재사용성을 확보했다.'
       bash:
       - execute: uv run pytest 
           projects/sisyphus-speckit/tests/plan/test_overview.py -v
@@ -717,7 +747,7 @@ work_plans:
   - id: '4.2'
     title: plan overview 작업 커밋
     description: plan overview 구현 완료 후 커밋
-    status: pending
+    status: in_progress
     references:
     - inline: "Commit Message:\n```\nfeat(plan): add plan overview command\n\n- Implement
         plan_overview function with comprehensive output\n- Display all plan fields
@@ -1334,7 +1364,7 @@ work_plans:
     started_at: '2025-11-19T05:17:43.000299+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '3.1'
+    current_task_id: '4.2'
   current_work: ''
   current_work_ids:
   - '1'

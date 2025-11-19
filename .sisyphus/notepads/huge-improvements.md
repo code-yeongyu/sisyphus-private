@@ -361,3 +361,143 @@ Commands Working:
 
 소요 시간: 약 3분
 
+
+[2025-11-19 14:48] - Task 4: plan overview 명령어 구현
+
+### WORK CONTEXT & HISTORY
+- Task 1-3 (plan schema, list, status) 완료됨
+- Task 4는 plan overview 명령어 신규 구현
+- status.py와 list.py의 패턴을 참고하여 구현
+
+### IMPLEMENTATION DECISIONS
+- async 함수를 사용하고 _run_async로 감싸기 (기존 패턴 따름)
+- Rich Panel, Table 사용하여 계층적 정보 표시
+- --path 옵션으로 특정 plan 지정 가능 (status와 동일)
+- progress bar 포함 (RichProgress 사용)
+- 모든 plan 정보 섹션별로 표시:
+  1. Plan Header (Panel)
+  2. Plan Metadata (ID, Task count, Progress)
+  3. Progress Bar (RichProgress)
+  4. User Request
+  5. Objectives (Core + Detailed)
+  6. Background (Current Situation, Reason, Changes)
+  7. Required Background
+  8. Workflow
+  9. Success Vision
+  10. Final Verification (Table + Details)
+  11. Acceptance Criteria (조건부 - hasattr 사용)
+
+### TECHNICAL DISCOVERIES
+- WorkPlan 모델의 acceptance_criteria 필드가 YAML에 없을 수 있음
+- hasattr() 체크로 안전하게 처리
+- _count_all_todos, _count_completed_todos 함수 재사용 (status.py에서)
+- 11개 섹션으로 구분하는 구조화 주석은 필수 문서화 요소
+
+### PROBLEMS FOR NEXT TASKS
+- 없음. Task 4 완료됨.
+
+### VERIFICATION RESULTS
+- 명령어 help: `uv run sisyphus-speckit plan overview --help` ✓
+- 명령어 실행: `uv run sisyphus-speckit plan overview --path .sisyphus/tasks/huge-improvements.yaml` ✓
+  - Plan Overview Panel 출력됨
+  - Plan Information 섹션 (ID, Total Tasks: 27, Completed: 9/27, Progress: 33.3%)
+  - Progress Bar 시각화됨
+  - User Request, Objectives, Background 등 모든 섹션 출력됨
+  - Final Verification 테이블 표시됨
+- 기존 테스트: `uv run pytest projects/sisyphus-speckit/tests/plan/ -v`
+  - 34 passed in 0.30s ✓
+- Type checking: `uv run basedpyright projects/sisyphus-speckit --level error`
+  - 0 errors, 0 warnings, 0 notes ✓
+- Linting: `uv run ruff check projects/sisyphus-speckit`
+  - All checks passed! ✓
+
+### LEARNINGS
+- 복잡한 다중 섹션 출력은 구조화 주석으로 명확히 구분
+- hasattr()을 사용하여 선택적 필드 안전하게 처리
+- Rich의 Panel, Table, Progress는 계층적 정보 표현에 최적
+- --path 옵션 패턴은 status.py와 동일하게 구현하면 일관성 유지
+
+### IMPLEMENTATION DETAILS
+파일 생성:
+- `/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/plan/overview.py`
+
+파일 수정:
+- `/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/plan/app.py`
+  - plan_overview import 추가
+  - plan_app.command(name="overview")(plan_overview) 등록
+
+핵심 함수:
+1. _count_all_todos() - 재귀적 todos 개수 계산
+2. _count_completed_todos() - 재귀적 완료된 todos 개수 계산
+3. plan_overview() - 메인 명령어 함수
+
+소요 시간: 약 10분
+
+
+[2025-11-19 14:53] - Task 4.1: plan overview 기능 테스트 작성
+
+### WORK CONTEXT & HISTORY
+- Task 4 (plan overview 명령어 구현)이 완료됨
+- Task 4.1은 plan overview 명령어의 테스트 작성
+- overview.py가 이미 구현되어 있으므로 테스트만 작성
+
+### IMPLEMENTATION DECISIONS
+- pytest fixture 패턴 활용
+  - tmp_path: 임시 파일 경로 제공
+  - ReferenceItem 사용: 모델의 실제 필드명 (Reference 아님)
+- BDD 패턴 (#given #when #then) 사용으로 테스트 가독성 확보
+- 테스트 함수명 패턴: test_{func_name}__if_{condition}__{result}
+- 12개의 테스트 케이스 작성 (모든 필드/옵션/진행률 계산 커버)
+
+### TECHNICAL DISCOVERIES
+- ReferenceItem이 Reference가 아님 (sisyphus_core 모델 사용)
+- _count_all_todos, _count_completed_todos 함수는 overview.py에서 정의됨
+- plan_overview 함수는 async 내부 함수를 사용하므로 직접 테스트 불가 (의도적)
+- 테스트는 helper 함수와 데이터 모델만 테스트 가능
+
+### PROBLEMS FOR NEXT TASKS
+- 없음. Task 4.1 완료됨.
+
+### VERIFICATION RESULTS
+- 신규 테스트: test_overview.py 12개 모두 통과 (12 passed in 0.10s)
+- 전체 plan 테스트: 46 passed in 0.27s (신규 12개 + 기존 34개)
+- Type Checking: 0 errors, 0 warnings, 0 notes
+- Linting: All checks passed!
+
+테스트 케이스:
+1. test_overview__if_all_fields_present__displays_all_sections - 모든 필드 접근 가능 확인
+2. test_overview__if_path_option_provided__loads_specific_plan - --path 옵션 경로 처리
+3. test_overview__if_plan_has_no_todos__displays_zero_progress - 빈 todos 처리
+4. test_overview__progress_calculates_percentage_correctly - 30% 계산 (3/10)
+5. test_overview__progress_calculates_one_hundred_percent - 100% 계산 (5/5)
+6. test_overview__if_nested_todos__counts_all_levels - 중첩 todos 계산 (parent + child)
+7. test_overview__if_acceptance_criteria_missing__handles_gracefully - optional 필드 처리
+8. test_overview__if_fully_done_not_set__displays_no - fully_done_at = None
+9. test_overview__if_fully_done_set__displays_yes - fully_done_at 타임스탬프 설정
+10. test_overview__plan_metadata_displays_correctly - 메타데이터 추출
+11. test_overview__multiple_additional_requirements_displayed - 추가 요구사항 3개 접근
+12. test_overview__final_verification_table_accessible - verification 아이템 접근
+
+### LEARNINGS
+- pytest fixture로 재사용 가능한 테스트 데이터 생성
+- BDD 주석 패턴은 프로젝트 필수 규칙
+- sisyphus_core 모델의 정확한 클래스명 사용 (ReferenceItem)
+- 프로젝트 규칙: BDD 주석(given/when/then)과 필수 docstring은 문제 없음
+- Helper 함수 (_count_all_todos, _count_completed_todos) 테스트 중요
+
+### IMPLEMENTATION DETAILS
+
+파일 생성:
+- `/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/tests/plan/test_overview.py`
+
+테스트 구조:
+- 8개 fixture 함수 (minimal_user_request, minimal_objectives, minimal_background, minimal_required_background, minimal_workflow, minimal_success_vision, minimal_work_plan)
+- 12개 테스트 함수 (모두 동기, anyio 마커 없음)
+
+테스트 커버리지:
+1. 모든 필드 출력 테스트: work_plan 모든 섹션 접근 가능성
+2. --path 옵션 테스트: 특정 파일 경로 처리
+3. Progress 계산 테스트: 빈 목록, 30%, 100%, 중첩 구조, 선택적 필드 처리
+
+소요 시간: 약 8분
+

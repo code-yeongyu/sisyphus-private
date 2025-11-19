@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from sisyphus_speckit.plan.schema import plan_schema
 
 

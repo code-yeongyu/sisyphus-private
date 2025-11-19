@@ -723,3 +723,62 @@ TestLintFixIntegration (4개 테스트):
 
 소요 시간: 약 30분 (모델 분석, 타입 에러 수정, 테스트 작성)
 
+
+[2025-11-19 15:23] - Task 7.1: Fix test_show.py test failures
+
+### DISCOVERED ISSUES
+- VerificationItem 모델은 최소 하나의 검증 타입(bash, llm_judge, deterministic_bash, orchestrator_judge) 필수
+- acceptance_criteria 필드는 None이 아닌 list[AcceptanceCriteriaItem] 타입 필수
+- Type narrowing 필요: children이 None일 수 있으므로 subscript 접근 전 체크 필수
+
+### IMPLEMENTATION DECISIONS
+- BashVerification을 import하고 minimal_todo fixture에서 실제로 사용
+  - bash=[BashVerification(execute="echo test", expected_exit_code=0)]로 설정하여 최소 검증 조건 충족
+- acceptance_criteria=None → acceptance_criteria=[]로 변경 (모든 fixture)
+- Type narrowing: assert parent.children is not None 추가하여 basedpyright strict mode 통과
+
+### TECHNICAL DISCOVERIES
+- BashVerification 모델: execute, expected_exit_code, notes 필드 포함
+- VerificationItem validation: 최소 하나의 검증 타입이 non-empty list여야 함
+- Type narrowing: None 체크 후 subscript 접근 가능
+
+### PROBLEMS FOR NEXT TASKS
+- 없음
+
+### VERIFICATION RESULTS
+- Test execution: 8 passed in 0.02s (100% 통과)
+  - test_show__verification_spec_exists__displays_table - PASSED
+  - test_show__verification_spec_details__shows_bash_and_llm - PASSED
+  - test_show__children_exist__displays_recursively - PASSED
+  - test_show__nested_children__maintains_hierarchy - PASSED
+  - test_show__references_with_ref_id__can_be_resolved - PASSED
+  - test_show__references_inline__shows_truncated - PASSED
+  - test_show__verification_status__shows_verified_flag - PASSED
+  - test_show__task_basic_info__has_required_fields - PASSED
+- Type checking: 0 errors, 0 warnings, 0 notes (basedpyright)
+- Linting: All checks passed! (ruff)
+
+### LEARNINGS
+- VerificationItem validation은 엄격함: 최소 하나의 검증 타입 필수
+- Pydantic v2 strict validation: None과 list[T]는 호환 불가
+- Type narrowing: isinstance/assert 후 타입이 narrowed됨 (basedpyright 지원)
+- pytest fixture에서 모델 생성 시 모든 필수 필드 명시 필요
+
+### IMPLEMENTATION DETAILS
+
+파일 수정:
+- `/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/tests/task/test_show.py`
+
+수정 내용:
+1. Import: BashVerification 추가 (실제 사용)
+2. minimal_todo fixture:
+   - bash=[BashVerification(execute="echo test", expected_exit_code=0)]로 변경
+   - acceptance_criteria=[] (None에서 변경)
+3. todo_with_children fixture (child):
+   - acceptance_criteria=[] (None에서 변경)
+4. todo_with_children fixture (parent):
+   - acceptance_criteria=[] (None에서 변경)
+5. test_show__nested_children__maintains_hierarchy:
+   - assert parent.children is not None 추가 (type narrowing)
+
+소요 시간: 약 5분

@@ -246,7 +246,7 @@ work_plans:
   - id: '1.1'
     title: plan schema 기능 테스트 작성
     description: plan schema 명령어의 동작을 검증하는 테스트 작성
-    status: in_progress
+    status: completed
     references:
     - inline: "Test Requirements:\n1. 스키마 출력 테스트 (콘솔)\n2. 파일 저장 테스트 (--output 옵션)\n\
         3. 스키마 구조 검증 (필수 키 존재)\n\nFile: projects/sisyphus-speckit/tests/plan/test_schema.py
@@ -265,9 +265,15 @@ work_plans:
       title: 테스트 통과
       description: plan schema 테스트가 모두 통과하는지 확인
       verified: true
-      verified_at: '2025-11-19T05:24:49.495558+00:00'
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified_at: '2025-11-19T05:26:05.395974+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: "Task 1.1 (plan schema 기능 테스트) bash 검증 완료:\npytest
+        실행: uv run pytest projects/sisyphus-speckit/tests/plan/test_schema.py -v\n\
+        결과: 3 passed in 0.13s (100% 통과)\n테스트 항목:\n  1. test_plan_schema__if_no_output__prints_to_console
+        PASSED [33%]\n  2. test_plan_schema__if_output_file__saves_to_file PASSED
+        [66%]  \n  3. test_plan_schema__validates_schema_structure PASSED [100%]\n\
+        모든 테스트 성공, exit code 0 확인\n테스트 파일: projects/sisyphus-speckit/tests/plan/test_schema.py
+        정상 작동"
       bash:
       - execute: uv run pytest 
           projects/sisyphus-speckit/tests/plan/test_schema.py -v
@@ -287,7 +293,7 @@ work_plans:
   - id: '1.2'
     title: plan schema 작업 커밋
     description: plan schema 구현 및 테스트 완료 후 커밋
-    status: pending
+    status: completed
     references:
     - inline: "Commit Message Format:\n```\nfeat(plan): add plan schema command\n\n\
         - Implement plan_schema function in plan/schema.py\n- Output PlanDocument
@@ -300,9 +306,17 @@ work_plans:
     - id: verify-1.2-1
       title: 커밋 생성 확인
       description: plan schema 작업이 커밋되었는지 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-19T05:26:42.361447+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: "Task 1.2 (plan schema 작업 커밋) 완료 검증:\n커밋 2개 생성
+        완료:\n  1. 900c9b4 'feat: implement plan schema command' (2025-11-19 14:21:52)\n\
+        \     - schema.py 생성 (30 lines)\n     - app.py 수정 (command 등록)\n     - 5 files
+        changed, 572 insertions(+), 1533 deletions(-)\n  2. 96fde09 'test: add plan
+        schema command tests' (2025-11-19 14:25:10)\n     - test_schema.py 생성 (47
+        lines)\n     - 3 files changed, 140 insertions(+), 7 deletions(-)\n모든 파일 커밋됨:\n\
+        \  - projects/sisyphus-speckit/sisyphus_speckit/plan/schema.py\n  - projects/sisyphus-speckit/sisyphus_speckit/plan/app.py\n\
+        \  - projects/sisyphus-speckit/tests/plan/test_schema.py\ngit log 확인 완료"
       bash:
       - execute: git log -1 --oneline
         expected_exit_code: 0
@@ -326,7 +340,7 @@ work_plans:
   - id: '2'
     title: plan list 명령어 구현
     description: "sisyphus-speckit plan list 명령어를 구현하여\n모든 plan을 테이블로 표시 (name/filepath/status/dependency/created_at)\n"
-    status: pending
+    status: in_progress
     references:
     - inline: "Implementation Requirements:\n1. .sisyphus/tasks/ 디렉토리의 모든 YAML 파일
         스캔\n2. 각 plan의 메타데이터 수집\n3. Rich Table로 포맷팅하여 출력\n4. Filter/Sort 옵션 지원\n\n\
@@ -362,7 +376,8 @@ work_plans:
     - id: verify-2-1
       title: plan list 명령어 실행 확인
       description: 명령어가 테이블을 출력하는지 확인
-      verified: false
+      verified: true
+      verified_at: '2025-11-19T05:31:23.210484+00:00'
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
@@ -1289,7 +1304,7 @@ work_plans:
     started_at: '2025-11-19T05:17:43.000299+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '1.1'
+    current_task_id: '2'
   current_work: ''
   current_work_ids:
   - '1'

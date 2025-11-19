@@ -83,3 +83,68 @@ def test_plan_schema__validates_schema_structure(tmp_path: Path) -> None:
 ```
 
 소요 시간: 약 10분
+
+[2025-11-19 14:30] - Task 2: plan list 명령어 구현
+
+### WORK CONTEXT & HISTORY
+- Task 1.0 (plan schema 명령어)과 Task 1.1 (schema 테스트)이 완료됨
+- Task 2는 plan list 명령어 구현
+- 모든 YAML 파일을 스캔하여 테이블로 표시
+
+### IMPLEMENTATION DECISIONS
+- TypedDict 사용: PlanInfo 타입 정의로 type safety 확보
+  - id, name, filepath, depends_on, created_at, fully_done, dependency_count, status
+- match-case 구문 사용: Python 3.10+ 스타일로 상태 문자열 매핑
+- 함수 분리: 상태 계산, 의존성 확인, 정렬 키 생성 등으로 관심사 분리
+- 동기 함수 래퍼: Typer CLI는 동기 함수를 기대하므로, anyio.run()으로 async 함수 실행
+
+### TECHNICAL DISCOVERIES
+- Typer는 동기 함수 기반이므로, async 함수는 동기 래퍼로 감싸야 함
+- status.json에서 current_plan.plan_path를 읽어 현재 작업 중인 plan 식별
+- PlanDocument.work_plans는 리스트이므로 여러 plan이 하나의 YAML에 포함 가능
+- 상태 계산 로직:
+  - 현재 plan: "작업중"
+  - 완료된 plan: "완료됨"
+  - 의존성 만족 & 미완료: "작업 가능"
+  - 의존성 미만족: "의존성 대기중"
+
+### PROBLEMS FOR NEXT TASKS
+- 없음. Task 2 완료됨.
+
+### VERIFICATION RESULTS
+- 수동 테스트: `uv run sisyphus-speckit plan list` 실행 성공
+  - 테이블 출력 확인
+  - 컬럼: Name, File Path, Status, Dependencies, Created At
+- --help 옵션 확인: 모든 옵션(--dir, --filter, --sort, --cwd) 등록됨
+- 기존 테스트 통과: pytest projects/sisyphus-speckit/tests/plan/ (13 passed)
+
+### LEARNINGS
+- TypedDict 패턴: dict 타입에서 타입 안전성 확보
+- match-case 구문: Python 3.10+ 권장 패턴
+- Typer + async: 동기 래퍼로 async 함수 감싸기
+- Rich Table: 컬러 코드([bright_green] 등) 지원으로 텍스트 스타일링
+
+### IMPLEMENTATION DETAILS
+
+파일 생성:
+- `/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/plan/list.py`
+
+파일 수정:
+- `/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/sisyphus_speckit/plan/app.py`
+  - list_plans import 추가
+  - plan_app.command(name="list")(list_plans) 등록
+
+핵심 구현:
+1. PlanInfo TypedDict 정의 (8개 필드)
+2. _get_current_plan_id: status.json에서 현재 plan ID 읽기
+3. _check_dependencies_satisfied: 의존성 만족 여부 확인
+4. _calculate_status: plan 상태 계산 (4가지 상태)
+5. _get_sort_key: 정렬 키 생성
+6. list_plans: 메인 명령어 함수
+   - YAML 파일 스캔
+   - plan 메타데이터 수집
+   - 상태 계산
+   - 필터링/정렬
+   - Rich Table 출력
+
+소요 시간: 약 20분

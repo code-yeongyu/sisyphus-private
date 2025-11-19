@@ -184,7 +184,7 @@ work_plans:
   - id: '1'
     title: plan schema 명령어 구현
     description: "sisyphus-speckit plan schema 명령어를 구현하여\nYAML 스펙을 JSON 스키마 형식으로 출력\n"
-    status: in_progress
+    status: completed
     references:
     - inline: "Implementation Requirements:\n1. Pydantic 모델(PlanDocument)을 JSON Schema로
         변환\n2. pydantic의 model_json_schema() 메서드 활용\n3. Rich JSON 포맷으로 콘솔에 예쁘게 출력\n\
@@ -207,9 +207,15 @@ work_plans:
       title: plan schema 명령어 실행 확인
       description: 명령어가 JSON 스키마를 출력하는지 확인
       verified: true
-      verified_at: '2025-11-19T05:21:13.179624+00:00'
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified_at: '2025-11-19T05:22:22.249022+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: "Task 1 완료 검증 완료. \n구현 파일: projects/sisyphus-speckit/sisyphus_speckit/plan/schema.py
+        생성 (30 lines)\n등록 파일: projects/sisyphus-speckit/sisyphus_speckit/plan/app.py
+        수정 (2 lines added)\n커밋: 900c9b4 'feat: implement plan schema command'\n기능
+        테스트:\n  1. sisyphus-speckit plan schema - 콘솔에 Rich 포맷 JSON 출력 성공\n  2. sisyphus-speckit
+        plan schema --output /tmp/test-schema.json - 파일 저장 성공 (25KB)\n  3. 저장된 파일
+        유효성: valid JSON with PlanDocument schema structure\n모든 bash 검증 통과 (exit code
+        0). 구현 완전히 완료됨."
       bash:
       - execute: uv run sisyphus-speckit plan schema
         expected_exit_code: 0
@@ -240,7 +246,7 @@ work_plans:
   - id: '1.1'
     title: plan schema 기능 테스트 작성
     description: plan schema 명령어의 동작을 검증하는 테스트 작성
-    status: pending
+    status: in_progress
     references:
     - inline: "Test Requirements:\n1. 스키마 출력 테스트 (콘솔)\n2. 파일 저장 테스트 (--output 옵션)\n\
         3. 스키마 구조 검증 (필수 키 존재)\n\nFile: projects/sisyphus-speckit/tests/plan/test_schema.py
@@ -258,7 +264,8 @@ work_plans:
     - id: verify-1.1-1
       title: 테스트 통과
       description: plan schema 테스트가 모두 통과하는지 확인
-      verified: false
+      verified: true
+      verified_at: '2025-11-19T05:24:49.495558+00:00'
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
@@ -1282,7 +1289,7 @@ work_plans:
     started_at: '2025-11-19T05:17:43.000299+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '1'
+    current_task_id: '1.1'
   current_work: ''
   current_work_ids:
   - '1'

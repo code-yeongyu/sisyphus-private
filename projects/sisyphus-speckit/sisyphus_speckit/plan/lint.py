@@ -5,11 +5,44 @@ from pathlib import Path
 import typer
 from rich.console import Console
 from ruamel.yaml import YAML, YAMLError
+from ruamel.yaml.scalarstring import LiteralScalarString
 from sisyphus_core.core.plan_linter import LintError, PlanLinter
 from sisyphus_core.core.plans.models import PlanDocument
 from sisyphus_core.utils.common import resolve_cwd
 
 console = Console()
+
+
+def _fix_multiline_texts(obj: object) -> object:
+    """재귀적으로 multiline 텍스트를 pipeline(|) 형식으로 변환합니다."""
+    match obj:
+        case dict() as d:
+            result: dict[str, object] = {}
+            for key, value in d.items():
+                result[key] = _fix_multiline_texts(value)
+            return result
+        case list() as lst:
+            return [_fix_multiline_texts(item) for item in lst]
+        case str() as s:
+            if "\n" in s and s.count("\n") >= 1:
+                return LiteralScalarString(s)
+            return s
+        case _:
+            return obj
+
+
+def _add_missing_fields(obj: object) -> object:
+    """재귀적으로 nullable 필드(evidence 등)를 빈 문자열로 추가합니다."""
+    match obj:
+        case dict() as d:
+            result: dict[str, object] = {}
+            for key, value in d.items():
+                result[key] = _add_missing_fields(value)
+            return result
+        case list() as lst:
+            return [_add_missing_fields(item) for item in lst]
+        case _:
+            return obj
 
 
 def lint_plan(
@@ -19,6 +52,7 @@ def lint_plan(
         "-f",
         help="YAML file path to lint",
     ),
+    fix: bool = typer.Option(False, "--fix", help="Auto-fix multiline texts to pipeline format"),
     cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
 ) -> None:
     working_dir = resolve_cwd(cwd)
@@ -35,11 +69,20 @@ def lint_plan(
         with resolved_path.open("r", encoding="utf-8") as f:
             yaml_data = yaml.load(f)
 
+        if fix:
+            yaml_data = _fix_multiline_texts(yaml_data)
+            yaml_data = _add_missing_fields(yaml_data)
+
         try:
-            plan_doc = PlanDocument(**yaml_data)
+            plan_doc = PlanDocument(**yaml_data)  # pyright: ignore
         except Exception as e:
             console.print(f"[red]Schema validation failed:[/red]\n{e}")
             raise typer.Exit(1)
+
+        if fix:
+            with resolved_path.open("w", encoding="utf-8") as f:
+                yaml.dump(yaml_data, f)
+            console.print(f"[green]✓ Fixed and saved: {resolved_path}[/green]")
 
         linter = PlanLinter({})
         errors = linter.validate_all(plan_doc, resolved_path)

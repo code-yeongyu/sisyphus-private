@@ -846,7 +846,7 @@ work_plans:
   - id: '5.1'
     title: plan lint --fix 기능 테스트 작성
     description: lint --fix 테스트 작성
-    status: in_progress
+    status: completed
     references:
     - inline: "Test Requirements:\n1. multiline 변환 테스트\n2. 누락 필드 추가 테스트\n3. 파일 저장
         테스트\n\nFile: projects/sisyphus-speckit/tests/plan/test_lint_fix.py (신규 또는
@@ -880,7 +880,7 @@ work_plans:
   - id: '5.2'
     title: plan lint --fix 작업 커밋
     description: lint --fix 구현 완료 후 커밋
-    status: pending
+    status: in_progress
     references:
     - inline: "Commit Message:\n```\nfeat(plan): add --fix option to plan lint\n\n\
         - Add --fix flag to automatically fix YAML formatting\n- Convert multiline
@@ -1384,7 +1384,7 @@ work_plans:
     started_at: '2025-11-19T05:17:43.000299+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '5.1'
+    current_task_id: '5.2'
   current_work: ''
   current_work_ids:
   - '1'

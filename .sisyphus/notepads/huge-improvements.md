@@ -501,3 +501,75 @@ Commands Working:
 
 소요 시간: 약 8분
 
+
+[2025-11-19 15:03] - Task 5.1: plan lint --fix 기능 테스트 작성
+
+### DISCOVERED ISSUES
+- 없음. lint.py의 _fix_multiline_texts() 와 _add_missing_fields() 함수가 올바르게 구현됨
+
+### IMPLEMENTATION DECISIONS
+- BDD 패턴 (given/when/then) 사용으로 테스트 가독성 확보
+- 3개 테스트 클래스로 구조화:
+  1. TestFixMultilineTexts: _fix_multiline_texts() 함수 테스트 (9개)
+  2. TestAddMissingFields: _add_missing_fields() 함수 테스트 (4개)
+  3. TestLintFixIntegration: YAML 파일 로드/저장 통합 테스트 (4개)
+- cast() 타입 캐스팅으로 basedpyright type safety 확보
+
+### TECHNICAL DISCOVERIES
+- _fix_multiline_texts()는 재귀적으로 dict, list, str을 처리하여 멀티라인 텍스트를 LiteralScalarString으로 변환
+- _add_missing_fields()는 현재 pass-through 구현이지만, 구조적으로 필드 추가를 위해 설계됨
+- ruamel.yaml의 YAML() 클래스로 preserve_quotes=True 설정하면 원본 YAML 포맷 유지
+- tmp_path fixture로 임시 파일 작성/읽기 테스트 가능
+
+### PROBLEMS FOR NEXT TASKS
+- 없음
+
+### VERIFICATION RESULTS
+- test_lint_fix.py: 17개 테스트 모두 통과 (17 passed in 0.09s)
+- 전체 plan 테스트: 63개 모두 통과 (63 passed in 0.24s)
+- Type checking: 0 errors, 0 warnings, 0 notes
+- Linting: All checks passed!
+
+### LEARNINGS
+- cast() 함수: typing 모듈의 cast()로 type narrowing 수행 (runtime에는 no-op)
+- BDD 주석 패턴: # given, # when, # then은 프로젝트 필수 규칙
+- LiteralScalarString: ruamel.yaml에서 멀티라인 문자열을 파이프(|) 형식으로 표현
+- 타입 안전성: dict[str, object]와 같은 명시적 타입 힌트로 basedpyright strict mode 통과
+
+### IMPLEMENTATION DETAILS
+
+파일 생성:
+- `/Users/yeongyu/local-workspaces/sisyphus/projects/sisyphus-speckit/tests/plan/test_lint_fix.py`
+
+테스트 구조:
+```
+TestFixMultilineTexts (9개 테스트):
+- test_fix_multiline_texts__if_single_line_string__returns_unchanged
+- test_fix_multiline_texts__if_multiline_string__converts_to_literal_scalar_string
+- test_fix_multiline_texts__if_dict_with_multiline__converts_all_values
+- test_fix_multiline_texts__if_nested_dict__processes_recursively
+- test_fix_multiline_texts__if_list_with_multiline__converts_all_items
+- test_fix_multiline_texts__if_list_of_dicts__processes_all_dicts
+- test_fix_multiline_texts__if_non_string_types__preserves_unchanged
+- test_fix_multiline_texts__if_empty_dict__returns_empty_dict
+- test_fix_multiline_texts__if_empty_list__returns_empty_list
+
+TestAddMissingFields (4개 테스트):
+- test_add_missing_fields__if_simple_dict__returns_unchanged
+- test_add_missing_fields__if_nested_dict__processes_recursively
+- test_add_missing_fields__if_list_of_items__processes_all_items
+- test_add_missing_fields__if_non_dict_non_list__returns_unchanged
+
+TestLintFixIntegration (4개 테스트):
+- test_lint_fix__if_yaml_with_multiline__saves_fixed_file
+- test_lint_fix__if_empty_yaml__handles_gracefully
+- test_lint_fix__if_yaml_file_saved__preserves_structure
+- test_lint_fix__if_complex_structure__processes_all_levels
+```
+
+테스트 커버리지:
+- _fix_multiline_texts(): 싱글라인, 멀티라인, dict, list, 중첩 구조, 타입 보존, 빈 컨테이너
+- _add_missing_fields(): dict, list, 중첩 구조, 비dict/비list 타입
+- YAML 통합: 파일 로드/저장, 멀티라인 변환, 빈 파일, 복잡한 구조
+
+소요 시간: 약 15분

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, cast
+from typing import Annotated, Any
 
 import typer
 from rich.console import Console
@@ -20,10 +20,10 @@ def _fix_multiline_texts(obj: object) -> object:
         case dict() as d:
             result: dict[str, object] = {}
             for key, value in d.items():
-                result[key] = cast(object, _fix_multiline_texts(value))
+                result[key] = _fix_multiline_texts(value)
             return result
         case list() as lst:
-            return [cast(object, _fix_multiline_texts(item)) for item in lst]
+            return [_fix_multiline_texts(item) for item in lst]
         case str() as s:
             if "\n" in s and s.count("\n") >= 1:
                 return LiteralScalarString(s)
@@ -38,10 +38,10 @@ def _add_missing_fields(obj: object) -> object:
         case dict() as d:
             result: dict[str, object] = {}
             for key, value in d.items():
-                result[key] = cast(object, _add_missing_fields(value))
+                result[key] = _add_missing_fields(value)
             return result
         case list() as lst:
-            return [cast(object, _add_missing_fields(item)) for item in lst]
+            return [_add_missing_fields(item) for item in lst]
         case _:
             return obj
 
@@ -63,14 +63,14 @@ def lint_plan(
             raise typer.Exit(1)
 
         with resolved_path.open("r", encoding="utf-8") as f:
-            yaml_data = yaml.load(f)
+            yaml_data: Any = yaml.load(f)
 
         if fix:
-            yaml_data = cast(object, _fix_multiline_texts(yaml_data))
-            yaml_data = cast(object, _add_missing_fields(yaml_data))
+            yaml_data = _fix_multiline_texts(yaml_data)
+            yaml_data = _add_missing_fields(yaml_data)
 
         try:
-            plan_doc = PlanDocument(**cast(dict[str, object], yaml_data))
+            plan_doc = PlanDocument(**yaml_data)
         except Exception as e:
             console.print(f"[red]Schema validation failed:[/red]\n{e}")
             raise typer.Exit(1)

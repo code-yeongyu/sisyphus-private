@@ -8,5 +8,6 @@
   "reportImplicitOverride": false,
   "reportUnannotatedClassAttribute": false,
   "reportAny": false,
-  "reportExplicitAny": false
+  "reportExplicitAny": false,
+  "reportImplicitRelativeImport": false
 }

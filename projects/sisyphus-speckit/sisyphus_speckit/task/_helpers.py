@@ -152,8 +152,8 @@ def _display_verification_status_table(
             collect_tasks_dfs(work_plan.todos)
 
             try:
-                current_index = cast(int, next(i for i, t in enumerate(all_tasks_dfs) if t.id == current_task.id))
-                task_position = f"{cast(int, current_index + 1)}/{cast(int, len(all_tasks_dfs))}"
+                current_index = next(i for i, t in enumerate(all_tasks_dfs) if t.id == current_task.id)
+                task_position = f"{current_index + 1}/{len(all_tasks_dfs)}"
             except StopIteration:
                 task_position = "?/?"
 

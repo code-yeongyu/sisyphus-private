@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
-from typing import Annotated, cast
+from typing import Annotated, Any
 
 import typer
 from pydantic import ValidationError
@@ -43,9 +43,9 @@ def show_graph(
 
             for plan_file in plan_files:
                 with plan_file.open("r", encoding="utf-8") as f:
-                    yaml_data = yaml.load(f)
+                    yaml_data: Any = yaml.load(f)
                 try:
-                    plan_doc = PlanDocument(**cast(dict[str, object], yaml_data))
+                    plan_doc = PlanDocument(**yaml_data)
                     for work_plan in plan_doc.work_plans:
                         plan_to_file[work_plan.id] = plan_file
                     all_plans.extend(plan_doc.work_plans)
@@ -65,7 +65,7 @@ def show_graph(
             raise typer.Exit(1)
 
         plans = {plan.id: plan for plan in all_plans}
-        graph = build_plan_graph(cast(dict[str, object], plans))
+        graph = build_plan_graph(plans)
 
         cycles = detect_cycles(graph)
         if cycles:

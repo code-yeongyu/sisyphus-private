@@ -17,7 +17,7 @@ def verify_final_plan(
     verification_id: Annotated[str, typer.Option("--id", help="Final verification item ID")],
     evidence: Annotated[str, typer.Option("--evidence", help="Verification evidence description")],
     yaml_path: Annotated[Path, typer.Option("--file", "-f", help="YAML file path")] = Path(
-        "./.sisyphus/tasks/plan.yaml"
+        ".sisyphus/tasks/plan.yaml"
     ),
     cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:

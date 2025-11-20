@@ -17,6 +17,7 @@ from sisyphus_core.core.plans.models import Todo, TodoStatus
 from sisyphus_core.core.prompts import (
     DEFAULT_EXECUTE_PROMPT,
     build_execute_prompt,
+    build_simple_execute_prompt,
     build_verification_failure_prompt,
     build_verify_prompt,
 )
@@ -80,6 +81,7 @@ class ExecutionLoop:
             execute_agent, verify_agent, ui, session_store, logger_factory, self.state, status_manager
         )
 
+        self.execute_agent: Agent = execute_agent
         self.ui: UIProtocol = ui
         self.task_validator: TaskValidatorProtocol = task_validator
         self.status_manager: StatusManager | None = status_manager
@@ -192,7 +194,14 @@ class ExecutionLoop:
         if len(uncompleted_todos) > 10:
             todo_summary += f"\n  ... and {len(uncompleted_todos) - 10} more"
 
-        execute_prompt = build_execute_prompt(str(plan_path), todo_summary)
+        # Use simple prompt if execute agent has orchestrator system prompt
+        from sisyphus_core.agents.claude import ClaudeAgent
+
+        if isinstance(self.execute_agent, ClaudeAgent) and self.execute_agent._system_prompt:
+            execute_prompt = build_simple_execute_prompt(str(plan_path), todo_summary)
+        else:
+            execute_prompt = build_execute_prompt(str(plan_path), todo_summary)
+
         verify_prompt = build_verify_prompt(str(plan_path))
 
         return (execute_prompt, verify_prompt, str(plan_path))

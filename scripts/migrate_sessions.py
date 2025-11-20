@@ -48,7 +48,7 @@ def detect_legacy_structure(data: dict[str, Any]) -> bool:
     if not data:
         return False
 
-    for agent_type, agent_data in data.items():
+    for _, agent_data in data.items():
         if not isinstance(agent_data, dict):
             continue
 

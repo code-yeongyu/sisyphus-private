@@ -96,8 +96,8 @@ async def find_target_commit_for_fixup(file_path: str) -> str | None:
 
 @app.command()
 def main(
-    base_branch: str | None = typer.Argument(None, help="Base branch to rebase onto (auto-detected if not provided)"),
-    force: bool = typer.Option(False, "-f", "--force", help="Force rebase even with conflicts"),
+    base_branch: str | None = typer.Argument(None, help="Base branch to rebase onto (auto-detected if not provided)"),  # pyright: ignore[reportCallInDefaultInitializer]
+    force: bool = typer.Option(False, "-f", "--force", help="Force rebase even with conflicts"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     """Clean up commits using git absorb and autosquash rebase.
 
@@ -138,7 +138,7 @@ def main(
             progress.update(task, advance=1, description="[cyan]Running git absorb... (2/5)")
 
             force_flag = "--force" if force else ""
-            returncode, stdout, stderr = await run_git_command(
+            returncode, _stdout, stderr = await run_git_command(
                 "absorb",
                 "--and-rebase",
                 force_flag,
@@ -227,8 +227,8 @@ def main(
 
         if final_has_changes:
             panel = Panel(
-                "[yellow]⚠ Some changes could not be automatically committed\n" +
-                "Please review and commit manually[/yellow]",
+                "[yellow]⚠ Some changes could not be automatically committed\n"
+                + "Please review and commit manually[/yellow]",
                 title="[yellow]Partially Complete[/yellow]",
                 border_style="yellow",
             )

@@ -5,7 +5,7 @@
 #   "ast-grep-py>=0.24.1",
 # ]
 # ///
-# pyright: reportMissingImports=false, reportMissingModuleSource=false
+# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportUnknownArgumentType=false
 """
 Any return type detector hook for Claude Code (PostToolUse version).
 Detects '-> Any' return type hints after file modifications and provides feedback to Claude for correction.

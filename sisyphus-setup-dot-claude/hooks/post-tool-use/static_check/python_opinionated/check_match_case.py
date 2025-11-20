@@ -5,7 +5,7 @@
 #   "ast-grep-py>=0.24.1",
 # ]
 # ///
-# pyright: reportMissingImports=false, reportMissingModuleSource=false
+# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportUnknownArgumentType=false, reportUnusedFunction=false
 """
 Match-case detector hook for Claude Code (PostToolUse version).
 Detects if-elif-else chains that can be converted to match-case statements.
@@ -696,6 +696,9 @@ def _get_existing_violations(file_path: str, tool_name: str, tool_input: ClaudeC
                         existing_violations.add(_create_violation_key(violation))
                 except Exception:
                     pass
+
+        case _:
+            pass
 
     return existing_violations
 

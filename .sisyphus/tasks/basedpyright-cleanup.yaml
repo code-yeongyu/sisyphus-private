@@ -518,7 +518,7 @@ work_plans:
   - id: '11'
     title: sisyphus-speckit 타입 이슈 해결
     description: plan lint 관련 타입 이슈 해결
-    status: in_progress
+    status: completed
     references:
     - inline: "sisyphus-speckit 프로젝트 타입 이슈 해결\n\n주요 파일:\n- projects/sisyphus-speckit/sisyphus_speckit/plan/lint.py\n\
         \n예상 이슈:\n- Any 타입 사용\n- Unknown 타입\n\n해결 방법:\n- TypedDict로 데이터 구조 정의\n- 타입
@@ -555,7 +555,7 @@ work_plans:
   - id: '12'
     title: setup-dot-claude 주요 타입 이슈 해결
     description: setup-dot-claude hook 스크립트 타입 이슈 해결
-    status: pending
+    status: in_progress
     references:
     - inline: "setup-dot-claude 주요 타입 이슈 해결\n\n이슈 개수: ~3900개 (대부분 hook 스크립트)\n\n우선순위:\n\
         1. 주요 hook 스크립트 (static check, inject 등)\n2. 나머지 hook 스크립트\n\n주요 이슈:\n- TypedDict
@@ -705,6 +705,6 @@ work_plans:
     started_at: '2025-11-20T08:40:49.260285+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '11'
+    current_task_id: '12'
   current_work_ids: []
   acceptance_criteria_for_verification_agent: []

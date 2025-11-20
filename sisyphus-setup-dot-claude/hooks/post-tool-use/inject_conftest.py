@@ -6,7 +6,7 @@
 #     "toml>=0.10.2",
 # ]
 # ///
-# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportImplicitRelativeImport=false
+# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportUnreachable=false, reportImplicitRelativeImport=false
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ import hashlib
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any, TypedDict, cast
 
 import orjson
 import toml
@@ -261,7 +261,7 @@ class ConftestInjector:
             return
 
         try:
-            todos = orjson.loads(todo_file.read_bytes())
+            todos: list[dict[str, Any]] = cast(list[dict[str, Any]], orjson.loads(todo_file.read_bytes()))
         except (orjson.JSONDecodeError, OSError):
             return
 
@@ -272,7 +272,7 @@ class ConftestInjector:
                 break
 
         try:
-            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(cast(bytes, orjson.dumps(todos, option=orjson.OPT_INDENT_2)))
         except OSError:
             pass
 
@@ -283,7 +283,7 @@ class ConftestInjector:
             return
 
         try:
-            todos = orjson.loads(todo_file.read_bytes())
+            todos: list[dict[str, Any]] = cast(list[dict[str, Any]], orjson.loads(todo_file.read_bytes()))
         except (orjson.JSONDecodeError, OSError):
             return
 
@@ -308,7 +308,7 @@ class ConftestInjector:
 
         if modified:
             try:
-                _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+                _ = todo_file.write_bytes(cast(bytes, orjson.dumps(todos, option=orjson.OPT_INDENT_2)))
             except OSError:
                 pass
 
@@ -318,7 +318,7 @@ class ConftestInjector:
 
         try:
             if todo_file.exists():
-                todos = orjson.loads(todo_file.read_bytes())
+                todos: list[dict[str, Any]] = cast(list[dict[str, Any]], orjson.loads(todo_file.read_bytes()))
             else:
                 todos = []
         except (orjson.JSONDecodeError, OSError):
@@ -358,7 +358,7 @@ class ConftestInjector:
         todos[:] = other_todos + conftest_todos
 
         try:
-            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(cast(bytes, orjson.dumps(todos, option=orjson.OPT_INDENT_2)))
         except OSError:
             pass
 
@@ -410,7 +410,7 @@ class HookHandler:
                 print(f"[{hook_filename}] Skipping: No input provided")
                 sys.exit(0)
 
-            data: PostToolUseInput = orjson.loads(input_raw)
+            data: PostToolUseInput = cast(PostToolUseInput, orjson.loads(input_raw))
         except (orjson.JSONDecodeError, KeyError, TypeError):
             print(f"[{hook_filename}] Skipping: Invalid input format")
             sys.exit(0)

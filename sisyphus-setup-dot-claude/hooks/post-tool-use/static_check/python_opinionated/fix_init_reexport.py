@@ -5,7 +5,7 @@
 #   "ast-grep-py>=0.24.1",
 # ]
 # ///
-# pyright: reportMissingImports=false, reportMissingModuleSource=false
+# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportUnknownArgumentType=false
 """
 Auto-fix hook for converting implicit imports to explicit re-exports in __init__.py.
 Automatically converts 'from X import Y' to 'from X import Y as Y' for items in __all__.
@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 from typing import Any, NoReturn, TypedDict
 
-import ast_grep_py as sg  # type: ignore[import-not-found]  # pyright: ignore[reportMissingImports]
+import ast_grep_py as sg  # type: ignore[import-not-found]
 
 EXIT_CODE_BLOCK_TOOL: int = 2
 

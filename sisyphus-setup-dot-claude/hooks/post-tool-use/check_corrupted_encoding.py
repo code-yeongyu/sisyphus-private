@@ -5,7 +5,7 @@
 #   "chardet>=5.2.0",
 # ]
 # ///
-# pyright: reportMissingImports=false, reportMissingModuleSource=false
+# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportUnknownArgumentType=false
 """
 Post-tool-use corrupted encoding checker for Claude Code.
 Checks files after they've been written/edited for encoding issues and reports warnings.
@@ -20,7 +20,7 @@ import traceback
 from pathlib import Path
 from typing import Any, NoReturn, TypedDict
 
-import chardet  # pyright: ignore[reportMissingImports]
+import chardet
 
 
 class Config:

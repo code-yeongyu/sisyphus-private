@@ -20,7 +20,7 @@ import traceback
 from pathlib import Path
 from typing import Any, NoReturn, NotRequired, TypedDict
 
-import ast_grep_py as sg  # pyright: ignore[reportMissingImports] # type: ignore[import-not-found]
+import ast_grep_py as sg  # type: ignore[import-not-found]
 import toml
 
 

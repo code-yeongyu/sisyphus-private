@@ -5,13 +5,13 @@
 #     "orjson",
 # ]
 # ///
-# pyright: reportMissingImports=false
+# pyright: reportMissingImports=false, reportUnreachable=false
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any, Literal, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict, cast
 
 import orjson
 
@@ -113,7 +113,7 @@ class LanguageGuideChecker:
             return
 
         try:
-            todos = orjson.loads(todo_file.read_bytes())
+            todos = cast(list[dict[str, Any]], orjson.loads(todo_file.read_bytes()))
         except (orjson.JSONDecodeError, OSError):
             return
 
@@ -124,7 +124,7 @@ class LanguageGuideChecker:
                 break
 
         try:
-            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(cast(bytes, orjson.dumps(todos, option=orjson.OPT_INDENT_2)))
         except OSError:
             pass
 
@@ -136,7 +136,7 @@ class LanguageGuideChecker:
             return
 
         try:
-            todos = orjson.loads(todo_file.read_bytes())
+            todos = cast(list[dict[str, Any]], orjson.loads(todo_file.read_bytes()))
         except (orjson.JSONDecodeError, OSError):
             return
 
@@ -161,7 +161,7 @@ class LanguageGuideChecker:
 
         if modified:
             try:
-                _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+                _ = todo_file.write_bytes(cast(bytes, orjson.dumps(todos, option=orjson.OPT_INDENT_2)))
             except OSError:
                 pass
 
@@ -199,7 +199,7 @@ class LanguageGuideChecker:
                     continue
 
                 try:
-                    entry: RawTranscriptEntry = orjson.loads(line)
+                    entry: RawTranscriptEntry = cast(RawTranscriptEntry, orjson.loads(line))
                 except orjson.JSONDecodeError:
                     continue
 
@@ -248,7 +248,7 @@ class LanguageGuideChecker:
 
         try:
             if todo_file.exists():
-                todos = orjson.loads(todo_file.read_bytes())
+                todos = cast(list[dict[str, Any]], orjson.loads(todo_file.read_bytes()))
             else:
                 todos = []
         except (orjson.JSONDecodeError, OSError):
@@ -270,7 +270,7 @@ class LanguageGuideChecker:
         _ = todos.insert(0, todo_item)
 
         try:
-            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(cast(bytes, orjson.dumps(todos, option=orjson.OPT_INDENT_2)))
         except OSError:
             pass
 
@@ -322,7 +322,7 @@ def main() -> None:
             print(f"[{hook_filename}] Skipping: No input provided")
             sys.exit(0)
 
-        data: PostToolUseInput = orjson.loads(input_raw)
+        data: PostToolUseInput = cast(PostToolUseInput, orjson.loads(input_raw))
     except (orjson.JSONDecodeError, KeyError, TypeError):
         print(f"[{hook_filename}] Skipping: Invalid input format")
         sys.exit(0)

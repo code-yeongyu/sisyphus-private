@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, NotRequired, TypedDict
 
-import ast_grep_py as sg  # pyright: ignore[reportMissingImports]
+import ast_grep_py as sg  # type: ignore[import-not-found]
 import toml
 
 EXIT_CODE_ALLOW: int = 0

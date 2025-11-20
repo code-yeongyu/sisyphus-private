@@ -230,7 +230,7 @@ def detect_package_manager_usage(command: str) -> DetectionResult:
     parts = re.split(r"(\s*(?:&&|;|\|)\s*)", command)
 
     # Check each command part for package manager usage
-    for i, part in enumerate(parts):
+    for _i, part in enumerate(parts):
         # Skip separators
         if re.match(r"^\s*(?:&&|;|\|)\s*$", part):
             continue

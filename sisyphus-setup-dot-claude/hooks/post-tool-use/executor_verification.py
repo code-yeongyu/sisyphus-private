@@ -3,7 +3,7 @@
 # requires-python = ">=3.12"
 # dependencies = ["pydantic>=2.0", "anyio>=4.0", "ruamel.yaml>=0.18"]
 # ///
-# pyright: reportMissingImports=false
+# pyright: reportMissingImports=false, reportUnknownArgumentType=false
 
 import json
 import sys

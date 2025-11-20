@@ -5,7 +5,7 @@
 #   "comment-parser>=1.2.4"
 # ]
 # ///
-# pyright: reportMissingImports=false, reportAttributeAccessIssue=false, reportArgumentType=false
+# pyright: reportMissingImports=false, reportAttributeAccessIssue=false, reportArgumentType=false, reportUnknownArgumentType=false
 
 from __future__ import annotations
 

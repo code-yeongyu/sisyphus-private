@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["toml>=0.10.2"]
 # ///
-# pyright: reportMissingImports=false, reportMissingModuleSource=false
+# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportUnknownArgumentType=false
 
 from __future__ import annotations
 

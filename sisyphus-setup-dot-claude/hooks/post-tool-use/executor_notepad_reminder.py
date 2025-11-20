@@ -113,7 +113,7 @@ Current system time: {current_time}
         if all(k in git_info for k in ["commit_hash", "commit_message", "commit_author", "commit_time"]):
             git_lines.append(
                 f"Git commit: [{git_info['commit_hash']}] "
-                f'"{git_info["commit_message"]}" by {git_info["commit_author"]} ({git_info["commit_time"]})'
+                + f'"{git_info["commit_message"]}" by {git_info["commit_author"]} ({git_info["commit_time"]})'
             )
         if "unstaged" in git_info:
             git_lines.append(f"Git unstaged: {git_info['unstaged']} files")

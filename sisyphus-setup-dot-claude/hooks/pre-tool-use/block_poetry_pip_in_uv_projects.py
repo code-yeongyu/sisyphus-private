@@ -208,7 +208,7 @@ def detect_package_manager_usage(command: str) -> DetectionResult:
     """
     parts = re.split(r"(\s*(?:&&|;|\|)\s*)", command)
 
-    for i, part in enumerate(parts):
+    for _i, part in enumerate(parts):
         if re.match(r"^\s*(?:&&|;|\|)\s*$", part):
             continue
 

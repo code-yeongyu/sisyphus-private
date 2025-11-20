@@ -65,7 +65,7 @@ async def _main() -> int:
 
     claude_needs_to_know = False
 
-    for checker_path, result in zip(checker_files, results, strict=False):
+    for _checker_path, result in zip(checker_files, results, strict=False):
         if isinstance(result, BaseException):
             continue
 

@@ -322,8 +322,8 @@ async def generate_system_reminder_async() -> str:
         context_info = format_context_window_info(usage)
     else:
         context_info = (
-            "Context Window: Unable to calculate (transcript not found). " +
-            "Okay to Process remaining works. Never stop until the user explicitly asks you to stop."
+            "Context Window: Unable to calculate (transcript not found). "
+            + "Okay to Process remaining works. Never stop until the user explicitly asks you to stop."
         )
 
     lines.extend(
@@ -350,7 +350,7 @@ async def generate_system_reminder_async() -> str:
         if all(key in git_info for key in ["commit_hash", "commit_message", "commit_author", "commit_time"]):
             lines.append(
                 f'Git commit: [{git_info["commit_hash"]}] "{git_info["commit_message"]}" '
-                f"by {git_info['commit_author']} ({git_info['commit_time']})"
+                + f"by {git_info['commit_author']} ({git_info['commit_time']})"
             )
 
         if "unstaged" in git_info:
@@ -393,8 +393,8 @@ async def generate_system_reminder_async() -> str:
             "Without user's explicit \"Do Foo Bar\", don't try to do write operations.",
             "without user's saying: always do operations with NO SIDE EFFECTS",
             "(running test code, look at web, look at the code, executing command to look at docker status)",
-            "After extracting and analyzing user's request, use todo tools to manage them." +
-            "Always use todo tool to plan and processing user's request.",
+            "After extracting and analyzing user's request, use todo tools to manage them."
+            + "Always use todo tool to plan and processing user's request.",
             "[TOOL USE]",
             "TOOL USAGES ARE YOUR SUPERPOWER, ALWAYS USE TOOLS A LOT. BE SUPERINTELLIGENT AI. CLAUDE.",
         ]

@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.11"
 # ///
-# pyright: reportMissingImports=false, reportMissingModuleSource=false
+# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportUnknownArgumentType=false
 
 from __future__ import annotations
 
@@ -82,6 +82,9 @@ def main() -> None:
                         if new_string:
                             findings = check_uncompiled_regex(new_string, file_path)
                             all_findings.extend(findings)
+
+            case _:
+                pass
 
     except Exception:
         print(f"[{hook_filename}] Skipping: Error during check", file=sys.stderr)

@@ -8,7 +8,7 @@
 #     "wcmatch",
 # ]
 # ///
-# pyright: reportMissingImports=false, reportMissingModuleSource=false
+# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportUnknownArgumentType=false
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ import hashlib
 import re
 import sys
 from pathlib import Path
-from typing import Any, Literal, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict, cast
 
 import aiofiles
 import orjson
@@ -52,9 +52,7 @@ class PostToolUseInput(TypedDict):
     transcript_path: str
     cwd: str
     hook_event_name: str
-    tool_input: (
-        WriteToolInput | EditToolInput | MultiEditToolInput | NotebookEditToolInput
-    )
+    tool_input: WriteToolInput | EditToolInput | MultiEditToolInput | NotebookEditToolInput
     tool_response: dict[str, Any]
 
 
@@ -114,9 +112,7 @@ class RuleFinder:
             for pattern in ["**/*.mdc", "**/*.md"]:
                 for rule_file in rule_dir.glob(pattern):
                     if rule_file.is_file():
-                        distance = self._calculate_distance(
-                            rule_file, current_file_path
-                        )
+                        distance = self._calculate_distance(rule_file, current_file_path)
                         candidates.append((rule_file, distance))
 
         if self.user_rules_dir.exists():
@@ -173,18 +169,14 @@ class RuleParser:
             metadata = {}
 
         if "globs" in metadata and isinstance(metadata["globs"], str):
-            metadata["globs"] = [
-                g.strip() for g in metadata["globs"].split(",") if g.strip()
-            ]
+            metadata["globs"] = [g.strip() for g in metadata["globs"].split(",") if g.strip()]
 
         return RuleMetadata(**metadata), markdown
 
 
 class RuleMatcher:
     @staticmethod
-    def should_apply(
-        rule_metadata: RuleMetadata, current_file_path: Path, cwd: Path
-    ) -> str | None:
+    def should_apply(rule_metadata: RuleMetadata, current_file_path: Path, cwd: Path) -> str | None:
         if rule_metadata.get("alwaysApply"):
             return "alwaysApply"
 
@@ -235,7 +227,7 @@ class TranscriptAnalyzer:
                     continue
 
                 try:
-                    entry = orjson.loads(line)
+                    entry = cast(dict[str, Any], orjson.loads(line))
                 except orjson.JSONDecodeError:
                     continue
 
@@ -369,7 +361,7 @@ class RuleInjector:
             return
 
         try:
-            todos = orjson.loads(todo_file.read_bytes())
+            todos = cast(list[dict[str, Any]], orjson.loads(todo_file.read_bytes()))
         except (orjson.JSONDecodeError, OSError):
             return
 
@@ -380,7 +372,7 @@ class RuleInjector:
                 break
 
         try:
-            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(cast(bytes, orjson.dumps(todos, option=orjson.OPT_INDENT_2)))
         except OSError:
             pass
 
@@ -390,7 +382,7 @@ class RuleInjector:
 
         try:
             if todo_file.exists():
-                todos = orjson.loads(todo_file.read_bytes())
+                todos = cast(list[dict[str, Any]], orjson.loads(todo_file.read_bytes()))
             else:
                 todos = []
         except (orjson.JSONDecodeError, OSError):
@@ -412,7 +404,7 @@ class RuleInjector:
         _ = todos.insert(0, todo_item)
 
         try:
-            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(cast(bytes, orjson.dumps(todos, option=orjson.OPT_INDENT_2)))
         except OSError:
             pass
 
@@ -427,7 +419,7 @@ class HookHandler:
                 print(f"[{hook_filename}] Skipping: No input provided")
                 sys.exit(0)
 
-            data: PostToolUseInput = orjson.loads(input_raw)
+            data: PostToolUseInput = cast(PostToolUseInput, orjson.loads(input_raw))
         except (orjson.JSONDecodeError, KeyError, TypeError):
             print(f"[{hook_filename}] Skipping: Invalid input format")
             sys.exit(0)
@@ -472,9 +464,7 @@ class HookHandler:
                     _ = current_file_path.relative_to(rule_dir)
                     finder = RuleFinder(cwd)
                     injector = RuleInjector(session_id)
-                    todo_id = injector._generate_todo_id_from_path(
-                        current_file_path, finder.project_root
-                    )
+                    todo_id = injector._generate_todo_id_from_path(current_file_path, finder.project_root)
                     injector._mark_todo_completed(todo_id)
 
                     print(f"[{hook_filename}] Success: Rule todo completed")
@@ -494,9 +484,7 @@ class HookHandler:
         already_read = await analyzer.get_already_read_rule_contents()
 
         tasks = [
-            process_single_rule_file(
-                rule_path, distance, current_file_path, cwd, already_read
-            )
+            process_single_rule_file(rule_path, distance, current_file_path, cwd, already_read)
             for rule_path, distance in rule_candidates
         ]
 

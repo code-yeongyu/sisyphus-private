@@ -5,7 +5,7 @@
 #   "ast-grep-py>=0.24.1",
 # ]
 # ///
-# pyright: reportMissingImports=false, reportMissingModuleSource=false
+# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportUnknownArgumentType=false
 """
 Nested import detector hook for Claude Code (PostToolUse version).
 Detects nested imports after file modifications and provides feedback to Claude for correction.

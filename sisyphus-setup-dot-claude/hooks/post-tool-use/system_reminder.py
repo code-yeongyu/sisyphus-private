@@ -5,7 +5,7 @@
 #     "orjson",
 # ]
 # ///
-# pyright: reportMissingImports=false
+# pyright: reportMissingImports=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false
 """
 PostToolUse hook that generates system reminder context in pure Python.
 This is a Python-only implementation without external shell script dependencies.
@@ -379,6 +379,8 @@ def get_last_user_query_from_backup(backup_paths: list[Path]) -> str:
                                 ]
                                 if text_items:
                                     last_user_message = " ".join(text_items)
+                            case _:
+                                pass
 
                 except orjson.JSONDecodeError:
                     continue
@@ -509,8 +511,8 @@ async def generate_system_reminder_async(
         session_id = transcript_path.stem
     else:
         context_info = (
-            "Context Window: Unable to calculate (transcript not found). " +
-            "Okay to Process remaining works. Never stop until the user explicitly asks you to stop."
+            "Context Window: Unable to calculate (transcript not found). "
+            + "Okay to Process remaining works. Never stop until the user explicitly asks you to stop."
         )
 
     lines.extend(
@@ -545,7 +547,7 @@ async def generate_system_reminder_async(
         if all(key in git_info for key in ["commit_hash", "commit_message", "commit_author", "commit_time"]):
             lines.append(
                 f'Git commit: [{git_info["commit_hash"]}] "{git_info["commit_message"]}" '
-                f"by {git_info['commit_author']} ({git_info['commit_time']})"
+                + f"by {git_info['commit_author']} ({git_info['commit_time']})"
             )
 
         if "unstaged" in git_info:

@@ -170,6 +170,8 @@ def check_execute_in_transcript(transcript_path: Path) -> bool:
                                     text = item.get("text", "")
                                     if "<command-name>/execute</command-name>" in text:
                                         return True
+                        case _:
+                            pass
 
                 except json.JSONDecodeError:
                     continue

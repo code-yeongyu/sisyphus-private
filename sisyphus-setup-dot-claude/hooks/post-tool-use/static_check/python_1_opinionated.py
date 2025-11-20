@@ -67,7 +67,7 @@ async def _main() -> int:
             *fix_tasks, return_exceptions=True
         )
 
-        for fix_path, result in zip(fix_files, fix_results, strict=False):
+        for _fix_path, result in zip(fix_files, fix_results, strict=False):
             if isinstance(result, BaseException):
                 continue
 
@@ -83,7 +83,7 @@ async def _main() -> int:
             *check_tasks, return_exceptions=True
         )
 
-        for check_path, result in zip(check_files, check_results, strict=False):
+        for _check_path, result in zip(check_files, check_results, strict=False):
             if isinstance(result, BaseException):
                 continue
 

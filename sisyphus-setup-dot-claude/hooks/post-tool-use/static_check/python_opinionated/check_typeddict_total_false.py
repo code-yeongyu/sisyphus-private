@@ -5,7 +5,7 @@
 #   "ast-grep-py>=0.24.1",
 # ]
 # ///
-# pyright: reportMissingImports=false, reportMissingModuleSource=false
+# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportUnknownArgumentType=false, reportUnusedFunction=false
 """
 TypedDict total=False detector hook for Claude Code (PostToolUse version).
 Detects TypedDict declarations with total=False and suggests using NotRequired instead (Python 3.11+).

@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 from typing import Literal, NotRequired, TypedDict
 
-import orjson  # pyright: ignore[reportMissingImports]
+import orjson  # type: ignore[import-not-found]
 
 
 class UserPromptSubmitInput(TypedDict):

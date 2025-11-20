@@ -5,7 +5,7 @@
 #     "orjson",
 # ]
 # ///
-# pyright: reportMissingImports=false
+# pyright: reportMissingImports=false, reportUnknownArgumentType=false, reportUnreachable=false
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ import hashlib
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict, cast
 
 import orjson
 
@@ -283,7 +283,7 @@ class KnowledgeInjector:
             return
 
         try:
-            todos = orjson.loads(todo_file.read_bytes())
+            todos: list[dict[str, Any]] = cast(list[dict[str, Any]], orjson.loads(todo_file.read_bytes()))
         except (orjson.JSONDecodeError, OSError):
             return
 
@@ -294,7 +294,7 @@ class KnowledgeInjector:
                 break
 
         try:
-            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(cast(bytes, orjson.dumps(todos, option=orjson.OPT_INDENT_2)))
         except OSError:
             pass
 
@@ -305,7 +305,7 @@ class KnowledgeInjector:
             return
 
         try:
-            todos = orjson.loads(todo_file.read_bytes())
+            todos: list[dict[str, Any]] = cast(list[dict[str, Any]], orjson.loads(todo_file.read_bytes()))
         except (orjson.JSONDecodeError, OSError):
             return
 
@@ -367,7 +367,7 @@ class KnowledgeInjector:
 
         try:
             if todo_file.exists():
-                todos = orjson.loads(todo_file.read_bytes())
+                todos: list[dict[str, Any]] = cast(list[dict[str, Any]], orjson.loads(todo_file.read_bytes()))
             else:
                 todos = []
         except (orjson.JSONDecodeError, OSError):
@@ -408,7 +408,7 @@ class KnowledgeInjector:
         todos[:] = other_todos + knowledge_todos
 
         try:
-            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(cast(bytes, orjson.dumps(todos, option=orjson.OPT_INDENT_2)))
         except OSError:
             pass
 
@@ -430,7 +430,7 @@ class KnowledgeInjector:
                     continue
 
                 try:
-                    entry: RawTranscriptEntry = orjson.loads(line)
+                    entry: RawTranscriptEntry = cast(RawTranscriptEntry, orjson.loads(line))
                 except orjson.JSONDecodeError:
                     continue
 
@@ -523,7 +523,7 @@ class HookHandler:
                 print(f"[{hook_filename}] Skipping: No input provided")
                 sys.exit(0)
 
-            data: PostToolUseInput = orjson.loads(input_raw)
+            data: PostToolUseInput = cast(PostToolUseInput, orjson.loads(input_raw))
         except (orjson.JSONDecodeError, KeyError, TypeError):
             print(f"[{hook_filename}] Skipping: Invalid input format")
             sys.exit(0)

@@ -122,6 +122,8 @@ def check_skill_in_transcript(transcript_path: Path) -> bool:
                                     text = item.get("text", "")
                                     if "<command-name>interactive-terminal</command-name>" in text:
                                         return True
+                        case _:
+                            pass
 
                 except json.JSONDecodeError:
                     continue

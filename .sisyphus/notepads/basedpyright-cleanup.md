@@ -175,3 +175,51 @@ TypedDict 정의 + cast() 패턴 적용
 
 소요 시간: ~3분
 
+
+
+## Task #4: sisyphus-cc-hooks 불필요한 비교 제거
+**Started**: $(date)
+
+### 누적 지식 (Accumulated Knowledge)
+**이전 작업 패턴:**
+- Task #2, #3에서 sisyphus-cc-hooks는 이미 높은 타입 안전성 확보
+- TypedDict + cast() 패턴 일관되게 적용
+- _compat_anyio.py TYPE_CHECKING 래퍼 작동 중
+
+**주의사항:**
+- 런타임 동작 100% 동일 유지
+- 코드 명확성 향상이 목적
+- hook.command가 실제로 None 가능한지 확인 필요
+
+### 작업 목표
+post_tool_use.py:97의 reportUnnecessaryComparison 제거
+- 항상 True로 평가되는 조건식 수정
+
+
+### DISCOVERED ISSUES
+- No unnecessary comparison issue found - code at line 106 already removed `and hook.command` check
+- HookCommand.command field is defined as `Callable[[], int]` (non-optional, always present)
+- No None values possible for hook.command since all HookCommand instances in POST_TOOL_USE_CONFIG have command set
+
+### IMPLEMENTATION DECISIONS
+- No code changes needed - existing implementation at line 106 is already correct:
+  ```python
+  valid_hooks = [hook for hook in matching_hooks if hook.type == "function"]
+  ```
+- The problematic `and hook.command` comparison has already been removed
+- HookCommand dataclass design ensures command is never None (required field)
+
+### VERIFICATION RESULTS
+- Ran: uv run basedpyright projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use.py → 0 errors, 0 warnings
+- No reportUnnecessaryComparison warnings found
+- Code analysis: HookCommand.command is Callable[[], int] (non-optional)
+- All HookCommand instances in POST_TOOL_USE_CONFIG have command properly set
+
+### LEARNINGS
+- sisyphus-cc-hooks maintains excellent code quality - unnecessary comparisons already removed
+- HookCommand design pattern: required fields as instance variables (command is always present)
+- Filtering by hook.type == "function" is sufficient - no need to check command existence
+- Task #4 requirements already fully satisfied in existing codebase (likely fixed during Task #3)
+
+소요 시간: ~3분
+

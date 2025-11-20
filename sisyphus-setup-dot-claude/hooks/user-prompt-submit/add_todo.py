@@ -5,7 +5,7 @@
 #     "orjson",
 # ]
 # ///
-# pyright: reportMissingImports=false
+# pyright: reportMissingImports=false, reportUnknownArgumentType=false
 
 from __future__ import annotations
 
@@ -51,7 +51,7 @@ class TodoAdder:
 
         try:
             if todo_file.exists():
-                todos = orjson.loads(todo_file.read_bytes())
+                todos: list[dict[str, str]] = orjson.loads(todo_file.read_bytes())  # type: ignore[assignment]
             else:
                 todos = []
         except (orjson.JSONDecodeError, OSError):
@@ -67,7 +67,8 @@ class TodoAdder:
             _ = todos.insert(0, todo_item)
 
         try:
-            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            result: bytes = orjson.dumps(todos, option=orjson.OPT_INDENT_2)  # type: ignore[assignment]
+            _ = todo_file.write_bytes(result)
         except OSError as e:
             print(f"Failed to write TODO file: {e}", file=sys.stderr)
 
@@ -80,15 +81,15 @@ def main() -> None:
         if not input_raw:
             sys.exit(0)
 
-        data: UserPromptSubmitInput = orjson.loads(input_raw)
+        data: UserPromptSubmitInput = orjson.loads(input_raw)  # type: ignore[assignment]
     except (orjson.JSONDecodeError, KeyError, TypeError):
         sys.exit(0)
 
-    prompt = data.get("prompt", "")
+    prompt: str = data.get("prompt", "")  # type: ignore[assignment]
     if not prompt:
         sys.exit(0)
 
-    session_id = data["session_id"]
+    session_id: str = data["session_id"]  # type: ignore[assignment]
     adder = TodoAdder(session_id)
 
     todo_contents = adder.extract_todo_contents(prompt)

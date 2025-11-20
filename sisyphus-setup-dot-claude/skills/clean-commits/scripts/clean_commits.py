@@ -169,7 +169,7 @@ def main(
 
                 # Get list of modified files
                 _, status_output, _ = await run_git_command("status", "--porcelain")
-                modified_files = []
+                modified_files: list[str] = []
                 for line in status_output.split("\n"):
                     if line.strip():
                         # Parse git status format: "XY filename"

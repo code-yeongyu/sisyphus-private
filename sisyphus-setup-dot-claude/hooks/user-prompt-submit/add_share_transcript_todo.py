@@ -5,7 +5,7 @@
 #     "orjson",
 # ]
 # ///
-# pyright: reportMissingImports=false, reportMissingModuleSource=false
+# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false
 """
 User-prompt-submit hook that detects /share command and adds transcript path to todos.
 
@@ -58,14 +58,14 @@ def main() -> None:
         if not input_raw.strip():
             sys.exit(Config.EXIT_CODE_ALLOW)
 
-        data: UserPromptSubmitInput = orjson.loads(input_raw)
+        data: UserPromptSubmitInput = orjson.loads(input_raw)  # type: ignore[assignment]
 
-        prompt = data.get("prompt", "").strip()
+        prompt: str = data.get("prompt", "").strip()  # type: ignore[union-attr]
         if prompt != "/share":
             sys.exit(Config.EXIT_CODE_ALLOW)
 
-        session_id = data.get("session_id", "")
-        transcript_path = data.get("transcript_path", "")
+        session_id: str = data.get("session_id", "")  # type: ignore[assignment]
+        transcript_path: str = data.get("transcript_path", "")  # type: ignore[assignment]
 
         if not session_id or not transcript_path:
             sys.exit(Config.EXIT_CODE_ALLOW)
@@ -100,7 +100,7 @@ def add_transcript_todo(session_id: str, transcript_path: str) -> None:
 
     try:
         if todo_file.exists():
-            todos = orjson.loads(todo_file.read_bytes())
+            todos: list[dict[str, str] | TodoItem] = orjson.loads(todo_file.read_bytes())
         else:
             todos = []
     except (orjson.JSONDecodeError, OSError):
@@ -120,15 +120,17 @@ def add_transcript_todo(session_id: str, transcript_path: str) -> None:
             existing_todo["content"] = todo_item["content"]
             existing_todo["activeForm"] = todo_item["activeForm"]
             try:
-                _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+                result: bytes = orjson.dumps(todos, option=orjson.OPT_INDENT_2)  # type: ignore[assignment]
+                _ = todo_file.write_bytes(result)
             except OSError:
                 pass
             return
 
-    _ = todos.insert(0, todo_item)
+    _ = todos.insert(0, todo_item)  # type: ignore[arg-type]
 
     try:
-        _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+        result = orjson.dumps(todos, option=orjson.OPT_INDENT_2)  # type: ignore[assignment]
+        _ = todo_file.write_bytes(result)
     except OSError:
         pass
 

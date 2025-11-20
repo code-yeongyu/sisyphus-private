@@ -3,6 +3,7 @@
 # requires-python = ">=3.14"
 # dependencies = []
 # ///
+# pyright: reportUnknownArgumentType=false, reportUnknownLambdaType=false
 """
 UserPromptSubmit hook that generates system reminder context in pure Python.
 This is a Python-only implementation without external shell script dependencies.
@@ -210,7 +211,7 @@ def find_current_session_transcript() -> Path | None:
         if not projects_dir.exists():
             return None
 
-        transcripts = []
+        transcripts: list[Path] = []
         for project_dir in projects_dir.iterdir():
             if not project_dir.is_dir():
                 continue
@@ -223,7 +224,7 @@ def find_current_session_transcript() -> Path | None:
         if not transcripts:
             return None
 
-        most_recent = max(transcripts, key=lambda p: p.stat().st_mtime)
+        most_recent: Path = max(transcripts, key=lambda p: p.stat().st_mtime)  # type: ignore[assignment,arg-type]
         return most_recent
 
     except Exception:

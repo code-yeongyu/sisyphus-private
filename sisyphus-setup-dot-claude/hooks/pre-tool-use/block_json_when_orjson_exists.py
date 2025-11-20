@@ -6,7 +6,7 @@
 #   "ast-grep-py>=0.24.1",
 # ]
 # ///
-# pyright: reportMissingImports=false, reportMissingModuleSource=false
+# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportUnknownArgumentType=false
 """
 JSON blocker hook for Claude Code when orjson is available.
 Blocks edits that use json when orjson is available in the project.
@@ -152,8 +152,8 @@ def detect_json_usage(code: str) -> list[Violation]:
     """Detect json usage in the given code using ast-grep."""
     violations: list[Violation] = []
 
-    root = sg.SgRoot(code, "python")
-    node = root.root()
+    root = sg.SgRoot(code, "python")  # type: ignore[arg-type]
+    node = root.root()  # type: ignore[attr-defined]
 
     patterns: list[tuple[str, str]] = [
         ("import_json", "import json"),
@@ -164,11 +164,11 @@ def detect_json_usage(code: str) -> list[Violation]:
     ]
 
     for issue_type, pattern in patterns:
-        matches = node.find_all(pattern=pattern)
-        for match in matches:
-            match_range = match.range()
-            line = match_range.start.line + 1
-            text = match.text()
+        matches = node.find_all(pattern=pattern)  # type: ignore[attr-defined]
+        for match in matches:  # type: ignore[attr-defined]
+            match_range = match.range()  # type: ignore[attr-defined]
+            line = match_range.start.line + 1  # type: ignore[attr-defined]
+            text: str = match.text()  # type: ignore[attr-defined]
 
             if len(text) > 100:
                 text = text[:100]

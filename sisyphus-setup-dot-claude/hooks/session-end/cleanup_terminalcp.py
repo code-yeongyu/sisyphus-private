@@ -5,6 +5,7 @@
 #     "orjson",
 # ]
 # ///
+# pyright: reportUnknownArgumentType=false
 """
 Cleanup terminalcp sessions on SessionEnd hook.
 
@@ -104,7 +105,7 @@ def extract_terminalcp_sessions_from_transcript(transcript_path: Path) -> list[s
     if orjson is None:
         return []
 
-    session_ids = []
+    session_ids: list[str] = []
 
     try:
         with transcript_path.open("rb") as f:
@@ -133,7 +134,7 @@ def extract_terminalcp_sessions_from_transcript(transcript_path: Path) -> list[s
                         # Look for Bash tool use
                         if item.get("type") == "tool_use" and item.get("name") == "Bash":
                             tool_input = item.get("input", {})
-                            command = tool_input.get("command", "")
+                            command: str = tool_input.get("command", "")
 
                             # Parse terminalcp start commands
                             if "terminalcp start" in command:

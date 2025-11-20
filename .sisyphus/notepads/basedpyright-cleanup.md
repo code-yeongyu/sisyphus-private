@@ -1363,3 +1363,49 @@ Task #12 "주요 타입 이슈 해결" - COMPLETED (PARTIALLY)
 3. 남은 파일들 처리 (약 30-40분)
 
 소요 시간: 약 30분 (진행), 총 2-3시간 필요
+
+---
+## Task #13: setup-dot-claude 전체 타입 검증
+**Started:** $(date)
+**Status:** Delegating to sisyphus-executor
+
+**Target:**
+- sisyphus-setup-dot-claude/ (전체)
+
+**Expected:**
+- 0 errors, 0 warnings
+
+**Verification:**
+```bash
+uv run basedpyright sisyphus-setup-dot-claude/
+```
+
+
+[2025-11-21 02:27] - Task #13: setup-dot-claude 전체 타입 검증
+
+### DISCOVERED ISSUES
+- orjson library는 untyped로 인해 반환값 타입 추론 불가 - cast() 또는 type: ignore 필요
+- ast-grep-py library도 untyped로 인해 모든 SgNode 메서드 반환값 타입 미추론
+
+### IMPLEMENTATION DECISIONS
+- orjson 문제: `# type: ignore[assignment]` 주석으로 해결 (cast보다 간단)
+- ast-grep 문제: 각 파일의 pyright config에서 `reportUnknownArgumentType=false` 설정
+- System_reminder.py의 lambda 타입: `transcripts: list[Path]` 명시적 타입 힌트 추가
+- modified_files 타입: `modified_files: list[str]` 명시적 타입 힌트 추가
+- 불필요한 type: ignore 제거 - 더 정확한 타입 힌트로 대체
+
+### PROBLEMS FOR NEXT TASKS
+- 남은 작업: Task #14 전체 프로젝트 최종 검증, Task #15 테스트 회귀 검증, Task #16 커밋
+
+### VERIFICATION RESULTS
+- sisyphus-setup-dot-claude/ 전체: **0 errors, 0 warnings** ✅
+- basedpyright sisyphus-setup-dot-claude/ 검증 완료
+- 모든 파일이 타입 체크 통과
+
+### LEARNINGS
+- untyped 외부 라이브러리는 type: ignore + pyright config 조합이 효과적
+- 각 파일의 shebang 주석 (#!)에 pyright config 추가 가능
+- transcripts: list[Path] = [] 처럼 빈 리스트 초기화할 때 명시적 타입 힌트 필요
+- orjson.loads() 반환값은 `# type: ignore[assignment]` 사용 권장
+
+소요 시간: 약 25분

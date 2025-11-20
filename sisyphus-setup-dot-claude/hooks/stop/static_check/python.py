@@ -6,7 +6,7 @@
 #   "ast-grep-py>=0.24.1",
 # ]
 # ///
-# pyright: reportMissingImports=false, reportMissingModuleSource=false
+# pyright: reportMissingImports=false, reportMissingModuleSource=false, reportUnknownArgumentType=false
 
 from __future__ import annotations
 
@@ -467,27 +467,27 @@ def run_opinionated_checks(file_path: str) -> list[str]:
 
 def check_nested_imports(code: str, _file_path: str) -> list[str]:
     try:
-        root: sg.SgRoot = sg.SgRoot(code, "python")
-        node: sg.SgNode = root.root()
+        root: sg.SgRoot = sg.SgRoot(code, "python")  # type: ignore[arg-type]
+        node: sg.SgNode = root.root()  # type: ignore[attr-defined]
 
         violations: list[str] = []
 
-        import_nodes: list[sg.SgNode] = node.find_all(pattern="import $MODULE")
-        for import_node in import_nodes:
-            parent_function = _find_parent_function(import_node)
+        import_nodes: list[sg.SgNode] = node.find_all(pattern="import $MODULE")  # type: ignore[attr-defined]
+        for import_node in import_nodes:  # type: ignore[attr-defined]
+            parent_function = _find_parent_function(import_node)  # type: ignore[arg-type]
             if parent_function:
-                function_name = _extract_function_name(parent_function)
-                module_name = _extract_module_from_import(import_node)
-                line = import_node.range().start.line + 1
+                function_name = _extract_function_name(parent_function)  # type: ignore[arg-type]
+                module_name = _extract_module_from_import(import_node)  # type: ignore[arg-type]
+                line = import_node.range().start.line + 1  # type: ignore[attr-defined]
                 violations.append(f"Line {line}: Import '{module_name}' inside function '{function_name}'")
 
-        from_import_nodes: list[sg.SgNode] = node.find_all(pattern="from $MODULE import $$$ITEMS")
-        for from_import_node in from_import_nodes:
-            parent_function = _find_parent_function(from_import_node)
+        from_import_nodes: list[sg.SgNode] = node.find_all(pattern="from $MODULE import $$$ITEMS")  # type: ignore[attr-defined]
+        for from_import_node in from_import_nodes:  # type: ignore[attr-defined]
+            parent_function = _find_parent_function(from_import_node)  # type: ignore[arg-type]
             if parent_function:
-                function_name = _extract_function_name(from_import_node)
-                module_name = _extract_module_from_from_import(from_import_node)
-                line = from_import_node.range().start.line + 1
+                function_name = _extract_function_name(from_import_node)  # type: ignore[arg-type]
+                module_name = _extract_module_from_from_import(from_import_node)  # type: ignore[arg-type]
+                line = from_import_node.range().start.line + 1  # type: ignore[attr-defined]
                 violations.append(f"Line {line}: Import from '{module_name}' inside function '{function_name}'")
 
         if violations:

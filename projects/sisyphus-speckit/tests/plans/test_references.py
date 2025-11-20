@@ -150,13 +150,8 @@ async def test_index_references__with_empty_references__returns_empty_dict(
     assert len(index) == 0
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_resolve_ref_id__with_existing_ref_id__returns_reference(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # Given
     index = {
@@ -172,13 +167,8 @@ async def test_resolve_ref_id__with_existing_ref_id__returns_reference(
     assert ref_item.uri == "https://example.com"
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_resolve_ref_id__with_missing_ref_id__raises_key_error(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # Given
     index = {"ref1": ReferenceItem(ref_id="ref1", uri="https://example.com")}

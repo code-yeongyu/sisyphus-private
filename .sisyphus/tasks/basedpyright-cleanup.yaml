@@ -681,7 +681,7 @@ work_plans:
   - id: '16'
     title: 변경 사항 커밋
     description: 타입 이슈 해결 변경 사항 커밋
-    status: in_progress
+    status: completed
     references:
     - inline: "모든 타입 이슈 해결 후 변경 사항 커밋\n\n커밋 메시지 형식:\n```\nfix(types): resolve all
         basedpyright warnings and errors\n\n- Add TypedDict definitions for JSON structures\n\
@@ -745,8 +745,8 @@ work_plans:
     started: true
     completed: false
     started_at: '2025-11-20T08:40:49.260285+00:00'
+    completed_at: '2025-11-20T18:12:04.283524+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '16'
   current_work_ids: []
   acceptance_criteria_for_verification_agent: []

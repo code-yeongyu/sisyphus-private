@@ -105,7 +105,7 @@ class MockUI:
     async def initialize(self) -> None:
         pass
 
-    async def show_message(self, message: AgentMessage, source: str = "execute") -> None:
+    async def show_message(self, message: AgentMessage, source: str = "execute") -> None:  # pyright: ignore[reportUnusedParameter]
         self.messages.append(message)
 
     async def show_status(self, status: str) -> None:

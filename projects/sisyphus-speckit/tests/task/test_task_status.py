@@ -144,8 +144,8 @@ def test_status__verification_spec_table__displays_all_verification_items(
     assert vspec_table_data[2]["llm"] == "✓"
 
 
+@pytest.mark.usefixtures("minimal_work_plan")
 def test_status__verification_spec_table__extracts_bash_details(
-    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A verification item with bash checks
@@ -183,8 +183,8 @@ def test_status__verification_spec_table__extracts_bash_details(
     assert bash_details["notes"] == "All tests must pass"
 
 
+@pytest.mark.usefixtures("minimal_work_plan")
 def test_status__verification_spec_table__extracts_llm_judge_details(
-    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A verification item with LLM judge checks
@@ -410,8 +410,8 @@ def test_status__continuable__detects_incomplete_verifications(
     assert all_verifications_complete is False
 
 
+@pytest.mark.usefixtures("minimal_work_plan")
 def test_status__continuable__detects_missing_manual_verification(
-    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A task with verified but not manually verified items
@@ -450,8 +450,8 @@ def test_status__continuable__detects_missing_manual_verification(
     assert needs_manual_verification is True
 
 
+@pytest.mark.usefixtures("minimal_work_plan")
 def test_status__continuable__handles_no_verification_spec(
-    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A task with no verification specifications
@@ -477,8 +477,8 @@ def test_status__continuable__handles_no_verification_spec(
     assert is_continuable is True
 
 
+@pytest.mark.usefixtures("minimal_work_plan")
 def test_status__detailed_verification_info__formats_bash_check_details(
-    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A verification item with bash checks and multiple checks
@@ -528,8 +528,8 @@ def test_status__detailed_verification_info__formats_bash_check_details(
     assert "basedpyright" in bash_details_list[1]["execute"]
 
 
+@pytest.mark.usefixtures("minimal_work_plan")
 def test_status__detailed_verification_info__formats_llm_judge_details(
-    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A verification item with multiple LLM judge checks
@@ -576,8 +576,8 @@ def test_status__detailed_verification_info__formats_llm_judge_details(
     assert "error handling" in llm_details_list[1]["instruction_preview"]
 
 
+@pytest.mark.usefixtures("minimal_work_plan")
 def test_status__verification_output__handles_bash_verification_type(
-    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A verification item with bash checks
@@ -610,8 +610,8 @@ def test_status__verification_output__handles_bash_verification_type(
     assert verify_type_str == "bash"
 
 
+@pytest.mark.usefixtures("minimal_work_plan")
 def test_status__verification_output__handles_mixed_verification_types(
-    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A verification item with both bash and LLM judge

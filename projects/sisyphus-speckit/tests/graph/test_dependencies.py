@@ -277,14 +277,15 @@ async def test_build_plan_graph__if_multiple_dependencies__preserves_order(
 # ============================================================
 
 
-async def test_detect_cycles__if_no_cycle__returns_empty_list(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
-) -> None:
+@pytest.mark.usefixtures(
+    "minimal_user_request",
+    "minimal_objectives",
+    "minimal_background",
+    "minimal_required_background",
+    "minimal_workflow",
+    "minimal_success_vision",
+)
+async def test_detect_cycles__if_no_cycle__returns_empty_list() -> None:
     # given
     graph = {
         "plan-a": ["plan-b"],
@@ -299,13 +300,8 @@ async def test_detect_cycles__if_no_cycle__returns_empty_list(
     assert cycles == []
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_detect_cycles__if_simple_cycle__detects_cycle(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A → B → A
     graph = {
@@ -324,13 +320,8 @@ async def test_detect_cycles__if_simple_cycle__detects_cycle(
     assert "plan-b" in cycle
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_detect_cycles__if_complex_cycle__detects_cycle(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A → B → C → A
     graph = {
@@ -350,13 +341,8 @@ async def test_detect_cycles__if_complex_cycle__detects_cycle(
     assert "plan-c" in cycle
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_detect_cycles__if_multiple_disconnected_cycles__detects_all_cycles(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given:
     # Cycle 1: A → B → A
@@ -380,13 +366,8 @@ async def test_detect_cycles__if_multiple_disconnected_cycles__detects_all_cycle
     assert any({"plan-c", "plan-d"}.issubset(nodes) for nodes in cycle_nodes)
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_detect_cycles__if_self_reference__detects_cycle(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A → A
     graph = {
@@ -402,13 +383,8 @@ async def test_detect_cycles__if_self_reference__detects_cycle(
     assert "plan-a" in cycle
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_detect_cycles__if_diamond_dependency_no_cycle__returns_empty_list(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given:
     #     A
@@ -430,13 +406,8 @@ async def test_detect_cycles__if_diamond_dependency_no_cycle__returns_empty_list
     assert cycles == []
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_detect_cycles__if_long_chain_with_cycle__detects_cycle(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A → B → C → D → B (cycle at B-C-D-B)
     graph = {
@@ -462,13 +433,8 @@ async def test_detect_cycles__if_long_chain_with_cycle__detects_cycle(
 # ============================================================
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_topo_sort__if_linear_dependency_chain__returns_correct_order(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A → B → C
     graph = {
@@ -487,13 +453,8 @@ async def test_topo_sort__if_linear_dependency_chain__returns_correct_order(
     assert result.index("plan-b") < result.index("plan-a")
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_topo_sort__if_diamond_dependency__returns_valid_topological_order(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given:
     #     A
@@ -521,13 +482,8 @@ async def test_topo_sort__if_diamond_dependency__returns_valid_topological_order
     assert result.index("plan-c") < result.index("plan-a")
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_topo_sort__if_no_dependencies__returns_all_nodes(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given
     graph = {
@@ -544,13 +500,8 @@ async def test_topo_sort__if_no_dependencies__returns_all_nodes(
     assert set(result) == {"plan-a", "plan-b", "plan-c"}
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_topo_sort__if_graph_with_cycles__raises_value_error(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A → B → A (cycle)
     graph = {
@@ -563,13 +514,8 @@ async def test_topo_sort__if_graph_with_cycles__raises_value_error(
         _ = topo_sort(graph)
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_topo_sort__if_complex_dag__returns_valid_order(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given:
     #     A
@@ -604,13 +550,8 @@ async def test_topo_sort__if_complex_dag__returns_valid_order(
     assert result.index("plan-c") < result.index("plan-a")
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_topo_sort__if_single_node__returns_single_element_list(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given
     graph = {
@@ -624,13 +565,8 @@ async def test_topo_sort__if_single_node__returns_single_element_list(
     assert result == ["plan-a"]
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_topo_sort__if_parallel_branches__maintains_dependencies(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given:
     #   A   B

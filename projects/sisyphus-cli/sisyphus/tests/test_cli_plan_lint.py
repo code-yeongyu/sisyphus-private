@@ -63,7 +63,8 @@ metadata:
     assert result.exit_code != 0
 
 
-async def test_plan_lint__when_file_not_found__exits_1(tmp_path: Path) -> None:
+@pytest.mark.usefixtures("tmp_path")
+async def test_plan_lint__when_file_not_found__exits_1() -> None:
     # when
     result = runner.invoke(app, ["plan", "lint", "--file", "/nonexistent/file.yaml"])
 

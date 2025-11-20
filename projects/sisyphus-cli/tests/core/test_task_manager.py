@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from sisyphus_core.core.plans.models import (
     Background,
     BashVerification,
@@ -56,14 +55,15 @@ async def test_task_manager__if_work_plan_exists__finds_it(
     assert manager.work_plan.id == "test-plan"
 
 
-async def test_task_manager__if_work_plan_missing__raises_error(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
-) -> None:
+@pytest.mark.usefixtures(
+    "minimal_user_request",
+    "minimal_objectives",
+    "minimal_background",
+    "minimal_required_background",
+    "minimal_workflow",
+    "minimal_success_vision",
+)
+async def test_task_manager__if_work_plan_missing__raises_error() -> None:
     plan_doc = PlanDocument(version="3.0", metadata=Metadata(created_at="2025-11-06T00:00:00Z"), work_plans=[])
 
     with pytest.raises(ValueError, match="WorkPlan not found"):

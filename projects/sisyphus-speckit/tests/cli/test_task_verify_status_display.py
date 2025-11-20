@@ -126,14 +126,15 @@ async def test_verify_status__collects_all_verifications_from_todos(
 
 
 @pytest.mark.anyio()
-async def test_verify_status__includes_manual_verification_fields(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
-) -> None:
+@pytest.mark.usefixtures(
+    "minimal_user_request",
+    "minimal_objectives",
+    "minimal_background",
+    "minimal_required_background",
+    "minimal_workflow",
+    "minimal_success_vision",
+)
+async def test_verify_status__includes_manual_verification_fields() -> None:
     """
     Given: A verification item with manual verification complete
     When: Processing for display
@@ -165,14 +166,15 @@ async def test_verify_status__includes_manual_verification_fields(
 
 
 @pytest.mark.anyio()
-async def test_verify_status__detects_missing_manual_verification(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
-) -> None:
+@pytest.mark.usefixtures(
+    "minimal_user_request",
+    "minimal_objectives",
+    "minimal_background",
+    "minimal_required_background",
+    "minimal_workflow",
+    "minimal_success_vision",
+)
+async def test_verify_status__detects_missing_manual_verification() -> None:
     """
     Given: A verification item with manual verification incomplete
     When: Processing for display

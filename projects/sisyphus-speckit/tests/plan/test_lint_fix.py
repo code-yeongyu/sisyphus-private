@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
+import pytest
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import LiteralScalarString
 
@@ -223,7 +224,7 @@ user_request:
         # then: 데이터가 수정됨
         fixed_dict = cast(dict[str, object], fixed_data)
         user_request = cast(dict[str, object], fixed_dict["user_request"])
-        assert isinstance(user_request["original"], (LiteralScalarString, str))
+        assert isinstance(user_request["original"], LiteralScalarString | str)
 
     def test_lint_fix__if_empty_yaml__handles_gracefully(self, tmp_path: Path) -> None:
         # given: 빈 YAML 파일
@@ -274,7 +275,8 @@ user_request:
         saved_text = yaml_file.read_text()
         assert "test" in saved_text
 
-    def test_lint_fix__if_complex_structure__processes_all_levels(self, tmp_path: Path) -> None:
+    @pytest.mark.usefixtures("tmp_path")
+    def test_lint_fix__if_complex_structure__processes_all_levels(self) -> None:
         # given: 복잡한 중첩 구조
         data: dict[str, object] = {
             "work_plans": [

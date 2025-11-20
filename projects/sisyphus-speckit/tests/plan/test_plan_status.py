@@ -131,13 +131,8 @@ async def test_status__collects_all_verifications_from_todos(
 
 
 @pytest.mark.anyio()
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_status__includes_manual_verification_fields(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     """
     Given: A verification item with manual verification complete
@@ -170,13 +165,8 @@ async def test_status__includes_manual_verification_fields(
 
 
 @pytest.mark.anyio()
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 async def test_status__detects_missing_manual_verification(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     """
     Given: A verification item with manual verification incomplete
@@ -205,13 +195,8 @@ async def test_status__detects_missing_manual_verification(
     assert evidence_status == "Missing", "Item without evidence should show Missing"
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 def test_status__count_all_todos__counts_flat_todos(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A WorkPlan with 3 flat todos (no children)
     todos = [
@@ -251,13 +236,8 @@ def test_status__count_all_todos__counts_flat_todos(
     assert count == 3
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 def test_status__count_all_todos__counts_nested_todos(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A WorkPlan with nested todos (parent with children)
     child_todo = Todo(
@@ -287,13 +267,8 @@ def test_status__count_all_todos__counts_nested_todos(
     assert count == 2
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 def test_status__count_completed_todos__counts_only_completed(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A WorkPlan with mixed status todos
     todos = [
@@ -333,13 +308,8 @@ def test_status__count_completed_todos__counts_only_completed(
     assert count == 2
 
 
+@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
 def test_status__count_completed_todos__counts_nested_completed(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A WorkPlan with nested todos where parent is in_progress and child is completed
     child_todo = Todo(

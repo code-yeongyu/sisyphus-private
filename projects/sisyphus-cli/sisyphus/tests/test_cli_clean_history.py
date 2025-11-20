@@ -15,11 +15,11 @@ pytestmark = [pytest.mark.anyio]
 
 def _init_git_repo(tmp_path: Path, branch: str = "main") -> None:
     """Initialize git repo with specified branch."""
-    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
-    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=tmp_path, check=True, capture_output=True)
-    subprocess.run(["git", "config", "user.name", "Test User"], cwd=tmp_path, check=True, capture_output=True)
+    _ = subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    _ = subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=tmp_path, check=True, capture_output=True)
+    _ = subprocess.run(["git", "config", "user.name", "Test User"], cwd=tmp_path, check=True, capture_output=True)
     if branch != "main":
-        subprocess.run(["git", "checkout", "-b", branch], cwd=tmp_path, check=True, capture_output=True)
+        _ = subprocess.run(["git", "checkout", "-b", branch], cwd=tmp_path, check=True, capture_output=True)
 
 
 def test_clean_history__on_main_branch__exits_with_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

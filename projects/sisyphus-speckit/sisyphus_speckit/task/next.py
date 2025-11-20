@@ -17,7 +17,7 @@ def show_next(
 ) -> None:
     async def _next() -> None:
         working_dir = resolve_cwd(cwd)
-        plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
+        _, _, task_manager = await _load_current_plan(working_dir)
 
         next_task = task_manager.get_next_task()
         if next_task is None:

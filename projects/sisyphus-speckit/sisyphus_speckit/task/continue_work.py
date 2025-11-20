@@ -125,12 +125,12 @@ def continue_work(
                             console.print(f"[red]❌ [{verify_item.id}] {verify_item.title}[/red]")
                             console.print(
                                 f"[yellow]   → 1단계: 수동 검증 미완료[/yellow] "
-                                f"(orchestrator_manually_verified={verify_item.orchestrator_manually_verified}, "
-                                f"evidence={'있음' if verify_item.manual_verification_evidence else '없음'})"
+                                + f"(orchestrator_manually_verified={verify_item.orchestrator_manually_verified}, "
+                                + f"evidence={'있음' if verify_item.manual_verification_evidence else '없음'})"
                             )
                             console.print(
                                 f"[cyan]   sisyphus-speckit task verify manual-mark {verify_item.id} "
-                                f"--evidence '<상세한 검증 증거 100자 이상>'[/cyan]\n"
+                                + f"--evidence '<상세한 검증 증거 100자 이상>'[/cyan]\n"
                             )
                             continue
 
@@ -150,7 +150,7 @@ def continue_work(
                             console.print("[cyan]   sisyphus-speckit task verify llm[/cyan]")
                             console.print(
                                 f"[cyan]   sisyphus-speckit task verify llm-mark {verify_item.id} "
-                                f"--evidence '<증거 설명>'[/cyan]\n"
+                                + f"--evidence '<증거 설명>'[/cyan]\n"
                             )
                             continue
 
@@ -179,7 +179,7 @@ def continue_work(
 
         # 3. llm_judge 검증 모두 통과 (빈 리스트는 통과)
         for verify_item in current_task.verification_spec:
-            for llm_judge in verify_item.llm_judge:
+            for _ in verify_item.llm_judge:
                 if not verify_item.verified:
                     llm_judge_errors.append(f"[{verify_item.id}] '{verify_item.title}'")
                     break

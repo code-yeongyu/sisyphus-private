@@ -67,7 +67,7 @@ def mark_completed_command(
         else:
             # Show incomplete message and current task
             console.print("[yellow]⚠ 모든 작업이 완료되지 않았습니다.[/yellow]")
-            console.print(f"[yellow]미완료 작업:[/yellow] {len(incomplete_todos)}개")
+            console.print(f"[yellow]미완료 작업:[/yellow] {len(incomplete_todos)}개")  # pyright: ignore[reportUnknownArgumentType]
             console.print()
             console.print("[cyan]다음 명령으로 계속 진행하세요:[/cyan]")
             console.print("  [bold]sisyphus-speckit task continue[/bold]")

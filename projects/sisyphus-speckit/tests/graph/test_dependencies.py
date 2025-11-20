@@ -537,7 +537,7 @@ async def test_topo_sort__if_no_dependencies__returns_all_nodes(
     }
 
     # when
-    result = topo_sort(graph)
+    result = topo_sort(graph)  # pyright: ignore[reportUnknownArgumentType]
 
     # then
     assert len(result) == 3
@@ -618,7 +618,7 @@ async def test_topo_sort__if_single_node__returns_single_element_list(
     }
 
     # when
-    result = topo_sort(graph)
+    result = topo_sort(graph)  # pyright: ignore[reportUnknownArgumentType]
 
     # then
     assert result == ["plan-a"]

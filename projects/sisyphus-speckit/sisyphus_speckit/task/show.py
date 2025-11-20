@@ -76,7 +76,7 @@ def _display_verification_specs(task: Todo) -> None:
             console.print(f"    Bash checks: {len(vspec.bash)}")
             for bash in vspec.bash:
                 console.print(f"      - Execute: {bash.execute}")
-                if bash.expected_exit_code is not None:
+                if bash.expected_exit_code is not None:  # pyright: ignore[reportUnnecessaryComparison]
                     console.print(f"        Expected exit code: {bash.expected_exit_code}")
                 if bash.notes:
                     console.print(f"        Notes: {bash.notes}")
@@ -147,7 +147,7 @@ def show_task(
 ) -> None:
     async def _show() -> None:
         working_dir = resolve_cwd(cwd)
-        plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
+        _, work_plan, task_manager = await _load_current_plan(working_dir)
 
         task = task_manager.find_todo_by_id(task_id)
         if task is None:

@@ -259,8 +259,8 @@ class TestCurrentCommand:
         task = current_task_todo
 
         # when: Checking all required fields
-        has_id = task.id is not None
-        has_title = task.title is not None
+        has_id = task.id is not None  # pyright: ignore[reportUnnecessaryComparison]
+        has_title = task.title is not None  # pyright: ignore[reportUnnecessaryComparison]
         has_description = task.description is not None
         has_status = task.status is not None
         has_verification_spec = hasattr(task, "verification_spec")

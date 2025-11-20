@@ -17,7 +17,7 @@ def show_previous(
 ) -> None:
     async def _previous() -> None:
         working_dir = resolve_cwd(cwd)
-        plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
+        _, _, task_manager = await _load_current_plan(working_dir)
 
         current_task = task_manager.get_current_task()
         if current_task is None:

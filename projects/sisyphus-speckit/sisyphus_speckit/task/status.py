@@ -27,7 +27,7 @@ def task_status(
 
     async def _task_status() -> None:
         working_dir = resolve_cwd(cwd)
-        plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
+        _, _, task_manager = await _load_current_plan(working_dir)
 
         current_task = task_manager.get_current_task()
         if not current_task:
@@ -38,9 +38,9 @@ def task_status(
         console.print(
             Panel(
                 f"[bold cyan]ID:[/bold cyan] {current_task.id}\n"
-                f"[bold cyan]Title:[/bold cyan] {current_task.title}\n"
-                f"[bold cyan]Status:[/bold cyan] {current_task.status.value if current_task.status else 'N/A'}\n"
-                f"[bold cyan]Description:[/bold cyan] {current_task.description or 'N/A'}",
+                + f"[bold cyan]Title:[/bold cyan] {current_task.title}\n"
+                + f"[bold cyan]Status:[/bold cyan] {current_task.status.value if current_task.status else 'N/A'}\n"
+                + f"[bold cyan]Description:[/bold cyan] {current_task.description or 'N/A'}",
                 title="Task Information",
                 border_style="cyan",
             )
@@ -85,7 +85,7 @@ def task_status(
                     console.print("  [bold]Bash Checks:[/bold]")
                     for bash in vspec.bash:
                         console.print(f"    - Execute: {bash.execute}")
-                        if bash.expected_exit_code is not None:
+                        if bash.expected_exit_code is not None:  # pyright: ignore[reportUnnecessaryComparison]
                             console.print(f"      Expected Exit Code: {bash.expected_exit_code}")
                         if bash.notes:
                             console.print(f"      Notes: {bash.notes}")

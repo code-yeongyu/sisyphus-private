@@ -23,7 +23,7 @@ async def test_ascii_renderer__if_single_node_no_deps__returns_node_name() -> No
     graph = {"plan-a": []}
 
     # when
-    result = renderer.render(graph)
+    result = renderer.render(graph)  # pyright: ignore[reportUnknownArgumentType]
 
     # then
     assert "plan-a" in result
@@ -95,7 +95,7 @@ async def test_mermaid_renderer__if_single_node_no_deps__returns_mermaid_syntax(
     graph = {"plan-a": []}
 
     # when
-    result = renderer.render(graph)
+    result = renderer.render(graph)  # pyright: ignore[reportUnknownArgumentType]
 
     # then
     assert "graph TD" in result
@@ -147,7 +147,7 @@ async def test_mermaid_renderer__if_node_with_special_chars__hashes_node_id() ->
     graph = {"plan-with-special-chars!@#": []}
 
     # when
-    result = renderer.render(graph)
+    result = renderer.render(graph)  # pyright: ignore[reportUnknownArgumentType]
 
     # then
     assert "node_" in result
@@ -161,7 +161,7 @@ async def test_png_renderer__if_graphviz_not_installed__raises_import_error() ->
 
     # when/then
     try:
-        import graphviz  # noqa: F401
+        import graphviz  # noqa: F401  # pyright: ignore[reportUnusedImport, reportMissingTypeStubs]
 
         pytest.skip("graphviz is installed, skipping test")
     except ImportError:

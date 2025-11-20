@@ -13,7 +13,7 @@ console = Console()
 
 def init_plan(
     path: Path = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
-        Path("./.sisyphus/tasks/plan.yaml"),
+        Path("./.sisyphus/tasks/plan.yaml"),  # pyright: ignore[reportCallInDefaultInitializer]
         "--path",
         "-p",
         help="Path where plan YAML will be created",

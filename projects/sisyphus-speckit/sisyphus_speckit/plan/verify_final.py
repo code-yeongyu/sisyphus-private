@@ -16,7 +16,7 @@ def verify_final_plan(
     verification_id: str = typer.Option(..., "--id", help="Final verification item ID"),  # pyright: ignore[reportCallInDefaultInitializer]
     evidence: str = typer.Option(..., "--evidence", help="Verification evidence description"),  # pyright: ignore[reportCallInDefaultInitializer]
     yaml_path: Path = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
-        Path("./.sisyphus/tasks/plan.yaml"),
+        None,
         "--file",
         "-f",
         help="YAML file path",

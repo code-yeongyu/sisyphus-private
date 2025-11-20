@@ -129,7 +129,7 @@ def test_status__verification_spec_table__displays_all_verification_items(
         )
 
     # then: All 3 verification items are present in table data
-    assert len(vspec_table_data) == 3
+    assert len(vspec_table_data) == 3  # pyright: ignore[reportUnknownArgumentType]
     assert vspec_table_data[0]["id"] == "verify-1"
     assert vspec_table_data[0]["verified"] == "✓"
     assert vspec_table_data[0]["bash"] == "✓"
@@ -270,7 +270,7 @@ def test_status__acceptance_criteria_table__displays_all_criteria(
             )
 
     # then: All 3 acceptance criteria are present
-    assert len(ac_table_data) == 3
+    assert len(ac_table_data) == 3  # pyright: ignore[reportUnknownArgumentType]
     assert ac_table_data[0]["id"] == "criterion-1"
     assert ac_table_data[0]["verified"] == "✓"
 
@@ -521,7 +521,7 @@ def test_status__detailed_verification_info__formats_bash_check_details(
         )
 
     # then: All bash details are formatted correctly
-    assert len(bash_details_list) == 2
+    assert len(bash_details_list) == 2  # pyright: ignore[reportUnknownArgumentType]
     assert "pytest" in bash_details_list[0]["execute"]
     assert bash_details_list[0]["expected_exit_code"] == 0
     assert bash_details_list[0]["notes"] == "All tests must pass"
@@ -569,7 +569,7 @@ def test_status__detailed_verification_info__formats_llm_judge_details(
         )
 
     # then: All LLM judge details are formatted correctly
-    assert len(llm_details_list) == 2
+    assert len(llm_details_list) == 2  # pyright: ignore[reportUnknownArgumentType]
     assert llm_details_list[0]["by"] == LLMJudgeBy.ORCHESTRATOR
     assert "code quality" in llm_details_list[0]["instruction_preview"]
     assert llm_details_list[1]["by"] == LLMJudgeBy.EXTERNAL
@@ -604,7 +604,7 @@ def test_status__verification_output__handles_bash_verification_type(
     if vspec.llm_judge:
         verify_types.append("llm")
 
-    verify_type_str = ", ".join(verify_types) if verify_types else "unknown"
+    verify_type_str = ", ".join(verify_types) if verify_types else "unknown"  # pyright: ignore[reportUnknownArgumentType]
 
     # then: Bash verification type is correctly identified
     assert verify_type_str == "bash"
@@ -640,7 +640,7 @@ def test_status__verification_output__handles_mixed_verification_types(
     if not vspec.bash and not vspec.llm_judge:
         verify_types.append("manual")
 
-    verify_type_str = ", ".join(verify_types)
+    verify_type_str = ", ".join(verify_types)  # pyright: ignore[reportUnknownArgumentType]
 
     # then: Both types are listed
     assert verify_type_str == "bash, llm"

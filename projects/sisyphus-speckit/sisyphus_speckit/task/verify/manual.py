@@ -20,7 +20,7 @@ def verify_manual(
 
     async def _verify_manual() -> None:
         working_dir = resolve_cwd(cwd)
-        plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
+        _, _, task_manager = await _load_current_plan(working_dir)
 
         result = task_manager.next_unverified()
         if result is None:

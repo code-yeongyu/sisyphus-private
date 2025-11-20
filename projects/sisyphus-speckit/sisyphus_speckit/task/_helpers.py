@@ -14,6 +14,16 @@ from sisyphus_core.core.plans.loader import resolve_current_plan_from_status
 from sisyphus_core.core.plans.models import PlanDocument, Todo, WorkPlan
 from sisyphus_core.core.task_manager import TaskManager
 
+__all__ = [
+    "console",
+    "_run_async",
+    "_load_current_plan",
+    "_format_task_display",
+    "_display_verification_guidance",
+    "_display_verification_status_table",
+    "_display_remaining_verifications",
+]
+
 console = Console()
 
 
@@ -85,7 +95,7 @@ def _format_task_display(
         total_count = len(task.verification_spec)
         lines.append(f"[bold cyan]검증:[/bold cyan] {verified_count}/{total_count} 완료")
 
-    return "\n".join(lines)
+    return "\n".join(lines)  # pyright: ignore[reportUnknownArgumentType]
 
 
 def _display_verification_guidance(current_task: Todo) -> None:
@@ -142,8 +152,8 @@ def _display_verification_status_table(
             collect_tasks_dfs(work_plan.todos)
 
             try:
-                current_index = next(i for i, t in enumerate(all_tasks_dfs) if t.id == current_task.id)
-                task_position = f"{current_index + 1}/{len(all_tasks_dfs)}"
+                current_index = next(i for i, t in enumerate(all_tasks_dfs) if t.id == current_task.id)  # pyright: ignore[reportUnknownArgumentType]
+                task_position = f"{current_index + 1}/{len(all_tasks_dfs)}"  # pyright: ignore[reportUnknownArgumentType]
             except StopIteration:
                 task_position = "?/?"
 
@@ -187,7 +197,7 @@ def _display_verification_status_table(
         if not verify_item.bash and not verify_item.llm_judge:
             verify_types.append("manual")
 
-        verify_type_str = ", ".join(verify_types) if verify_types else "unknown"
+        verify_type_str = ", ".join(verify_types) if verify_types else "unknown"  # pyright: ignore[reportUnknownArgumentType]
 
         status_emoji = "✓" if verify_item.verified else "○"
         status_color = "green" if verify_item.verified else "yellow"

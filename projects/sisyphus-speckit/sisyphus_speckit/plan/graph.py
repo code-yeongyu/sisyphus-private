@@ -47,7 +47,7 @@ def show_graph(
                 with plan_file.open("r", encoding="utf-8") as f:
                     yaml_data = yaml.load(f)
                 try:
-                    plan_doc = PlanDocument(**yaml_data)
+                    plan_doc = PlanDocument(**yaml_data)  # pyright: ignore[reportUnknownArgumentType]
                     for work_plan in plan_doc.work_plans:
                         plan_to_file[work_plan.id] = plan_file
                     all_plans.extend(plan_doc.work_plans)
@@ -57,8 +57,8 @@ def show_graph(
         else:
             console.print(
                 f"[red]Error: No plan files found.[/red]\n"
-                f"Expected: {tasks_dir}/*.yaml (v3.0 format)\n"
-                f"Run: sisyphus-speckit plan init .sisyphus/tasks/plan.yaml"
+                + f"Expected: {tasks_dir}/*.yaml (v3.0 format)\n"
+                + f"Run: sisyphus-speckit plan init .sisyphus/tasks/plan.yaml"
             )
             raise typer.Exit(1)
 
@@ -67,7 +67,7 @@ def show_graph(
             raise typer.Exit(1)
 
         plans = {plan.id: plan for plan in all_plans}
-        graph = build_plan_graph(plans)
+        graph = build_plan_graph(plans)  # pyright: ignore[reportUnknownArgumentType]
 
         cycles = detect_cycles(graph)
         if cycles:

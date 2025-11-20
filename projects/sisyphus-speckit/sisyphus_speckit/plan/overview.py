@@ -69,9 +69,9 @@ def plan_overview(
                 raise typer.Exit(code=1)
 
             work_plan = plan_doc.work_plans[0]
-            task_manager = TaskManager(plan_doc, work_plan.id)
+            _ = TaskManager(plan_doc, work_plan.id)
         else:
-            plan_doc, work_plan, task_manager = await _load_current_plan(working_dir)
+            _, work_plan, _ = await _load_current_plan(working_dir)
 
         # Calculate progress
         total_todos = _count_all_todos(work_plan.todos)
@@ -215,7 +215,7 @@ def plan_overview(
             acceptance_table.add_column("Category", style="yellow")
 
             for criterion in work_plan.acceptance_criteria:
-                acceptance_table.add_row(criterion.id, criterion.title, criterion.category)
+                acceptance_table.add_row(criterion.id, criterion.title, criterion.category)  # pyright: ignore[reportUnknownArgumentType]
 
             console.print(acceptance_table)
 

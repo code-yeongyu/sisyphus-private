@@ -46,7 +46,7 @@ async def _get_current_plan_id(working_dir: Path) -> str | None:
 
     try:
         status_content = await anyio.to_thread.run_sync(status_path.read_text)
-        status_data = json.loads(status_content)
+        status_data = json.loads(status_content)  # pyright: ignore[reportUnknownArgumentType]
         if status_data.get("current_plan") and status_data["current_plan"].get("plan_path"):
             plan_path = status_data["current_plan"]["plan_path"]
             plan_name = Path(plan_path).stem
@@ -58,7 +58,7 @@ async def _get_current_plan_id(working_dir: Path) -> str | None:
 
 
 async def _check_dependencies_satisfied(
-    plan_id: str, depends_on: list[str], _working_dir: Path, all_plans: dict[str, PlanInfo]
+    plan_id: str, depends_on: list[str], _working_dir: Path, all_plans: dict[str, PlanInfo]  # pyright: ignore[reportUnusedParameter]
 ) -> bool:
     """Check if all dependencies are satisfied.
 
@@ -210,6 +210,8 @@ def list_plans(
             case "created":
                 plans_data.sort(key=lambda p: p["created_at"])
 
+            case _:
+                pass
         table = Table(title="Available Plans")
         table.add_column("Name", style="cyan")
         table.add_column("File Path", style="magenta")

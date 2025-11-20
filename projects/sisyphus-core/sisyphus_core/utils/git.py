@@ -124,14 +124,14 @@ def find_commits_with_files(base_branch: str, file_patterns: list[str]) -> list[
         commit_hash = parts[0]
         message = parts[1]
 
-        files = []
+        files: list[str] = []
         if len(parts) > 2 and parts[2]:
             file_content = parts[2].lstrip("\n")
             if file_content:
                 file_lines = file_content.split("\n")
                 files.extend([f for f in file_lines if f.strip()])
 
-        matching_files = []
+        matching_files: list[str] = []
         for f in files:
             if _matches_pattern(f, file_patterns):
                 matching_files.append(f)
@@ -160,7 +160,7 @@ def generate_rebase_guide(commits: list[dict[str, str | list[str]]], base_branch
     Returns:
         Formatted guide string with Rich markup
     """
-    lines = []
+    lines: list[str] = []
     lines.append("[bold yellow]⚠ Git History Cleanup Guide[/bold yellow]\n")
     lines.append(
         f"Found [bold]{len(commits)} commit(s)[/bold] containing Sisyphus files since [cyan]{base_branch}[/cyan]:\n"
@@ -186,7 +186,8 @@ def generate_rebase_guide(commits: list[dict[str, str | list[str]]], base_branch
     lines.append("3. For each commit marked 'edit', run:")
     for commit in commits:
         hash_short = commit["hash"][:7]
-        files_str = " ".join(f'"{f}"' if " " in f else f for f in commit["files"])
+        files_list: list[str] = [f'"{f}"' if " " in f else f for f in commit["files"]]
+        files_str = " ".join(files_list)
         lines.append(f"   [dim]$[/dim] git rm {files_str}  # For {hash_short}")
         lines.append("   [dim]$[/dim] git commit --amend --no-edit")
         lines.append("   [dim]$[/dim] git rebase --continue\n")

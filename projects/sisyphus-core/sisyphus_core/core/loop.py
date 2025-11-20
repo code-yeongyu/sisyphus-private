@@ -183,7 +183,7 @@ class ExecutionLoop:
 
         self.state.set_plan_id(plan_id)
 
-        uncompleted_todos = []
+        uncompleted_todos: list[str] = []
         for plan in plan_doc.work_plans:
             for todo in plan.todos:
                 if todo.status != "completed":
@@ -347,7 +347,7 @@ class ExecutionLoop:
         if should_verify:
             await self.ui.show_status(
                 f"⚠️  Execute phase repeated {self.state._consecutive_execute_count} times consecutively. "
-                f"Forcing Verify phase to break potential infinite loop."
+                + "Forcing Verify phase to break potential infinite loop."
             )
 
         # Check execution.completed from plan
@@ -403,7 +403,7 @@ class ExecutionLoop:
 
                 if plan_path_for_failure_prompt:
                     plan_doc = await load_plan(plan_path_for_failure_prompt)
-                    uncompleted_todos = []
+                    uncompleted_todos: list[str] = []
                     for plan in plan_doc.work_plans:
                         for todo in plan.todos:
                             if todo.status != "completed":
@@ -514,7 +514,7 @@ class ExecutionLoop:
                     error_name = error.__class__.__name__
                     await self.ui.show_status(
                         f"[Iteration {self.state.iteration}] Verify retry required ({error_name}): {error} "
-                        f"(attempt {verify_retry_count}/{max_verify_retries})"
+                        + f"(attempt {verify_retry_count}/{max_verify_retries})"
                     )
 
         return (feedback, fully_done)

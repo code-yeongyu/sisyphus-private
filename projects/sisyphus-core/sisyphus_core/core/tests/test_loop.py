@@ -120,7 +120,7 @@ class MockLoggerFactory:
     """Mock logger factory for testing."""
 
     @staticmethod
-    def create_logger(agent_type: str, session_id: str | None = None, _log_dir: Path = Path("./logs")) -> MagicMock:
+    def create_logger(_agent_type: str, _session_id: str | None = None, _log_dir: Path | None = None) -> MagicMock:
         logger = MagicMock()
         logger.info = MagicMock()
         logger.debug = MagicMock()
@@ -226,7 +226,7 @@ class MockStatusManager:
             )
         )
 
-    async def set_current(self, plan_path: str, _plan_root: str) -> None:
+    async def set_current(self, _plan_path: str, _plan_root: str) -> None:
         """No-op for tests."""
         pass
 
@@ -591,7 +591,7 @@ async def test_verify_phase__if_middle_message_has_true_but_last_has_false__retu
     loop.state.set_plan_id("test-plan")
 
     # when
-    feedback, fully_done = await loop.phase_orchestrator.verify_phase(
+    _feedback, fully_done = await loop.phase_orchestrator.verify_phase(
         prompt="Test prompt",
         extra=None,
     )
@@ -638,7 +638,7 @@ async def test_verify_phase__if_no_judgment__retries_until_found() -> None:
     loop.state.set_plan_id("test-plan")
 
     # when
-    feedback, fully_done = await loop.phase_orchestrator.verify_phase(
+    _feedback, fully_done = await loop.phase_orchestrator.verify_phase(
         prompt="Test prompt",
         extra=None,
     )
@@ -673,7 +673,7 @@ async def test_verify_phase__if_max_retries_exceeded__defaults_to_false() -> Non
     loop.state.set_plan_id("test-plan")
 
     # when
-    feedback, fully_done = await loop.phase_orchestrator.verify_phase(
+    _feedback, fully_done = await loop.phase_orchestrator.verify_phase(
         prompt="Test prompt",
         extra=None,
     )

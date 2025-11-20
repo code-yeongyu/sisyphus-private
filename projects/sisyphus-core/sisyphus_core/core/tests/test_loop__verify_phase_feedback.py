@@ -121,7 +121,7 @@ async def test_verify_phase__if_multiple_messages__concatenates_with_newlines() 
     loop.state.set_plan_id("test-plan")
 
     # when
-    feedback, fully_done = await loop.phase_orchestrator.verify_phase("test prompt", None)
+    feedback, _fully_done = await loop.phase_orchestrator.verify_phase("test prompt", None)
 
     # then
     assert "First message\n\nSecond message" == feedback
@@ -248,7 +248,7 @@ class MockLoggerFactory:
     """Mock logger factory for testing."""
 
     @staticmethod
-    def create_logger(agent_type: str, session_id: str | None = None, _log_dir: Path = Path("./logs")) -> MagicMock:
+    def create_logger(_agent_type: str, _session_id: str | None = None, _log_dir: Path | None = None) -> MagicMock:
         logger = MagicMock()
         logger.info = MagicMock()
         logger.debug = MagicMock()

@@ -86,6 +86,9 @@ class TaskManager:
                     if parent_next and parent_next.computed_status == TodoStatus.pending:
                         return parent_next
 
+            case TodoStatus.pending | TodoStatus.blocked:
+                pass
+
         return None
 
     def get_previous_task(self, current_id: str | None = None) -> Todo | None:

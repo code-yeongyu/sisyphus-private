@@ -107,9 +107,8 @@ class PlanLinter:
         Reuses existing validation methods for nested structures.
         """
         if not isinstance(plan, dict):
-            self._check_type(plan, path, "dict")
+            self._check_type(plan, path, "dict")  # pyright: ignore[reportUnreachable]
             return
-
         allowed_fields = {
             "id",
             "name",
@@ -1773,8 +1772,8 @@ class PlanLinter:
                     available = ", ".join(f"'{p}'" for p in plans.keys())
                     errors.append(
                         f"Plan '{plan.id}' depends on plan '{dep_id}' that does not exist. "
-                        f"Fix: Either create a plan with id '{dep_id}', or change the dependency to one of: "
-                        f"{available}"
+                        + f"Fix: Either create a plan with id '{dep_id}', or change the dependency to one of: "
+                        + f"{available}"
                     )
 
                 # File path validation

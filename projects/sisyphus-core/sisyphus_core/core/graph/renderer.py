@@ -69,7 +69,7 @@ class MermaidRenderer:
 class PngRenderer:
     def render(self, graph: dict[str, list[str]]) -> bytes:
         try:
-            import graphviz
+            import graphviz  # type: ignore[import-untyped]  # pyright: ignore[reportMissingTypeStubs]
         except ImportError as e:
             msg = (
                 "graphviz library not found. Install it with:\n"

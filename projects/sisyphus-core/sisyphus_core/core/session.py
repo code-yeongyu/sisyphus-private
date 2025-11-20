@@ -5,7 +5,7 @@ import shutil
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import anyio
 
@@ -107,7 +107,8 @@ class SessionStore:
             plan_id: Plan ID
         """
         async with self.lock:
-            sessions = await anyio.to_thread.run_sync(self._load_sessions_sync)
+            sessions_data = await anyio.to_thread.run_sync(self._load_sessions_sync)
+            sessions: dict[str, dict[str, Any]] = cast(dict[str, dict[str, Any]], sessions_data)
 
             if agent_type not in sessions:
                 sessions[agent_type] = {}
@@ -127,7 +128,8 @@ class SessionStore:
             plan_id: Optional plan ID. If None, deletes all sessions for the agent
         """
         async with self.lock:
-            sessions = await anyio.to_thread.run_sync(self._load_sessions_sync)
+            sessions_data = await anyio.to_thread.run_sync(self._load_sessions_sync)
+            sessions: dict[str, dict[str, Any]] = cast(dict[str, dict[str, Any]], sessions_data)
             if agent_type not in sessions:
                 return
 

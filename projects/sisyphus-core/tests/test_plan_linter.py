@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -45,7 +46,7 @@ def create_test_plan(plan_id: str, todos: list[Todo], depends_on: list[str] | No
 
 async def test_plan_linter__if_valid_yaml__returns_no_errors() -> None:
     # given
-    yaml_data = {
+    yaml_data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-11-06T00:00:00Z"},
         "work_plans": [
@@ -73,7 +74,7 @@ async def test_plan_linter__if_valid_yaml__returns_no_errors() -> None:
     errors = linter.lint(yaml_data)
 
     # then
-    assert len(errors) == 0
+    assert len(errors) == 0  # type: ignore[arg-type]
 
 
 async def test_plan_linter__if_circular_dependency__detects_error() -> None:

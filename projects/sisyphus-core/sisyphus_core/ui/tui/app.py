@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import anyio
 from textual.app import App, ComposeResult
@@ -181,8 +181,8 @@ class TUI(App[None]):
             if not content:
                 return
 
-            total = self.task_validator.count_total_checkboxes(content)
-            completed = self.task_validator.count_completed_checkboxes(content)
+            total = cast(int, self.task_validator.count_total_checkboxes(content))
+            completed = cast(int, self.task_validator.count_completed_checkboxes(content))
 
             if total != self._last_total_checkboxes or completed != self._last_completed_checkboxes:
                 self._last_total_checkboxes = total
@@ -262,6 +262,8 @@ class TUI(App[None]):
                     chat_log.write_execute_message(message.message.content)
                 case "verify":
                     chat_log.write_verify_message(message.message.content)
+                case _:
+                    pass
         except Exception as e:
             self.log.error(f"Failed to show message: {e}")
 
@@ -291,7 +293,7 @@ class TUI(App[None]):
         minutes = int((seconds % 3600) // 60)
         secs = int(seconds % 60)
 
-        parts = []
+        parts: list[str] = []
         if hours > 0:
             parts.append(f"{hours} hour(s)")
         if minutes > 0:

@@ -14,7 +14,7 @@ class LoggerFactory:
     def create_logger(
         agent_type: str,
         session_id: str | None = None,
-        log_dir: Path = Path("./logs"),
+        log_dir: Path | None = None,
     ) -> logging.Logger:
         """
         Create agent/session-specific logger.
@@ -33,6 +33,10 @@ class LoggerFactory:
             - Log file format: {agent}_{timestamp}_{tz}.log
             - If session_id is provided, uses it in log filename
         """
+        # Default log directory if not provided
+        if log_dir is None:
+            log_dir = Path("./logs")
+
         # Create log directory if it doesn't exist
         log_dir.mkdir(parents=True, exist_ok=True)
 

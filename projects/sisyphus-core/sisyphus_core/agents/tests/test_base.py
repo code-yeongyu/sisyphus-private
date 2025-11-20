@@ -107,7 +107,7 @@ async def test_mock_agent_stream() -> None:
     agent = MockAgent()
 
     # When
-    messages = []
+    messages: list[AgentMessage] = []
     async for msg in agent.stream():
         messages.append(msg)
 

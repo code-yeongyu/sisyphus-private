@@ -202,6 +202,8 @@ class ClaudeAgent:
                                     content += f"{thinking_header}\n{indented_block}"
                                 else:
                                     content += thinking_header
+                            case _:
+                                pass
 
                     yield AgentMessage(
                         role="assistant",
@@ -247,6 +249,9 @@ class ClaudeAgent:
                         },
                     )
                     return
+
+                case _:
+                    pass
 
     async def close(self) -> None:
         """Close the Claude Agent SDK client."""

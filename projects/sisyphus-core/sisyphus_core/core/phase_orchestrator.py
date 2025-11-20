@@ -371,7 +371,7 @@ class PhaseOrchestrator:
                                             if checklist.checked_at is None or not checklist.checked_evidence:
                                                 unchecked_items.append(
                                                     f"  - [{checklist.id}] {checklist.title}\n"
-                                                    f"    Content: {checklist.content}"
+                                                    + f"    Content: {checklist.content}"
                                                 )
 
                             if unchecked_items:
@@ -380,19 +380,21 @@ class PhaseOrchestrator:
                                     f"FULLY_DONE = TRUE but {len(unchecked_items)} AC items unchecked"
                                 )
                                 self.state.set_acceptance_criteria_retry_message(
-                                    "❌ You said FULLY_DONE = TRUE, but you have NOT completed all " +
-                                    "acceptance_criteria_for_verification_agent items!\n\n" +
-                                    "**UNCHECKED ITEMS**:\n\n" + "\n".join(unchecked_items) + "\n\n" +
-                                    "**YOU MUST**:\n\n" +
-                                    "1. Read each unchecked item's content carefully\n" +
-                                    "2. Perform the verification specified in the content\n" +
-                                    "3. Mark each item using:\n" +
-                                    "   ```bash\n" +
-                                    "   sisyphus-speckit plan accept-as-verification-agent --id <checklist-id> "
+                                    "❌ You said FULLY_DONE = TRUE, but you have NOT completed all "
+                                    + "acceptance_criteria_for_verification_agent items!\n\n"
+                                    + "**UNCHECKED ITEMS**:\n\n"
+                                    + "\n".join(unchecked_items)
+                                    + "\n\n"
+                                    + "**YOU MUST**:\n\n"
+                                    + "1. Read each unchecked item's content carefully\n"
+                                    + "2. Perform the verification specified in the content\n"
+                                    + "3. Mark each item using:\n"
+                                    + "   ```bash\n"
+                                    + "   sisyphus-speckit plan accept-as-verification-agent --id <checklist-id> "
                                     + '--evidence "<detailed evidence>"\n'
-                                    + "   ```\n\n" +
-                                    "4. After ALL items are checked, THEN you can say FULLY_DONE = TRUE\n\n" +
-                                    "Please complete the unchecked items now and resume your work."
+                                    + "   ```\n\n"
+                                    + "4. After ALL items are checked, THEN you can say FULLY_DONE = TRUE\n\n"
+                                    + "Please complete the unchecked items now and resume your work."
                                 )
                                 fully_done = False
                                 has_judgment = False
@@ -482,11 +484,11 @@ class PhaseOrchestrator:
                         self.state.set_acceptance_criteria_retry_message(None)
                     else:
                         retry_message = (
-                            "You did not provide a clear FULLY_DONE judgment in your last response. " +
-                            "Please review the execute phase output and provide a clear judgment:\n\n" +
-                            "- Say 'FULLY_DONE = TRUE' if all goals in the work plan are accomplished\n" +
-                            "- Say 'FULLY_DONE = FALSE' if any goals remain incomplete\n\n" +
-                            "Please respond with your judgment now."
+                            "You did not provide a clear FULLY_DONE judgment in your last response. "
+                            + "Please review the execute phase output and provide a clear judgment:\n\n"
+                            + "- Say 'FULLY_DONE = TRUE' if all goals in the work plan are accomplished\n"
+                            + "- Say 'FULLY_DONE = FALSE' if any goals remain incomplete\n\n"
+                            + "Please respond with your judgment now."
                         )
 
                     feedback_messages.clear()

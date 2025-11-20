@@ -186,7 +186,7 @@ async def test_stream_assistant_message(mock_sdk_client: MagicMock, mock_sdk_opt
             _ = await agent.start_session()
 
     # when
-    messages = []
+    messages: list[AgentMessage] = []
     async for msg in agent.stream():
         messages.append(msg)
 
@@ -218,7 +218,7 @@ async def test_stream_system_message(mock_sdk_client: MagicMock, mock_sdk_option
             _ = await agent.start_session()
 
     # when
-    messages = []
+    messages: list[AgentMessage] = []
     async for msg in agent.stream():
         messages.append(msg)
 
@@ -251,7 +251,7 @@ async def test_stream_result_message(mock_sdk_client: MagicMock, mock_sdk_option
             _ = await agent.start_session()
 
     # when
-    messages = []
+    messages: list[AgentMessage] = []
     async for msg in agent.stream():
         messages.append(msg)
 

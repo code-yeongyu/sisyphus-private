@@ -6,13 +6,13 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
-import anyio
 import httpx
 import pytest
 
 from sisyphus_core.agents.base import Agent
 from sisyphus_core.agents.opencode import OpenCodeAgent
 from sisyphus_core.utils.errors import AgentNotFoundError, HealthCheckError, ServerStartError
+from sisyphus_core.utils.types import AgentMessage
 
 pytestmark = [pytest.mark.anyio]
 
@@ -111,18 +111,18 @@ async def test_server_auto_start() -> None:
     agent._binary_path = Path("/usr/bin/opencode")
     agent._auto_port = 4096
 
-    mock_process = Mock(spec=anyio.abc.Process)
+    mock_process: Mock = Mock()
 
     with patch(
         "sisyphus_core.agents.opencode.ProcessManager.run_with_timeout",
         return_value=mock_process,
-    ) as mock_run:
+    ) as mock_run:  # type: ignore[arg-type]
         # when
         await agent._start_server()
 
         # then
         mock_run.assert_called_once()
-        call_args = mock_run.call_args[0][0]
+        call_args: tuple[str, ...] = mock_run.call_args[0][0]  # type: ignore[assignment]
         assert call_args[0] == "/usr/bin/opencode"
         assert call_args[1] == "serve"
         assert "4096" in call_args
@@ -324,7 +324,7 @@ async def test_sse_streaming_message_chunk() -> None:
     agent._session_id = "ses_123"
 
     # when
-    messages = []
+    messages: list[AgentMessage] = []
     async for msg in agent.stream():
         messages.append(msg)
 
@@ -362,7 +362,7 @@ async def test_sse_streaming_tool_events() -> None:
     agent._session_id = "ses_123"
 
     # when
-    messages = []
+    messages: list[AgentMessage] = []
     async for msg in agent.stream():
         messages.append(msg)
 
@@ -398,7 +398,7 @@ async def test_sse_streaming_error_event() -> None:
     agent._session_id = "ses_123"
 
     # when
-    messages = []
+    messages: list[AgentMessage] = []
     async for msg in agent.stream():
         messages.append(msg)
 
@@ -437,7 +437,7 @@ async def test_sse_streaming_skip_invalid_lines() -> None:
     agent._session_id = "ses_123"
 
     # when
-    messages = []
+    messages: list[AgentMessage] = []
     async for msg in agent.stream():
         messages.append(msg)
 
@@ -474,7 +474,7 @@ async def test_sse_streaming_malformed_json() -> None:
     agent._session_id = "ses_123"
 
     # when
-    messages = []
+    messages: list[AgentMessage] = []
     async for msg in agent.stream():
         messages.append(msg)
 
@@ -511,7 +511,7 @@ async def test_sse_streaming_empty_data_field() -> None:
     agent._session_id = "ses_123"
 
     # when
-    messages = []
+    messages: list[AgentMessage] = []
     async for msg in agent.stream():
         messages.append(msg)
 
@@ -524,7 +524,7 @@ async def test_close_cleanup() -> None:
     """Should cleanup resources on close."""
     # given
     mock_client = AsyncMock(spec=httpx.AsyncClient)
-    mock_process = Mock(spec=anyio.abc.Process)
+    mock_process: Mock = Mock()
 
     agent = OpenCodeAgent()
     agent._client = mock_client

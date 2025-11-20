@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import anyio
 import pytest
@@ -157,7 +157,7 @@ async def test_atomic_write_creates_backup(session_store: SessionStore, temp_ses
 
     assert backup_file.exists()
     backup_content = await anyio.to_thread.run_sync(backup_file.read_text)
-    backup_data = json.loads(backup_content)
+    backup_data: Any = json.loads(cast(str, backup_content))
     assert "claude" in backup_data
 
 
@@ -165,8 +165,9 @@ async def test_json_format_validity(session_store: SessionStore, temp_sessions_d
     await session_store.save_session("claude", "test-session", "plan-foundation")
     sessions_file = temp_sessions_dir / "sessions.json"
 
-    content = await anyio.to_thread.run_sync(sessions_file.read_text)
-    data = json.loads(content)
+    content_data = await anyio.to_thread.run_sync(sessions_file.read_text)
+    content: str = cast(str, content_data)
+    data: Any = json.loads(content)
 
     assert isinstance(data, dict)
     assert "claude" in data
@@ -228,7 +229,7 @@ async def test_concurrent_access(session_store: SessionStore) -> None:
             tg.start_soon(save_operation, i)
 
     sessions = await session_store.list_sessions()
-    assert len(sessions) == num_operations
+    assert len(sessions) == num_operations  # type: ignore[arg-type]
     for i in range(num_operations):
         assert f"agent_{i}" in sessions
         assert f"plan_{i}" in sessions[f"agent_{i}"]

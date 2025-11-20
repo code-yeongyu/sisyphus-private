@@ -21,7 +21,7 @@ def test_create_logger_basic(tmp_path: Path) -> None:
     assert logger is not None
     assert logger.name == "sisyphus.test_agent"
     assert logger.level == logging.DEBUG
-    assert len(logger.handlers) == 2
+    assert len(logger.handlers) == 2  # type: ignore[arg-type]
 
 
 def test_create_logger_with_session_id(tmp_path: Path) -> None:
@@ -63,7 +63,7 @@ def test_create_logger_file_handler(tmp_path: Path) -> None:
 
     # then
     file_handlers = [h for h in logger.handlers if isinstance(h, logging.FileHandler)]
-    assert len(file_handlers) == 1
+    assert len(file_handlers) == 1  # type: ignore[arg-type]
 
     file_handler = file_handlers[0]
     assert file_handler.level == logging.DEBUG
@@ -78,7 +78,7 @@ def test_create_logger_console_handler(tmp_path: Path) -> None:
     logger = LoggerFactory.create_logger("test_agent", log_dir=log_dir)
 
     # then
-    console_handlers = [
+    console_handlers: list[logging.Handler] = [
         h for h in logger.handlers if isinstance(h, logging.StreamHandler) and not isinstance(h, logging.FileHandler)
     ]
     assert len(console_handlers) == 1
@@ -111,7 +111,7 @@ def test_create_logger_reuses_existing(tmp_path: Path) -> None:
     # then
     assert logger1 is logger2
     # Should not duplicate handlers
-    assert len(logger1.handlers) == 2
+    assert len(logger1.handlers) == 2  # type: ignore[arg-type]
 
 
 def test_create_logger_log_file_created(tmp_path: Path) -> None:

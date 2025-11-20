@@ -1,6 +1,7 @@
 """PlanLinter unit tests."""
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -14,7 +15,7 @@ async def test_lint_valid_yaml__when_all_fields_present__returns_no_errors() -> 
     # given
     linter = PlanLinter({})
     # v3.0 PlanDocument structure
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -60,7 +61,7 @@ async def test_lint_missing_required_field__when_metadata_missing__returns_error
     # given
     linter = PlanLinter({})
     # v3.0 PlanDocument structure - missing metadata to trigger error
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         # metadata is missing
         "work_plans": [
@@ -100,7 +101,7 @@ async def test_lint_type_mismatch__when_boolean_is_string__returns_error() -> No
     # given
     linter = PlanLinter({})
     # v3.0 PlanDocument structure
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01T00:00:00Z", "updated_at": "2025-01-01T00:00:00Z"},
         "work_plans": [
@@ -144,7 +145,7 @@ async def test_lint_extra_field__when_unknown_field_at_root__returns_error() -> 
     # given
     linter = PlanLinter({})
     # v3.0 PlanDocument structure
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -184,7 +185,7 @@ async def test_lint_invalid_enum__when_todo_status_invalid__returns_error() -> N
     # given
     linter = PlanLinter({})
     # v3.0 PlanDocument structure
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -230,7 +231,7 @@ async def test_lint_invalid_enum__when_todo_status_invalid__returns_error() -> N
 async def test_lint_ref_integrity__when_ref_id_not_found__returns_error() -> None:
     # given
     linter = PlanLinter({})
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -273,7 +274,7 @@ async def test_lint_ref_integrity__when_ref_id_not_found__returns_error() -> Non
     }
 
     # when
-    plan_doc = PlanDocument(**data)  # pyright: ignore[reportArgumentType]
+    plan_doc = PlanDocument(**data)  # type: ignore[arg-type]
     errors = linter.validate_all(plan_doc, Path("test.yaml"))
 
     # then
@@ -285,7 +286,7 @@ async def test_lint_multiple_errors__when_multiple_issues__returns_all_errors() 
     # given
     linter = PlanLinter({})
     # v3.0 PlanDocument structure
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01"},
         "work_plans": [
@@ -335,7 +336,7 @@ async def test_lint_recursive_children__when_child_has_error__returns_error() ->
     # given
     linter = PlanLinter({})
     # v3.0 PlanDocument structure
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -427,7 +428,7 @@ async def test_lint_verification_item_v2_1__when_bash_only__returns_no_errors() 
     # given
     linter = PlanLinter({})
     # v3.0 PlanDocument structure
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -482,7 +483,7 @@ async def test_lint_verification_item_v2_1__when_llm_judge_only__returns_no_erro
     # given
     linter = PlanLinter({})
     # v3.0 PlanDocument structure
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -537,7 +538,7 @@ async def test_lint_verification_item_v2_1__when_both_bash_and_llm__returns_no_e
     # given
     linter = PlanLinter({})
     # v3.0 PlanDocument structure
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -593,7 +594,7 @@ async def test_lint_verification_item_v2_1__when_neither_bash_nor_llm__returns_e
     # given
     linter = PlanLinter({})
     # v3.0 PlanDocument structure
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -648,7 +649,7 @@ async def test_lint_reference_pointer_v2_1__when_type_field_present__returns_no_
     # given
     linter = PlanLinter({})
     # v3.0 PlanDocument structure
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -698,7 +699,7 @@ async def test_lint_final_verification_v2_1__when_category_field_present__return
     # given
     linter = PlanLinter({})
     # v3.0 PlanDocument structure
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -754,7 +755,7 @@ async def test_validate_todos__if_empty__returns_error() -> None:
     # given
     linter = PlanLinter({})
     # v3.0 PlanDocument structure
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -795,7 +796,7 @@ async def test_validate_todos__if_empty__returns_error() -> None:
 async def test_validate_all_success__when_all_checks_pass__returns_empty_list() -> None:
     # given
     linter = PlanLinter({})
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -830,7 +831,7 @@ async def test_validate_all_success__when_all_checks_pass__returns_empty_list() 
             }
         ],
     }
-    plan_doc = PlanDocument(**data)  # pyright: ignore[reportArgumentType]
+    plan_doc = PlanDocument(**data)  # type: ignore[arg-type]
     plan_path = Path("/tmp/test.yaml")
 
     # when
@@ -843,7 +844,7 @@ async def test_validate_all_success__when_all_checks_pass__returns_empty_list() 
 async def test_validate_all_with_dependency_errors__when_missing_plan__returns_dependency_error() -> None:
     # given
     linter = PlanLinter({})
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -872,7 +873,7 @@ async def test_validate_all_with_dependency_errors__when_missing_plan__returns_d
             }
         ],
     }
-    plan_doc = PlanDocument(**data)  # pyright: ignore[reportArgumentType]
+    plan_doc = PlanDocument(**data)  # type: ignore[arg-type]
     plan_path = Path("/tmp/test.yaml")
 
     # when
@@ -887,7 +888,7 @@ async def test_validate_all_with_dependency_errors__when_missing_plan__returns_d
 async def test_validate_all_with_cycle_errors__when_circular_dependency__returns_cycle_error() -> None:
     # given
     linter = PlanLinter({})
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -939,7 +940,7 @@ async def test_validate_all_with_cycle_errors__when_circular_dependency__returns
             },
         ],
     }
-    plan_doc = PlanDocument(**data)  # pyright: ignore[reportArgumentType]
+    plan_doc = PlanDocument(**data)  # type: ignore[arg-type]
     plan_path = Path("/tmp/test.yaml")
 
     # when
@@ -954,7 +955,7 @@ async def test_validate_all_with_cycle_errors__when_circular_dependency__returns
 async def test_validate_all_returns_list_of_lint_errors__when_called__returns_correct_type() -> None:
     # given
     linter = PlanLinter({})
-    data = {
+    data: dict[str, Any] = {
         "version": "3.0",
         "metadata": {"created_at": "2025-01-01", "updated_at": "2025-01-01"},
         "work_plans": [
@@ -983,7 +984,7 @@ async def test_validate_all_returns_list_of_lint_errors__when_called__returns_co
             }
         ],
     }
-    plan_doc = PlanDocument(**data)  # pyright: ignore[reportArgumentType]
+    plan_doc = PlanDocument(**data)  # type: ignore[arg-type]
     plan_path = Path("/tmp/test.yaml")
 
     # when

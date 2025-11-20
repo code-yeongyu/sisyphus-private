@@ -60,8 +60,9 @@ class StatusPanel(RichLog):
         filled = int((completed / total) * bar_length)
         bar = "█" * filled + "░" * (bar_length - filled)
 
-        _ = self.write(
+        progress_text = (
             f"[dim]{timestamp}[/dim] [cyan]📋 Progress:[/cyan] {bar} "
-            f"[bold]{completed}/{total}[/bold] ({percentage}%) "
-            f"[dim]| Remaining: {remaining}[/dim]"
+            + f"[bold]{completed}/{total}[/bold] ({percentage}%) "
+            + f"[dim]| Remaining: {remaining}[/dim]"
         )
+        _ = self.write(progress_text)

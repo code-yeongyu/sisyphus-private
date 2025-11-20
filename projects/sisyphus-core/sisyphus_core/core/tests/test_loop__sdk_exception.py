@@ -264,7 +264,7 @@ class MockSessionStore:
 
 class MockLoggerFactory:
     @staticmethod
-    def create_logger(agent_type: str, session_id: str | None = None, _log_dir: Path = Path("./logs")) -> MagicMock:
+    def create_logger(_agent_type: str, _session_id: str | None = None, _log_dir: Path | None = None) -> MagicMock:
         logger = MagicMock()
         logger.info = MagicMock()
         logger.debug = MagicMock()

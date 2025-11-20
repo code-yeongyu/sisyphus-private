@@ -206,7 +206,7 @@ async def test_verify_phase__normal_completion__ends_phase(
 
     loop.state.set_plan_id("test-plan")
 
-    feedback, fully_done = await loop.phase_orchestrator.verify_phase("test prompt", None)
+    feedback, _fully_done = await loop.phase_orchestrator.verify_phase("test prompt", None)
 
     assert mock_verify_agent.closed
     assert len(mock_ui.messages) == 2
@@ -311,7 +311,7 @@ class MockSessionStore:
 
 
 class MockLoggerFactory:
-    def create_logger(self, name: str, _session_id: str | None) -> MagicMock:
+    def create_logger(self, _name: str, _session_id: str | None) -> MagicMock:
         logger = MagicMock()
         logger.info = MagicMock()
         logger.debug = MagicMock()

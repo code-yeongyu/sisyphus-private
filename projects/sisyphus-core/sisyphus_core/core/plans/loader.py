@@ -1,5 +1,6 @@
 from io import StringIO
 from pathlib import Path
+from typing import Any, cast
 
 import anyio
 from ruamel.yaml import YAML
@@ -26,14 +27,14 @@ async def load_plan(path: Path) -> PlanDocument:
         content = await f.read()
 
     yaml = YAML()
-    data = yaml.load(content)
+    data: Any = yaml.load(content)
 
     version = data.get("version")
     if not version:
         raise ValueError(f"Plan file {path} missing 'version' field")
 
     if version == "3.0":
-        return PlanDocument(**data)
+        return PlanDocument(**cast(dict[str, Any], data))
     else:
         raise ValueError(f"Unsupported version: {version}. Only v3.0 supported.")
 

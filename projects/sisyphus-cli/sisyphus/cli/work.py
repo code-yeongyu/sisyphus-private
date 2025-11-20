@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 import traceback
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Annotated, cast
 
 import anyio
 import typer
@@ -100,12 +100,10 @@ async def _validate_plan(plan_path: Path, ui: UIProtocol) -> None:
                 if not all_completed:
                     incomplete_count = sum(1 for t in dep_plan.todos if t.status != TodoStatus.completed)
                     await ui.show_status(
-                        (
-                            f"[red]Dependency not completed:[/red]\n\n"
-                            f"  Plan '{plan.id}' depends on '{dep_id}', "
-                            f"but '{dep_id}' has {incomplete_count} incomplete todo(s).\n\n"
-                            "Fix: Complete all todos in dependent plans first."
-                        )
+                        f"[red]Dependency not completed:[/red]\n\n"
+                        f"  Plan '{plan.id}' depends on '{dep_id}', "
+                        f"but '{dep_id}' has {incomplete_count} incomplete todo(s).\n\n"
+                        "Fix: Complete all todos in dependent plans first."
                     )
                     raise ValueError(f"Dependency '{dep_id}' not completed")
 
@@ -248,10 +246,10 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
 
     if not tasks_dir.exists():
         await ui.show_status(
-            "[yellow]No '.sisyphus/tasks/' directory found.[/yellow]\n\n" +
-            "Create v3.0 YAML plan:\n" +
-            "  mkdir -p .sisyphus/tasks\n" +
-            "  vi .sisyphus/tasks/my-plan.yaml"
+            "[yellow]No '.sisyphus/tasks/' directory found.[/yellow]\n\n"
+            + "Create v3.0 YAML plan:\n"
+            + "  mkdir -p .sisyphus/tasks\n"
+            + "  vi .sisyphus/tasks/my-plan.yaml"
         )
         return None
 
@@ -269,8 +267,8 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
 
     if len(executable_plans) == 0:
         await ui.show_status(
-            "[yellow]No executable plans found.[/yellow]\n\n" +
-            "All plans have unresolved dependencies. Complete dependency plans first."
+            "[yellow]No executable plans found.[/yellow]\n\n"
+            + "All plans have unresolved dependencies. Complete dependency plans first."
         )
         return None
     elif len(executable_plans) == 1:
@@ -299,9 +297,12 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
                 raise ValueError("User cancelled selection")
         else:
             # CLI 모드: anyio.to_thread.run_sync로 typer.prompt 래핑 (이벤트 루프 블로킹 방지)
-            result = cast(int, await anyio.to_thread.run_sync(
-                lambda: typer.prompt(f"Select plan (1-{len(executable_plans)})", default=1, type=int)
-            ))
+            result = cast(
+                int,
+                await anyio.to_thread.run_sync(
+                    lambda: typer.prompt(f"Select plan (1-{len(executable_plans)})", default=1, type=int)
+                ),
+            )
             selection = str(result)
 
         try:
@@ -512,25 +513,41 @@ async def _main_tui(
 @work_app.callback(invoke_without_command=True)
 def run(
     ctx: typer.Context,
-    agent: str | None = typer.Option(None, "--agent", "-a", help="Agent type (claude|opencode)"),  # pyright: ignore[reportCallInDefaultInitializer]
-    execute: str | None = typer.Option(None, "--execute", help="Execute agent (AGENT[:MODEL])"),  # pyright: ignore[reportCallInDefaultInitializer]
-    verify: str | None = typer.Option(None, "--verify", help="Verify agent (AGENT[:MODEL])"),  # pyright: ignore[reportCallInDefaultInitializer]
-    execute_extra_prompt: str | None = typer.Option(None, "--execute-extra-prompt", help="Extra execute prompt"),  # pyright: ignore[reportCallInDefaultInitializer]
-    verify_extra_prompt: str | None = typer.Option(None, "--verify-extra-prompt", help="Extra verify prompt"),  # pyright: ignore[reportCallInDefaultInitializer]
-    binary: Path | None = typer.Option(None, "--binary", help="Common binary path"),  # pyright: ignore[reportCallInDefaultInitializer]
-    execute_binary: Path | None = typer.Option(None, "--execute-binary", help="Execute binary (overrides --binary)"),  # pyright: ignore[reportCallInDefaultInitializer]
-    verify_binary: Path | None = typer.Option(None, "--verify-binary", help="Verify binary (overrides --binary)"),  # pyright: ignore[reportCallInDefaultInitializer]
-    execute_sdk_options: str | None = typer.Option(None, "--execute-sdk-options", help="Execute SDK options (JSON)"),  # pyright: ignore[reportCallInDefaultInitializer]
-    verify_sdk_options: str | None = typer.Option(None, "--verify-sdk-options", help="Verify SDK options (JSON)"),  # pyright: ignore[reportCallInDefaultInitializer]
-    opencode_server_url: str | None = typer.Option(None, "--opencode-server-url", help="OpenCode server URL"),  # pyright: ignore[reportCallInDefaultInitializer]
-    no_tui: bool = typer.Option(False, "--no-tui", help="Disable TUI, use CLI mode"),  # pyright: ignore[reportCallInDefaultInitializer]
-    theme: ThemeOption = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
-        ThemeOption.SYSTEM,
-        "--theme",
-        help="TUI theme (system: auto-detect, mocha: dark, latte: light)",
-        case_sensitive=False,
-    ),
-    _log: Path | None = typer.Option(None, "--log", help="Log file path"),  # pyright: ignore[reportCallInDefaultInitializer]
+    agent: Annotated[str | None, typer.Option("--agent", "-a", help="Agent type (claude|opencode)")] = None,
+    execute: Annotated[str | None, typer.Option("--execute", help="Execute agent (AGENT[:MODEL])")] = None,
+    verify: Annotated[str | None, typer.Option("--verify", help="Verify agent (AGENT[:MODEL])")] = None,
+    execute_extra_prompt: Annotated[
+        str | None, typer.Option("--execute-extra-prompt", help="Extra execute prompt")
+    ] = None,
+    verify_extra_prompt: Annotated[
+        str | None, typer.Option("--verify-extra-prompt", help="Extra verify prompt")
+    ] = None,
+    binary: Annotated[Path | None, typer.Option("--binary", help="Common binary path")] = None,
+    execute_binary: Annotated[
+        Path | None, typer.Option("--execute-binary", help="Execute binary (overrides --binary)")
+    ] = None,
+    verify_binary: Annotated[
+        Path | None, typer.Option("--verify-binary", help="Verify binary (overrides --binary)")
+    ] = None,
+    execute_sdk_options: Annotated[
+        str | None, typer.Option("--execute-sdk-options", help="Execute SDK options (JSON)")
+    ] = None,
+    verify_sdk_options: Annotated[
+        str | None, typer.Option("--verify-sdk-options", help="Verify SDK options (JSON)")
+    ] = None,
+    opencode_server_url: Annotated[
+        str | None, typer.Option("--opencode-server-url", help="OpenCode server URL")
+    ] = None,
+    no_tui: Annotated[bool, typer.Option("--no-tui", help="Disable TUI, use CLI mode")] = False,
+    theme: Annotated[
+        ThemeOption,
+        typer.Option(
+            "--theme",
+            help="TUI theme (system: auto-detect, mocha: dark, latte: light)",
+            case_sensitive=False,
+        ),
+    ] = ThemeOption.SYSTEM,
+    _log: Annotated[Path | None, typer.Option("--log", help="Log file path")] = None,
 ) -> None:
     """Work with Sisyphus multi-agent system."""
     execution_pwd = Path.cwd()
@@ -612,8 +629,10 @@ def run(
 
 @work_app.command(name="ignore")
 def ignore(
-    exclude_only: bool = typer.Option(False, "--exclude-only", help="Add only to .git/info/exclude (local)"),  # pyright: ignore[reportCallInDefaultInitializer]
-    both: bool = typer.Option(False, "--both", help="Add to both .gitignore and .git/info/exclude"),  # pyright: ignore[reportCallInDefaultInitializer]
+    exclude_only: Annotated[
+        bool, typer.Option("--exclude-only", help="Add only to .git/info/exclude (local)")
+    ] = False,
+    both: Annotated[bool, typer.Option("--both", help="Add to both .gitignore and .git/info/exclude")] = False,
 ) -> None:
     """Add Sisyphus-generated files to git ignore configuration."""
     if exclude_only and both:
@@ -674,8 +693,10 @@ def ignore(
 
 @work_app.command(name="clean-history")
 def clean_history(
-    base_branch: str | None = typer.Option(None, "--base-branch", help="Base branch (auto-detect if not specified)"),  # pyright: ignore[reportCallInDefaultInitializer]
-    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be done without making changes"),  # pyright: ignore[reportCallInDefaultInitializer]
+    base_branch: Annotated[
+        str | None, typer.Option("--base-branch", help="Base branch (auto-detect if not specified)")
+    ] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Show what would be done without making changes")] = False,
 ) -> None:
     """Remove Sisyphus-generated files from git history (current branch only)."""
     if is_on_main_branch():

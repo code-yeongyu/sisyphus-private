@@ -278,12 +278,12 @@ async def test_build_plan_graph__if_multiple_dependencies__preserves_order(
 
 
 async def test_detect_cycles__if_no_cycle__returns_empty_list(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given
     graph = {
@@ -300,12 +300,12 @@ async def test_detect_cycles__if_no_cycle__returns_empty_list(
 
 
 async def test_detect_cycles__if_simple_cycle__detects_cycle(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A → B → A
     graph = {
@@ -325,12 +325,12 @@ async def test_detect_cycles__if_simple_cycle__detects_cycle(
 
 
 async def test_detect_cycles__if_complex_cycle__detects_cycle(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A → B → C → A
     graph = {
@@ -351,12 +351,12 @@ async def test_detect_cycles__if_complex_cycle__detects_cycle(
 
 
 async def test_detect_cycles__if_multiple_disconnected_cycles__detects_all_cycles(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given:
     # Cycle 1: A → B → A
@@ -381,12 +381,12 @@ async def test_detect_cycles__if_multiple_disconnected_cycles__detects_all_cycle
 
 
 async def test_detect_cycles__if_self_reference__detects_cycle(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A → A
     graph = {
@@ -403,12 +403,12 @@ async def test_detect_cycles__if_self_reference__detects_cycle(
 
 
 async def test_detect_cycles__if_diamond_dependency_no_cycle__returns_empty_list(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given:
     #     A
@@ -431,12 +431,12 @@ async def test_detect_cycles__if_diamond_dependency_no_cycle__returns_empty_list
 
 
 async def test_detect_cycles__if_long_chain_with_cycle__detects_cycle(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A → B → C → D → B (cycle at B-C-D-B)
     graph = {
@@ -463,12 +463,12 @@ async def test_detect_cycles__if_long_chain_with_cycle__detects_cycle(
 
 
 async def test_topo_sort__if_linear_dependency_chain__returns_correct_order(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A → B → C
     graph = {
@@ -488,12 +488,12 @@ async def test_topo_sort__if_linear_dependency_chain__returns_correct_order(
 
 
 async def test_topo_sort__if_diamond_dependency__returns_valid_topological_order(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given:
     #     A
@@ -522,12 +522,12 @@ async def test_topo_sort__if_diamond_dependency__returns_valid_topological_order
 
 
 async def test_topo_sort__if_no_dependencies__returns_all_nodes(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given
     graph = {
@@ -545,12 +545,12 @@ async def test_topo_sort__if_no_dependencies__returns_all_nodes(
 
 
 async def test_topo_sort__if_graph_with_cycles__raises_value_error(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given: A → B → A (cycle)
     graph = {
@@ -564,12 +564,12 @@ async def test_topo_sort__if_graph_with_cycles__raises_value_error(
 
 
 async def test_topo_sort__if_complex_dag__returns_valid_order(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given:
     #     A
@@ -605,12 +605,12 @@ async def test_topo_sort__if_complex_dag__returns_valid_order(
 
 
 async def test_topo_sort__if_single_node__returns_single_element_list(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given
     graph = {
@@ -625,12 +625,12 @@ async def test_topo_sort__if_single_node__returns_single_element_list(
 
 
 async def test_topo_sort__if_parallel_branches__maintains_dependencies(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # given:
     #   A   B

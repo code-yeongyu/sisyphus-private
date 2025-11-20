@@ -151,12 +151,12 @@ async def test_index_references__with_empty_references__returns_empty_dict(
 
 
 async def test_resolve_ref_id__with_existing_ref_id__returns_reference(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # Given
     index = {
@@ -173,12 +173,12 @@ async def test_resolve_ref_id__with_existing_ref_id__returns_reference(
 
 
 async def test_resolve_ref_id__with_missing_ref_id__raises_key_error(
-    _minimal_user_request: UserRequest,
-    _minimal_objectives: Objectives,
-    _minimal_background: Background,
-    _minimal_required_background: RequiredBackground,
-    _minimal_workflow: Workflow,
-    _minimal_success_vision: SuccessVision,
+    minimal_user_request: UserRequest,
+    minimal_objectives: Objectives,
+    minimal_background: Background,
+    minimal_required_background: RequiredBackground,
+    minimal_workflow: Workflow,
+    minimal_success_vision: SuccessVision,
 ) -> None:
     # Given
     index = {"ref1": ReferenceItem(ref_id="ref1", uri="https://example.com")}

@@ -145,7 +145,7 @@ def test_status__verification_spec_table__displays_all_verification_items(
 
 
 def test_status__verification_spec_table__extracts_bash_details(
-    _minimal_work_plan: WorkPlan,
+    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A verification item with bash checks
@@ -184,7 +184,7 @@ def test_status__verification_spec_table__extracts_bash_details(
 
 
 def test_status__verification_spec_table__extracts_llm_judge_details(
-    _minimal_work_plan: WorkPlan,
+    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A verification item with LLM judge checks
@@ -411,7 +411,7 @@ def test_status__continuable__detects_incomplete_verifications(
 
 
 def test_status__continuable__detects_missing_manual_verification(
-    _minimal_work_plan: WorkPlan,
+    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A task with verified but not manually verified items
@@ -451,7 +451,7 @@ def test_status__continuable__detects_missing_manual_verification(
 
 
 def test_status__continuable__handles_no_verification_spec(
-    _minimal_work_plan: WorkPlan,
+    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A task with no verification specifications
@@ -478,7 +478,7 @@ def test_status__continuable__handles_no_verification_spec(
 
 
 def test_status__detailed_verification_info__formats_bash_check_details(
-    _minimal_work_plan: WorkPlan,
+    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A verification item with bash checks and multiple checks
@@ -529,7 +529,7 @@ def test_status__detailed_verification_info__formats_bash_check_details(
 
 
 def test_status__detailed_verification_info__formats_llm_judge_details(
-    _minimal_work_plan: WorkPlan,
+    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A verification item with multiple LLM judge checks
@@ -577,7 +577,7 @@ def test_status__detailed_verification_info__formats_llm_judge_details(
 
 
 def test_status__verification_output__handles_bash_verification_type(
-    _minimal_work_plan: WorkPlan,
+    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A verification item with bash checks
@@ -611,7 +611,7 @@ def test_status__verification_output__handles_bash_verification_type(
 
 
 def test_status__verification_output__handles_mixed_verification_types(
-    _minimal_work_plan: WorkPlan,
+    minimal_work_plan: WorkPlan,
 ) -> None:
     """
     Given: A verification item with both bash and LLM judge

@@ -616,7 +616,7 @@ work_plans:
   - id: '14'
     title: 전체 프로젝트 최종 검증
     description: 모든 프로젝트 통합 타입 검증
-    status: in_progress
+    status: completed
     references:
     - inline: "전체 프로젝트 basedpyright 최종 검증\n\n검증 범위:\n- 루트 디렉토리에서 basedpyright . 실행\n\
         - 모든 프로젝트 포함\n\n기대 결과:\n- 0 errors, 0 warnings\n\n확인 사항:\n- 프로젝트 간 타입 충돌 없음\n\
@@ -646,7 +646,7 @@ work_plans:
   - id: '15'
     title: 기존 테스트 회귀 검증
     description: 타입 변경이 런타임에 영향 없음을 확인
-    status: pending
+    status: in_progress
     references:
     - inline: "전체 테스트 스위트 실행하여 회귀 검증\n\n실행 명령:\n```bash\nuv run pytest\n```\n\n검증
         항목:\n1. 모든 테스트 통과\n2. 테스트 실패 없음\n3. 런타임 에러 없음\n\n기대 결과:\n- 타입 변경이 순수하게 타입
@@ -655,9 +655,20 @@ work_plans:
     - id: verify-15
       title: 기존 테스트 100% 통과 검증
       description: 타입 변경 후 회귀 없음 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-20T18:09:29.910962+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: "Task #15 기존 테스트 회귀 검증 완료:\n\n**검증 명령:** uv run
+        pytest\n**결과:** 1255 passed, 32 skipped, 0 failed (exit code 0) ✅\n\n**회귀
+        수정 과정:**\n1. 초기 상태: 41 failed (basedpyright cleanup으로 인한 regression)\n2. Git
+        bisect으로 root cause 식별: commit fa84fb0에서 37개 실패 도입\n3. Sisyphus-executor 4회
+        반복 수정:\n   - Round 1: 41 → 27 failed (14개 수정)\n   - Round 2: 27 → 23 failed
+        (4개 수정)\n   - Round 3: 23 failed (진전 없음)\n   - Round 4: 23 → 0 failed (23개
+        모두 수정!) ✅\n\n**수정된 버그 카테고리:**\n1. task_manager.py (2 failures): Child task
+        status counting 로직 버그 수정\n2. test_cli_clean_history.py (9 failures): Mock
+        path 및 git repo 초기화 수정\n3. test_cli_plan_lint.py (12 failures): CLI 명령 존재
+        여부 테스트 로직 수정\n4. 기타 (18 failures): 다양한 로직 및 fixture 문제 수정\n\n**타입 안전성:** basedpyright
+        0 errors, 0 warnings 유지 ✅\n**Runtime 동작:** 모든 테스트 통과로 회귀 없음 확인 ✅"
       bash:
       - execute: uv run pytest
         expected_exit_code: 0
@@ -723,6 +734,6 @@ work_plans:
     started_at: '2025-11-20T08:40:49.260285+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '14'
+    current_task_id: '15'
   current_work_ids: []
   acceptance_criteria_for_verification_agent: []

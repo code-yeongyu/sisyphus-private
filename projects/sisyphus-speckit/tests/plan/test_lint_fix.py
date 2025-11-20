@@ -274,7 +274,7 @@ user_request:
         saved_text = yaml_file.read_text()
         assert "test" in saved_text
 
-    def test_lint_fix__if_complex_structure__processes_all_levels(self, _tmp_path: Path) -> None:
+    def test_lint_fix__if_complex_structure__processes_all_levels(self, tmp_path: Path) -> None:
         # given: 복잡한 중첩 구조
         data: dict[str, object] = {
             "work_plans": [

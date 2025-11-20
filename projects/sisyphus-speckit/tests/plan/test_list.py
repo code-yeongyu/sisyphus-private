@@ -210,7 +210,7 @@ def test_list_plans__if_filter_status__filters_correctly(tmp_path: Path, capsys:
     assert "Available Plans" in captured.out
 
 
-def test_list_plans__if_sort_option__sorts_correctly(_tmp_path: Path) -> None:
+def test_list_plans__if_sort_option__sorts_correctly(tmp_path: Path) -> None:
     # given: 정렬 키 생성
     plan_info_1: PlanInfo = {
         "id": "plan-1",
@@ -246,7 +246,7 @@ def test_list_plans__if_sort_option__sorts_correctly(_tmp_path: Path) -> None:
 
 
 @pytest.mark.anyio()
-async def test_list_plans__calculates_status_correctly(_tmp_path: Path) -> None:
+async def test_list_plans__calculates_status_correctly(tmp_path: Path) -> None:
     # given: 현재 plan과 의존 관계가 있는 plans
     current_plan_id = "plan-1"
 

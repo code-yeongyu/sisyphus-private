@@ -255,14 +255,19 @@ class TaskManager:
         pending_count = 0
 
         for d in descendants:
-            if not d.verification_spec:
-                completed_count += 1
+            # Check if child's status is completed
+            if d.computed_status != TodoStatus.completed:
+                pending_count += 1
             else:
-                all_verified = all(v.verified for v in d.verification_spec)
-                if all_verified:
+                # If status is completed, check verifications
+                if not d.verification_spec:
                     completed_count += 1
                 else:
-                    pending_count += 1
+                    all_verified = all(v.verified for v in d.verification_spec)
+                    if all_verified:
+                        completed_count += 1
+                    else:
+                        pending_count += 1
 
         children_summary = {
             "completed": completed_count,

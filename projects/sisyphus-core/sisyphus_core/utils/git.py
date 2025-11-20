@@ -38,7 +38,7 @@ def detect_base_branch() -> str | None:
     """
     candidates = ["origin/main", "origin/master", "origin/develop"]
     for branch in candidates:
-        returncode, stdout, _ = run_git_command(["show-ref", "--verify", f"refs/remotes/{branch}"])
+        returncode, _, _ = run_git_command(["show-ref", "--verify", f"refs/remotes/{branch}"])
         if returncode == 0:
             return branch
     return None

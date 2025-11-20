@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import ANY, MagicMock, patch
 
 import pytest
-import typer
 
 from sisyphus_core.agents.base import Agent
 from sisyphus_core.agents.claude import ClaudeAgent

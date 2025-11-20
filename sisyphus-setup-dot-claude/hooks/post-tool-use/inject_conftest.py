@@ -15,7 +15,7 @@ import hashlib
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal, NotRequired, TypedDict
+from typing import Any, TypedDict
 
 import orjson
 import toml

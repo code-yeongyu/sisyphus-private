@@ -124,11 +124,10 @@ class ExecutionLoop:
 
         execute_prompt = DEFAULT_EXECUTE_PROMPT
         verify_prompt = ""
-        resolved_plan_path: str | None = None
 
         try:
             plan_path = await self._resolve_plan_path_from_status()
-            execute_prompt, verify_prompt, resolved_plan_path = await self._initialize_from_plan(plan_path)
+            execute_prompt, verify_prompt, _ = await self._initialize_from_plan(plan_path)
         except (ValueError, FileNotFoundError):
             if not self.state.get_plan_id():
                 plan_id = await self._resolve_plan_id()
@@ -149,16 +148,16 @@ class ExecutionLoop:
         """
         if not self.status_manager:
             raise ValueError(
-                "status_manager is required. " +
-                "task_validator.todolist_path fallback has been removed in v3.0. " +
-                "Please set status_manager in ExecutionLoop initialization."
+                "status_manager is required. "
+                + "task_validator.todolist_path fallback has been removed in v3.0. "
+                + "Please set status_manager in ExecutionLoop initialization."
             )
 
         status_file = await self.status_manager.get()
         if not status_file.current_plan or not status_file.current_plan.plan_path:
             raise ValueError(
-                "current_plan is not set in status.json. " +
-                "Please run 'sisyphus-speckit plan init' or set current plan first."
+                "current_plan is not set in status.json. "
+                + "Please run 'sisyphus-speckit plan init' or set current plan first."
             )
 
         return Path(status_file.current_plan.plan_path)

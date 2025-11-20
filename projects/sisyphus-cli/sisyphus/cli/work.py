@@ -99,10 +99,12 @@ async def _validate_plan(plan_path: Path, ui: UIProtocol) -> None:
                 if not all_completed:
                     incomplete_count = sum(1 for t in dep_plan.todos if t.status != TodoStatus.completed)
                     await ui.show_status(
-                        f"[red]Dependency not completed:[/red]\n\n"
-                        f"  Plan '{plan.id}' depends on '{dep_id}', "
-                        f"but '{dep_id}' has {incomplete_count} incomplete todo(s).\n\n"
-                        + "Fix: Complete all todos in dependent plans first."
+                        (
+                            f"[red]Dependency not completed:[/red]\n\n"
+                            f"  Plan '{plan.id}' depends on '{dep_id}', "
+                            f"but '{dep_id}' has {incomplete_count} incomplete todo(s).\n\n"
+                            "Fix: Complete all todos in dependent plans first."
+                        )
                     )
                     raise ValueError(f"Dependency '{dep_id}' not completed")
 

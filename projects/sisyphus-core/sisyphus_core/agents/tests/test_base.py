@@ -24,10 +24,10 @@ class MockAgent:
     async def initialize(self) -> None:
         pass
 
-    async def start_session(self, session_id: str | None = None) -> str:
+    async def start_session(self, _session_id: str | None = None) -> str:
         return "test-session-id"
 
-    async def send(self, message: str) -> None:
+    async def send(self, _message: str) -> None:
         pass
 
     async def stream(self) -> AsyncIterator[AgentMessage]:

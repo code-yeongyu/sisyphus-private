@@ -166,7 +166,7 @@ async def test_png_renderer__if_graphviz_not_installed__raises_import_error() ->
         pytest.skip("graphviz is installed, skipping test")
     except ImportError:
         with pytest.raises(ImportError, match="graphviz library not found"):
-            renderer.render(graph)
+            _ = renderer.render(graph)
 
 
 async def test_png_renderer__if_graphviz_installed__returns_png_bytes() -> None:

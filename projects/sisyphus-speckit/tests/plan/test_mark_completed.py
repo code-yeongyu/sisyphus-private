@@ -83,7 +83,7 @@ def test_mark_completed__if_all_todos_completed__sets_execution_completed_true(t
             "updated_at": datetime.now(UTC).isoformat(),
         }
     }
-    status_path.write_text(json.dumps(status_data))
+    _ = status_path.write_text(json.dumps(status_data))
 
     # when
     result = runner.invoke(
@@ -172,7 +172,7 @@ def test_mark_completed__if_todos_incomplete__exits_with_error_code(tmp_path: Pa
             "updated_at": datetime.now(UTC).isoformat(),
         }
     }
-    status_path.write_text(json.dumps(status_data))
+    _ = status_path.write_text(json.dumps(status_data))
 
     # when
     result = runner.invoke(
@@ -257,7 +257,7 @@ def test_mark_completed__if_todos_incomplete__shows_guidance_message(tmp_path: P
             "updated_at": datetime.now(UTC).isoformat(),
         }
     }
-    status_path.write_text(json.dumps(status_data))
+    _ = status_path.write_text(json.dumps(status_data))
 
     # when
     result = runner.invoke(
@@ -282,7 +282,7 @@ def test_mark_completed__if_no_current_plan__exits_with_error(tmp_path: Path) ->
 
     status_path = sisyphus_dir / "status.json"
     status_data = {"current_plan": None}
-    status_path.write_text(json.dumps(status_data))
+    _ = status_path.write_text(json.dumps(status_data))
 
     # when
     result = runner.invoke(

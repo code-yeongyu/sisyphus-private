@@ -48,5 +48,5 @@ def add_patterns_to_file(file_path: Path, patterns: list[str]) -> list[str]:
         content_to_add = "\n"
     content_to_add += "\n".join(new_patterns) + "\n"
 
-    file_path.write_text(existing_content + content_to_add)
+    _ = file_path.write_text(existing_content + content_to_add)
     return new_patterns

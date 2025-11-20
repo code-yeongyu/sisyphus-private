@@ -110,7 +110,7 @@ async def run_command(cmd: list[str], command_timeout: float = 1.0) -> CommandRe
             )
         except TimeoutError:
             proc.kill()
-            await proc.wait()
+            _ = await proc.wait()
             return CommandResult("", "", -1)
 
     except Exception:

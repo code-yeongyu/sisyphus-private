@@ -144,7 +144,7 @@ def test_list_plans__if_directory_exists__prints_table(tmp_path: Path, capsys: p
         },
         "work_plans": [work_plan.model_dump()],
     }
-    plan_file.write_text(
+    _ = plan_file.write_text(
         json.dumps(plan_doc_dict),
         encoding="utf-8",
     )
@@ -197,7 +197,7 @@ def test_list_plans__if_filter_status__filters_correctly(tmp_path: Path, capsys:
         },
         "work_plans": [work_plan.model_dump()],
     }
-    plan_file.write_text(
+    _ = plan_file.write_text(
         json.dumps(plan_doc_dict),
         encoding="utf-8",
     )
@@ -210,7 +210,7 @@ def test_list_plans__if_filter_status__filters_correctly(tmp_path: Path, capsys:
     assert "Available Plans" in captured.out
 
 
-def test_list_plans__if_sort_option__sorts_correctly(tmp_path: Path) -> None:
+def test_list_plans__if_sort_option__sorts_correctly(_tmp_path: Path) -> None:
     # given: 정렬 키 생성
     plan_info_1: PlanInfo = {
         "id": "plan-1",
@@ -246,7 +246,7 @@ def test_list_plans__if_sort_option__sorts_correctly(tmp_path: Path) -> None:
 
 
 @pytest.mark.anyio()
-async def test_list_plans__calculates_status_correctly(tmp_path: Path) -> None:
+async def test_list_plans__calculates_status_correctly(_tmp_path: Path) -> None:
     # given: 현재 plan과 의존 관계가 있는 plans
     current_plan_id = "plan-1"
 
@@ -378,7 +378,7 @@ async def test_list_plans__reads_current_plan_from_status_json(tmp_path: Path) -
     status_file = sisyphus_dir / "status.json"
 
     current_plan_path = str(tmp_path / "plans" / "current.yaml")
-    status_file.write_text(
+    _ = status_file.write_text(
         json.dumps(
             {
                 "current_plan": {

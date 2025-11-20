@@ -118,7 +118,7 @@ def has_executor_agent(session_id: str) -> bool:
     return False
 
 
-def build_delegation_message(file_path: str) -> str:
+def build_delegation_message(_file_path: str) -> str:
     return """
 PLAN FILE MODIFICATION BLOCKED
 

@@ -27,7 +27,7 @@ class MockLoggerFactory:
     """Mock logger factory for testing."""
 
     @staticmethod
-    def create_logger(agent_type: str, session_id: str | None = None, log_dir: Path = Path("./logs")) -> MagicMock:
+    def create_logger(agent_type: str, session_id: str | None = None, _log_dir: Path = Path("./logs")) -> MagicMock:
         logger = MagicMock()
         logger.info = MagicMock()
         logger.debug = MagicMock()
@@ -84,7 +84,7 @@ async def test_execute_phase__if_user_sends_message_during_agent_response__messa
             if len(self.messages) == 1:
                 self.input_queue.append("User message during response")
 
-        async def show_status(self, status: str) -> None:
+        async def show_status(self, _status: str) -> None:
             pass
 
         async def get_input(self) -> str | None:
@@ -96,10 +96,10 @@ async def test_execute_phase__if_user_sends_message_during_agent_response__messa
             return None
 
     class MockSessionStore:
-        async def get_session(self, agent_type: str) -> str | None:
+        async def get_session(self, _agent_type: str) -> str | None:
             return None
 
-        async def save_session(self, agent_type: str, session_id: str) -> None:
+        async def save_session(self, agent_type: str, _session_id: str) -> None:
             pass
 
 
@@ -146,7 +146,7 @@ async def test_execute_phase__if_multiple_user_messages_sent__all_forwarded_in_o
         async def show_message(self, message: AgentMessage, source: str) -> None:
             self.messages.append((message, source))
 
-        async def show_status(self, status: str) -> None:
+        async def show_status(self, _status: str) -> None:
             pass
 
         async def get_input(self) -> str | None:
@@ -159,8 +159,8 @@ async def test_execute_phase__if_multiple_user_messages_sent__all_forwarded_in_o
             return None
 
     class MockSessionStore:
-        async def get_session(self, agent_type: str) -> str | None:
+        async def get_session(self, _agent_type: str) -> str | None:
             return None
 
-        async def save_session(self, agent_type: str, session_id: str) -> None:
+        async def save_session(self, agent_type: str, _session_id: str) -> None:
             pass

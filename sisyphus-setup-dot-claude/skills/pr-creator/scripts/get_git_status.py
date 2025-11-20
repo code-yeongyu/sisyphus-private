@@ -48,7 +48,7 @@ async def main() -> int:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        await check_process.communicate()
+        _ = await check_process.communicate()
 
         if check_process.returncode != 0:
             print(json.dumps({"error": "Not a git repository", "cwd": str(Path.cwd())}), file=sys.stderr)

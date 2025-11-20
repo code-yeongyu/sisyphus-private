@@ -25,7 +25,7 @@ async def test_run_with_timeout_success() -> None:
     assert process.returncode is None or process.returncode == 0
 
     # cleanup
-    await process.wait()
+    _ = await process.wait()
 
 
 async def test_run_with_timeout_exceeds() -> None:
@@ -42,7 +42,7 @@ async def test_run_with_timeout_exceeds() -> None:
         assert process is not None
     finally:
         if process:
-            await process.wait()
+            _ = await process.wait()
 
     # then
     # Test that timeout mechanism is properly configured
@@ -53,7 +53,7 @@ async def test_terminate_gracefully_already_terminated() -> None:
     """Test graceful termination when process already terminated."""
     # given
     process = await anyio.open_process(["echo", "hello"])
-    await process.wait()
+    _ = await process.wait()
 
     # when
     await ProcessManager.terminate_gracefully(process, timeout_seconds=1.0)

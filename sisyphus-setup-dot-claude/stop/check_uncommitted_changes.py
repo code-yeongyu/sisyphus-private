@@ -42,15 +42,15 @@ def main() -> None:
     log_path = Path.home() / ".claude" / "hook_debug.log"
     try:
         with log_path.open("a", encoding="utf-8") as log_file:
-            log_file.write(f"\n=== Stop Hook (Uncommitted Changes Check) {datetime.datetime.now()} ===\n")
+            _ = log_file.write(f"\n=== Stop Hook (Uncommitted Changes Check) {datetime.datetime.now()} ===\n")
             input_data = sys.stdin.read()
-            log_file.write(f"Input: {input_data}\n")
+            _ = log_file.write(f"Input: {input_data}\n")
 
         sys.stdin = io.StringIO(input_data)
         execute_hook_pipeline()
     except Exception as exception:
         with log_path.open("a", encoding="utf-8") as log_file:
-            log_file.write(f"Exception: {exception}\n")
+            _ = log_file.write(f"Exception: {exception}\n")
         sys.exit(Config.EXIT_CODE_ALLOW)
 
 
@@ -61,15 +61,15 @@ def execute_hook_pipeline() -> None:
 
     if not cwd:
         with open(Path.home() / ".claude" / "hook_debug.log", "a") as f:
-            f.write("No cwd provided\n")
+            _ = f.write("No cwd provided\n")
         sys.exit(Config.EXIT_CODE_ALLOW)
 
     uncommitted_changes = check_uncommitted_changes(cwd)
 
     with open(Path.home() / ".claude" / "hook_debug.log", "a") as f:
-        f.write(f"CWD: {cwd}, Uncommitted changes: {bool(uncommitted_changes)}\n")
+        _ = f.write(f"CWD: {cwd}, Uncommitted changes: {bool(uncommitted_changes)}\n")
         if uncommitted_changes:
-            f.write(f"Changes:\n{uncommitted_changes}\n")
+            _ = f.write(f"Changes:\n{uncommitted_changes}\n")
 
     handle_findings(uncommitted_changes)
 

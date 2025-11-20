@@ -64,10 +64,10 @@ class TodoAdder:
                 "priority": "high",
                 "activeForm": content,
             }
-            todos.insert(0, todo_item)
+            _ = todos.insert(0, todo_item)
 
         try:
-            todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
         except OSError as e:
             print(f"Failed to write TODO file: {e}", file=sys.stderr)
 

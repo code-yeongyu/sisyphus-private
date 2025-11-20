@@ -46,7 +46,7 @@ def test_create_logger_creates_directory(tmp_path: Path) -> None:
     assert not log_dir.exists()
 
     # when
-    LoggerFactory.create_logger("test_agent", log_dir=log_dir)
+    _ = LoggerFactory.create_logger("test_agent", log_dir=log_dir)
 
     # then
     assert log_dir.exists()

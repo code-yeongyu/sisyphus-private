@@ -19,7 +19,7 @@ console = Console()
 
 def verify_bash(
     cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
-    evidence: str | None = typer.Option(
+    _evidence: str | None = typer.Option(
         None,
         "--evidence",
         help="Evidence description (legacy option)",

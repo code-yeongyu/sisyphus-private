@@ -59,7 +59,7 @@ work_plans:
       current_task_id: null
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(app, ["plan", "lint", "--file", str(yaml_file)])
@@ -75,7 +75,7 @@ async def test_plan_lint__when_missing_fields__exits_1_and_shows_errors(tmp_path
     yaml_content = """version: "3.0"
 work_plans: []
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(app, ["plan", "lint", "--file", str(yaml_file)])
@@ -131,7 +131,7 @@ work_plans:
       current_task_id: null
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(app, ["plan", "lint", "--file", str(yaml_file)])
@@ -200,7 +200,7 @@ work_plans:
       current_task_id: null
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(app, ["plan", "lint", "--file", str(yaml_file)])
@@ -220,7 +220,7 @@ async def test_plan_lint__when_yaml_syntax_error__exits_1_and_shows_parsing_erro
   invalid indentation
     bad_field: "value"
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(app, ["plan", "lint", "--file", str(yaml_file)])

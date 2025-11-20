@@ -217,13 +217,13 @@ class MockSessionStore:
     def __init__(self) -> None:
         self.sessions: dict[str, str] = {}
 
-    async def get_session(self, agent_type: str, plan_id: str) -> str | None:
+    async def get_session(self, agent_type: str, _plan_id: str) -> str | None:
         return self.sessions.get(agent_type)
 
-    async def save_session(self, agent_type: str, session_id: str, plan_id: str) -> None:
+    async def save_session(self, agent_type: str, session_id: str, _plan_id: str) -> None:
         self.sessions[agent_type] = session_id
 
-    async def delete_session(self, agent_type: str, plan_id: str | None = None) -> None:
+    async def delete_session(self, agent_type: str, _plan_id: str | None = None) -> None:
         if agent_type in self.sessions:
             del self.sessions[agent_type]
 
@@ -235,7 +235,7 @@ class MockLoggerFactory:
     """Mock logger factory for testing."""
 
     @staticmethod
-    def create_logger(agent_type: str, session_id: str | None = None, log_dir: Path = Path("./logs")) -> MagicMock:
+    def create_logger(agent_type: str, session_id: str | None = None, _log_dir: Path = Path("./logs")) -> MagicMock:
         logger = MagicMock()
         logger.info = MagicMock()
         logger.debug = MagicMock()

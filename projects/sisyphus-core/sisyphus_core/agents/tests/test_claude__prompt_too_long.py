@@ -59,7 +59,7 @@ async def test_claude__if_result_message_has_prompt_too_long_error__raises_promp
     with patch("sisyphus_core.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
         with patch("sisyphus_core.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
             await agent.initialize()
-            await agent.start_session()
+            _ = await agent.start_session()
 
     # when/then
     with pytest.raises(PromptTooLongError, match="Prompt exceeded maximum length"):
@@ -96,7 +96,7 @@ async def test_claude__if_assistant_message_mentions_prompt_too_long__yields_nor
     with patch("sisyphus_core.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
         with patch("sisyphus_core.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
             await agent.initialize()
-            await agent.start_session()
+            _ = await agent.start_session()
 
     # when
     messages: list[AgentMessage] = []
@@ -132,7 +132,7 @@ async def test_claude__if_result_message_has_other_sdk_error__raises_runtime_err
     with patch("sisyphus_core.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
         with patch("sisyphus_core.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
             await agent.initialize()
-            await agent.start_session()
+            _ = await agent.start_session()
 
     # when/then
     with pytest.raises(RuntimeError, match="Claude Agent SDK error"):

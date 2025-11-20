@@ -57,7 +57,7 @@ work_plans:
       parallel_requested: false
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(plan_app, ["lint", "--file", str(yaml_file)])
@@ -70,7 +70,7 @@ work_plans:
 def test_lint__with_invalid_yaml__fails(tmp_path: Path) -> None:
     # given
     yaml_file = tmp_path / "test.yaml"
-    yaml_file.write_text("metadata:\n  invalid: true")
+    _ = yaml_file.write_text("metadata:\n  invalid: true")
 
     # when
     result = runner.invoke(plan_app, ["lint", "--file", str(yaml_file)])
@@ -123,7 +123,7 @@ work_plans:
       parallel_requested: false
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(plan_app, ["lint", "--file", "ai-todolist.yaml", "--cwd", str(tmp_path)])
@@ -154,7 +154,7 @@ def test_init__creates_template_file(tmp_path: Path) -> None:
 def test_init__with_existing_file__fails(tmp_path: Path) -> None:
     # given
     output_file = tmp_path / "existing.yaml"
-    output_file.write_text("existing content")
+    _ = output_file.write_text("existing content")
 
     # when
     result = runner.invoke(plan_app, ["init", "--path", str(output_file)])
@@ -304,7 +304,7 @@ work_plans:
       parallel_requested: false
     current_work: ""
 """
-    plan_file.write_text(yaml_content)
+    _ = plan_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(plan_app, ["graph", "--cwd", str(tmp_path), "--format", "ascii"])
@@ -322,7 +322,7 @@ def test_graph__with_non_v3_plan__shows_warning(tmp_path: Path) -> None:
   created_at: "2025-01-01T00:00:00Z"
   updated_at: "2025-01-01T00:00:00Z"
 """
-    plan_file.write_text(yaml_content)
+    _ = plan_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(plan_app, ["graph", "--cwd", str(tmp_path)])
@@ -377,7 +377,7 @@ work_plans:
       parallel_requested: false
     current_work: ""
 """
-    plan_file.write_text(yaml_content)
+    _ = plan_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(plan_app, ["graph", "--cwd", str(tmp_path), "--format", "mermaid"])

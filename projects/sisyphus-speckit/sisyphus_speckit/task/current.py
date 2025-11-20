@@ -8,7 +8,7 @@ from sisyphus_speckit.task.show import _show_task_impl
 
 
 def show_current(
-    rich: bool = typer.Option(
+    _rich: bool = typer.Option(
         False,
         "--rich",
         help="Rich formatting (legacy option, always enabled)",

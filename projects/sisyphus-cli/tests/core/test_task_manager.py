@@ -57,17 +57,17 @@ async def test_task_manager__if_work_plan_exists__finds_it(
 
 
 async def test_task_manager__if_work_plan_missing__raises_error(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
+    _minimal_user_request: UserRequest,
+    _minimal_objectives: Objectives,
+    _minimal_background: Background,
+    _minimal_required_background: RequiredBackground,
+    _minimal_workflow: Workflow,
+    _minimal_success_vision: SuccessVision,
 ) -> None:
     plan_doc = PlanDocument(version="3.0", metadata=Metadata(created_at="2025-11-06T00:00:00Z"), work_plans=[])
 
     with pytest.raises(ValueError, match="WorkPlan not found"):
-        TaskManager(plan_doc, "missing-plan")
+        _ = TaskManager(plan_doc, "missing-plan")
 
 
 async def test_find_todo_by_id__if_root_todo__returns_it(

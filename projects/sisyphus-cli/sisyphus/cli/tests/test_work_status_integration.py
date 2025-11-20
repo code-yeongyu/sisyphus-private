@@ -30,7 +30,7 @@ async def test_work_and_task_continue__use_same_plan_via_status_json(
     tasks_dir.mkdir(parents=True)
 
     test_plan = tasks_dir / "test-plan.yaml"
-    test_plan.write_text("""version: '3.0'
+    _ = test_plan.write_text("""version: '3.0'
 metadata:
   created_at: '2025-11-10T00:00:00Z'
   updated_at: '2025-11-10T00:00:00Z'

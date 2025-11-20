@@ -136,7 +136,7 @@ async def test_start_session_resume_failure(mock_sdk_client: MagicMock) -> None:
     with patch("sisyphus_core.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
         with patch("sisyphus_core.agents.claude.ClaudeAgentOptions"):
             with pytest.raises(SessionResumeError, match="Failed to resume session"):
-                await agent.start_session("invalid-session")
+                _ = await agent.start_session("invalid-session")
 
 
 async def test_send_message(mock_sdk_client: MagicMock, mock_sdk_options: MagicMock) -> None:
@@ -146,7 +146,7 @@ async def test_send_message(mock_sdk_client: MagicMock, mock_sdk_options: MagicM
     with patch("sisyphus_core.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
         with patch("sisyphus_core.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
             await agent.initialize()
-            await agent.start_session()
+            _ = await agent.start_session()
 
     # when
     await agent.send("Hello Claude")
@@ -183,7 +183,7 @@ async def test_stream_assistant_message(mock_sdk_client: MagicMock, mock_sdk_opt
     with patch("sisyphus_core.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
         with patch("sisyphus_core.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
             await agent.initialize()
-            await agent.start_session()
+            _ = await agent.start_session()
 
     # when
     messages = []
@@ -215,7 +215,7 @@ async def test_stream_system_message(mock_sdk_client: MagicMock, mock_sdk_option
     with patch("sisyphus_core.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
         with patch("sisyphus_core.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
             await agent.initialize()
-            await agent.start_session()
+            _ = await agent.start_session()
 
     # when
     messages = []
@@ -248,7 +248,7 @@ async def test_stream_result_message(mock_sdk_client: MagicMock, mock_sdk_option
     with patch("sisyphus_core.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
         with patch("sisyphus_core.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
             await agent.initialize()
-            await agent.start_session()
+            _ = await agent.start_session()
 
     # when
     messages = []
@@ -282,7 +282,7 @@ async def test_close(mock_sdk_client: MagicMock, mock_sdk_options: MagicMock) ->
     with patch("sisyphus_core.agents.claude.ClaudeSDKClient", return_value=mock_sdk_client):
         with patch("sisyphus_core.agents.claude.ClaudeAgentOptions", return_value=mock_sdk_options):
             await agent.initialize()
-            await agent.start_session()
+            _ = await agent.start_session()
 
     # when
     await agent.close()

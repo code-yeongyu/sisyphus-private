@@ -156,7 +156,7 @@ async def test_verify_phase__if_sdk_exception__deletes_session_and_retries() -> 
     while retry_count < max_retries:
         should_retry = False
         try:
-            await loop.phase_orchestrator.verify_phase(prompt="Test prompt", extra=None)
+            _ = await loop.phase_orchestrator.verify_phase(prompt="Test prompt", extra=None)
             success = True
             break
         except* RetryRequiredError:
@@ -264,7 +264,7 @@ class MockSessionStore:
 
 class MockLoggerFactory:
     @staticmethod
-    def create_logger(agent_type: str, session_id: str | None = None, log_dir: Path = Path("./logs")) -> MagicMock:
+    def create_logger(agent_type: str, session_id: str | None = None, _log_dir: Path = Path("./logs")) -> MagicMock:
         logger = MagicMock()
         logger.info = MagicMock()
         logger.debug = MagicMock()
@@ -281,8 +281,8 @@ class MockTaskValidator:
     def read_content(self) -> str:
         return "mock content"
 
-    async def check_all_goals_accomplished(self, content: str | None = None) -> bool:
+    async def check_all_goals_accomplished(self, _content: str | None = None) -> bool:
         return self._all_complete
 
-    async def check_all_checkboxes_completed(self, content: str | None = None) -> bool:
+    async def check_all_checkboxes_completed(self, _content: str | None = None) -> bool:
         return self._all_complete

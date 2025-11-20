@@ -38,7 +38,7 @@ def export_plan(
         if output:
             resolved_output = working_dir / output if not output.is_absolute() else output
             resolved_output.parent.mkdir(parents=True, exist_ok=True)
-            resolved_output.write_text(markdown, encoding="utf-8")
+            _ = resolved_output.write_text(markdown, encoding="utf-8")
             console.print(f"[green]✓ Markdown exported to: {resolved_output}[/green]")
         else:
             print(markdown)

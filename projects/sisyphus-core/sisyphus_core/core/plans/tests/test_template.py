@@ -116,4 +116,4 @@ class TestPlanTemplateGenerator:
 
         # when/then
         with pytest.raises(FileNotFoundError, match="Example file not found"):
-            PlanTemplateGenerator.full_example()
+            _ = PlanTemplateGenerator.full_example()

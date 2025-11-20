@@ -104,7 +104,7 @@ async def save_plan(path: Path, plan_doc: PlanDocument) -> None:
     yaml.dump(content, stream)
 
     async with await anyio.open_file(path, "w") as f:
-        await f.write(stream.getvalue())
+        _ = await f.write(stream.getvalue())
 
 
 async def resolve_current_plan_from_status(root: Path) -> PlanDocument | None:

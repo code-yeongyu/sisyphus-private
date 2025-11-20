@@ -30,7 +30,7 @@ class StatusPanel(RichLog):
             status: Status message to display
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-        self.write(f"[dim]{timestamp}[/dim] [blue]{status}[/blue]")
+        _ = self.write(f"[dim]{timestamp}[/dim] [blue]{status}[/blue]")
 
     def show_iteration(self, current: int, total: int) -> None:
         """Display iteration progress (with timestamp).
@@ -40,7 +40,7 @@ class StatusPanel(RichLog):
             total: Total iteration count
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-        self.write(f"[dim]{timestamp}[/dim] [dim]Iteration {current}/{total}[/dim]")
+        _ = self.write(f"[dim]{timestamp}[/dim] [dim]Iteration {current}/{total}[/dim]")
 
     def show_progress(self, completed: int, total: int) -> None:
         """Display checkbox progress with visual progress bar (with timestamp).
@@ -60,7 +60,7 @@ class StatusPanel(RichLog):
         filled = int((completed / total) * bar_length)
         bar = "█" * filled + "░" * (bar_length - filled)
 
-        self.write(
+        _ = self.write(
             f"[dim]{timestamp}[/dim] [cyan]📋 Progress:[/cyan] {bar} "
             f"[bold]{completed}/{total}[/bold] ({percentage}%) "
             f"[dim]| Remaining: {remaining}[/dim]"

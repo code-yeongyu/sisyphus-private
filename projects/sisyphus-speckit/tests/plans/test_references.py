@@ -83,7 +83,7 @@ async def test_index_references__with_duplicate_ref_id__raises_error(
 
     # When / Then
     with pytest.raises(ValueError, match="Duplicate ref_id found: ref1"):
-        ReferenceResolver.index_references(work_plan)
+        _ = ReferenceResolver.index_references(work_plan)
 
 
 async def test_index_references__with_none_ref_id__skips_item(
@@ -151,12 +151,12 @@ async def test_index_references__with_empty_references__returns_empty_dict(
 
 
 async def test_resolve_ref_id__with_existing_ref_id__returns_reference(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
+    _minimal_user_request: UserRequest,
+    _minimal_objectives: Objectives,
+    _minimal_background: Background,
+    _minimal_required_background: RequiredBackground,
+    _minimal_workflow: Workflow,
+    _minimal_success_vision: SuccessVision,
 ) -> None:
     # Given
     index = {
@@ -173,19 +173,19 @@ async def test_resolve_ref_id__with_existing_ref_id__returns_reference(
 
 
 async def test_resolve_ref_id__with_missing_ref_id__raises_key_error(
-    minimal_user_request: UserRequest,
-    minimal_objectives: Objectives,
-    minimal_background: Background,
-    minimal_required_background: RequiredBackground,
-    minimal_workflow: Workflow,
-    minimal_success_vision: SuccessVision,
+    _minimal_user_request: UserRequest,
+    _minimal_objectives: Objectives,
+    _minimal_background: Background,
+    _minimal_required_background: RequiredBackground,
+    _minimal_workflow: Workflow,
+    _minimal_success_vision: SuccessVision,
 ) -> None:
     # Given
     index = {"ref1": ReferenceItem(ref_id="ref1", uri="https://example.com")}
 
     # When / Then
     with pytest.raises(KeyError, match="Reference ID 'ref99' not found"):
-        ReferenceResolver.resolve_ref_id("ref99", index)
+        _ = ReferenceResolver.resolve_ref_id("ref99", index)
 
 
 async def test_validate_references__with_valid_plan__returns_no_errors(

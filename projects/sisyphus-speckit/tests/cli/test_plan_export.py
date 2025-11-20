@@ -41,7 +41,7 @@ work_plans:
         updated_at: "2025-11-01T00:00:00Z"
 """
     yaml_file = tmp_path / "test.yaml"
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     result = runner.invoke(app, ["plan", "export", str(yaml_file)])
 
@@ -86,7 +86,7 @@ work_plans:
         updated_at: "2025-11-01T00:00:00Z"
 """
     yaml_file = tmp_path / "test.yaml"
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     result = runner.invoke(app, ["plan", "export", str(yaml_file)])
 
@@ -128,7 +128,7 @@ work_plans:
         updated_at: "2025-11-01T00:00:00Z"
 """
     yaml_file = tmp_path / "test.yaml"
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
     output_file = tmp_path / "output.md"
 
     result = runner.invoke(app, ["plan", "export", str(yaml_file), "--output", str(output_file)])
@@ -190,7 +190,7 @@ work_plans:
             updated_at: "2025-11-01T00:00:00Z"
 """
     yaml_file = tmp_path / "test.yaml"
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     result = runner.invoke(app, ["plan", "export", str(yaml_file)])
 
@@ -238,7 +238,7 @@ work_plans:
         inline: "Inline reference text"
 """
     yaml_file = tmp_path / "test.yaml"
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     result = runner.invoke(app, ["plan", "export", str(yaml_file)])
 
@@ -282,7 +282,7 @@ work_plans:
         updated_at: "2025-11-01T00:00:00Z"
 """
     yaml_file = tmp_path / "test.yaml"
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     result = runner.invoke(app, ["plan", "export", "test.yaml", "--cwd", str(tmp_path)])
 

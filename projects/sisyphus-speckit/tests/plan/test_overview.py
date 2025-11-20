@@ -153,7 +153,7 @@ def test_overview__if_all_fields_present__displays_all_sections(
     minimal_required_background: RequiredBackground,
     minimal_workflow: Workflow,
     minimal_success_vision: SuccessVision,
-    capsys: pytest.CaptureFixture[str],
+    _capsys: pytest.CaptureFixture[str],
 ) -> None:
     # given: A WorkPlan with all fields populated
     work_plan = WorkPlan(

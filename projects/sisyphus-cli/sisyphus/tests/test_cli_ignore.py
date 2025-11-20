@@ -92,7 +92,7 @@ def test_ignore__duplicate_prevention__skips_existing_patterns(
     (git_dir / "info").mkdir()
 
     gitignore_path = tmp_path / ".gitignore"
-    gitignore_path.write_text(".sisyphus/\n")
+    _ = gitignore_path.write_text(".sisyphus/\n")
 
     runner = CliRunner()
     monkeypatch.chdir(tmp_path)
@@ -168,7 +168,7 @@ def test_ignore__existing_gitignore_with_content__preserves_existing_content(
 
     gitignore_path = tmp_path / ".gitignore"
     existing_content = "# My custom ignores\n*.pyc\n"
-    gitignore_path.write_text(existing_content)
+    _ = gitignore_path.write_text(existing_content)
 
     runner = CliRunner()
     monkeypatch.chdir(tmp_path)
@@ -192,7 +192,7 @@ def test_ignore__all_patterns_already_exist__shows_no_changes_message(
     (git_dir / "info").mkdir()
 
     gitignore_path = tmp_path / ".gitignore"
-    gitignore_path.write_text(
+    _ = gitignore_path.write_text(
         "# Sisyphus generated files\n.sisyphus/\nnotepad.md\nsessions/\nlogs/\nagentloop.json\nclaude_session_*.log\n"
     )
 

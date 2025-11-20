@@ -74,7 +74,7 @@ async def test_is_plan_executable__if_no_dependencies__returns_true(tmp_path: Pa
         todo_status="pending",
         execution_completed=False,
     )
-    plan_file.write_text(plan_content)
+    _ = plan_file.write_text(plan_content)
 
     result = await _is_plan_executable(plan_file, tasks_dir)
 
@@ -94,7 +94,7 @@ async def test_is_plan_executable__if_dependency_completed__returns_true(tmp_pat
         todo_status="completed",
         execution_completed=True,
     )
-    dep_plan_file.write_text(dep_content)
+    _ = dep_plan_file.write_text(dep_content)
 
     dependent_file = tasks_dir / "app.yaml"
     dependent_content = create_minimal_plan_yaml(
@@ -105,7 +105,7 @@ async def test_is_plan_executable__if_dependency_completed__returns_true(tmp_pat
         todo_status="pending",
         execution_completed=False,
     )
-    dependent_file.write_text(dependent_content)
+    _ = dependent_file.write_text(dependent_content)
 
     result = await _is_plan_executable(dependent_file, tasks_dir)
 
@@ -125,7 +125,7 @@ async def test_is_plan_executable__if_dependency_not_completed__returns_false(tm
         todo_status="pending",
         execution_completed=False,
     )
-    dep_plan_file.write_text(dep_content)
+    _ = dep_plan_file.write_text(dep_content)
 
     dependent_file = tasks_dir / "app.yaml"
     dependent_content = create_minimal_plan_yaml(
@@ -136,7 +136,7 @@ async def test_is_plan_executable__if_dependency_not_completed__returns_false(tm
         todo_status="pending",
         execution_completed=False,
     )
-    dependent_file.write_text(dependent_content)
+    _ = dependent_file.write_text(dependent_content)
 
     result = await _is_plan_executable(dependent_file, tasks_dir)
 
@@ -156,7 +156,7 @@ async def test_is_dependency_satisfied__if_file_reference_completed__returns_tru
         todo_status="completed",
         execution_completed=True,
     )
-    dep_plan_file.write_text(dep_content)
+    _ = dep_plan_file.write_text(dep_content)
 
     result = await _is_dependency_satisfied("file:backend.yaml#backend-api", tasks_dir)
 
@@ -176,7 +176,7 @@ async def test_is_dependency_satisfied__if_file_reference_not_completed__returns
         todo_status="pending",
         execution_completed=False,
     )
-    dep_plan_file.write_text(dep_content)
+    _ = dep_plan_file.write_text(dep_content)
 
     result = await _is_dependency_satisfied("file:backend.yaml#backend-api", tasks_dir)
 
@@ -207,7 +207,7 @@ async def test_is_dependency_satisfied__if_file_reference_without_plan_id__retur
         todo_status="completed",
         execution_completed=True,
     )
-    dep_plan_file.write_text(dep_content)
+    _ = dep_plan_file.write_text(dep_content)
 
     result = await _is_dependency_satisfied("file:backend.yaml", tasks_dir)
 
@@ -236,7 +236,7 @@ async def test_is_dependency_satisfied__if_plain_id_completed__returns_true(tmp_
         todo_status="completed",
         execution_completed=True,
     )
-    dep_plan_file.write_text(dep_content)
+    _ = dep_plan_file.write_text(dep_content)
 
     result = await _is_dependency_satisfied("database-setup", tasks_dir)
 
@@ -257,7 +257,7 @@ async def test_is_plan_executable__if_malformed_yaml__returns_false(tmp_path: Pa
     tasks_dir.mkdir(parents=True)
 
     plan_file = tasks_dir / "malformed.yaml"
-    plan_file.write_text("invalid: yaml: content: [")
+    _ = plan_file.write_text("invalid: yaml: content: [")
 
     result = await _is_plan_executable(plan_file, tasks_dir)
 
@@ -277,7 +277,7 @@ async def test_is_plan_executable__if_multiple_dependencies_all_completed__retur
         todo_status="completed",
         execution_completed=True,
     )
-    backend_file.write_text(backend_content)
+    _ = backend_file.write_text(backend_content)
 
     frontend_file = tasks_dir / "frontend.yaml"
     frontend_content = create_minimal_plan_yaml(
@@ -288,7 +288,7 @@ async def test_is_plan_executable__if_multiple_dependencies_all_completed__retur
         todo_status="completed",
         execution_completed=True,
     )
-    frontend_file.write_text(frontend_content)
+    _ = frontend_file.write_text(frontend_content)
 
     integration_file = tasks_dir / "integration.yaml"
     integration_content = create_minimal_plan_yaml(
@@ -299,7 +299,7 @@ async def test_is_plan_executable__if_multiple_dependencies_all_completed__retur
         todo_status="pending",
         execution_completed=False,
     )
-    integration_file.write_text(integration_content)
+    _ = integration_file.write_text(integration_content)
 
     result = await _is_plan_executable(integration_file, tasks_dir)
 
@@ -319,7 +319,7 @@ async def test_is_plan_executable__if_multiple_dependencies_one_incomplete__retu
         todo_status="completed",
         execution_completed=True,
     )
-    backend_file.write_text(backend_content)
+    _ = backend_file.write_text(backend_content)
 
     frontend_file = tasks_dir / "frontend.yaml"
     frontend_content = create_minimal_plan_yaml(
@@ -330,7 +330,7 @@ async def test_is_plan_executable__if_multiple_dependencies_one_incomplete__retu
         todo_status="pending",
         execution_completed=False,
     )
-    frontend_file.write_text(frontend_content)
+    _ = frontend_file.write_text(frontend_content)
 
     integration_file = tasks_dir / "integration.yaml"
     integration_content = create_minimal_plan_yaml(
@@ -341,7 +341,7 @@ async def test_is_plan_executable__if_multiple_dependencies_one_incomplete__retu
         todo_status="pending",
         execution_completed=False,
     )
-    integration_file.write_text(integration_content)
+    _ = integration_file.write_text(integration_content)
 
     result = await _is_plan_executable(integration_file, tasks_dir)
 
@@ -361,7 +361,7 @@ async def test_is_plan_executable__if_plan_already_completed__returns_false(tmp_
         todo_status="completed",
         execution_completed=True,
     )
-    completed_file.write_text(completed_content)
+    _ = completed_file.write_text(completed_content)
 
     result = await _is_plan_executable(completed_file, tasks_dir)
 
@@ -381,7 +381,7 @@ async def test_is_plan_executable__if_plan_completed_with_dependencies__returns_
         todo_status="completed",
         execution_completed=True,
     )
-    dep_file.write_text(dep_content)
+    _ = dep_file.write_text(dep_content)
 
     completed_file = tasks_dir / "app.yaml"
     completed_content = create_minimal_plan_yaml(
@@ -392,7 +392,7 @@ async def test_is_plan_executable__if_plan_completed_with_dependencies__returns_
         todo_status="completed",
         execution_completed=True,
     )
-    completed_file.write_text(completed_content)
+    _ = completed_file.write_text(completed_content)
 
     result = await _is_plan_executable(completed_file, tasks_dir)
 

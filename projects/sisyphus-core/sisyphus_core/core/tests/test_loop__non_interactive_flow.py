@@ -29,7 +29,7 @@ async def test_plan_file(tmp_path: Path) -> Path:
     plan_dir = tmp_path / ".sisyphus" / "tasks"
     plan_dir.mkdir(parents=True, exist_ok=True)
     plan_file = plan_dir / "test-plan.yaml"
-    plan_file.write_text("""version: "3.0"
+    _ = plan_file.write_text("""version: "3.0"
 metadata:
   created_at: "2025-11-12T00:00:00Z"
 work_plans:
@@ -210,23 +210,23 @@ class MockTaskValidator:
     def read_content(self) -> str:
         return "mock content"
 
-    async def check_all_goals_accomplished(self, content: str | None = None) -> bool:
+    async def check_all_goals_accomplished(self, _content: str | None = None) -> bool:
         if self.check_call_count < len(self.check_results):
             return self.check_results[self.check_call_count][0]
         return True
 
-    async def check_all_checkboxes_completed(self, content: str | None = None) -> bool:
+    async def check_all_checkboxes_completed(self, _content: str | None = None) -> bool:
         result_index = self.check_call_count
         self.check_call_count += 1
         if result_index < len(self.check_results):
             return self.check_results[result_index][1]
         return True
 
-    def extract_uncompleted_checkboxes(self, content: str | None = None) -> list[str]:
+    def extract_uncompleted_checkboxes(self, _content: str | None = None) -> list[str]:
         return ["Task 1"]
 
-    def count_total_checkboxes(self, content: str | None = None) -> int:
+    def count_total_checkboxes(self, _content: str | None = None) -> int:
         return 10
 
-    def count_completed_checkboxes(self, content: str | None = None) -> int:
+    def count_completed_checkboxes(self, _content: str | None = None) -> int:
         return 8

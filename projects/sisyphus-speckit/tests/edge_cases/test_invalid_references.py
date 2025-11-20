@@ -14,7 +14,7 @@ async def test_reference_uri_and_inline_both__if_both_provided__raises_validatio
 
     # when & then
     with pytest.raises(ValidationError) as exc_info:
-        ReferenceItem(**data)
+        _ = ReferenceItem(**data)
     assert "uri와 inline은 동시에 사용할 수 없습니다" in str(exc_info.value)
 
 
@@ -24,7 +24,7 @@ async def test_reference_all_none__if_no_fields_provided__raises_validation_erro
 
     # when & then
     with pytest.raises(ValidationError) as exc_info:
-        ReferenceItem(**data)
+        _ = ReferenceItem(**data)
     assert "ref_id, uri 또는 inline 중 하나는 필수입니다" in str(exc_info.value)
 
 
@@ -38,7 +38,7 @@ async def test_reference_ref_id_with_uri_and_inline__if_all_three_provided__rais
 
     # when & then
     with pytest.raises(ValidationError) as exc_info:
-        ReferenceItem(**data)
+        _ = ReferenceItem(**data)
     assert "uri와 inline은 동시에 사용할 수 없습니다" in str(exc_info.value)
 
 

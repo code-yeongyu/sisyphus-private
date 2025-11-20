@@ -380,7 +380,7 @@ class RuleInjector:
                 break
 
         try:
-            todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
         except OSError:
             pass
 
@@ -409,10 +409,10 @@ class RuleInjector:
             "id": todo_id,
         }
 
-        todos.insert(0, todo_item)
+        _ = todos.insert(0, todo_item)
 
         try:
-            todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
         except OSError:
             pass
 
@@ -469,7 +469,7 @@ class HookHandler:
                     continue
 
                 try:
-                    current_file_path.relative_to(rule_dir)
+                    _ = current_file_path.relative_to(rule_dir)
                     finder = RuleFinder(cwd)
                     injector = RuleInjector(session_id)
                     todo_id = injector._generate_todo_id_from_path(

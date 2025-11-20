@@ -28,11 +28,11 @@ def test_reset__with_base_files__deletes_them(tmp_path: Path) -> None:
     sessions = tmp_path / "sessions"
     logs = tmp_path / "logs"
 
-    notepad.write_text("test")
+    _ = notepad.write_text("test")
     sessions.mkdir()
-    (sessions / "test.json").write_text("{}")
+    _ = (sessions / "test.json").write_text("{}")
     logs.mkdir()
-    (logs / "test.log").write_text("log")
+    _ = (logs / "test.log").write_text("log")
 
     # when
     result = runner.invoke(reset_app, ["--cwd", str(tmp_path), "--yes"])
@@ -48,15 +48,15 @@ def test_reset__with_base_files__deletes_them(tmp_path: Path) -> None:
 def test_reset__with_task_specs_flag__deletes_task_specs(tmp_path: Path) -> None:
     # given
     notepad = tmp_path / "notepad.md"
-    notepad.write_text("test")
+    _ = notepad.write_text("test")
 
     sisyphus_dir = tmp_path / ".sisyphus"
     sisyphus_dir.mkdir()
     tasks_dir = sisyphus_dir / "tasks"
     tasks_dir.mkdir()
-    (tasks_dir / "plan.yaml").write_text("test")
+    _ = (tasks_dir / "plan.yaml").write_text("test")
     status_file = sisyphus_dir / "status.json"
-    status_file.write_text("{}")
+    _ = status_file.write_text("{}")
 
     # when
     result = runner.invoke(reset_app, ["--cwd", str(tmp_path), "--include-task-specs", "--yes"])
@@ -72,15 +72,15 @@ def test_reset__with_task_specs_flag__deletes_task_specs(tmp_path: Path) -> None
 def test_reset__without_task_specs_flag__preserves_task_specs(tmp_path: Path) -> None:
     # given
     notepad = tmp_path / "notepad.md"
-    notepad.write_text("test")
+    _ = notepad.write_text("test")
 
     sisyphus_dir = tmp_path / ".sisyphus"
     sisyphus_dir.mkdir()
     tasks_dir = sisyphus_dir / "tasks"
     tasks_dir.mkdir()
-    (tasks_dir / "plan.yaml").write_text("test")
+    _ = (tasks_dir / "plan.yaml").write_text("test")
     status_file = sisyphus_dir / "status.json"
-    status_file.write_text("{}")
+    _ = status_file.write_text("{}")
 
     # when
     result = runner.invoke(reset_app, ["--cwd", str(tmp_path), "--yes"])
@@ -95,7 +95,7 @@ def test_reset__without_task_specs_flag__preserves_task_specs(tmp_path: Path) ->
 def test_reset__with_dry_run__does_not_delete(tmp_path: Path) -> None:
     # given
     notepad = tmp_path / "notepad.md"
-    notepad.write_text("test")
+    _ = notepad.write_text("test")
 
     # when
     result = runner.invoke(reset_app, ["--cwd", str(tmp_path), "--dry-run"])
@@ -110,7 +110,7 @@ def test_reset__with_dry_run__shows_what_would_be_deleted(tmp_path: Path) -> Non
     # given
     notepad = tmp_path / "notepad.md"
     sessions = tmp_path / "sessions"
-    notepad.write_text("test")
+    _ = notepad.write_text("test")
     sessions.mkdir()
 
     # when
@@ -126,7 +126,7 @@ def test_reset__with_dry_run__shows_what_would_be_deleted(tmp_path: Path) -> Non
 def test_reset__without_yes_flag__prompts_confirmation(tmp_path: Path) -> None:
     # given
     notepad = tmp_path / "notepad.md"
-    notepad.write_text("test")
+    _ = notepad.write_text("test")
 
     # when: user cancels
     result = runner.invoke(reset_app, ["--cwd", str(tmp_path)], input="n\n")
@@ -140,7 +140,7 @@ def test_reset__without_yes_flag__prompts_confirmation(tmp_path: Path) -> None:
 def test_reset__with_yes_flag__skips_confirmation(tmp_path: Path) -> None:
     # given
     notepad = tmp_path / "notepad.md"
-    notepad.write_text("test")
+    _ = notepad.write_text("test")
 
     # when
     result = runner.invoke(reset_app, ["--cwd", str(tmp_path), "--yes"])

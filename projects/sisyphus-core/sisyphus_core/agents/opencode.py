@@ -194,7 +194,7 @@ class OpenCodeAgent:
         app_id = session_id or "default"
 
         response = await self._client.post("/session", json={"appId": app_id})
-        response.raise_for_status()
+        _ = response.raise_for_status()
 
         session_data = response.json()
         self._session_id = session_data.get("id", app_id)
@@ -216,7 +216,7 @@ class OpenCodeAgent:
         if self._client is None or self._session_id is None:
             raise RuntimeError("Session not started. Call start_session() first.")
 
-        await self._client.post(
+        _ = await self._client.post(
             "/app",
             json={"session": self._session_id, "message": message},
         )

@@ -86,8 +86,8 @@ async def test_worktree_cache__if_called_twice__uses_cache() -> None:
 
     # when
     with patch("sisyphus_core.core.status.manager.anyio.run_process", return_value=mock_result) as mock_run:
-        await StatusManager.list_all()
-        await StatusManager.list_all()
+        _ = await StatusManager.list_all()
+        _ = await StatusManager.list_all()
 
     # then
     assert mock_run.call_count == 1

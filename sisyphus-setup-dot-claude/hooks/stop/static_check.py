@@ -60,14 +60,14 @@ def main() -> None:
     log_path = Path.home() / ".claude" / "hook_debug.log"
     try:
         with log_path.open("a", encoding="utf-8") as log_file:
-            log_file.write("\n=== Static Check Stop Hook ===\n")
+            _ = log_file.write("\n=== Static Check Stop Hook ===\n")
             input_data = sys.stdin.read()
-            log_file.write(f"Input: {input_data}\n")
+            _ = log_file.write(f"Input: {input_data}\n")
 
         execute_hook_pipeline(input_data)
     except Exception as exception:
         with log_path.open("a", encoding="utf-8") as log_file:
-            log_file.write(f"Exception: {exception}\n")
+            _ = log_file.write(f"Exception: {exception}\n")
         sys.exit(Config.EXIT_CODE_ALLOW)
 
 

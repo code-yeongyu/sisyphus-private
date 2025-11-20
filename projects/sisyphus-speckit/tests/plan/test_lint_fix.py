@@ -210,7 +210,7 @@ user_request:
     This is line 1
     This is line 2
 """
-        yaml_file.write_text(yaml_content)
+        _ = yaml_file.write_text(yaml_content)
 
         # when: YAML를 로드하고 fix 적용
         yaml = YAML()
@@ -228,7 +228,7 @@ user_request:
     def test_lint_fix__if_empty_yaml__handles_gracefully(self, tmp_path: Path) -> None:
         # given: 빈 YAML 파일
         yaml_file = tmp_path / "empty.yaml"
-        yaml_file.write_text("")
+        _ = yaml_file.write_text("")
 
         # when: YAML를 로드하고 fix 적용
         yaml = YAML()
@@ -274,7 +274,7 @@ user_request:
         saved_text = yaml_file.read_text()
         assert "test" in saved_text
 
-    def test_lint_fix__if_complex_structure__processes_all_levels(self, tmp_path: Path) -> None:
+    def test_lint_fix__if_complex_structure__processes_all_levels(self, _tmp_path: Path) -> None:
         # given: 복잡한 중첩 구조
         data: dict[str, object] = {
             "work_plans": [

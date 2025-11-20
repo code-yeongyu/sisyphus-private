@@ -47,7 +47,7 @@ class FeedbackManager:
         Used when PromptTooLongError occurs to reduce prompt length.
         """
         if self.verify_feedback_history:
-            self.verify_feedback_history.pop(0)
+            _ = self.verify_feedback_history.pop(0)
 
     def build_feedback_section_for_execute(self, execute_extra: str | None) -> str:
         """Build Execute phase prompt with feedback XML.

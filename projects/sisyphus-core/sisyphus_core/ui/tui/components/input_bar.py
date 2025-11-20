@@ -32,7 +32,7 @@ class InputBar(TextArea):
 
     def on_mount(self) -> None:
         """Set focus when widget is mounted."""
-        self.call_after_refresh(self.focus)
+        _ = self.call_after_refresh(self.focus)
 
     def _update_suggestion(self) -> None:
         """Display queue status or placeholder based on state.
@@ -64,9 +64,9 @@ class InputBar(TextArea):
             event: Key event object with .key attribute
         """
         if event.character == "\n":
-            self.insert("\n")
-            event.prevent_default()
-            event.stop()
+            _ = self.insert("\n")
+            _ = event.prevent_default()
+            _ = event.stop()
             return
 
         if event.key == "enter":
@@ -85,22 +85,22 @@ class InputBar(TextArea):
 
                 self.text = ""
                 self._update_suggestion()
-                self.app.post_message(InputReadyEvent())
+                _ = self.app.post_message(InputReadyEvent())
 
                 if self._agent_paused:
                     self._agent_paused = False
                     self.suggestion = self._original_suggestion
 
-                event.prevent_default()
-                event.stop()
+                _ = event.prevent_default()
+                _ = event.stop()
                 return
 
         elif event.key == "escape":
-            event.stop()
+            _ = event.stop()
             if not self._agent_paused:
                 self._agent_paused = True
                 self.suggestion = "⏸ Paused - send message to resume"
-                self.app.post_message(AgentInterruptEvent())
+                _ = self.app.post_message(AgentInterruptEvent())
                 self.log.info("Agent interrupted by ESC key")
             return
 
@@ -111,8 +111,8 @@ class InputBar(TextArea):
                 self._update_suggestion()
             elif self._last_sent:
                 self.text = self._last_sent
-            event.prevent_default()
-            event.stop()
+            _ = event.prevent_default()
+            _ = event.stop()
             return
 
     def get_and_clear_queue(self) -> str | None:

@@ -125,4 +125,4 @@ async def test_full_example__when_file_missing__raises_file_not_found() -> None:
     ):
         # when/then
         with pytest.raises(FileNotFoundError, match="Example file not found"):
-            PlanTemplateGenerator.full_example()
+            _ = PlanTemplateGenerator.full_example()

@@ -74,7 +74,7 @@ work_plans:
       current_task_id: "1"
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     status_file = tmp_path / ".sisyphus" / "status.json"
     status_file.parent.mkdir(parents=True, exist_ok=True)
@@ -82,7 +82,7 @@ work_plans:
         '{"current_plan": {"plan_path": ".sisyphus/tasks/test-plan.yaml", '
         '"plan_id": "test-plan", "plan_root": ".sisyphus/tasks", "updated_at": "2025-01-01T00:00:00Z"}}'
     )
-    status_file.write_text(status_content)
+    _ = status_file.write_text(status_content)
 
     evidence = "a" * 100  # exactly 100 characters
 
@@ -155,7 +155,7 @@ work_plans:
       current_task_id: "1"
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     status_file = tmp_path / ".sisyphus" / "status.json"
     status_file.parent.mkdir(parents=True, exist_ok=True)
@@ -163,7 +163,7 @@ work_plans:
         '{"current_plan": {"plan_path": ".sisyphus/tasks/test-plan.yaml", '
         '"plan_id": "test-plan", "plan_root": ".sisyphus/tasks", "updated_at": "2025-01-01T00:00:00Z"}}'
     )
-    status_file.write_text(status_content)
+    _ = status_file.write_text(status_content)
 
     evidence = "a" * 99  # 99 characters
 
@@ -238,7 +238,7 @@ work_plans:
       current_task_id: "1"
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     status_file = tmp_path / ".sisyphus" / "status.json"
     status_file.parent.mkdir(parents=True, exist_ok=True)
@@ -246,7 +246,7 @@ work_plans:
         '{"current_plan": {"plan_path": ".sisyphus/tasks/test-plan.yaml", '
         '"plan_id": "test-plan", "plan_root": ".sisyphus/tasks", "updated_at": "2025-01-01T00:00:00Z"}}'
     )
-    status_file.write_text(status_content)
+    _ = status_file.write_text(status_content)
 
     evidence = "a" * 200  # 200 characters
 
@@ -319,7 +319,7 @@ work_plans:
       current_task_id: "1"
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     status_file = tmp_path / ".sisyphus" / "status.json"
     status_file.parent.mkdir(parents=True, exist_ok=True)
@@ -327,7 +327,7 @@ work_plans:
         '{"current_plan": {"plan_path": ".sisyphus/tasks/test-plan.yaml", '
         '"plan_id": "test-plan", "plan_root": ".sisyphus/tasks", "updated_at": "2025-01-01T00:00:00Z"}}'
     )
-    status_file.write_text(status_content)
+    _ = status_file.write_text(status_content)
 
     evidence = ""  # empty string
 
@@ -401,7 +401,7 @@ work_plans:
       current_task_id: "1"
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     status_file = tmp_path / ".sisyphus" / "status.json"
     status_file.parent.mkdir(parents=True, exist_ok=True)
@@ -409,7 +409,7 @@ work_plans:
         '{"current_plan": {"plan_path": ".sisyphus/tasks/test-plan.yaml", '
         '"plan_id": "test-plan", "plan_root": ".sisyphus/tasks", "updated_at": "2025-01-01T00:00:00Z"}}'
     )
-    status_file.write_text(status_content)
+    _ = status_file.write_text(status_content)
 
     evidence = "short"  # too short
 

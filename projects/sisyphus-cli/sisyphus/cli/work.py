@@ -477,7 +477,7 @@ async def _main_tui(
             )
 
             elapsed_seconds = time.time() - start_time
-            ui.post_message(CompletionMessage("All tasks completed.", elapsed_seconds=elapsed_seconds))
+            _ = ui.post_message(CompletionMessage("All tasks completed.", elapsed_seconds=elapsed_seconds))
 
             try:
                 completion_event = anyio.Event()
@@ -489,7 +489,7 @@ async def _main_tui(
                 await ui.show_status(f"[bold red]Error: {e}[/bold red]")
             except Exception:
                 pass
-            ui.post_message(ShutdownRequestMessage())
+            _ = ui.post_message(ShutdownRequestMessage())
             raise
 
     try:
@@ -530,7 +530,7 @@ def run(
         help="TUI theme (system: auto-detect, mocha: dark, latte: light)",
         case_sensitive=False,
     ),
-    log: Path | None = typer.Option(None, "--log", help="Log file path"),
+    _log: Path | None = typer.Option(None, "--log", help="Log file path"),
 ) -> None:
     """Work with Sisyphus multi-agent system."""
     execution_pwd = Path.cwd()

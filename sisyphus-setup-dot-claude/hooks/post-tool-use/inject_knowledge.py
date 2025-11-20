@@ -130,7 +130,7 @@ class KnowledgeFinder:
             return []
 
         try:
-            self.file_path.relative_to(self.project_root)
+            _ = self.file_path.relative_to(self.project_root)
         except ValueError:
             return []
 
@@ -294,7 +294,7 @@ class KnowledgeInjector:
                 break
 
         try:
-            todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
         except OSError:
             pass
 
@@ -357,7 +357,7 @@ class KnowledgeInjector:
 
         if modified:
             try:
-                todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+                _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
             except OSError:
                 pass
 
@@ -388,7 +388,7 @@ class KnowledgeInjector:
             if existing_todo.get("id") == todo_item["id"]:
                 return
 
-        todos.append(todo_item)
+        _ = todos.append(todo_item)
 
         knowledge_todos = [t for t in todos if t.get("id", "").startswith("read-knowledge-d")]
         other_todos = [t for t in todos if not t.get("id", "").startswith("read-knowledge-d")]
@@ -408,7 +408,7 @@ class KnowledgeInjector:
         todos[:] = other_todos + knowledge_todos
 
         try:
-            todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
         except OSError:
             pass
 

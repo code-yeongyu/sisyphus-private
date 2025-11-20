@@ -139,7 +139,7 @@ class ConftestFinder:
             return conftest_infos
 
         try:
-            self.test_file.relative_to(self.project_root)
+            _ = self.test_file.relative_to(self.project_root)
         except ValueError:
             return conftest_infos
 
@@ -272,7 +272,7 @@ class ConftestInjector:
                 break
 
         try:
-            todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
         except OSError:
             pass
 
@@ -308,7 +308,7 @@ class ConftestInjector:
 
         if modified:
             try:
-                todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+                _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
             except OSError:
                 pass
 
@@ -338,7 +338,7 @@ class ConftestInjector:
             if existing_todo.get("id") == todo_item["id"]:
                 return
 
-        todos.append(todo_item)
+        _ = todos.append(todo_item)
 
         conftest_todos = [t for t in todos if t.get("id", "").startswith("read-conftest-d")]
         other_todos = [t for t in todos if not t.get("id", "").startswith("read-conftest-d")]
@@ -358,7 +358,7 @@ class ConftestInjector:
         todos[:] = other_todos + conftest_todos
 
         try:
-            todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
         except OSError:
             pass
 

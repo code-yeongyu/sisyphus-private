@@ -311,7 +311,7 @@ class MockSessionStore:
 
 
 class MockLoggerFactory:
-    def create_logger(self, name: str, session_id: str | None) -> MagicMock:
+    def create_logger(self, name: str, _session_id: str | None) -> MagicMock:
         logger = MagicMock()
         logger.info = MagicMock()
         logger.debug = MagicMock()

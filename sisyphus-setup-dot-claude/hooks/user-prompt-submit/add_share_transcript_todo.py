@@ -120,15 +120,15 @@ def add_transcript_todo(session_id: str, transcript_path: str) -> None:
             existing_todo["content"] = todo_item["content"]
             existing_todo["activeForm"] = todo_item["activeForm"]
             try:
-                todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+                _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
             except OSError:
                 pass
             return
 
-    todos.insert(0, todo_item)
+    _ = todos.insert(0, todo_item)
 
     try:
-        todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+        _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
     except OSError:
         pass
 

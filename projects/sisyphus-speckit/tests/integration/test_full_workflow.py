@@ -105,7 +105,7 @@ work_plans:
         children: []
         verification_spec: []
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when: Run graph command with ASCII format
     result_graph_ascii = runner.invoke(plan_app, ["graph", "--cwd", str(tmp_path), "--format", "ascii"])
@@ -179,7 +179,7 @@ success_vision:
   technical_criteria: []
 final_verification: []
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when: Show specific task by ID
     result_show = runner.invoke(task_app, ["show", "1", "--cwd", str(tmp_path)])
@@ -213,7 +213,7 @@ def test_full_workflow__lint_detects_validation_errors__fails_gracefully(tmp_pat
   created_at: "2025-11-01T00:00:00Z"
 todos: invalid_value
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when: Run lint on invalid file
     result_lint = runner.invoke(plan_app, ["lint", "--file", str(yaml_file)])
@@ -285,7 +285,7 @@ success_vision:
   technical_criteria: []
 final_verification: []
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when: Run bash verification
     result_verify = runner.invoke(task_app, ["verify", "bash", "--cwd", str(tmp_path)])
@@ -362,7 +362,7 @@ work_plans:
             verification_spec: []
         verification_spec: []
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when: Export to markdown (stdout)
     result_export = runner.invoke(plan_app, ["export", str(yaml_file)])

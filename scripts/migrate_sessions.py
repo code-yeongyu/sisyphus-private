@@ -106,12 +106,12 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "sessions_file",
         type=Path,
         help="Path to sessions.json file to migrate",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Show what would be changed without modifying files",
@@ -171,7 +171,7 @@ def main() -> None:
     # Create backup
     backup_file = sessions_file.with_suffix(sessions_file.suffix + ".pre-migration")
     try:
-        shutil.copy2(sessions_file, backup_file)
+        _ = shutil.copy2(sessions_file, backup_file)
         print(f"\n💾 Backup created: {backup_file}")
     except OSError as e:
         print(f"❌ Error: Cannot create backup: {e}")
@@ -180,7 +180,7 @@ def main() -> None:
     # Write migrated data
     try:
         migrated_content = json.dumps(migrated, indent=2, ensure_ascii=False) + "\n"
-        sessions_file.write_text(migrated_content, encoding="utf-8")
+        _ = sessions_file.write_text(migrated_content, encoding="utf-8")
         print(f"✅ Migration completed: {sessions_file}")
     except OSError as e:
         print(f"❌ Error: Cannot write migrated file: {e}")

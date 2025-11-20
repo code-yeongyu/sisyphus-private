@@ -58,7 +58,7 @@ async def _get_current_plan_id(working_dir: Path) -> str | None:
 
 
 async def _check_dependencies_satisfied(
-    plan_id: str, depends_on: list[str], working_dir: Path, all_plans: dict[str, PlanInfo]
+    plan_id: str, depends_on: list[str], _working_dir: Path, all_plans: dict[str, PlanInfo]
 ) -> bool:
     """Check if all dependencies are satisfied.
 

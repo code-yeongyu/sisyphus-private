@@ -22,7 +22,7 @@ def test_plan_lint__with_cwd_option__resolves_path(tmp_path: Path) -> None:
     cwd_dir = tmp_path / "subdir"
     cwd_dir.mkdir()
     yaml_file = cwd_dir / "test.yaml"
-    yaml_file.write_text("""version: "3.0"
+    _ = yaml_file.write_text("""version: "3.0"
 metadata:
   created_at: "2025-11-01T00:00:00Z"
   updated_at: "2025-11-01T00:00:00Z"
@@ -90,7 +90,7 @@ def test_plan_graph__with_cwd_option__resolves_path(tmp_path: Path) -> None:
     tasks_dir = cwd_dir / ".sisyphus" / "tasks"
     tasks_dir.mkdir(parents=True)
     yaml_file = tasks_dir / "ai-todolist.yaml"
-    yaml_file.write_text("""version: "3.0"
+    _ = yaml_file.write_text("""version: "3.0"
 metadata:
   created_at: "2025-11-01T00:00:00Z"
   updated_at: "2025-11-01T00:00:00Z"
@@ -145,7 +145,7 @@ def test_plan_export__with_cwd_option__resolves_paths(tmp_path: Path) -> None:
     tasks_dir = cwd_dir / ".sisyphus" / "tasks"
     tasks_dir.mkdir(parents=True)
     yaml_file = tasks_dir / "test.yaml"
-    yaml_file.write_text("""version: "3.0"
+    _ = yaml_file.write_text("""version: "3.0"
 metadata:
   created_at: "2025-11-01T00:00:00Z"
   updated_at: "2025-11-01T00:00:00Z"
@@ -255,9 +255,9 @@ work_plans:
       parallel_requested: false
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
     status_file = status_dir / "status.json"
-    status_file.write_text(
+    _ = status_file.write_text(
         '{"version": 1, "current_plan": {"plan_path": ".sisyphus/tasks/ai-todolist.yaml", "plan_root": "'
         + str(cwd_dir)
         + '", "updated_at": "2025-01-01T00:00:00Z"}}'
@@ -327,7 +327,7 @@ work_plans:
       current_task_id: "1"
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
     status_file = status_dir / "status.json"
     status_data = {
         "version": 1,
@@ -338,7 +338,7 @@ work_plans:
         },
     }
 
-    status_file.write_text(json.dumps(status_data))
+    _ = status_file.write_text(json.dumps(status_data))
 
     # when
     result = runner.invoke(app, ["task", "current", "--cwd", str(cwd_dir)])
@@ -409,7 +409,7 @@ work_plans:
       parallel_requested: false
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
     status_file = status_dir / "status.json"
     status_data = {
         "version": 1,
@@ -419,7 +419,7 @@ work_plans:
             "updated_at": "2025-01-01T00:00:00Z",
         },
     }
-    status_file.write_text(json.dumps(status_data))
+    _ = status_file.write_text(json.dumps(status_data))
 
     # when
     result = runner.invoke(app, ["task", "next", "--cwd", str(cwd_dir)])

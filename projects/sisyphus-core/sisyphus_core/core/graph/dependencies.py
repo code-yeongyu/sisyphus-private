@@ -65,7 +65,7 @@ def detect_cycles(graph: dict[str, list[str]]) -> list[list[str]]:
         for neighbor in graph.get(node, []):
             visit(neighbor, stack)
 
-        stack.pop()
+        _ = stack.pop()
         temp_mark.remove(node)
         perm_mark.add(node)
 

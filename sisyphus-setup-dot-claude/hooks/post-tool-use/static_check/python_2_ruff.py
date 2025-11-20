@@ -263,7 +263,7 @@ def execute_ruff_operations(config: RuffConfiguration, file_path: Path | str) ->
     has_format_changes = format_check_exit_code != 0
 
     if has_format_changes:
-        run_ruff_command(
+        _ = run_ruff_command(
             config.executable_path,
             [RUFF_CMD_FORMAT] + config.format_args + [str(file_path)],
         )

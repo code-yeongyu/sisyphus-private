@@ -9,9 +9,9 @@ app = typer.Typer(name="sisyphus", help="Sisyphus Multi-Agent System")
 from .cli.reset import reset_app  # noqa: E402
 from .cli.work import clean_history, ignore, run  # noqa: E402
 
-app.command(name="work")(run)
-app.command(name="ignore")(ignore)
-app.command(name="clean-history")(clean_history)
+_ = app.command(name="work")(run)
+_ = app.command(name="ignore")(ignore)
+_ = app.command(name="clean-history")(clean_history)
 
 app.add_typer(reset_app)
 

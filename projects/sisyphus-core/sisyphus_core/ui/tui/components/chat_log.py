@@ -59,7 +59,7 @@ class ChatLog(RichLog):
             content: User message content to display
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-        self.write(f"[dim]{timestamp}[/dim] [green]👤 USER:[/green] {content}")
+        _ = self.write(f"[dim]{timestamp}[/dim] [green]👤 USER:[/green] {content}")
 
     def write_execute_message(self, content: str) -> None:
         """Write Execute message.
@@ -68,7 +68,7 @@ class ChatLog(RichLog):
             content: Message content to display
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-        self.write(f"[dim]{timestamp}[/dim] [yellow]▶ EXECUTE:[/yellow] {content}")
+        _ = self.write(f"[dim]{timestamp}[/dim] [yellow]▶ EXECUTE:[/yellow] {content}")
 
     def write_verify_message(self, content: str) -> None:
         """Write Verify message.
@@ -77,7 +77,7 @@ class ChatLog(RichLog):
             content: Message content to display
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-        self.write(f"[dim]{timestamp}[/dim] [cyan]✓ VERIFY:[/cyan] {content}")
+        _ = self.write(f"[dim]{timestamp}[/dim] [cyan]✓ VERIFY:[/cyan] {content}")
 
     def write_completion_message(self, content: str) -> None:
         """Write task completion message.
@@ -86,4 +86,4 @@ class ChatLog(RichLog):
             content: Completion message content to display
         """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-        self.write(f"[dim]{timestamp}[/dim] [bold green]✅ COMPLETED:[/bold green] {content}")
+        _ = self.write(f"[dim]{timestamp}[/dim] [bold green]✅ COMPLETED:[/bold green] {content}")

@@ -43,7 +43,7 @@ work_plans:
     todos: []
 """
     plan_file = tmp_path / "test.yaml"
-    plan_file.write_text(yaml_content)
+    _ = plan_file.write_text(yaml_content)
 
     # when
     result = await load_plan(plan_file)
@@ -61,11 +61,11 @@ async def test_load_plan__if_missing_version__raises_error(tmp_path: Path) -> No
 work_plans: []
 """
     plan_file = tmp_path / "test.yaml"
-    plan_file.write_text(yaml_content)
+    _ = plan_file.write_text(yaml_content)
 
     # when & then
     with pytest.raises(ValueError, match="missing 'version' field"):
-        await load_plan(plan_file)
+        _ = await load_plan(plan_file)
 
 
 async def test_load_plan__if_unsupported_version__raises_error(tmp_path: Path) -> None:
@@ -76,11 +76,11 @@ metadata:
 work_plans: []
 """
     plan_file = tmp_path / "test.yaml"
-    plan_file.write_text(yaml_content)
+    _ = plan_file.write_text(yaml_content)
 
     # when & then
     with pytest.raises(ValueError, match="Unsupported version.*2\\.1.*Only v3\\.0 supported"):
-        await load_plan(plan_file)
+        _ = await load_plan(plan_file)
 
 
 async def test_load_plan__if_file_not_found__raises_error(tmp_path: Path) -> None:
@@ -89,4 +89,4 @@ async def test_load_plan__if_file_not_found__raises_error(tmp_path: Path) -> Non
 
     # when & then
     with pytest.raises(FileNotFoundError):
-        await load_plan(plan_file)
+        _ = await load_plan(plan_file)

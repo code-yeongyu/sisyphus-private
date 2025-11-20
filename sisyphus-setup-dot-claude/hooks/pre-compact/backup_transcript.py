@@ -40,7 +40,7 @@ def main() -> None:
 
         source_path = Path(transcript_path)
         if source_path.exists():
-            shutil.copy(source_path, backup_path)
+            _ = shutil.copy(source_path, backup_path)
 
         sys.exit(0)
 

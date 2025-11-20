@@ -549,7 +549,7 @@ class ExecutionLoop:
                                 return True
                         return False
 
-                    find_and_reset_task(work_plan.todos)
+                    _ = find_and_reset_task(work_plan.todos)
 
             await save_plan(plan_path, plan_doc)
         except (ValueError, FileNotFoundError):

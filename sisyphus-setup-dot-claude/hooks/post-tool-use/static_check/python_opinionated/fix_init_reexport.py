@@ -141,7 +141,7 @@ def process_and_fix(data: PostToolUseInput) -> bool:
 
         if fixed_content != original_content:
             with open(file_path, "w", encoding="utf-8") as f:
-                f.write(fixed_content)
+                _ = f.write(fixed_content)
             print(f"[auto-fix-init-reexport] ✓ Auto-fixed: {Path(file_path).name}", file=sys.stderr)
             return True
 
@@ -305,7 +305,7 @@ def _convert_import_to_explicit_reexport(code: str, item: str) -> str:
             continue
 
         indent = match.group(1)
-        match.group(2)
+        _ = match.group(2)
         imports_part = match.group(3)
 
         import_items = [x.strip() for x in imports_part.split(",")]

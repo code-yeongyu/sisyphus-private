@@ -38,7 +38,7 @@ async def test_load_multiple_plans__if_single_plan__returns_one_item_dict(tmp_pa
     tasks_dir.mkdir(parents=True)
 
     plan_file = tasks_dir / "test.yaml"
-    plan_file.write_text("""version: "3.0"
+    _ = plan_file.write_text("""version: "3.0"
 metadata:
   created_at: "2025-11-01T21:00:00Z"
 work_plans:
@@ -91,7 +91,7 @@ async def test_load_multiple_plans__if_multiple_plans__returns_n_item_dict(tmp_p
     tasks_dir.mkdir(parents=True)
 
     plan1 = tasks_dir / "foundation.yaml"
-    plan1.write_text("""version: "3.0"
+    _ = plan1.write_text("""version: "3.0"
 metadata:
   created_at: "2025-11-01T21:00:00Z"
 work_plans:
@@ -128,7 +128,7 @@ work_plans:
 """)
 
     plan2 = tasks_dir / "main.yaml"
-    plan2.write_text("""version: "3.0"
+    _ = plan2.write_text("""version: "3.0"
 metadata:
   created_at: "2025-11-01T21:00:00Z"
 work_plans:
@@ -166,7 +166,7 @@ work_plans:
 """)
 
     plan3 = tasks_dir / "cleanup.yaml"
-    plan3.write_text("""version: "3.0"
+    _ = plan3.write_text("""version: "3.0"
 metadata:
   created_at: "2025-11-01T21:00:00Z"
 work_plans:
@@ -222,7 +222,7 @@ async def test_load_multiple_plans__if_v2_1_file__raises_value_error_with_detail
     tasks_dir.mkdir(parents=True)
 
     legacy_file = tasks_dir / "legacy.yaml"
-    legacy_file.write_text("""version: "2.1"
+    _ = legacy_file.write_text("""version: "2.1"
 metadata:
   created_at: "2025-11-01T21:00:00Z"
 work_plan:
@@ -232,7 +232,7 @@ work_plan:
 
     # when & then
     with pytest.raises(ValueError, match="Failed to load some plans"):
-        await load_multiple_plans(root)
+        _ = await load_multiple_plans(root)
 
 
 async def test_load_multiple_plans__if_subdirectory_plans__loads_all(tmp_path: Path) -> None:
@@ -243,7 +243,7 @@ async def test_load_multiple_plans__if_subdirectory_plans__loads_all(tmp_path: P
     subdir.mkdir(parents=True)
 
     plan1 = tasks_dir / "active.yaml"
-    plan1.write_text("""version: "3.0"
+    _ = plan1.write_text("""version: "3.0"
 metadata:
   created_at: "2025-11-01T21:00:00Z"
 work_plans:
@@ -280,7 +280,7 @@ work_plans:
 """)
 
     plan2 = subdir / "archived.yaml"
-    plan2.write_text("""version: "3.0"
+    _ = plan2.write_text("""version: "3.0"
 metadata:
   created_at: "2025-11-01T21:00:00Z"
 work_plans:
@@ -341,7 +341,7 @@ async def test_resolve_current_plan_from_status__if_current_plan_none__returns_n
     root = tmp_path
     status_file = root / ".sisyphus" / "status.json"
     status_file.parent.mkdir(parents=True)
-    status_file.write_text('{"version": 1, "current_plan": null}')
+    _ = status_file.write_text('{"version": 1, "current_plan": null}')
 
     # when
     result = await resolve_current_plan_from_status(root)
@@ -357,7 +357,7 @@ async def test_resolve_current_plan_from_status__if_valid_current_plan__returns_
     tasks_dir.mkdir(parents=True)
 
     plan_file = tasks_dir / "current.yaml"
-    plan_file.write_text("""version: "3.0"
+    _ = plan_file.write_text("""version: "3.0"
 metadata:
   created_at: "2025-11-01T21:00:00Z"
 work_plans:
@@ -394,7 +394,7 @@ work_plans:
 """)
 
     status_file = root / ".sisyphus" / "status.json"
-    status_file.write_text("""{
+    _ = status_file.write_text("""{
   "version": 1,
   "current_plan": {
     "plan_path": ".sisyphus/tasks/current.yaml",
@@ -418,7 +418,7 @@ async def test_resolve_current_plan_from_status__if_missing_file__raises_file_no
     root = tmp_path
     status_file = root / ".sisyphus" / "status.json"
     status_file.parent.mkdir(parents=True)
-    status_file.write_text("""{
+    _ = status_file.write_text("""{
   "version": 1,
   "current_plan": {
     "plan_path": ".sisyphus/tasks/missing.yaml",
@@ -429,7 +429,7 @@ async def test_resolve_current_plan_from_status__if_missing_file__raises_file_no
 
     # when & then
     with pytest.raises(FileNotFoundError):
-        await resolve_current_plan_from_status(root)
+        _ = await resolve_current_plan_from_status(root)
 
 
 async def test_resolve_current_plan_from_status__if_v2_1_plan__raises_unsupported_error(tmp_path: Path) -> None:
@@ -439,7 +439,7 @@ async def test_resolve_current_plan_from_status__if_v2_1_plan__raises_unsupporte
     tasks_dir.mkdir(parents=True)
 
     plan_file = tasks_dir / "legacy.yaml"
-    plan_file.write_text("""version: "2.1"
+    _ = plan_file.write_text("""version: "2.1"
 metadata:
   created_at: "2025-11-01T21:00:00Z"
 work_plan:
@@ -448,7 +448,7 @@ work_plan:
 """)
 
     status_file = root / ".sisyphus" / "status.json"
-    status_file.write_text("""{
+    _ = status_file.write_text("""{
   "version": 1,
   "current_plan": {
     "plan_path": ".sisyphus/tasks/legacy.yaml",
@@ -459,4 +459,4 @@ work_plan:
 
     # when & then
     with pytest.raises(ValueError, match="Unsupported version.*2\\.1.*Only v3\\.0 supported"):
-        await resolve_current_plan_from_status(root)
+        _ = await resolve_current_plan_from_status(root)

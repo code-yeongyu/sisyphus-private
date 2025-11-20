@@ -23,7 +23,7 @@ def plan_schema(
     json_str = json.dumps(schema, indent=2, ensure_ascii=False)
 
     if output:
-        output.write_text(json_str, encoding="utf-8")
+        _ = output.write_text(json_str, encoding="utf-8")
         console.print(f"[green]✓[/green] Schema saved to {output}")
     else:
         syntax = Syntax(json_str, "json", theme="monokai", line_numbers=False)

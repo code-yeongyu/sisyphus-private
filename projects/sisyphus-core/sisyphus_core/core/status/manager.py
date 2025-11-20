@@ -72,7 +72,7 @@ class StatusManager:
             temp_file = self.status_path.parent / f"{self.status_path.name}.tmp.{uuid.uuid4().hex}"
             try:
                 async with await anyio.open_file(temp_file, "w", encoding="utf-8") as f:
-                    await f.write(json.dumps(status.model_dump(), indent=2, ensure_ascii=False))
+                    _ = await f.write(json.dumps(status.model_dump(), indent=2, ensure_ascii=False))
                     await f.flush()
 
                 await anyio.to_thread.run_sync(temp_file.rename, self.status_path)

@@ -514,7 +514,7 @@ work_plans:
       technical_criteria: []
     final_verification: []
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     status_file = sisyphus_dir / "status.json"
     status_content = (
@@ -522,7 +522,7 @@ work_plans:
         '"plan_id": "test-plan", "plan_root": ".sisyphus/tasks", '
         '"updated_at": "2025-01-01T00:00:00Z"}}'
     )
-    status_file.write_text(status_content)
+    _ = status_file.write_text(status_content)
 
     # when
     result = runner.invoke(task_app, ["verify", "bash", "--cwd", str(tmp_path)])
@@ -604,7 +604,7 @@ work_plans:
       technical_criteria: []
     final_verification: []
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     status_file = sisyphus_dir / "status.json"
     status_content = (
@@ -612,7 +612,7 @@ work_plans:
         '"plan_id": "test-plan", "plan_root": ".sisyphus/tasks", '
         '"updated_at": "2025-01-01T00:00:00Z"}}'
     )
-    status_file.write_text(status_content)
+    _ = status_file.write_text(status_content)
 
     # when
     result = runner.invoke(task_app, ["verify", "bash", "--cwd", str(tmp_path)])

@@ -12,7 +12,7 @@ console = Console()
 
 @reset_app.callback(invoke_without_command=True)
 def reset_command(
-    ctx: typer.Context,
+    _ctx: typer.Context,
     include_task_specs: bool = typer.Option(
         False, "--include-task-specs", help="Also delete .sisyphus/tasks/ and status.json"
     ),

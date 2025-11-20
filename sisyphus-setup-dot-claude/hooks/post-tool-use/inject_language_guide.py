@@ -124,7 +124,7 @@ class LanguageGuideChecker:
                 break
 
         try:
-            todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
         except OSError:
             pass
 
@@ -161,7 +161,7 @@ class LanguageGuideChecker:
 
         if modified:
             try:
-                todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+                _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
             except OSError:
                 pass
 
@@ -183,7 +183,7 @@ class LanguageGuideChecker:
         except OSError:
             return None
 
-    def _get_guide_identifier(self, guide_content: str, guide_filename: str) -> str:
+    def _get_guide_identifier(self, _guide_content: str, guide_filename: str) -> str:
         return f"[language-guide:{guide_filename}]"
 
     def _has_guide_been_read(self, guide_path: Path) -> bool:
@@ -267,10 +267,10 @@ class LanguageGuideChecker:
             if existing_todo.get("id") == todo_item["id"]:
                 return
 
-        todos.insert(0, todo_item)
+        _ = todos.insert(0, todo_item)
 
         try:
-            todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
+            _ = todo_file.write_bytes(orjson.dumps(todos, option=orjson.OPT_INDENT_2))
         except OSError:
             pass
 

@@ -72,7 +72,7 @@ class ProcessManager:
 
         # Wait for graceful termination
         with anyio.move_on_after(timeout_seconds) as scope:
-            await process.wait()
+            _ = await process.wait()
 
         if not scope.cancel_called:
             return
@@ -87,7 +87,7 @@ class ProcessManager:
         # Wait for SIGKILL to take effect (with timeout)
         try:
             with anyio.fail_after(timeout_seconds):
-                await process.wait()
+                _ = await process.wait()
         except (TimeoutError, anyio.get_cancelled_exc_class()) as e:
             raise ProcessTimeoutError(f"Process did not terminate after SIGKILL within {timeout_seconds}s") from e
 

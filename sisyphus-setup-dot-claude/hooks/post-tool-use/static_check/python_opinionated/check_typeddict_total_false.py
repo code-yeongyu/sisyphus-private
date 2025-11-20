@@ -297,7 +297,7 @@ def _handle_hook_error() -> NoReturn:
     sys.exit(0)
 
 
-def _is_excluded_path(file_path: str) -> bool:
+def _is_excluded_path(_file_path: str) -> bool:
     return False
 
 

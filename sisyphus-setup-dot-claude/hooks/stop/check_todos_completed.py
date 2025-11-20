@@ -52,15 +52,15 @@ def main() -> None:
     log_path = Path.home() / ".claude" / "hook_debug.log"
     try:
         with log_path.open("a", encoding="utf-8") as log_file:
-            log_file.write(f"\n=== Stop Hook {datetime.datetime.now()} ===\n")
+            _ = log_file.write(f"\n=== Stop Hook {datetime.datetime.now()} ===\n")
             input_data = sys.stdin.read()
-            log_file.write(f"Input: {input_data}\n")
+            _ = log_file.write(f"Input: {input_data}\n")
 
         sys.stdin = io.StringIO(input_data)
         execute_hook_pipeline()
     except Exception as exception:
         with log_path.open("a", encoding="utf-8") as log_file:
-            log_file.write(f"Exception: {exception}\n")
+            _ = log_file.write(f"Exception: {exception}\n")
         sys.exit(Config.EXIT_CODE_ALLOW)
 
 
@@ -71,22 +71,22 @@ def execute_hook_pipeline() -> None:
     session_id = data.get("session_id", "")
     if not session_id:
         with open(Path.home() / ".claude" / "hook_debug.log", "a") as f:
-            f.write("No session_id\n")
+            _ = f.write("No session_id\n")
         sys.exit(Config.EXIT_CODE_ALLOW)
 
     todos = get_todos_from_file(session_id)
 
     with open(Path.home() / ".claude" / "hook_debug.log", "a") as f:
-        f.write(f"Session: {session_id}, Todos: {todos}\n")
+        _ = f.write(f"Session: {session_id}, Todos: {todos}\n")
 
     if todos is None:
         with open(Path.home() / ".claude" / "hook_debug.log", "a") as f:
-            f.write("Todos is None - allowing\n")
+            _ = f.write("Todos is None - allowing\n")
         sys.exit(Config.EXIT_CODE_ALLOW)
 
     unresolved = check_unresolved_todos(todos)
     with open(Path.home() / ".claude" / "hook_debug.log", "a") as f:
-        f.write(f"Unresolved count: {len(unresolved)}\n")
+        _ = f.write(f"Unresolved count: {len(unresolved)}\n")
 
     handle_findings(unresolved)
 

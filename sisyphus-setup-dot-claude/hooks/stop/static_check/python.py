@@ -212,7 +212,7 @@ def execute_ruff_operations(config: RuffConfiguration, file_path: str, cwd: str)
     )
 
 
-def build_ruff_error_messages(results: RuffResults, file_path: str) -> list[str]:
+def build_ruff_error_messages(results: RuffResults, _file_path: str) -> list[str]:
     messages: list[str] = []
 
     if results.lint_exit_code != 0 and results.lint_output:
@@ -465,7 +465,7 @@ def run_opinionated_checks(file_path: str) -> list[str]:
     return errors
 
 
-def check_nested_imports(code: str, file_path: str) -> list[str]:
+def check_nested_imports(code: str, _file_path: str) -> list[str]:
     try:
         root: sg.SgRoot = sg.SgRoot(code, "python")
         node: sg.SgNode = root.root()
@@ -500,7 +500,7 @@ def check_nested_imports(code: str, file_path: str) -> list[str]:
         return []
 
 
-def check_any_return(code: str, file_path: str) -> list[str]:
+def check_any_return(code: str, _file_path: str) -> list[str]:
     try:
         root: sg.SgRoot = sg.SgRoot(code, "python")
         node: sg.SgNode = root.root()

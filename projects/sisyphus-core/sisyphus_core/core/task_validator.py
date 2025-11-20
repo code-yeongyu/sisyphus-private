@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from sisyphus_core.core.loop import TaskValidatorProtocol
 from sisyphus_core.core.plans.loader import load_plan
 from sisyphus_core.core.plans.models import Todo, TodoStatus
 
 
-class YamlTaskValidator:
+class YamlTaskValidator(TaskValidatorProtocol):
     """Task validator for v3.0 YAML work plans.
 
     Implements TaskValidatorProtocol for ExecutionLoop feedback loop.
@@ -40,6 +41,7 @@ class YamlTaskValidator:
         Returns:
             True if execution.completed is True, False otherwise
         """
+        del content
         try:
             plan_doc = await load_plan(self.todolist_path)
 
@@ -60,6 +62,7 @@ class YamlTaskValidator:
         Returns:
             True if all todos have status=completed, False otherwise
         """
+        del content
         try:
             plan_doc = await load_plan(self.todolist_path)
 

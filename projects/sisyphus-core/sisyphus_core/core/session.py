@@ -68,7 +68,7 @@ class SessionStore:
         temp_file = self.base_dir / f"sessions.json.tmp.{uuid.uuid4().hex}"
         try:
             async with await anyio.open_file(temp_file, "w", encoding="utf-8") as f:
-                await f.write(json.dumps(sessions, indent=2, ensure_ascii=False))
+                _ = await f.write(json.dumps(sessions, indent=2, ensure_ascii=False))
                 await f.flush()
 
             await anyio.to_thread.run_sync(temp_file.rename, self.sessions_file)

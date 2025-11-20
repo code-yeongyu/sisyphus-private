@@ -120,7 +120,7 @@ class MockLoggerFactory:
     """Mock logger factory for testing."""
 
     @staticmethod
-    def create_logger(agent_type: str, session_id: str | None = None, log_dir: Path = Path("./logs")) -> MagicMock:
+    def create_logger(agent_type: str, session_id: str | None = None, _log_dir: Path = Path("./logs")) -> MagicMock:
         logger = MagicMock()
         logger.info = MagicMock()
         logger.debug = MagicMock()
@@ -177,13 +177,13 @@ work_plans:
     completed: false
 """
         self.todolist_path.parent.mkdir(parents=True, exist_ok=True)
-        self.todolist_path.write_text(content)
+        _ = self.todolist_path.write_text(content)
 
     def read_content(self) -> str:
         self.read_count += 1
         return "mock content"
 
-    async def check_all_goals_accomplished(self, content: str | None = None) -> bool:
+    async def check_all_goals_accomplished(self, _content: str | None = None) -> bool:
         if self.completion_sequence:
             idx = min(self.call_count, len(self.completion_sequence) - 1)
             result = self.completion_sequence[idx]
@@ -191,22 +191,22 @@ work_plans:
             return result
         return self._all_complete
 
-    async def check_all_checkboxes_completed(self, content: str | None = None) -> bool:
+    async def check_all_checkboxes_completed(self, _content: str | None = None) -> bool:
         if self.completion_sequence:
             current_check_index = max(0, self.call_count - 1)
             sequence_index = min(current_check_index, len(self.completion_sequence) - 1)
             return self.completion_sequence[sequence_index]
         return self._all_complete
 
-    def extract_uncompleted_checkboxes(self, content: str | None = None) -> list[str]:
+    def extract_uncompleted_checkboxes(self, _content: str | None = None) -> list[str]:
         if self._all_complete:
             return []
         return ["Task 1", "Task 2"]
 
-    def count_total_checkboxes(self, content: str | None = None) -> int:
+    def count_total_checkboxes(self, _content: str | None = None) -> int:
         return 10
 
-    def count_completed_checkboxes(self, content: str | None = None) -> int:
+    def count_completed_checkboxes(self, _content: str | None = None) -> int:
         return 8 if not self._all_complete else 10
 
 
@@ -226,7 +226,7 @@ class MockStatusManager:
             )
         )
 
-    async def set_current(self, plan_path: str, plan_root: str) -> None:
+    async def set_current(self, plan_path: str, _plan_root: str) -> None:
         """No-op for tests."""
         pass
 

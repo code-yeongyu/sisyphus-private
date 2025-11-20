@@ -23,7 +23,7 @@ async def test_plan_file(tmp_path: Path) -> Path:
     plan_dir = tmp_path / ".sisyphus" / "tasks"
     plan_dir.mkdir(parents=True, exist_ok=True)
     plan_file = plan_dir / "test-plan.yaml"
-    plan_file.write_text("""version: "3.0"
+    _ = plan_file.write_text("""version: "3.0"
 metadata:
   created_at: "2025-11-12T00:00:00Z"
 work_plans:
@@ -79,7 +79,7 @@ class MockAgentWithPromptError:
             self.session_id = "new-session-123"
         return self.session_id
 
-    async def send(self, message: str) -> None:
+    async def send(self, _message: str) -> None:
         pass
 
     def stream(self) -> AsyncIterator[AgentMessage]:
@@ -105,7 +105,7 @@ class MockUI:
     async def initialize(self) -> None:
         pass
 
-    async def show_message(self, message: AgentMessage, source: str = "execute") -> None:
+    async def show_message(self, message: AgentMessage, _source: str = "execute") -> None:
         self.messages.append(message)
 
     async def show_status(self, status: str) -> None:
@@ -125,7 +125,7 @@ class MockTaskValidator:
     def read_content(self) -> str:
         return "mock content"
 
-    async def check_all_goals_accomplished(self, content: str | None = None) -> bool:
+    async def check_all_goals_accomplished(self, _content: str | None = None) -> bool:
         if self.call_count >= self.complete_after:
             return True
         return self._all_complete
@@ -135,13 +135,13 @@ class MockTaskValidator:
         self.call_count += 1
         return result
 
-    def extract_uncompleted_checkboxes(self, content: str | None = None) -> list[str]:
+    def extract_uncompleted_checkboxes(self, _content: str | None = None) -> list[str]:
         return []
 
-    def count_total_checkboxes(self, content: str | None = None) -> int:
+    def count_total_checkboxes(self, _content: str | None = None) -> int:
         return 1
 
-    def count_completed_checkboxes(self, content: str | None = None) -> int:
+    def count_completed_checkboxes(self, _content: str | None = None) -> int:
         return 1 if self._all_complete else 0
 
 

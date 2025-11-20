@@ -138,7 +138,7 @@ async def _show_task_impl(task: Todo, work_plan: WorkPlan, working_dir: Path) ->
 
 def show_task(
     task_id: str = typer.Argument(..., help="Task ID"),
-    rich: bool = typer.Option(
+    _rich: bool = typer.Option(
         False,
         "--rich",
         help="Rich formatting (legacy option, always enabled)",

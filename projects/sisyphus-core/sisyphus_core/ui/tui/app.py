@@ -207,7 +207,7 @@ class TUI(App[None]):
         self.theme = self.theme_name
 
         if self.task_validator is not None:
-            self.set_interval(2.0, self._monitor_todolist)
+            _ = self.set_interval(2.0, self._monitor_todolist)
 
         self.ready_event.set()
 
@@ -265,7 +265,7 @@ class TUI(App[None]):
         except Exception as e:
             self.log.error(f"Failed to show message: {e}")
 
-    async def on_shutdown_request_message(self, message: ShutdownRequestMessage) -> None:
+    async def on_shutdown_request_message(self, _message: ShutdownRequestMessage) -> None:
         """Shutdown request handler."""
         await self._safe_shutdown()
 
@@ -301,7 +301,7 @@ class TUI(App[None]):
 
         return " ".join(parts)
 
-    async def on_agent_interrupt_event(self, message: AgentInterruptEvent) -> None:
+    async def on_agent_interrupt_event(self, _message: AgentInterruptEvent) -> None:
         """Agent interrupt event handler."""
         self.agent_interrupted = True
 
@@ -312,9 +312,9 @@ class TUI(App[None]):
             self._execution_loop.request_interrupt()
 
         chat_log = self.query_one(ChatLog)
-        chat_log.write("[yellow]⏸ Paused by ESC key. Send a message to resume.[/yellow]")
+        _ = chat_log.write("[yellow]⏸ Paused by ESC key. Send a message to resume.[/yellow]")
 
-    async def on_input_ready_event(self, message: InputReadyEvent) -> None:
+    async def on_input_ready_event(self, _message: InputReadyEvent) -> None:
         """Wake up get_input() when Enter is pressed in InputBar."""
         if self.agent_interrupted:
             self.agent_interrupted = False
@@ -339,7 +339,7 @@ class TUI(App[None]):
             source: Message source ('execute' or 'verify')
         """
         await self.ready_event.wait()
-        self.post_message(ShowAgentMessage(message, source))
+        _ = self.post_message(ShowAgentMessage(message, source))
 
     async def show_status(self, status: str) -> None:
         """Display status (Thread-Safe).
@@ -348,7 +348,7 @@ class TUI(App[None]):
             status: Status message to display
         """
         await self.ready_event.wait()
-        self.post_message(UpdateStatusMessage(status))
+        _ = self.post_message(UpdateStatusMessage(status))
 
     async def get_input(self) -> str | None:
         """Get message from InputBar queue.

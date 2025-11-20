@@ -120,7 +120,7 @@ def test_accept_as_verification_agent__if_valid_id__marks_checklist(tmp_path: Pa
             "updated_at": datetime.now(UTC).isoformat(),
         }
     }
-    status_path.write_text(json.dumps(status_data))
+    _ = status_path.write_text(json.dumps(status_data))
 
     # when
     result = runner.invoke(
@@ -231,7 +231,7 @@ def test_accept_as_verification_agent__if_invalid_id__returns_error(tmp_path: Pa
             "updated_at": datetime.now(UTC).isoformat(),
         }
     }
-    status_path.write_text(json.dumps(status_data))
+    _ = status_path.write_text(json.dumps(status_data))
 
     # when
     result = runner.invoke(
@@ -259,7 +259,7 @@ def test_accept_as_verification_agent__if_no_current_plan__returns_error(tmp_pat
 
     status_path = sisyphus_dir / "status.json"
     status_data = {"current_plan": None}
-    status_path.write_text(json.dumps(status_data))
+    _ = status_path.write_text(json.dumps(status_data))
 
     # when
     result = runner.invoke(
@@ -349,7 +349,7 @@ def test_accept_as_verification_agent__if_no_acceptance_criteria__returns_error(
             "updated_at": datetime.now(UTC).isoformat(),
         }
     }
-    status_path.write_text(json.dumps(status_data))
+    _ = status_path.write_text(json.dumps(status_data))
 
     # when
     result = runner.invoke(

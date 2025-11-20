@@ -131,7 +131,7 @@ def main(
 
             # Step 2: Stage all changes
             progress.update(task, advance=1, description="[cyan]Staging changes... (1/5)")
-            await run_git_command("add", ".")
+            _ = await run_git_command("add", ".")
             console.print("[green]✓[/green] Staged all changes")
 
             # Step 3: Run git absorb with rebase
@@ -188,10 +188,10 @@ def main(
 
                         if target_commit:
                             # Stage the file
-                            await run_git_command("add", file_path)
+                            _ = await run_git_command("add", file_path)
 
                             # Create fixup commit
-                            await run_git_command(
+                            _ = await run_git_command(
                                 "commit",
                                 "--fixup",
                                 target_commit,
@@ -204,7 +204,7 @@ def main(
                     # Step 6: Run autosquash rebase
                     progress.update(task, advance=1, description="[cyan]Running autosquash rebase... (5/5)")
 
-                    await run_git_command(
+                    _ = await run_git_command(
                         "rebase",
                         "-i",
                         "--autosquash",

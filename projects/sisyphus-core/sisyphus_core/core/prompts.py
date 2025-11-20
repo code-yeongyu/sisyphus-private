@@ -1,6 +1,33 @@
 from __future__ import annotations
 
 
+def build_simple_execute_prompt(plan_path: str, uncompleted_tasks: str) -> str:
+    """Build simple execute user message for orchestrator agent.
+
+    Args:
+        plan_path: Path to the YAML plan file
+        uncompleted_tasks: Summary of uncompleted tasks (formatted string)
+
+    Returns:
+        User message for orchestrator agent
+    """
+    return f"""Start working on the plan: {plan_path}
+
+## Current Work Context
+
+**Plan File**: {plan_path}
+
+**Uncompleted Tasks**:
+{uncompleted_tasks}
+
+**Your Mission**: Complete ALL tasks above by delegating to `sisyphus-executor` agents.
+Verify each task thoroughly. Do NOT trust executors blindly - they may lie about completion.
+
+Remember: You are the orchestrator. Delegate tasks, verify work, ensure quality.
+
+Start now by running `sisyphus-speckit task continue` to move to the first task."""
+
+
 def build_execute_prompt(plan_path: str, current_todo_summary: str) -> str:
     """Build execute prompt with plan path and current todo overview.
 

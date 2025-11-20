@@ -7,7 +7,7 @@ import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 
-import anyio  # type: ignore[import-not-found]
+from ._compat_anyio import run_sync
 
 from .post_tool_use_executor_verification import main as verification_main
 from .post_tool_use_plan_lint import main as plan_lint_main
@@ -61,7 +61,8 @@ async def execute_hook_in_thread(func: Callable[[], int], stdin_data: str) -> in
         return func()
 
     try:
-        return await anyio.to_thread.run_sync(_run)  # type: ignore
+        result: int = await run_sync(_run)
+        return result
     except Exception as e:
         print(f"Hook execution failed: {e}", file=sys.stderr)
         return 1
@@ -110,6 +111,7 @@ async def _main() -> int:
             result = await execute_hook_in_thread(func, stdin_data)
             results.append(result)
 
+        import anyio
         async with anyio.create_task_group() as tg:
             for hook in async_hooks:
                 tg.start_soon(run_and_collect, hook.command)
@@ -127,6 +129,7 @@ async def _main() -> int:
 
 
 def main() -> int:
+    import anyio
     return anyio.run(_main)
 
 

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 import anyio  # type: ignore[import-not-found]
 
+from ._compat_anyio import run_sync
 from .pre_tool_use_plan_delegation import main as plan_delegation_main
 
 
@@ -52,7 +53,8 @@ async def execute_hook_in_thread(func: Callable[[], int], stdin_data: str) -> in
         return func()
 
     try:
-        return await anyio.to_thread.run_sync(_run)  # type: ignore
+        result: int = await run_sync(_run)
+        return result
     except Exception as e:
         print(f"Hook execution failed: {e}", file=sys.stderr)
         return 1

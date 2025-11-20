@@ -410,7 +410,7 @@ work_plans:
   - id: '8'
     title: sisyphus-core 전체 타입 검증
     description: sisyphus-core 프로젝트 타입 이슈 완전 해결 확인
-    status: in_progress
+    status: completed
     references:
     - inline: "sisyphus-core 프로젝트 전체 basedpyright 검증\n\n검증 범위:\n- projects/sisyphus-core/sisyphus_core/
         (모든 파일)\n\n기대 결과:\n- 0 errors, 0 warnings\n\n주요 파일:\n- core/loop.py\n- core/plan_linter.py\n\
@@ -442,7 +442,7 @@ work_plans:
   - id: '9'
     title: sisyphus-cli Unknown 타입 이슈 해결
     description: CLI 관련 Unknown 타입 이슈 해결
-    status: pending
+    status: in_progress
     references:
     - inline: "파일: projects/sisyphus-cli/sisyphus/cli/work.py\n\n현재 이슈:\n- list comprehension에서
         Unknown 타입\n- Path 관련 타입 추론 실패\n\n해결 방법:\n```python\nfrom pathlib import Path\n\
@@ -452,7 +452,8 @@ work_plans:
     - id: verify-9
       title: sisyphus-cli Unknown 타입 해결 검증
       description: Unknown 타입 워닝 제거 확인
-      verified: false
+      verified: true
+      verified_at: '2025-11-20T16:01:25.346916+00:00'
       orchestrator_manually_verified: false
       manual_verification_evidence: ''
       bash:
@@ -665,6 +666,6 @@ work_plans:
     started_at: '2025-11-20T08:40:49.260285+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '8'
+    current_task_id: '9'
   current_work_ids: []
   acceptance_criteria_for_verification_agent: []

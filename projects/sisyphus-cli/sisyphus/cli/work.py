@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 import traceback
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import anyio
 import typer
@@ -31,6 +31,7 @@ from sisyphus_core.utils.ignore import add_patterns_to_file
 from sisyphus_core.utils.logging import LoggerFactory
 
 if TYPE_CHECKING:
+    from anyio.abc import TaskGroup
     from sisyphus_core.agents.base import Agent
     from sisyphus_core.ui.base import UIProtocol
 
@@ -255,15 +256,13 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
         return None
 
     # 재귀 탐색 + 대소문자 무시 (glob은 대소문자 구분하므로 양쪽 다 검색)
-    yaml_files = []
+    yaml_files_set: set[Path] = set()
     for pattern in ("**/*.yaml", "**/*.yml", "**/*.YAML", "**/*.YML"):
-        yaml_files.extend(tasks_dir.glob(pattern))
-    # 중복 제거 (같은 파일이 여러 패턴에 매칭될 수 있음)
-    yaml_files = list(set(yaml_files))
-    # 파일명 기준 정렬 (표시 순서와 실제 선택 인덱스 일치 보장)
-    yaml_files.sort(key=lambda p: p.name)
+        yaml_files_set.update(tasks_dir.glob(pattern))
+    # 중복 제거 후 명시적 타입 지정 (같은 파일이 여러 패턴에 매칭될 수 있음)
+    yaml_files: list[Path] = sorted(yaml_files_set, key=lambda p: p.name)
 
-    executable_plans = []
+    executable_plans: list[Path] = []
     for yaml_file in yaml_files:
         if await _is_plan_executable(yaml_file, tasks_dir):
             executable_plans.append(yaml_file)
@@ -300,11 +299,10 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
                 raise ValueError("User cancelled selection")
         else:
             # CLI 모드: anyio.to_thread.run_sync로 typer.prompt 래핑 (이벤트 루프 블로킹 방지)
-            selection = str(
-                await anyio.to_thread.run_sync(  # pyright: ignore[reportAttributeAccessIssue]
-                    lambda: typer.prompt(f"Select plan (1-{len(executable_plans)})", default=1, type=int)
-                )
-            )
+            result = cast(int, await anyio.to_thread.run_sync(
+                lambda: typer.prompt(f"Select plan (1-{len(executable_plans)})", default=1, type=int)
+            ))
+            selection = str(result)
 
         try:
             idx = int(selection) - 1
@@ -388,7 +386,7 @@ async def _main_cli(
     minutes = int((elapsed_seconds % 3600) // 60)
     secs = int(elapsed_seconds % 60)
 
-    time_parts = []
+    time_parts: list[str] = []
     if hours > 0:
         time_parts.append(f"{hours} hour(s)")
     if minutes > 0:
@@ -423,7 +421,7 @@ async def _main_tui(
     if not isinstance(ui, TUI):
         raise TypeError("ui must be TUI instance for TUI mode")
 
-    async def monitor_shutdown(tg: anyio.abc.TaskGroup) -> None:  # pyright: ignore[reportAttributeAccessIssue]
+    async def monitor_shutdown(tg: TaskGroup) -> None:
         """Monitor shutdown event (TUI → ExecutionLoop termination)."""
         await ui.shutdown_event.wait()
         tg.cancel_scope.cancel()

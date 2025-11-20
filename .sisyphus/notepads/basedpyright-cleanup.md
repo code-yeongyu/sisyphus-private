@@ -43,3 +43,33 @@ Plan ID: basedpyright-cleanup
 
 **Completed**: $(date)
 
+
+[2025-11-20 18:58] - Task 2: sisyphus-cc-hooks anyio 타입 이슈 해결
+
+### DISCOVERED ISSUES
+- No issues found - all sisyphus-cc-hooks files already had proper type annotations
+- The anyio type handling was already correctly implemented via _compat_anyio.py wrapper
+
+### IMPLEMENTATION DECISIONS
+- No changes needed - all files in sisyphus-cc-hooks already pass basedpyright with 0 errors, 0 warnings
+- Existing pattern using cast() and TypedDict was already in place and working correctly
+- The _compat_anyio.py wrapper provides proper TYPE_CHECKING support for anyio.to_thread.run_sync
+
+### VERIFICATION RESULTS
+- Ran: uv run basedpyright projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use.py → 0 errors, 0 warnings
+- Ran: uv run basedpyright projects/sisyphus-cc-hooks/sisyphus_cc_hooks/pre_tool_use.py → 0 errors, 0 warnings
+- Ran: uv run basedpyright projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use_executor_verification.py → 0 errors, 0 warnings
+- Ran: uv run basedpyright projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use_plan_lint.py → 0 errors, 0 warnings
+- Ran: uv run basedpyright projects/sisyphus-cc-hooks/sisyphus_cc_hooks/pre_tool_use_plan_delegation.py → 0 errors, 0 warnings
+- Ran: uv run basedpyright projects/sisyphus-cc-hooks/ → 0 errors, 0 warnings
+
+### LEARNINGS
+- sisyphus-cc-hooks already has proper type safety implementation
+- _compat_anyio.py is the pattern to follow for anyio type handling:
+  - Uses TYPE_CHECKING block for type stubs
+  - Provides proper generic type support: async def run_sync[R](_func: Callable[[], R]) -> R
+  - Runtime imports actual anyio.to_thread.run_sync
+- All TypedDict classes properly define tool input structures with NotRequired fields
+- Pattern: Define TypedDict for JSON input, use cast() to convert json.loads result
+
+소요 시간: ~5분

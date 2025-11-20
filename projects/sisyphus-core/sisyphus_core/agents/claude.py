@@ -34,6 +34,7 @@ class ClaudeAgent:
         model: str | None = None,
         sdk_options: dict[str, Any] | None = None,
         cwd: str | None = None,
+        system_prompt: str | None = None,
     ) -> None:
         """Initialize ClaudeAgent.
 
@@ -41,10 +42,12 @@ class ClaudeAgent:
             model: Optional model override (e.g., "claude-sonnet-4-5-20250929")
             sdk_options: Optional SDK options to override defaults
             cwd: Optional working directory path for resolving project settings
+            system_prompt: Optional system prompt to set custom instructions
         """
         self._model = model
         self._sdk_options = sdk_options or {}
         self._cwd = cwd
+        self._system_prompt = system_prompt
         self._client: ClaudeSDKClient | None = None
         self._options: ClaudeAgentOptions | None = None
         self._session_id: str | None = None
@@ -58,6 +61,14 @@ class ClaudeAgent:
             Current session ID or None if not yet received
         """
         return self._session_id
+
+    def set_system_prompt(self, system_prompt: str) -> None:
+        """Set system prompt (must be called before initialize()).
+
+        Args:
+            system_prompt: System prompt to set
+        """
+        self._system_prompt = system_prompt
 
     async def initialize(self) -> None:
         """Initialize the Claude Agent SDK client."""
@@ -74,6 +85,9 @@ class ClaudeAgent:
 
         if self._cwd:
             final_options["cwd"] = self._cwd
+
+        if self._system_prompt:
+            final_options["system_prompt"] = self._system_prompt
 
         self._options = ClaudeAgentOptions(**final_options)
         self._client = ClaudeSDKClient(self._options)
@@ -104,6 +118,9 @@ class ClaudeAgent:
 
             if self._cwd:
                 resume_options["cwd"] = self._cwd
+
+            if self._system_prompt:
+                resume_options["system_prompt"] = self._system_prompt
 
             resume_options["resume"] = session_id
 

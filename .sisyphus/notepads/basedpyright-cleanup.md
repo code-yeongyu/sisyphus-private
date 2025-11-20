@@ -390,3 +390,68 @@ sisyphus-core의 Unknown 타입 이슈 해결
 - Convention: Reuse the variable in all branches to avoid type checker confusion
 
 소요 시간: 15 minutes
+
+
+## Task #7: sisyphus-core anyio 타입 이슈 해결
+**Started**: $(date)
+
+### 누적 지식 (Accumulated Knowledge)
+**sisyphus-cc-hooks anyio 해결 패턴 (Task #2):**
+- _compat_anyio.py TYPE_CHECKING 래퍼로 anyio.to_thread.run_sync 타입 해결
+- 제네릭 타입 지원: `async def run_sync[R](_func: Callable[[], R]) -> R`
+- 런타임에는 실제 anyio 함수 사용, 타입 체킹 시에만 타입 힌트 제공
+
+**Task #6 성공 패턴:**
+- isinstance() 체크 후 명시적 타입 캐스팅
+- dict[str, Any] 패턴으로 YAML 구조 타입 지정
+- 40개 Unknown 워닝 완전 제거
+
+**적용 가능한 패턴:**
+- anyio.create_task_group() → cast(TaskGroup, ...)
+- 또는 _compat_anyio.py 스타일 TYPE_CHECKING 래퍼
+- 함수 반환 타입 명시
+
+### 작업 목표
+sisyphus-core의 anyio 타입 이슈 해결
+- 주요 대상: loop.py:220의 anyio.create_task_group() 반환 타입
+- anyio 관련 타입 워닝 제거
+
+
+[2025-11-20 23:55] - Task #7: sisyphus-core anyio 타입 이슈 해결
+
+### DISCOVERED ISSUES
+- No anyio-related type warnings found in sisyphus-core
+- Task #6 already resolved all Unknown type issues that were caused by YAML loader
+- The anyio types (Event, CancelScope) in loop.py are properly inferred by basedpyright
+- Current state: 0 anyio warnings, 0 anyio errors
+
+### IMPLEMENTATION DECISIONS
+- No code changes needed - sisyphus-core anyio types are already properly handled
+- Loop.py line 90-91: anyio.Event and anyio.CancelScope type annotations are correct
+- Line 255: anyio.Event() instantiation has proper type inference
+- All anyio operations in sisyphus-core pass basedpyright validation
+
+### VERIFICATION RESULTS
+- Ran: uv run basedpyright projects/sisyphus-core/sisyphus_core/core/loop.py
+  - Result: 0 errors, 8 warnings (NONE anyio-related)
+  - Warnings are: reportUnknownArgumentType (from list comprehension), reportImplicitStringConcatenation
+- Ran: uv run basedpyright projects/sisyphus-core/ 2>&1 | grep -i "anyio"
+  - Result: No matches found (no anyio warnings)
+- Runtime type verification:
+  - anyio.Event: <class 'anyio.Event'> ✓
+  - anyio.CancelScope: <class 'anyio.CancelScope'> ✓
+  - TaskGroup: <class 'anyio.abc.TaskGroup'> ✓
+
+### LEARNINGS
+- Task #6's Unknown type resolution appears to have also resolved anyio type inference issues
+- basedpyright properly infers anyio types without explicit type annotations in most cases
+- The TYPE_CHECKING pattern from sisyphus-cc-hooks (_compat_anyio.py) is not needed in sisyphus-core
+- anyio.Event() and anyio.CancelScope() are correctly typed at runtime
+- No additional fixes required for anyio in sisyphus-core - all types are already correct
+
+### PROBLEMS FOR NEXT TASKS
+- Task #8 will verify sisyphus-core full type safety across all files
+- Current status: Ready for Task #8 (full project validation)
+
+소요 시간: ~10분
+

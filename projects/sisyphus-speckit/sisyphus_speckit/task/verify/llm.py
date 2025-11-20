@@ -14,7 +14,7 @@ from sisyphus_speckit.task._helpers import (
 
 
 def verify_llm(
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     """Display next LLM verification item for manual review."""
 

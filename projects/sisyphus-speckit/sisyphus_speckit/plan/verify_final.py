@@ -13,15 +13,15 @@ console = Console()
 
 
 def verify_final_plan(
-    verification_id: str = typer.Option(..., "--id", help="Final verification item ID"),
-    evidence: str = typer.Option(..., "--evidence", help="Verification evidence description"),
-    yaml_path: Path = typer.Option(
+    verification_id: str = typer.Option(..., "--id", help="Final verification item ID"),  # pyright: ignore[reportCallInDefaultInitializer]
+    evidence: str = typer.Option(..., "--evidence", help="Verification evidence description"),  # pyright: ignore[reportCallInDefaultInitializer]
+    yaml_path: Path = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
         Path("./.sisyphus/tasks/plan.yaml"),
         "--file",
         "-f",
         help="YAML file path",
     ),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     async def _verify_final() -> None:
         working_dir = resolve_cwd(cwd)

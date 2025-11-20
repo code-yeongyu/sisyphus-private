@@ -149,15 +149,15 @@ class ExecutionLoop:
         """
         if not self.status_manager:
             raise ValueError(
-                "status_manager is required. "
-                "task_validator.todolist_path fallback has been removed in v3.0. "
+                "status_manager is required. " +
+                "task_validator.todolist_path fallback has been removed in v3.0. " +
                 "Please set status_manager in ExecutionLoop initialization."
             )
 
         status_file = await self.status_manager.get()
         if not status_file.current_plan or not status_file.current_plan.plan_path:
             raise ValueError(
-                "current_plan is not set in status.json. "
+                "current_plan is not set in status.json. " +
                 "Please run 'sisyphus-speckit plan init' or set current plan first."
             )
 

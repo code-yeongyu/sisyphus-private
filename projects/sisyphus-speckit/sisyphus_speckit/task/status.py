@@ -14,7 +14,7 @@ console = Console()
 
 
 def task_status(
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     """Display current task's verification status in detail.
 

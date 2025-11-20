@@ -245,9 +245,9 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
 
     if not tasks_dir.exists():
         await ui.show_status(
-            "[yellow]No '.sisyphus/tasks/' directory found.[/yellow]\n\n"
-            "Create v3.0 YAML plan:\n"
-            "  mkdir -p .sisyphus/tasks\n"
+            "[yellow]No '.sisyphus/tasks/' directory found.[/yellow]\n\n" +
+            "Create v3.0 YAML plan:\n" +
+            "  mkdir -p .sisyphus/tasks\n" +
             "  vi .sisyphus/tasks/my-plan.yaml"
         )
         return None
@@ -268,7 +268,7 @@ async def _detect_plan_path(ui: UIProtocol) -> Path | None:
 
     if len(executable_plans) == 0:
         await ui.show_status(
-            "[yellow]No executable plans found.[/yellow]\n\n"
+            "[yellow]No executable plans found.[/yellow]\n\n" +
             "All plans have unresolved dependencies. Complete dependency plans first."
         )
         return None
@@ -512,25 +512,25 @@ async def _main_tui(
 @work_app.callback(invoke_without_command=True)
 def run(
     ctx: typer.Context,
-    agent: str | None = typer.Option(None, "--agent", "-a", help="Agent type (claude|opencode)"),
-    execute: str | None = typer.Option(None, "--execute", help="Execute agent (AGENT[:MODEL])"),
-    verify: str | None = typer.Option(None, "--verify", help="Verify agent (AGENT[:MODEL])"),
-    execute_extra_prompt: str | None = typer.Option(None, "--execute-extra-prompt", help="Extra execute prompt"),
-    verify_extra_prompt: str | None = typer.Option(None, "--verify-extra-prompt", help="Extra verify prompt"),
-    binary: Path | None = typer.Option(None, "--binary", help="Common binary path"),
-    execute_binary: Path | None = typer.Option(None, "--execute-binary", help="Execute binary (overrides --binary)"),
-    verify_binary: Path | None = typer.Option(None, "--verify-binary", help="Verify binary (overrides --binary)"),
-    execute_sdk_options: str | None = typer.Option(None, "--execute-sdk-options", help="Execute SDK options (JSON)"),
-    verify_sdk_options: str | None = typer.Option(None, "--verify-sdk-options", help="Verify SDK options (JSON)"),
-    opencode_server_url: str | None = typer.Option(None, "--opencode-server-url", help="OpenCode server URL"),
-    no_tui: bool = typer.Option(False, "--no-tui", help="Disable TUI, use CLI mode"),
-    theme: ThemeOption = typer.Option(
+    agent: str | None = typer.Option(None, "--agent", "-a", help="Agent type (claude|opencode)"),  # pyright: ignore[reportCallInDefaultInitializer]
+    execute: str | None = typer.Option(None, "--execute", help="Execute agent (AGENT[:MODEL])"),  # pyright: ignore[reportCallInDefaultInitializer]
+    verify: str | None = typer.Option(None, "--verify", help="Verify agent (AGENT[:MODEL])"),  # pyright: ignore[reportCallInDefaultInitializer]
+    execute_extra_prompt: str | None = typer.Option(None, "--execute-extra-prompt", help="Extra execute prompt"),  # pyright: ignore[reportCallInDefaultInitializer]
+    verify_extra_prompt: str | None = typer.Option(None, "--verify-extra-prompt", help="Extra verify prompt"),  # pyright: ignore[reportCallInDefaultInitializer]
+    binary: Path | None = typer.Option(None, "--binary", help="Common binary path"),  # pyright: ignore[reportCallInDefaultInitializer]
+    execute_binary: Path | None = typer.Option(None, "--execute-binary", help="Execute binary (overrides --binary)"),  # pyright: ignore[reportCallInDefaultInitializer]
+    verify_binary: Path | None = typer.Option(None, "--verify-binary", help="Verify binary (overrides --binary)"),  # pyright: ignore[reportCallInDefaultInitializer]
+    execute_sdk_options: str | None = typer.Option(None, "--execute-sdk-options", help="Execute SDK options (JSON)"),  # pyright: ignore[reportCallInDefaultInitializer]
+    verify_sdk_options: str | None = typer.Option(None, "--verify-sdk-options", help="Verify SDK options (JSON)"),  # pyright: ignore[reportCallInDefaultInitializer]
+    opencode_server_url: str | None = typer.Option(None, "--opencode-server-url", help="OpenCode server URL"),  # pyright: ignore[reportCallInDefaultInitializer]
+    no_tui: bool = typer.Option(False, "--no-tui", help="Disable TUI, use CLI mode"),  # pyright: ignore[reportCallInDefaultInitializer]
+    theme: ThemeOption = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
         ThemeOption.SYSTEM,
         "--theme",
         help="TUI theme (system: auto-detect, mocha: dark, latte: light)",
         case_sensitive=False,
     ),
-    _log: Path | None = typer.Option(None, "--log", help="Log file path"),
+    _log: Path | None = typer.Option(None, "--log", help="Log file path"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     """Work with Sisyphus multi-agent system."""
     execution_pwd = Path.cwd()
@@ -615,8 +615,8 @@ def run(
 
 @work_app.command(name="ignore")
 def ignore(
-    exclude_only: bool = typer.Option(False, "--exclude-only", help="Add only to .git/info/exclude (local)"),
-    both: bool = typer.Option(False, "--both", help="Add to both .gitignore and .git/info/exclude"),
+    exclude_only: bool = typer.Option(False, "--exclude-only", help="Add only to .git/info/exclude (local)"),  # pyright: ignore[reportCallInDefaultInitializer]
+    both: bool = typer.Option(False, "--both", help="Add to both .gitignore and .git/info/exclude"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     """Add Sisyphus-generated files to git ignore configuration."""
     if exclude_only and both:
@@ -677,8 +677,8 @@ def ignore(
 
 @work_app.command(name="clean-history")
 def clean_history(
-    base_branch: str | None = typer.Option(None, "--base-branch", help="Base branch (auto-detect if not specified)"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be done without making changes"),
+    base_branch: str | None = typer.Option(None, "--base-branch", help="Base branch (auto-detect if not specified)"),  # pyright: ignore[reportCallInDefaultInitializer]
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be done without making changes"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     """Remove Sisyphus-generated files from git history (current branch only)."""
     if is_on_main_branch():

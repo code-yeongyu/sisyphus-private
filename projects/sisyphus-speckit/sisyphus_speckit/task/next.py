@@ -8,12 +8,12 @@ from sisyphus_speckit.task._helpers import _format_task_display, _load_current_p
 
 
 def show_next(
-    _rich: bool = typer.Option(
+    _rich: bool = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
         False,
         "--rich",
         help="Rich formatting (legacy option, always enabled)",
     ),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     async def _next() -> None:
         working_dir = resolve_cwd(cwd)

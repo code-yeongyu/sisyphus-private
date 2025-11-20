@@ -322,7 +322,7 @@ async def generate_system_reminder_async() -> str:
         context_info = format_context_window_info(usage)
     else:
         context_info = (
-            "Context Window: Unable to calculate (transcript not found). "
+            "Context Window: Unable to calculate (transcript not found). " +
             "Okay to Process remaining works. Never stop until the user explicitly asks you to stop."
         )
 
@@ -393,7 +393,7 @@ async def generate_system_reminder_async() -> str:
             "Without user's explicit \"Do Foo Bar\", don't try to do write operations.",
             "without user's saying: always do operations with NO SIDE EFFECTS",
             "(running test code, look at web, look at the code, executing command to look at docker status)",
-            "After extracting and analyzing user's request, use todo tools to manage them."
+            "After extracting and analyzing user's request, use todo tools to manage them." +
             "Always use todo tool to plan and processing user's request.",
             "[TOOL USE]",
             "TOOL USAGES ARE YOUR SUPERPOWER, ALWAYS USE TOOLS A LOT. BE SUPERINTELLIGENT AI. CLAUDE.",

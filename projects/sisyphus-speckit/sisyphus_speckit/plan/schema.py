@@ -12,7 +12,7 @@ console = Console()
 
 
 def plan_schema(
-    output: Path | None = typer.Option(None, "--output", "-o", help="Output file path"),
+    output: Path | None = typer.Option(None, "--output", "-o", help="Output file path"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     """Display or save the JSON schema for PlanDocument.
 

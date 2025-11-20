@@ -19,20 +19,20 @@ from sisyphus_speckit.task._helpers import (
 
 
 def verify_manual_mark(
-    verify_id: str = typer.Argument(..., help="Verification item ID"),
-    evidence: str = typer.Option(..., "--evidence", help="Evidence description"),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    verify_id: str = typer.Argument(..., help="Verification item ID"),  # pyright: ignore[reportCallInDefaultInitializer]
+    evidence: str = typer.Option(..., "--evidence", help="Evidence description"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     """Mark manual verification as completed with evidence."""
     if len(evidence) < 100:
         raise typer.BadParameter(
-            "증거(evidence)는 최소 100자 이상이어야 합니다.\n\n"
-            "이유: 철저한 검증은 상세한 기록을 통해 품질을 보장합니다.\n\n"
+            "증거(evidence)는 최소 100자 이상이어야 합니다.\n\n" +
+            "이유: 철저한 검증은 상세한 기록을 통해 품질을 보장합니다.\n\n" +
             "좋은 예시:\n"
-            '"Chrome 120.0 환경에서 로그인 플로우 테스트 완료. 5개 계정으로 테스트, '
-            "비밀번호 재설정 확인, 이메일 알림 수신 확인, 30분 후 세션 타임아웃 동작 검증. "
-            '모든 에러 핸들링 정상 작동."\n\n'
-            "가이드: 더 많은 검증을 수행하고 상세히 기록해주세요."
+            + '"Chrome 120.0 환경에서 로그인 플로우 테스트 완료. 5개 계정으로 테스트, '
+            + "비밀번호 재설정 확인, 이메일 알림 수신 확인, 30분 후 세션 타임아웃 동작 검증. "
+            + '모든 에러 핸들링 정상 작동."\n\n'
+            + "가이드: 더 많은 검증을 수행하고 상세히 기록해주세요."
         )
 
     async def _mark() -> None:

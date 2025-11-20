@@ -13,9 +13,9 @@ console = Console()
 
 
 def export_plan(
-    yaml_path: Path = typer.Argument(..., help="Path to YAML plan file"),
-    output: Path | None = typer.Option(None, "--output", "-o", help="Output Markdown file path (default: stdout)"),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    yaml_path: Path = typer.Argument(..., help="Path to YAML plan file"),  # pyright: ignore[reportCallInDefaultInitializer]
+    output: Path | None = typer.Option(None, "--output", "-o", help="Output Markdown file path (default: stdout)"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     working_dir = resolve_cwd(cwd)
     resolved_yaml = working_dir / yaml_path if not yaml_path.is_absolute() else yaml_path

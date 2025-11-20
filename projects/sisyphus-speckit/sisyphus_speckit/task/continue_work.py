@@ -21,7 +21,7 @@ from sisyphus_speckit.task._helpers import (
 
 
 def continue_work(
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     """Continue work: complete current task and move to next, or start first task."""
 

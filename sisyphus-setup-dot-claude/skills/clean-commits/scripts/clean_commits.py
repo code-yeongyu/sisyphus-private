@@ -227,7 +227,7 @@ def main(
 
         if final_has_changes:
             panel = Panel(
-                "[yellow]⚠ Some changes could not be automatically committed\n"
+                "[yellow]⚠ Some changes could not be automatically committed\n" +
                 "Please review and commit manually[/yellow]",
                 title="[yellow]Partially Complete[/yellow]",
                 border_style="yellow",

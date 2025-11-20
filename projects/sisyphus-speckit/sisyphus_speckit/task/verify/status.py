@@ -13,7 +13,7 @@ from sisyphus_speckit.task._helpers import (
 
 
 def verify_status(
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     """Display verification status for all tasks."""
 

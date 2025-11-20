@@ -12,8 +12,8 @@ console = Console()
 
 
 def mark_fully_done_command(
-    evidence: str = typer.Option(..., "--evidence", help="Evidence of full completion"),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    evidence: str = typer.Option(..., "--evidence", help="Evidence of full completion"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     async def _mark_fully_done() -> None:
         working_dir = resolve_cwd(cwd)

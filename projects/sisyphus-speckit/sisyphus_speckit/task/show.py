@@ -137,13 +137,13 @@ async def _show_task_impl(task: Todo, work_plan: WorkPlan, working_dir: Path) ->
 
 
 def show_task(
-    task_id: str = typer.Argument(..., help="Task ID"),
-    _rich: bool = typer.Option(
+    task_id: str = typer.Argument(..., help="Task ID"),  # pyright: ignore[reportCallInDefaultInitializer]
+    _rich: bool = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
         False,
         "--rich",
         help="Rich formatting (legacy option, always enabled)",
     ),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     async def _show() -> None:
         working_dir = resolve_cwd(cwd)

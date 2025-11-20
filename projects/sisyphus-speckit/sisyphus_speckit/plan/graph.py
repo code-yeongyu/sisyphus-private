@@ -21,13 +21,13 @@ class GraphFormat(str, Enum):
 
 
 def show_graph(
-    format: GraphFormat = typer.Option(
+    format: GraphFormat = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
         GraphFormat.ASCII,
         "--format",
         "-f",
         help="Output format (ascii or mermaid)",
     ),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     working_dir = resolve_cwd(cwd)
     tasks_dir = working_dir / ".sisyphus" / "tasks"
@@ -82,10 +82,10 @@ def show_graph(
                 console.print()
 
             console.print(
-                "[yellow]How to fix:[/yellow]\n"
-                "  1. Open the file(s) listed above\n"
-                "  2. Find the 'depends_on' field for each plan\n"
-                "  3. Remove one dependency to break the cycle\n"
+                "[yellow]How to fix:[/yellow]\n" +
+                "  1. Open the file(s) listed above\n" +
+                "  2. Find the 'depends_on' field for each plan\n" +
+                "  3. Remove one dependency to break the cycle\n" +
                 "  4. Run 'sisyphus-speckit plan graph' again to verify\n"
             )
             raise typer.Exit(1)

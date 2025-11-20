@@ -19,9 +19,9 @@ from sisyphus_speckit.task._helpers import (
 
 
 def verify_llm_mark(
-    verify_id: str = typer.Argument(..., help="Verification item ID"),
-    evidence: str = typer.Option(..., "--evidence", help="Evidence description"),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    verify_id: str = typer.Argument(..., help="Verification item ID"),  # pyright: ignore[reportCallInDefaultInitializer]
+    evidence: str = typer.Option(..., "--evidence", help="Evidence description"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     """Mark LLM verification as completed with evidence."""
 

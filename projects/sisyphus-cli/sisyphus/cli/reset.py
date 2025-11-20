@@ -13,12 +13,12 @@ console = Console()
 @reset_app.callback(invoke_without_command=True)
 def reset_command(
     _ctx: typer.Context,
-    include_task_specs: bool = typer.Option(
+    include_task_specs: bool = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
         False, "--include-task-specs", help="Also delete .sisyphus/tasks/ and status.json"
     ),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be deleted without deleting"),
-    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be deleted without deleting"),  # pyright: ignore[reportCallInDefaultInitializer]
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     working_dir = resolve_cwd(cwd)
 

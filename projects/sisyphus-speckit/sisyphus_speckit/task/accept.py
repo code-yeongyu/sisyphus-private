@@ -10,9 +10,9 @@ from sisyphus_speckit.task._helpers import _run_async, console
 
 
 def task_accept(
-    criterion_id: str = typer.Option(..., "--id", help="Acceptance criterion ID"),
-    evidence: str = typer.Option(..., "--evidence", help="Evidence of completion"),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    criterion_id: str = typer.Option(..., "--id", help="Acceptance criterion ID"),  # pyright: ignore[reportCallInDefaultInitializer]
+    evidence: str = typer.Option(..., "--evidence", help="Evidence of completion"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     async def _accept() -> None:
         working_dir = resolve_cwd(cwd)

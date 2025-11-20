@@ -46,14 +46,14 @@ def _add_missing_fields(obj: object) -> object:
 
 
 def lint_plan(
-    file_path: Path = typer.Option(
+    file_path: Path = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
         Path("./.sisyphus/tasks/plan.yaml"),
         "--file",
         "-f",
         help="YAML file path to lint",
     ),
-    fix: bool = typer.Option(False, "--fix", help="Auto-fix multiline texts to pipeline format"),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    fix: bool = typer.Option(False, "--fix", help="Auto-fix multiline texts to pipeline format"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     working_dir = resolve_cwd(cwd)
     resolved_path = working_dir / file_path if not file_path.is_absolute() else file_path

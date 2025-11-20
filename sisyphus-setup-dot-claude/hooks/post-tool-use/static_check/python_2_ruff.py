@@ -290,9 +290,9 @@ def handle_results_and_exit(results: RuffResults) -> None:
     if has_only_formatting:
         if results.format_output:
             format_message = (
-                results.format_output + "\n\n"
-                "FILE REFORMATTED\n"
-                "The file has been reformatted by ruff.\n"
+                results.format_output + "\n\n" +
+                "FILE REFORMATTED\n" +
+                "The file has been reformatted by ruff.\n" +
                 "NEXT STEP: Use Read() to view the reformatted content before making further edits."
             )
             print(
@@ -492,10 +492,10 @@ def _build_error_message(results: RuffResults) -> str:
         if results.lint_output:
             message_parts.append("\n")
             auto_fix_content = (
-                results.lint_output + "\n\n"
-                "FILE AUTOMATICALLY MODIFIED\n"
-                "The file has been changed by ruff auto-fix.\n"
-                "REQUIRED ACTION: Use Read() to get the latest file content before any Edit() operations.\n"
+                results.lint_output + "\n\n" +
+                "FILE AUTOMATICALLY MODIFIED\n" +
+                "The file has been changed by ruff auto-fix.\n" +
+                "REQUIRED ACTION: Use Read() to get the latest file content before any Edit() operations.\n" +
                 "Attempting to edit without reading first will cause conflicts or errors."
             )
             message_parts.append(_wrap_in_xml_tags("ruff-auto-fixed", auto_fix_content))
@@ -599,10 +599,10 @@ If you're not using it yet, DON'T add the import yet.
 def _get_error_fix_reminder() -> str:
     """Get reminder message about fixing errors."""
     return (
-        "**CRITICAL: DO NOT IGNORE THESE ERRORS!**\n"
-        "You MUST fix ALL lint errors and formatting issues shown above.\n"
-        "These are not warnings - they are REQUIRED fixes.\n"
-        "The code WILL NOT pass CI/CD until these are resolved.\n\n"
+        "**CRITICAL: DO NOT IGNORE THESE ERRORS!**\n" +
+        "You MUST fix ALL lint errors and formatting issues shown above.\n" +
+        "These are not warnings - they are REQUIRED fixes.\n" +
+        "The code WILL NOT pass CI/CD until these are resolved.\n\n" +
         "IMPORTANT: If the file was auto-fixed, use Read() before Edit to avoid conflicts."
     )
 

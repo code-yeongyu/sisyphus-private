@@ -17,7 +17,7 @@ from sisyphus_speckit.task._helpers import (
 
 
 def mark_completed_command(
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     """Mark work plan as completed when all todos are done.
 

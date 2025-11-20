@@ -42,8 +42,8 @@ def _count_completed_todos(todos: list[Todo]) -> int:
 
 
 def status(
-    path: Path | None = typer.Option(None, "--path", "-p", help="Path to specific plan file"),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    path: Path | None = typer.Option(None, "--path", "-p", help="Path to specific plan file"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     """Display plan status including progress bar and verification summary.
 

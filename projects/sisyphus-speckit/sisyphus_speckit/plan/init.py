@@ -12,25 +12,25 @@ console = Console()
 
 
 def init_plan(
-    path: Path = typer.Option(
+    path: Path = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
         Path("./.sisyphus/tasks/plan.yaml"),
         "--path",
         "-p",
         help="Path where plan YAML will be created",
     ),
-    template: str = typer.Option(
+    template: str = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
         "full",
         "--template",
         "-t",
         help="Template type: 'minimal' (TODO placeholders) or 'full' (complete example)",
     ),
-    initial_request: str | None = typer.Option(
+    initial_request: str | None = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
         None,
         "--initial-request",
         "-r",
         help="Initial user request to populate user_request.original field",
     ),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     working_dir = resolve_cwd(cwd)
     resolved_path = working_dir / path if not path.is_absolute() else path

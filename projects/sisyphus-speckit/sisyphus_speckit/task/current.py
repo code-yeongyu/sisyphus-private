@@ -8,12 +8,12 @@ from sisyphus_speckit.task.show import _show_task_impl
 
 
 def show_current(
-    _rich: bool = typer.Option(
+    _rich: bool = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
         False,
         "--rich",
         help="Rich formatting (legacy option, always enabled)",
     ),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     async def _current() -> None:
         working_dir = resolve_cwd(cwd)

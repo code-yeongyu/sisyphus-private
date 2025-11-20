@@ -18,8 +18,8 @@ console = Console()
 
 
 def verify_bash(
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
-    _evidence: str | None = typer.Option(
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    _evidence: str | None = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
         None,
         "--evidence",
         help="Evidence description (legacy option)",

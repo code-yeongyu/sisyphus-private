@@ -12,9 +12,9 @@ console = Console()
 
 
 def accept_as_verification_agent(
-    checklist_id: str = typer.Option(..., "--id", help="Acceptance criteria checklist ID"),
-    evidence: str = typer.Option(..., "--evidence", help="Evidence of completion"),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    checklist_id: str = typer.Option(..., "--id", help="Acceptance criteria checklist ID"),  # pyright: ignore[reportCallInDefaultInitializer]
+    evidence: str = typer.Option(..., "--evidence", help="Evidence of completion"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     async def _accept() -> None:
         working_dir = resolve_cwd(cwd)

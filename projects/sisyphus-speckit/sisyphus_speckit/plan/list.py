@@ -132,10 +132,10 @@ def _get_sort_key(plan_data: PlanInfo, status_order: dict[str, int]) -> tuple[in
 
 
 def list_plans(
-    directory: Path = typer.Option(Path(".sisyphus/tasks"), "--dir", "-d", help="Plan directory"),
-    filter_status: str | None = typer.Option(None, "--filter", help="Filter by status"),
-    sort_by: str = typer.Option("default", "--sort", help="Sort order (default/name/created)"),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),
+    directory: Path = typer.Option(Path(".sisyphus/tasks"), "--dir", "-d", help="Plan directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    filter_status: str | None = typer.Option(None, "--filter", help="Filter by status"),  # pyright: ignore[reportCallInDefaultInitializer]
+    sort_by: str = typer.Option("default", "--sort", help="Sort order (default/name/created)"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
 ) -> None:
     """List all plans in a directory with their metadata.
 

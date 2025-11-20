@@ -509,7 +509,7 @@ async def generate_system_reminder_async(
         session_id = transcript_path.stem
     else:
         context_info = (
-            "Context Window: Unable to calculate (transcript not found). "
+            "Context Window: Unable to calculate (transcript not found). " +
             "Okay to Process remaining works. Never stop until the user explicitly asks you to stop."
         )
 

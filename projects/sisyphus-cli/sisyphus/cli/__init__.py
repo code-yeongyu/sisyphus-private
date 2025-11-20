@@ -3,7 +3,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-from sisyphus.cli.reset import reset_app as reset_app
+from .reset import reset_app as reset_app
 
 cli_module_path = Path(__file__).parent.parent / "cli.py"
 spec = importlib.util.spec_from_file_location("sisyphus_cli_main", cli_module_path)

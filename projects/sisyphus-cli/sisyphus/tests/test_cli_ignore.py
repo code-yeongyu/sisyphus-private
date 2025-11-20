@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from sisyphus.cli import app
+from ..cli import app
 
 pytestmark = [pytest.mark.anyio]
 

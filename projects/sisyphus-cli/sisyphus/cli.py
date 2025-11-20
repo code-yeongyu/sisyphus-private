@@ -6,8 +6,8 @@ import typer
 
 app = typer.Typer(name="sisyphus", help="Sisyphus Multi-Agent System")
 
-from sisyphus.cli.reset import reset_app  # noqa: E402
-from sisyphus.cli.work import clean_history, ignore, run  # noqa: E402
+from .cli.reset import reset_app  # noqa: E402
+from .cli.work import clean_history, ignore, run  # noqa: E402
 
 app.command(name="work")(run)
 app.command(name="ignore")(ignore)

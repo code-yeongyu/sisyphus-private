@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Annotated
+
 import anyio
 import typer
 from rich.console import Console
@@ -12,9 +14,9 @@ console = Console()
 
 
 def accept_as_verification_agent(
-    checklist_id: str = typer.Option(..., "--id", help="Acceptance criteria checklist ID"),  # pyright: ignore[reportCallInDefaultInitializer]
-    evidence: str = typer.Option(..., "--evidence", help="Evidence of completion"),  # pyright: ignore[reportCallInDefaultInitializer]
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    checklist_id: Annotated[str, typer.Option("--id", help="Acceptance criteria checklist ID")],
+    evidence: Annotated[str, typer.Option("--evidence", help="Evidence of completion")],
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     async def _accept() -> None:
         working_dir = resolve_cwd(cwd)

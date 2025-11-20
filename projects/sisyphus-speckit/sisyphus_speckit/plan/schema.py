@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -12,7 +13,7 @@ console = Console()
 
 
 def plan_schema(
-    output: Path | None = typer.Option(None, "--output", "-o", help="Output file path"),  # pyright: ignore[reportCallInDefaultInitializer]
+    output: Annotated[Path | None, typer.Option("--output", "-o", help="Output file path")] = None,
 ) -> None:
     """Display or save the JSON schema for PlanDocument.
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Annotated
 
 import anyio
 import typer
@@ -18,12 +19,8 @@ console = Console()
 
 
 def verify_bash(
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
-    _evidence: str | None = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
-        None,
-        "--evidence",
-        help="Evidence description (legacy option)",
-    ),
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
+    _evidence: Annotated[str | None, typer.Option("--evidence", help="Evidence description (legacy option)")] = None,
 ) -> None:
     """Execute next bash verification test."""
 

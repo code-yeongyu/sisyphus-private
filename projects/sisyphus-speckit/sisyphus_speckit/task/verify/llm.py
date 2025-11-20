@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 import typer
 from sisyphus_core.utils.common import resolve_cwd
 
@@ -14,7 +16,7 @@ from sisyphus_speckit.task._helpers import (
 
 
 def verify_llm(
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     """Display next LLM verification item for manual review."""
 

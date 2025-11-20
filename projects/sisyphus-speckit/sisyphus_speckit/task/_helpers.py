@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Coroutine
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import anyio
 import typer
@@ -95,7 +95,7 @@ def _format_task_display(
         total_count = len(task.verification_spec)
         lines.append(f"[bold cyan]검증:[/bold cyan] {verified_count}/{total_count} 완료")
 
-    return "\n".join(lines)  # pyright: ignore[reportUnknownArgumentType]
+    return cast(str, "\n".join(lines))
 
 
 def _display_verification_guidance(current_task: Todo) -> None:
@@ -119,15 +119,15 @@ def _display_verification_guidance(current_task: Todo) -> None:
     if has_llm:
         console.print("  [cyan]●[/cyan] LLM 검증 확인: [bold]sisyphus-speckit task verify llm[/bold]")
         console.print(
-            "  [cyan]●[/cyan] LLM 검증 완료: " +
-            "[bold]sisyphus-speckit task verify llm-mark <verify-id> --evidence '...'[/bold]"
+            "  [cyan]●[/cyan] LLM 검증 완료: "
+            + "[bold]sisyphus-speckit task verify llm-mark <verify-id> --evidence '...'[/bold]"
         )
 
     if needs_manual_mark:
         console.print("  [cyan]●[/cyan] 수동 검증 시작: [bold]sisyphus-speckit task verify manual[/bold]")
         console.print(
-            "  [cyan]●[/cyan] 수동 검증 완료: " +
-            "[bold]sisyphus-speckit task verify manual-mark <verify-id> --evidence '...'[/bold]"
+            "  [cyan]●[/cyan] 수동 검증 완료: "
+            + "[bold]sisyphus-speckit task verify manual-mark <verify-id> --evidence '...'[/bold]"
         )
 
     console.print("\n  [cyan]●[/cyan] 전체 검증 상태 확인: [bold]sisyphus-speckit plan status[/bold]")
@@ -152,8 +152,8 @@ def _display_verification_status_table(
             collect_tasks_dfs(work_plan.todos)
 
             try:
-                current_index = next(i for i, t in enumerate(all_tasks_dfs) if t.id == current_task.id)  # pyright: ignore[reportUnknownArgumentType]
-                task_position = f"{current_index + 1}/{len(all_tasks_dfs)}"  # pyright: ignore[reportUnknownArgumentType]
+                current_index = cast(int, next(i for i, t in enumerate(all_tasks_dfs) if t.id == current_task.id))
+                task_position = f"{cast(int, current_index + 1)}/{cast(int, len(all_tasks_dfs))}"
             except StopIteration:
                 task_position = "?/?"
 
@@ -197,7 +197,7 @@ def _display_verification_status_table(
         if not verify_item.bash and not verify_item.llm_judge:
             verify_types.append("manual")
 
-        verify_type_str = ", ".join(verify_types) if verify_types else "unknown"  # pyright: ignore[reportUnknownArgumentType]
+        verify_type_str = cast(str, ", ".join(verify_types) if verify_types else "unknown")
 
         status_emoji = "✓" if verify_item.verified else "○"
         status_color = "green" if verify_item.verified else "yellow"

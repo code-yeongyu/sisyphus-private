@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Annotated, cast
 
 import typer
 from rich.console import Console
@@ -19,10 +20,10 @@ def _fix_multiline_texts(obj: object) -> object:
         case dict() as d:
             result: dict[str, object] = {}
             for key, value in d.items():
-                result[key] = _fix_multiline_texts(value)  # pyright: ignore[reportUnknownArgumentType]
+                result[key] = cast(object, _fix_multiline_texts(value))
             return result
         case list() as lst:
-            return [_fix_multiline_texts(item) for item in lst]  # pyright: ignore[reportUnknownArgumentType]
+            return [cast(object, _fix_multiline_texts(item)) for item in lst]
         case str() as s:
             if "\n" in s and s.count("\n") >= 1:
                 return LiteralScalarString(s)
@@ -37,23 +38,18 @@ def _add_missing_fields(obj: object) -> object:
         case dict() as d:
             result: dict[str, object] = {}
             for key, value in d.items():
-                result[key] = _add_missing_fields(value)  # pyright: ignore[reportUnknownArgumentType]
+                result[key] = cast(object, _add_missing_fields(value))
             return result
         case list() as lst:
-            return [_add_missing_fields(item) for item in lst]  # pyright: ignore[reportUnknownArgumentType]
+            return [cast(object, _add_missing_fields(item)) for item in lst]
         case _:
             return obj
 
 
 def lint_plan(
-    file_path: Path = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
-        None,
-        "--file",
-        "-f",
-        help="YAML file path to lint",
-    ),
-    fix: bool = typer.Option(False, "--fix", help="Auto-fix multiline texts to pipeline format"),  # pyright: ignore[reportCallInDefaultInitializer]
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    file_path: Annotated[Path, typer.Option("--file", "-f", help="YAML file path to lint")],
+    fix: Annotated[bool, typer.Option("--fix", help="Auto-fix multiline texts to pipeline format")] = False,
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     working_dir = resolve_cwd(cwd)
     resolved_path = working_dir / file_path if not file_path.is_absolute() else file_path
@@ -70,11 +66,11 @@ def lint_plan(
             yaml_data = yaml.load(f)
 
         if fix:
-            yaml_data = _fix_multiline_texts(yaml_data)  # pyright: ignore[reportUnknownArgumentType]
-            yaml_data = _add_missing_fields(yaml_data)
+            yaml_data = cast(object, _fix_multiline_texts(yaml_data))
+            yaml_data = cast(object, _add_missing_fields(yaml_data))
 
         try:
-            plan_doc = PlanDocument(**yaml_data)  # pyright: ignore[reportCallIssue]  # pyright: ignore[reportCallIssue, reportUnknownArgumentType, reportUnnecessaryTypeIgnoreComment]
+            plan_doc = PlanDocument(**cast(dict[str, object], yaml_data))
         except Exception as e:
             console.print(f"[red]Schema validation failed:[/red]\n{e}")
             raise typer.Exit(1)

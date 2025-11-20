@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -14,7 +16,7 @@ console = Console()
 
 
 def task_status(
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     """Display current task's verification status in detail.
 
@@ -85,7 +87,7 @@ def task_status(
                     console.print("  [bold]Bash Checks:[/bold]")
                     for bash in vspec.bash:
                         console.print(f"    - Execute: {bash.execute}")
-                        if bash.expected_exit_code is not None:  # pyright: ignore[reportUnnecessaryComparison]
+                        if bash.expected_exit_code is not None:
                             console.print(f"      Expected Exit Code: {bash.expected_exit_code}")
                         if bash.notes:
                             console.print(f"      Notes: {bash.notes}")

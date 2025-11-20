@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 from rich.panel import Panel
@@ -76,7 +76,7 @@ def _display_verification_specs(task: Todo) -> None:
             console.print(f"    Bash checks: {len(vspec.bash)}")
             for bash in vspec.bash:
                 console.print(f"      - Execute: {bash.execute}")
-                if bash.expected_exit_code is not None:  # pyright: ignore[reportUnnecessaryComparison]
+                if bash.expected_exit_code is not None:
                     console.print(f"        Expected exit code: {bash.expected_exit_code}")
                 if bash.notes:
                     console.print(f"        Notes: {bash.notes}")
@@ -137,13 +137,9 @@ async def _show_task_impl(task: Todo, work_plan: WorkPlan, working_dir: Path) ->
 
 
 def show_task(
-    task_id: str = typer.Argument(..., help="Task ID"),  # pyright: ignore[reportCallInDefaultInitializer]
-    _rich: bool = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
-        False,
-        "--rich",
-        help="Rich formatting (legacy option, always enabled)",
-    ),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    task_id: Annotated[str, typer.Argument(help="Task ID")],
+    _rich: Annotated[bool, typer.Option("--rich", help="Rich formatting (legacy option, always enabled)")] = False,
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     async def _show() -> None:
         working_dir = resolve_cwd(cwd)

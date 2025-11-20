@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Annotated
 
 import typer
 from rich.panel import Panel
@@ -21,7 +22,7 @@ from sisyphus_speckit.task._helpers import (
 
 
 def continue_work(
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     """Continue work: complete current task and move to next, or start first task."""
 
@@ -124,13 +125,13 @@ def continue_work(
                         ):
                             console.print(f"[red]❌ [{verify_item.id}] {verify_item.title}[/red]")
                             console.print(
-                                f"[yellow]   → 1단계: 수동 검증 미완료[/yellow] "
+                                "[yellow]   → 1단계: 수동 검증 미완료[/yellow] "
                                 + f"(orchestrator_manually_verified={verify_item.orchestrator_manually_verified}, "
                                 + f"evidence={'있음' if verify_item.manual_verification_evidence else '없음'})"
                             )
                             console.print(
                                 f"[cyan]   sisyphus-speckit task verify manual-mark {verify_item.id} "
-                                + f"--evidence '<상세한 검증 증거 100자 이상>'[/cyan]\n"
+                                + "--evidence '<상세한 검증 증거 100자 이상>'[/cyan]\n"
                             )
                             continue
 
@@ -150,7 +151,7 @@ def continue_work(
                             console.print("[cyan]   sisyphus-speckit task verify llm[/cyan]")
                             console.print(
                                 f"[cyan]   sisyphus-speckit task verify llm-mark {verify_item.id} "
-                                + f"--evidence '<증거 설명>'[/cyan]\n"
+                                + "--evidence '<증거 설명>'[/cyan]\n"
                             )
                             continue
 

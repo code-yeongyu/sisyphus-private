@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -42,8 +43,8 @@ def _count_completed_todos(todos: list[Todo]) -> int:
 
 
 def status(
-    path: Path | None = typer.Option(None, "--path", "-p", help="Path to specific plan file"),  # pyright: ignore[reportCallInDefaultInitializer]
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    path: Annotated[Path | None, typer.Option("--path", "-p", help="Path to specific plan file")] = None,
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     """Display plan status including progress bar and verification summary.
 

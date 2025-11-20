@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Annotated, Any
 
 import typer
 from sisyphus_core.core.plans.loader import load_plan, save_plan
@@ -19,9 +19,9 @@ from sisyphus_speckit.task._helpers import (
 
 
 def verify_llm_mark(
-    verify_id: str = typer.Argument(..., help="Verification item ID"),  # pyright: ignore[reportCallInDefaultInitializer]
-    evidence: str = typer.Option(..., "--evidence", help="Evidence description"),  # pyright: ignore[reportCallInDefaultInitializer]
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    verify_id: Annotated[str, typer.Argument(help="Verification item ID")],
+    evidence: Annotated[str, typer.Option("--evidence", help="Evidence description")],
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     """Mark LLM verification as completed with evidence."""
 

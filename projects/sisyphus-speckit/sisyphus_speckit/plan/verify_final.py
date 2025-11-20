@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Annotated
 
 import anyio
 import typer
@@ -13,15 +14,12 @@ console = Console()
 
 
 def verify_final_plan(
-    verification_id: str = typer.Option(..., "--id", help="Final verification item ID"),  # pyright: ignore[reportCallInDefaultInitializer]
-    evidence: str = typer.Option(..., "--evidence", help="Verification evidence description"),  # pyright: ignore[reportCallInDefaultInitializer]
-    yaml_path: Path = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
-        None,
-        "--file",
-        "-f",
-        help="YAML file path",
+    verification_id: Annotated[str, typer.Option("--id", help="Final verification item ID")],
+    evidence: Annotated[str, typer.Option("--evidence", help="Verification evidence description")],
+    yaml_path: Annotated[Path, typer.Option("--file", "-f", help="YAML file path")] = Path(
+        "./.sisyphus/tasks/plan.yaml"
     ),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     async def _verify_final() -> None:
         working_dir = resolve_cwd(cwd)

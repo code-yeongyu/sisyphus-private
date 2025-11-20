@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Annotated
+
 import typer
 from rich.panel import Panel
 from sisyphus_core.utils.common import resolve_cwd
@@ -8,12 +10,8 @@ from sisyphus_speckit.task._helpers import _format_task_display, _load_current_p
 
 
 def show_previous(
-    _rich: bool = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
-        False,
-        "--rich",
-        help="Rich formatting (legacy option, always enabled)",
-    ),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    _rich: Annotated[bool, typer.Option("--rich", help="Rich formatting (legacy option, always enabled)")] = False,
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     async def _previous() -> None:
         working_dir = resolve_cwd(cwd)

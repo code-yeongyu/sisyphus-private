@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -12,25 +13,18 @@ console = Console()
 
 
 def init_plan(
-    path: Path = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
-        Path("./.sisyphus/tasks/plan.yaml"),  # pyright: ignore[reportCallInDefaultInitializer]
-        "--path",
-        "-p",
-        help="Path where plan YAML will be created",
+    path: Annotated[Path, typer.Option("--path", "-p", help="Path where plan YAML will be created")] = Path(
+        "./.sisyphus/tasks/plan.yaml"
     ),
-    template: str = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
-        "full",
-        "--template",
-        "-t",
-        help="Template type: 'minimal' (TODO placeholders) or 'full' (complete example)",
-    ),
-    initial_request: str | None = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
-        None,
-        "--initial-request",
-        "-r",
-        help="Initial user request to populate user_request.original field",
-    ),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    template: Annotated[
+        str,
+        typer.Option("--template", "-t", help="Template: 'minimal' or 'full' example"),
+    ] = "full",
+    initial_request: Annotated[
+        str | None,
+        typer.Option("--initial-request", "-r", help="Initial user request for user_request.original"),
+    ] = None,
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     working_dir = resolve_cwd(cwd)
     resolved_path = working_dir / path if not path.is_absolute() else path

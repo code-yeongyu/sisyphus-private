@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import TypedDict
+from typing import Annotated, TypedDict, cast
 
 import anyio
 import typer
@@ -46,11 +46,15 @@ async def _get_current_plan_id(working_dir: Path) -> str | None:
 
     try:
         status_content = await anyio.to_thread.run_sync(status_path.read_text)
-        status_data = json.loads(status_content)  # pyright: ignore[reportUnknownArgumentType]
-        if status_data.get("current_plan") and status_data["current_plan"].get("plan_path"):
-            plan_path = status_data["current_plan"]["plan_path"]
-            plan_name = Path(plan_path).stem
-            return plan_name
+        status_data_raw = json.loads(status_content)
+        if not isinstance(status_data_raw, dict):
+            return None
+        status_data = cast(dict[str, object], status_data_raw)
+        current_plan = status_data.get("current_plan")
+        if isinstance(current_plan, dict) and current_plan.get("plan_path"):
+            plan_path = current_plan["plan_path"]
+            if isinstance(plan_path, str):
+                return Path(plan_path).stem
     except Exception:
         pass
 
@@ -58,15 +62,18 @@ async def _get_current_plan_id(working_dir: Path) -> str | None:
 
 
 async def _check_dependencies_satisfied(
-    plan_id: str, depends_on: list[str], _working_dir: Path, all_plans: dict[str, PlanInfo]  # pyright: ignore[reportUnusedParameter]
+    plan_id: str,
+    depends_on: list[str],
+    _working_dir: Path,
+    _all_plans: dict[str, PlanInfo],
 ) -> bool:
     """Check if all dependencies are satisfied.
 
     Args:
         plan_id: Plan ID to check
         depends_on: List of dependency plan IDs
-        working_dir: Working directory path
-        all_plans: Dict of all plans with their data
+        _working_dir: Working directory path
+        _all_plans: Dict of all plans with their data
 
     Returns:
         True if all dependencies are satisfied or no dependencies, False otherwise
@@ -75,9 +82,9 @@ async def _check_dependencies_satisfied(
         return True
 
     for dep_id in depends_on:
-        if dep_id not in all_plans:
+        if dep_id not in _all_plans:
             return False
-        dep_plan = all_plans[dep_id]
+        dep_plan = _all_plans[dep_id]
         if not dep_plan.get("fully_done"):
             return False
 
@@ -132,10 +139,10 @@ def _get_sort_key(plan_data: PlanInfo, status_order: dict[str, int]) -> tuple[in
 
 
 def list_plans(
-    directory: Path = typer.Option(Path(".sisyphus/tasks"), "--dir", "-d", help="Plan directory"),  # pyright: ignore[reportCallInDefaultInitializer]
-    filter_status: str | None = typer.Option(None, "--filter", help="Filter by status"),  # pyright: ignore[reportCallInDefaultInitializer]
-    sort_by: str = typer.Option("default", "--sort", help="Sort order (default/name/created)"),  # pyright: ignore[reportCallInDefaultInitializer]
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    directory: Annotated[Path, typer.Option("--dir", "-d", help="Plan directory")] = Path(".sisyphus/tasks"),
+    filter_status: Annotated[str | None, typer.Option("--filter", help="Filter by status")] = None,
+    sort_by: Annotated[str, typer.Option("--sort", help="Sort order (default/name/created)")] = "default",
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     """List all plans in a directory with their metadata.
 

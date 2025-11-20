@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Annotated, cast
 
 import typer
 from rich.console import Console
@@ -42,8 +43,8 @@ def _count_completed_todos(todos: list[Todo]) -> int:
 
 
 def plan_overview(
-    path: Path | None = typer.Option(None, "--path", "-p", help="Path to specific plan file"),  # pyright: ignore[reportCallInDefaultInitializer]
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    path: Annotated[Path | None, typer.Option("--path", "-p", help="Path to specific plan file")] = None,
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     """Display comprehensive plan overview including all metadata.
 
@@ -215,7 +216,9 @@ def plan_overview(
             acceptance_table.add_column("Category", style="yellow")
 
             for criterion in work_plan.acceptance_criteria:
-                acceptance_table.add_row(criterion.id, criterion.title, criterion.category)  # pyright: ignore[reportUnknownArgumentType]
+                acceptance_table.add_row(
+                    cast(str, criterion.id), cast(str, criterion.title), cast(str, criterion.category)
+                )
 
             console.print(acceptance_table)
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
+from typing import Annotated, cast
 
 import typer
 from pydantic import ValidationError
@@ -21,13 +22,10 @@ class GraphFormat(str, Enum):
 
 
 def show_graph(
-    format: GraphFormat = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
-        GraphFormat.ASCII,
-        "--format",
-        "-f",
-        help="Output format (ascii or mermaid)",
-    ),
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    format: Annotated[
+        GraphFormat, typer.Option("--format", "-f", help="Output format (ascii or mermaid)")
+    ] = GraphFormat.ASCII,
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     working_dir = resolve_cwd(cwd)
     tasks_dir = working_dir / ".sisyphus" / "tasks"
@@ -47,7 +45,7 @@ def show_graph(
                 with plan_file.open("r", encoding="utf-8") as f:
                     yaml_data = yaml.load(f)
                 try:
-                    plan_doc = PlanDocument(**yaml_data)  # pyright: ignore[reportUnknownArgumentType]
+                    plan_doc = PlanDocument(**cast(dict[str, object], yaml_data))
                     for work_plan in plan_doc.work_plans:
                         plan_to_file[work_plan.id] = plan_file
                     all_plans.extend(plan_doc.work_plans)
@@ -56,9 +54,9 @@ def show_graph(
                     continue
         else:
             console.print(
-                f"[red]Error: No plan files found.[/red]\n"
+                "[red]Error: No plan files found.[/red]\n"
                 + f"Expected: {tasks_dir}/*.yaml (v3.0 format)\n"
-                + f"Run: sisyphus-speckit plan init .sisyphus/tasks/plan.yaml"
+                + "Run: sisyphus-speckit plan init .sisyphus/tasks/plan.yaml"
             )
             raise typer.Exit(1)
 
@@ -67,7 +65,7 @@ def show_graph(
             raise typer.Exit(1)
 
         plans = {plan.id: plan for plan in all_plans}
-        graph = build_plan_graph(plans)  # pyright: ignore[reportUnknownArgumentType]
+        graph = build_plan_graph(cast(dict[str, object], plans))
 
         cycles = detect_cycles(graph)
         if cycles:
@@ -82,11 +80,11 @@ def show_graph(
                 console.print()
 
             console.print(
-                "[yellow]How to fix:[/yellow]\n" +
-                "  1. Open the file(s) listed above\n" +
-                "  2. Find the 'depends_on' field for each plan\n" +
-                "  3. Remove one dependency to break the cycle\n" +
-                "  4. Run 'sisyphus-speckit plan graph' again to verify\n"
+                "[yellow]How to fix:[/yellow]\n"
+                + "  1. Open the file(s) listed above\n"
+                + "  2. Find the 'depends_on' field for each plan\n"
+                + "  3. Remove one dependency to break the cycle\n"
+                + "  4. Run 'sisyphus-speckit plan graph' again to verify\n"
             )
             raise typer.Exit(1)
 

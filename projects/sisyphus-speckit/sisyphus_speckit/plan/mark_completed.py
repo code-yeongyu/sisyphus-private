@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Annotated, cast
 
 import anyio
 import typer
@@ -17,7 +18,7 @@ from sisyphus_speckit.task._helpers import (
 
 
 def mark_completed_command(
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     """Mark work plan as completed when all todos are done.
 
@@ -67,7 +68,7 @@ def mark_completed_command(
         else:
             # Show incomplete message and current task
             console.print("[yellow]⚠ 모든 작업이 완료되지 않았습니다.[/yellow]")
-            console.print(f"[yellow]미완료 작업:[/yellow] {len(incomplete_todos)}개")  # pyright: ignore[reportUnknownArgumentType]
+            console.print(f"[yellow]미완료 작업:[/yellow] {cast(int, len(incomplete_todos))}개")
             console.print()
             console.print("[cyan]다음 명령으로 계속 진행하세요:[/cyan]")
             console.print("  [bold]sisyphus-speckit task continue[/bold]")

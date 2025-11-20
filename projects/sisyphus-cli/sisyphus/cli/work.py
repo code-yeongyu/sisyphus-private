@@ -16,6 +16,7 @@ from sisyphus_core.core.plans.loader import load_plan
 from sisyphus_core.core.plans.models import TodoStatus
 from sisyphus_core.core.session import SessionStore
 from sisyphus_core.core.status.manager import StatusManager
+from sisyphus_core.core.system_prompts import ORCHESTRATOR_PROMPT
 from sisyphus_core.core.task_validator import YamlTaskValidator
 from sisyphus_core.ui.base import create_ui
 from sisyphus_core.ui.tui.app import TUI, CompletionMessage, ShutdownRequestMessage
@@ -559,7 +560,16 @@ def run(
     if execute_spec is None:
         raise typer.BadParameter("Execute agent must be specified")
 
-    execute_agent = create_agent(execute_spec, execute_sdk_options, exec_bin, opencode_server_url, cwd=execution_pwd)
+    # Create execute agent with orchestrator system prompt
+    execute_system_prompt = ORCHESTRATOR_PROMPT if execute_spec.startswith("claude") else None
+    execute_agent = create_agent(
+        execute_spec,
+        execute_sdk_options,
+        exec_bin,
+        opencode_server_url,
+        cwd=execution_pwd,
+        system_prompt=execute_system_prompt,
+    )
     verify_agent = (
         create_agent(verify_spec, verify_sdk_options, ver_bin, opencode_server_url, cwd=execution_pwd)
         if verify_spec

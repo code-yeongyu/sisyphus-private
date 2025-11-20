@@ -1,9 +1,13 @@
 # Sisyphus CLI 완전 레퍼런스
 
 **Version:** 3.0
-**Updated:** 2025-11-10
+**Updated:** 2025-11-20
 
 Sisyphus는 YAML 기반 작업 계획을 LLM 에이전트가 실행하여 프로덕션 코드로 컴파일하는 멀티 에이전트 오케스트레이션 CLI입니다.
+
+**CLI 구조:**
+- `sisyphus` - 워크 실행 및 Git 통합 (work, ignore, clean-history, reset)
+- `sisyphus-speckit` - Plan/Task 관리 (plan, task)
 
 ---
 
@@ -37,9 +41,24 @@ Commands:
   work            Work with Sisyphus multi-agent system.
   ignore          Add Sisyphus-generated files to git ignore.
   clean-history   Remove Sisyphus-generated files from git history.
+  reset           Reset Sisyphus state
+```
+
+### `sisyphus-speckit --help`
+
+```
+Usage: sisyphus-speckit [OPTIONS] COMMAND [ARGS]...
+
+ sisyphus-speckit plan and Task Specification Tools
+
+Options:
+  --install-completion          Install completion for the current shell.
+  --show-completion             Show completion for the current shell.
+  --help                        Show this message and exit.
+
+Commands:
   plan            Plan management commands
   task            Task navigation and verification commands
-  reset           Reset Sisyphus state
 ```
 
 ---
@@ -59,8 +78,15 @@ Commands:
   lint                        Validate YAML plan structure
   init                        Initialize new plan YAML template
   graph                       Display plan dependency graph
+  verify-final                Mark final verification item as verified
   export                      Export WorkPlan YAML to Markdown format
   accept-as-verification-agent Mark verification agent checklist as verified
+  mark completed              Mark work plan as completed when all todos are done
+  mark fully-done             Mark work plan as fully done with evidence
+  schema                      Display or save the JSON schema for PlanDocument
+  status                      Display plan status including progress bar
+  list                        List all plans in a directory with metadata
+  overview                    Display comprehensive plan overview
 ```
 
 ---
@@ -314,6 +340,253 @@ sisyphus-speckit plan accept-as-verification-agent \
 
 ---
 
+### `sisyphus-speckit plan verify-final`
+
+Plan의 최종 검증 항목(final verification)을 완료 처리합니다.
+
+#### 사용법
+
+```bash
+sisyphus-speckit plan verify-final [OPTIONS]
+```
+
+#### 옵션
+
+- `--id TEXT`: Final verification item ID (필수)
+- `--evidence TEXT`: 검증 증거 설명 (필수)
+- `-f, --file PATH`: YAML 파일 경로 (기본값: `.sisyphus/tasks/plan.yaml`)
+- `--cwd TEXT`: 작업 디렉터리
+
+#### 설명
+
+Plan 레벨의 최종 검증 항목을 완료 처리합니다. Task별 검증과 달리, plan 전체에 대한 최종 acceptance criteria를 검증할 때 사용합니다.
+
+#### 출력 예시
+
+**성공 시:**
+```bash
+sisyphus-speckit plan verify-final \
+  --id final-integration-test \
+  --evidence "All integration tests passed. End-to-end scenarios validated."
+```
+
+```
+✓ 최종 검증 완료: final-integration-test
+증거: All integration tests passed. End-to-end scenarios validated.
+```
+
+---
+
+### `sisyphus-speckit plan schema`
+
+PlanDocument의 JSON Schema를 출력하거나 파일로 저장합니다.
+
+#### 사용법
+
+```bash
+sisyphus-speckit plan schema [OPTIONS]
+```
+
+#### 옵션
+
+- `-o, --output PATH`: 출력 파일 경로 (없으면 stdout)
+
+#### 설명
+
+YAML plan 파일의 구조와 검증 규칙을 정의한 JSON Schema를 출력합니다. JSON Schema를 지원하는 에디터나 도구와 함께 사용하여 YAML 작성 시 자동완성 및 검증이 가능합니다.
+
+#### 출력 예시
+
+```bash
+sisyphus-speckit plan schema -o schema.json
+```
+
+```
+✓ Schema saved to schema.json
+```
+
+**stdout 출력:**
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "version": {"type": "string"},
+    "metadata": {"type": "object"},
+    "work_plans": {"type": "array"}
+  }
+}
+```
+
+---
+
+### `sisyphus-speckit plan status`
+
+Plan의 진행 상태를 진행률 바와 검증 요약과 함께 표시합니다.
+
+#### 사용법
+
+```bash
+sisyphus-speckit plan status [OPTIONS]
+```
+
+#### 옵션
+
+- `-p, --path PATH`: 특정 plan 파일 경로 (없으면 현재 활성 plan)
+- `--cwd TEXT`: 작업 디렉터리
+
+#### 설명
+
+Plan의 현재 진행 상태를 시각화합니다. 전체 task 개수, 완료된 task, 진행률, 검증 상태 등을 한눈에 확인할 수 있습니다.
+
+#### 출력 예시
+
+```
+Plan: Authentication Feature
+================================================================================
+
+Progress: ████████████░░░░░░░░ 60% (3/5 tasks completed)
+
+Status:
+  ✓ Completed: 3 tasks
+  ● In Progress: 1 task
+  ○ Pending: 1 task
+
+Verifications:
+  ✓ Bash: 5/5
+  ✓ Manual: 2/2
+  ○ LLM: 1/3
+
+Last updated: 2025-11-20 10:30:00
+```
+
+---
+
+### `sisyphus-speckit plan list`
+
+디렉터리 내의 모든 plan을 메타데이터와 함께 목록으로 표시합니다.
+
+#### 사용법
+
+```bash
+sisyphus-speckit plan list [OPTIONS]
+```
+
+#### 옵션
+
+- `-d, --dir PATH`: Plan 디렉터리 (기본값: `.sisyphus/tasks`)
+- `--filter TEXT`: 상태로 필터링 (예: `pending`, `in_progress`, `completed`)
+- `--sort TEXT`: 정렬 순서 (기본값: `default`, 옵션: `name`, `created`)
+- `--cwd TEXT`: 작업 디렉터리
+
+#### 설명
+
+여러 plan 파일을 관리할 때 전체 목록을 한눈에 확인합니다. 상태, 의존성, 생성일 등을 표 형식으로 보여줍니다.
+
+#### 출력 예시
+
+```
+Plans in .sisyphus/tasks/
+================================================================================
+
+┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━┓
+┃ Name               ┃ File                   ┃ Status     ┃ Dependencies ┃
+┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━┩
+│ Backend API        │ backend.yaml           │ completed  │ foundation   │
+│ Frontend UI        │ frontend.yaml          │ in_progress│ backend      │
+│ Integration Tests  │ integration.yaml       │ pending    │ frontend     │
+└────────────────────┴────────────────────────┴────────────┴──────────────┘
+
+Total: 3 plans
+```
+
+---
+
+### `sisyphus-speckit plan overview`
+
+Plan의 전체 개요를 모든 메타데이터와 함께 표시합니다.
+
+#### 사용법
+
+```bash
+sisyphus-speckit plan overview [OPTIONS]
+```
+
+#### 옵션
+
+- `-p, --path PATH`: 특정 plan 파일 경로 (없으면 현재 활성 plan)
+- `--cwd TEXT`: 작업 디렉터리
+
+#### 설명
+
+Plan의 상세 정보를 전체적으로 확인합니다. Objectives, background, todos, verification specs 등 plan의 모든 정보를 포괄적으로 보여줍니다.
+
+#### 출력 예시
+
+```
+╭─────────────────────────── Plan Overview ───────────────────────────╮
+│                                                                      │
+│ Plan: Authentication Feature                                        │
+│ File: .sisyphus/tasks/auth.yaml                                     │
+│ Status: in_progress                                                  │
+│                                                                      │
+│ Objectives:                                                          │
+│   • Implement JWT-based authentication                               │
+│   • Add user registration and login                                  │
+│   • Create password reset flow                                       │
+│                                                                      │
+│ Dependencies:                                                        │
+│   → foundation-plan                                                  │
+│                                                                      │
+│ Progress: 3/5 tasks (60%)                                           │
+│   ✓ Setup auth models                                               │
+│   ✓ Implement JWT service                                           │
+│   ✓ Create login endpoint                                           │
+│   ● Add password reset (in progress)                                │
+│   ○ Write integration tests                                         │
+│                                                                      │
+│ Verification: 7/10 completed                                         │
+│                                                                      │
+╰──────────────────────────────────────────────────────────────────────╯
+```
+
+---
+
+### `sisyphus-speckit plan mark completed`
+
+모든 todo가 완료되었을 때 work plan을 completed 상태로 표시합니다.
+
+#### 사용법
+
+```bash
+sisyphus-speckit plan mark completed [OPTIONS]
+```
+
+#### 옵션
+
+- `--cwd TEXT`: 작업 디렉터리
+
+#### 설명
+
+Plan의 `execution.completed` 상태를 `true`로 설정하고 완료 시각을 기록합니다. 모든 task가 완료된 후에만 성공하며, 미완료 task가 있으면 에러를 반환합니다.
+
+#### 출력 예시
+
+**성공 시:**
+```
+✓ WorkPlan 'auth-feature' marked as completed
+Completed at: 2025-11-20T10:55:00.000000+00:00
+```
+
+**미완료 task 존재 시:**
+```
+✗ Cannot mark as completed: 2 tasks are not yet completed
+  - task-004: Add password reset
+  - task-005: Write integration tests
+```
+
+---
+
 ### `sisyphus-speckit plan mark fully-done`
 
 Work plan을 fully done 상태로 마킹하고 완료 증거를 기록합니다.
@@ -378,6 +651,7 @@ Commands:
   previous   Display previous task in DFS order
   continue   Continue work: complete current task and move to next
   accept     Mark current task's acceptance criterion as verified
+  status     Display current task's verification status in detail
   verify     Verification management commands
 ```
 
@@ -576,6 +850,63 @@ sisyphus-speckit task continue를 실행하여 작업을 시작하세요.
 
 ---
 
+### `sisyphus-speckit task status`
+
+현재 task의 검증 상태를 상세하게 표시합니다.
+
+#### 사용법
+
+```bash
+sisyphus-speckit task status [OPTIONS]
+```
+
+#### 옵션
+
+- `--cwd TEXT`: 작업 디렉터리
+
+#### 설명
+
+현재 진행 중인 task의 모든 검증 항목 정보를 표시합니다:
+1. 현재 task 정보
+2. 모든 verification specifications (ID, 제목, 설명)
+3. Task가 다음 단계로 진행 가능한지 여부
+4. Acceptance criteria (있는 경우)
+
+#### 출력 예시
+
+```
+╭─────────────────── Current Task: auth-002 ───────────────────╮
+│ Title: Implement JWT service                                 │
+│ Status: in_progress                                           │
+│ Description: JWT token generation and validation              │
+╰───────────────────────────────────────────────────────────────╯
+
+Verification Status:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Bash Verifications: 1/2 completed
+  ✓ [verify-001] Unit tests pass
+  ○ [verify-002] Type check passes
+
+Manual Verifications: 0/1 completed
+  ○ [verify-003] Code review completed
+
+LLM Verifications: 1/1 completed
+  ✓ [verify-004] Code quality check
+
+Acceptance Criteria: 2/3 completed
+  ✓ [criterion-001] All functions type-hinted
+  ✓ [criterion-002] Test coverage > 80%
+  ○ [criterion-003] Documentation complete
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Can continue to next task: No
+Remaining verifications: 3
+```
+
+---
+
 ### `sisyphus-speckit task continue`
 
 현재 task를 완료하고 다음 task로 이동하거나, 첫 task를 시작합니다.
@@ -683,8 +1014,9 @@ Commands:
   llm-mark      Mark LLM verification as completed with evidence
   manual        Display next manual verification item
   manual-mark   Mark manual verification as completed with evidence
-  status        Display verification status for all tasks
 ```
+
+**참고:** 전체 검증 상태를 확인하려면 `sisyphus-speckit task status` 명령을 사용하세요.
 
 ---
 
@@ -913,65 +1245,6 @@ sisyphus-speckit task verify manual-mark verify-ui-manual-001 --evidence "Chrome
 
 다음 명령으로 작업을 계속하세요:
   sisyphus-speckit task continue
-```
-
----
-
-### `sisyphus-speckit task verify status`
-
-모든 task의 검증 상태를 표시합니다.
-
-#### 사용법
-
-```bash
-sisyphus-speckit task verify status [OPTIONS]
-```
-
-#### 옵션
-
-- `--cwd TEXT`: 작업 디렉터리
-
-#### 출력 예시
-
-```
-검증 상태: 5/8 완료
-
-                        검증 목록
-┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
-┃ 작업                 ┃ 검증 항목          ┃ 상태   ┃
-┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
-│ Setup auth models    │ 유닛 테스트 통과    │ ✓      │
-│ Setup auth models    │ 코드 품질 검증      │ ✓      │
-│ Implement JWT        │ 유닛 테스트 통과    │ ✓      │
-│ Implement JWT        │ 코드 품질 검증      │ ✓      │
-│ Implement JWT        │ Integration 테스트  │ ✓      │
-│ Create login API     │ API 응답 테스트     │ ○      │
-│ Create login API     │ 보안 체크           │ ○      │
-│ Create logout API    │ API 응답 테스트     │ ○      │
-└──────────────────────┴─────────────────────┴────────┘
-
-남은 검증: 3개
-```
-
-**모든 검증 완료 시:**
-```
-검증 상태: 8/8 완료
-
-                        검증 목록
-┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
-┃ 작업                 ┃ 검증 항목          ┃ 상태   ┃
-┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
-│ Setup auth models    │ 유닛 테스트 통과    │ ✓      │
-│ Setup auth models    │ 코드 품질 검증      │ ✓      │
-│ Implement JWT        │ 유닛 테스트 통과    │ ✓      │
-│ Implement JWT        │ 코드 품질 검증      │ ✓      │
-│ Implement JWT        │ Integration 테스트  │ ✓      │
-│ Create login API     │ API 응답 테스트     │ ✓      │
-│ Create login API     │ 보안 체크           │ ✓      │
-│ Create logout API    │ API 응답 테스트     │ ✓      │
-└──────────────────────┴─────────────────────┴────────┘
-
-모든 검증이 완료되었습니다! ✓
 ```
 
 ---
@@ -1313,6 +1586,9 @@ sisyphus-speckit task continue
 # 현재 작업 확인
 sisyphus-speckit task current
 
+# 현재 task의 상세 검증 상태 확인
+sisyphus-speckit task status
+
 # Bash 검증 실행
 sisyphus-speckit task verify bash
 
@@ -1322,14 +1598,14 @@ sisyphus-speckit task verify llm
 # LLM 검증 완료 표시
 sisyphus-speckit task verify llm-mark verify-id-123 --evidence "타입 힌트 완성, 커버리지 85%"
 
-# 전체 검증 상태 확인
-sisyphus-speckit task verify status
+# 다시 검증 상태 확인
+sisyphus-speckit task status
 
 # 모든 검증 완료 후 다음 작업으로 이동
 sisyphus-speckit task continue
 ```
 
-### 3. Multi-Plan 프로젝트
+### 3. Multi-Plan 프로젝트 관리
 
 ```bash
 # Plan 의존성 구조
@@ -1350,11 +1626,26 @@ sisyphus-speckit plan init -p .sisyphus/tasks/frontend.yaml
 # frontend.yaml에 의존성 설정
 # depends_on: ["plan-backend"]
 
+# 모든 plan 목록 확인
+sisyphus-speckit plan list
+
+# 특정 plan 상세 개요
+sisyphus-speckit plan overview -p .sisyphus/tasks/backend.yaml
+
+# Plan 진행 상태 확인
+sisyphus-speckit plan status -p .sisyphus/tasks/backend.yaml
+
 # 순환 의존성 체크
 sisyphus-speckit plan graph
 
 # 그래프 시각화 (Mermaid)
 sisyphus-speckit plan graph --format mermaid > dependency-graph.md
+
+# 진행 중인 plan만 필터링
+sisyphus-speckit plan list --filter in_progress
+
+# 이름순 정렬
+sisyphus-speckit plan list --sort name
 ```
 
 ### 4. Git 통합

@@ -29,14 +29,14 @@ def run_verify_status(cwd: str) -> str:
     try:
         result = anyio.run(
             anyio.run_process,
-            ["sisyphus", "task", "verify", "status", "--cwd", cwd],
+            ["sisyphus-speckit", "task", "status", "--cwd", cwd],
         )
         if result.returncode == 0:
             return result.stdout.decode("utf-8", errors="replace")
         else:
-            return "[Verification status unavailable]"
+            return "[Verification status unavailable - WARN TO USER IMMEDIATELY THAT IT IS UNAVAILABLE NOW]"
     except Exception:
-        return "[Verification status unavailable]"
+        return "[Verification status unavailable - WARN TO USER IMMEDIATELY THAT IT IS UNAVAILABLE NOW]"
 
 
 def check_git_status(cwd: str) -> bool:
@@ -100,7 +100,7 @@ Follow this sequence to complete all verifications:
   - Any unexpected findings
 
   Good evidence example:
-    "All functions have type hints (ruff check passed),
+    "All functions have type hints (ruff check passed), - [actual file path must be here]
      try-except blocks in 5 locations properly handle errors,
      pytest --cov shows 87% coverage (target: 80%),
      All 8 public functions have complete docstrings"
@@ -117,7 +117,7 @@ Follow this sequence to complete all verifications:
    ```
 
   Mark as complete:
-    sisyphus-speckit task verify manual-mark <verify-id> --evidence "<very detailed evidence>"
+    sisyphus-speckit task verify manual-mark <verify-id> --evidence "<very detailed evidence, with what you've focused on and verified>"
 
   CRITICAL WARNING:
   DO NOT use "LLM judge passed" or "previous verification completed" as evidence.
@@ -188,41 +188,12 @@ Follow this sequence to complete all verifications:
 
 CHECK STATUS ANYTIME
 View all verification status:
-  sisyphus-speckit task verify status
+  sisyphus-speckit task status
 
 Shows:
 - Total progress (completed/total)
 - Each verification item status
 - Task breakdown
-
-AFTER ALL VERIFICATIONS
-Once all verifications show complete:
-
-[IMPORTANT NOTE: FINAL VERIFICATION]
-If the work plan has a `final_verification` section (plan-level verification items),
-these are OUTSIDE the scope of task-level verification.
-
-Final verification items validate the ENTIRE work as an integrated whole
-(e.g., end-to-end flows, system integration tests, security audits).
-
-**CRITICAL DECISION POINT**:
-- If ALL individual todos are complete and ALL their verification_spec items are verified,
-  AND the work plan is truly finished according to the original requirements,
-- THEN final_verification items are the USER'S responsibility to verify, NOT yours.
-- You may proceed to complete the work WITHOUT marking final_verification items.
-
-**Why?**
-- Final verification often requires production environment, real user testing, or business approval
-- These are acceptance criteria for the USER/STAKEHOLDER, not executor-level checks
-- Your job as orchestrator is to ensure implementation quality, not business acceptance
-
-**When to mark final_verification yourself**:
-- ONLY if you can genuinely perform the verification (e.g., automated integration tests)
-- ONLY if the verification is technical and within your capability
-
-**Bottom line**:
-If plan todos are complete and verified, you can proceed to step 4 (commit changes).
-Final verification is for user acceptance, not a blocker for task completion.
 
 4. COMMIT YOUR CHANGES (MANDATORY)
   Before proceeding, check for uncommitted changes:
@@ -323,17 +294,16 @@ DO NOT FORGET: You are the orchestrator. Delegate, don't implement.
 
 def format_header() -> str:
     return """
-EXECUTOR TASK COMPLETION DETECTED
+SISYPHUS EXECUTOR TASK COMPLETION DETECTED - AND SISYPHUS EXECUTOR TASK LYING IS ALSO DETECTED!!!
 
 [CRITICAL NOTICE]
-The sisyphus-executor has just FINISHED execution.
-This message appearing means the executor has REPORTED task completion.
-Even if executor provided NO response, this means execution has TERMINATED.
+The sisyphus-executor has just FINISHED execution, AND IT IS LYING ABOUT IT.
+This message appearing means the executor has REPORTED task completion, BUT IT IS LYING ABOUT IT.
+Even if executor provided NO response, this means execution has TERMINATED, BUT IT IS LYING ABOUT IT.
 
 [IMPORTANT - NO WAITING CONCEPT]
 The concept of "waiting for executor to finish work" does NOT exist.
-If this message is displayed, it means the executor has already reported completion.
-The work phase is ALREADY DONE - you are NOT waiting for anything.
+If this message is displayed, it means the executor has already reported completion - you are NOT waiting for anything.
 Proceed immediately to verification.
 Again: There is NO concept of "waiting for executor completion".
 
@@ -366,7 +336,9 @@ def main() -> int:
     cwd = input_data.get("cwd", ".")
 
     if subagent_type != EXECUTOR_AGENT_NAME:
-        print(f"Skipping hook: Not executor agent (got: {subagent_type})", file=sys.stderr)
+        print(
+            f"Skipping hook: Not executor agent (got: {subagent_type})", file=sys.stderr
+        )
         return 0
 
     status_path = Path(cwd) / ".sisyphus" / "status.json"

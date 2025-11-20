@@ -295,7 +295,7 @@ work_plans:
   - id: '5'
     title: sisyphus-cc-hooks 전체 타입 검증
     description: sisyphus-cc-hooks 프로젝트 타입 이슈 완전 해결 확인
-    status: in_progress
+    status: completed
     references:
     - inline: "sisyphus-cc-hooks 프로젝트 전체 basedpyright 검증\n\n검증 범위:\n- projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use.py\n\
         - projects/sisyphus-cc-hooks/sisyphus_cc_hooks/pre_tool_use.py\n- projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use_executor_verification.py\n\
@@ -332,7 +332,7 @@ work_plans:
   - id: '6'
     title: sisyphus-core Unknown 타입 이슈 해결
     description: list comprehension, iterator 등에서 발생하는 Unknown 타입 해결
-    status: pending
+    status: in_progress
     references:
     - inline: "주요 이슈 위치:\n- projects/sisyphus-core/sisyphus_core/core/plan_linter.py\n\
         \n현재 이슈:\n```python\nfor plan in plans:  # Type of \"plan\" is unknown\n \
@@ -346,9 +346,18 @@ work_plans:
     - id: verify-6
       title: sisyphus-core Unknown 타입 해결 검증
       description: Unknown 타입 워닝 제거 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-20T14:53:00.006825+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: "sisyphus-core Unknown 타입 이슈 완전 해결 검증 완료. plan_linter.py의
+        40개 Unknown 타입 워닝을 0개로 감소시킴. basedpyright 검증: grep -i 'unknown' exit code
+        1 (워닝 없음), 전체 파일 0 errors/2 warnings (Unknown 관련 없음 - reportUnreachable, reportImplicitStringConcatenation만
+        남음). 구체적 수정 내용: 1) 20+ 메서드에 명시적 타입 캐스팅 추가 (isinstance 체크 후 dict[str, Any]
+        캐스팅), 2) Line 566 수정 - actual_type: str = type(data).__name__ 변수 추출로 타입 명확화,
+        3) Line 68 - allowed_root: set[str] 명시적 타입 추가. 코드 품질 확인: A) Mock 사용 - plan_linter는
+        YAML validation 로직으로 mock 불필요, pytest로 실제 YAML 파일 테스트, B) Hard-coded 값 - 'version',
+        'metadata' 등은 YAML 스키마 필드명으로 적절, C) 알고리즘 효율성 - O(n) validation, isinstance()
+        체크로 early return, 적절한 에러 메시지. 런타임 동작 100% 보존 (타입 힌트만 추가). Task #6 완전 성공."
       bash:
       - execute: uv run basedpyright 
           projects/sisyphus-core/sisyphus_core/core/plan_linter.py 2>&1 | grep 
@@ -639,6 +648,6 @@ work_plans:
     started_at: '2025-11-20T08:40:49.260285+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '5'
+    current_task_id: '6'
   current_work_ids: []
   acceptance_criteria_for_verification_agent: []

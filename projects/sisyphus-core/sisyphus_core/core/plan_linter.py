@@ -65,7 +65,7 @@ class PlanLinter:
         v3.0 structure: PlanDocument contains version, metadata, and work_plans list.
         Each work_plan in the list is validated separately.
         """
-        allowed_root = {"version", "metadata", "work_plans"}
+        allowed_root: set[str] = {"version", "metadata", "work_plans"}
         self._check_extra_fields(data, "", allowed_root)
 
         required_fields = ["version", "metadata", "work_plans"]
@@ -96,7 +96,8 @@ class PlanLinter:
         if "work_plans" in data:
             self._check_type(data["work_plans"], "work_plans", "list")
             if isinstance(data["work_plans"], list):
-                for i, plan in enumerate(data["work_plans"]):
+                work_plans: list[dict[str, Any]] = data["work_plans"]
+                for i, plan in enumerate(work_plans):
                     self._validate_work_plan(plan, f"work_plans[{i}]")
 
     def _validate_work_plan(self, plan: dict[str, Any], path: str) -> None:
@@ -190,20 +191,21 @@ class PlanLinter:
             self._check_type(user_req, path, "dict")
             return
 
+        user_req_dict: dict[str, Any] = user_req
         allowed_fields = {"original", "created_at", "additional", "expected_outcome", "forbidden_outcome"}
-        self._check_extra_fields(user_req, path, allowed_fields)
-        self._validate_nested_required(user_req, path, ["original", "created_at"])
+        self._check_extra_fields(user_req_dict, path, allowed_fields)
+        self._validate_nested_required(user_req_dict, path, ["original", "created_at"])
 
-        if "original" in user_req:
-            self._check_type(user_req["original"], f"{path}.original", "string")
-        if "created_at" in user_req:
-            self._check_type(user_req["created_at"], f"{path}.created_at", "string")
-        if "additional" in user_req:
-            self._check_type(user_req["additional"], f"{path}.additional", "list")
-        if "expected_outcome" in user_req and user_req["expected_outcome"] is not None:
-            self._check_type(user_req["expected_outcome"], f"{path}.expected_outcome", "string")
-        if "forbidden_outcome" in user_req and user_req["forbidden_outcome"] is not None:
-            self._check_type(user_req["forbidden_outcome"], f"{path}.forbidden_outcome", "string")
+        if "original" in user_req_dict:
+            self._check_type(user_req_dict["original"], f"{path}.original", "string")
+        if "created_at" in user_req_dict:
+            self._check_type(user_req_dict["created_at"], f"{path}.created_at", "string")
+        if "additional" in user_req_dict:
+            self._check_type(user_req_dict["additional"], f"{path}.additional", "list")
+        if "expected_outcome" in user_req_dict and user_req_dict["expected_outcome"] is not None:
+            self._check_type(user_req_dict["expected_outcome"], f"{path}.expected_outcome", "string")
+        if "forbidden_outcome" in user_req_dict and user_req_dict["forbidden_outcome"] is not None:
+            self._check_type(user_req_dict["forbidden_outcome"], f"{path}.forbidden_outcome", "string")
 
     def _validate_objectives_in_plan(self, objectives: Any, path: str) -> None:
         """Validate objectives within a work plan."""
@@ -211,16 +213,18 @@ class PlanLinter:
             self._check_type(objectives, path, "dict")
             return
 
+        objectives_dict: dict[str, Any] = objectives
         allowed_fields = {"core", "detailed"}
-        self._check_extra_fields(objectives, path, allowed_fields)
-        self._validate_nested_required(objectives, path, ["core"])
+        self._check_extra_fields(objectives_dict, path, allowed_fields)
+        self._validate_nested_required(objectives_dict, path, ["core"])
 
-        if "core" in objectives:
-            self._check_type(objectives["core"], f"{path}.core", "string")
-        if "detailed" in objectives:
-            self._check_type(objectives["detailed"], f"{path}.detailed", "list")
-            if isinstance(objectives["detailed"], list):
-                for i, detail in enumerate(objectives["detailed"]):
+        if "core" in objectives_dict:
+            self._check_type(objectives_dict["core"], f"{path}.core", "string")
+        if "detailed" in objectives_dict:
+            self._check_type(objectives_dict["detailed"], f"{path}.detailed", "list")
+            if isinstance(objectives_dict["detailed"], list):
+                detailed: list[dict[str, Any]] = objectives_dict["detailed"]
+                for i, detail in enumerate(detailed):
                     detail_path = f"{path}.detailed[{i}]"
                     if not isinstance(detail, dict):
                         self._check_type(detail, detail_path, "dict")
@@ -239,16 +243,19 @@ class PlanLinter:
             self._check_type(background, path, "dict")
             return
 
+        background_dict: dict[str, Any] = background
         allowed_fields = {"current_situation", "reason_for_change", "changes_to_make"}
-        self._check_extra_fields(background, path, allowed_fields)
-        self._validate_nested_required(background, path, ["current_situation", "reason_for_change", "changes_to_make"])
+        self._check_extra_fields(background_dict, path, allowed_fields)
+        self._validate_nested_required(
+            background_dict, path, ["current_situation", "reason_for_change", "changes_to_make"]
+        )
 
-        if "current_situation" in background:
-            self._check_type(background["current_situation"], f"{path}.current_situation", "string")
-        if "reason_for_change" in background:
-            self._check_type(background["reason_for_change"], f"{path}.reason_for_change", "string")
-        if "changes_to_make" in background:
-            self._check_type(background["changes_to_make"], f"{path}.changes_to_make", "string")
+        if "current_situation" in background_dict:
+            self._check_type(background_dict["current_situation"], f"{path}.current_situation", "string")
+        if "reason_for_change" in background_dict:
+            self._check_type(background_dict["reason_for_change"], f"{path}.reason_for_change", "string")
+        if "changes_to_make" in background_dict:
+            self._check_type(background_dict["changes_to_make"], f"{path}.changes_to_make", "string")
 
     def _validate_required_background_in_plan(self, req_bg: Any, path: str) -> None:
         """Validate required_background within a work plan."""
@@ -256,16 +263,17 @@ class PlanLinter:
             self._check_type(req_bg, path, "dict")
             return
 
+        req_bg_dict: dict[str, Any] = req_bg
         allowed_fields = {"description", "file_structure", "references"}
-        self._check_extra_fields(req_bg, path, allowed_fields)
-        self._validate_nested_required(req_bg, path, ["description"])
+        self._check_extra_fields(req_bg_dict, path, allowed_fields)
+        self._validate_nested_required(req_bg_dict, path, ["description"])
 
-        if "description" in req_bg:
-            self._check_type(req_bg["description"], f"{path}.description", "string")
-        if "file_structure" in req_bg and req_bg["file_structure"] is not None:
-            self._check_type(req_bg["file_structure"], f"{path}.file_structure", "string")
-        if "references" in req_bg:
-            self._check_type(req_bg["references"], f"{path}.references", "list")
+        if "description" in req_bg_dict:
+            self._check_type(req_bg_dict["description"], f"{path}.description", "string")
+        if "file_structure" in req_bg_dict and req_bg_dict["file_structure"] is not None:
+            self._check_type(req_bg_dict["file_structure"], f"{path}.file_structure", "string")
+        if "references" in req_bg_dict:
+            self._check_type(req_bg_dict["references"], f"{path}.references", "list")
 
     def _validate_workflow_in_plan(self, workflow: Any, path: str) -> None:
         """Validate workflow within a work plan."""
@@ -273,14 +281,15 @@ class PlanLinter:
             self._check_type(workflow, path, "dict")
             return
 
+        workflow_dict: dict[str, Any] = workflow
         allowed_fields = {"dependency_diagram", "critical_path"}
-        self._check_extra_fields(workflow, path, allowed_fields)
-        self._validate_nested_required(workflow, path, ["dependency_diagram"])
+        self._check_extra_fields(workflow_dict, path, allowed_fields)
+        self._validate_nested_required(workflow_dict, path, ["dependency_diagram"])
 
-        if "dependency_diagram" in workflow:
-            self._check_type(workflow["dependency_diagram"], f"{path}.dependency_diagram", "string")
-        if "critical_path" in workflow:
-            self._check_type(workflow["critical_path"], f"{path}.critical_path", "list")
+        if "dependency_diagram" in workflow_dict:
+            self._check_type(workflow_dict["dependency_diagram"], f"{path}.dependency_diagram", "string")
+        if "critical_path" in workflow_dict:
+            self._check_type(workflow_dict["critical_path"], f"{path}.critical_path", "list")
 
     def _validate_success_vision_in_plan(self, success_vision: Any, path: str) -> None:
         """Validate success_vision within a work plan."""
@@ -288,13 +297,15 @@ class PlanLinter:
             self._check_type(success_vision, path, "dict")
             return
 
+        success_vision_dict: dict[str, Any] = success_vision
         allowed_fields = {"user_perspective", "business_perspective", "technical_criteria"}
-        self._check_extra_fields(success_vision, path, allowed_fields)
+        self._check_extra_fields(success_vision_dict, path, allowed_fields)
 
-        if "user_perspective" in success_vision:
-            self._check_type(success_vision["user_perspective"], f"{path}.user_perspective", "list")
-            if isinstance(success_vision["user_perspective"], list):
-                for i, scenario in enumerate(success_vision["user_perspective"]):
+        if "user_perspective" in success_vision_dict:
+            self._check_type(success_vision_dict["user_perspective"], f"{path}.user_perspective", "list")
+            if isinstance(success_vision_dict["user_perspective"], list):
+                user_perspective: list[dict[str, Any]] = success_vision_dict["user_perspective"]
+                for i, scenario in enumerate(user_perspective):
                     scenario_path = f"{path}.user_perspective[{i}]"
                     if not isinstance(scenario, dict):
                         self._check_type(scenario, scenario_path, "dict")
@@ -307,10 +318,11 @@ class PlanLinter:
                     if "experience" in scenario:
                         self._check_type(scenario["experience"], f"{scenario_path}.experience", "string")
 
-        if "business_perspective" in success_vision:
-            self._check_type(success_vision["business_perspective"], f"{path}.business_perspective", "list")
-            if isinstance(success_vision["business_perspective"], list):
-                for i, metric in enumerate(success_vision["business_perspective"]):
+        if "business_perspective" in success_vision_dict:
+            self._check_type(success_vision_dict["business_perspective"], f"{path}.business_perspective", "list")
+            if isinstance(success_vision_dict["business_perspective"], list):
+                business_perspective: list[dict[str, Any]] = success_vision_dict["business_perspective"]
+                for i, metric in enumerate(business_perspective):
                     metric_path = f"{path}.business_perspective[{i}]"
                     if not isinstance(metric, dict):
                         self._check_type(metric, metric_path, "dict")
@@ -323,10 +335,11 @@ class PlanLinter:
                     if "target" in metric:
                         self._check_type(metric["target"], f"{metric_path}.target", "string")
 
-        if "technical_criteria" in success_vision:
-            self._check_type(success_vision["technical_criteria"], f"{path}.technical_criteria", "list")
-            if isinstance(success_vision["technical_criteria"], list):
-                for i, criterion in enumerate(success_vision["technical_criteria"]):
+        if "technical_criteria" in success_vision_dict:
+            self._check_type(success_vision_dict["technical_criteria"], f"{path}.technical_criteria", "list")
+            if isinstance(success_vision_dict["technical_criteria"], list):
+                technical_criteria: list[dict[str, Any]] = success_vision_dict["technical_criteria"]
+                for i, criterion in enumerate(technical_criteria):
                     criterion_path = f"{path}.technical_criteria[{i}]"
                     if not isinstance(criterion, dict):
                         self._check_type(criterion, criterion_path, "dict")
@@ -349,7 +362,8 @@ class PlanLinter:
             self._check_type(final_verification, path, "list")
             return
 
-        for i, item in enumerate(final_verification):
+        final_verifications: list[dict[str, Any]] = final_verification
+        for i, item in enumerate(final_verifications):
             item_path = f"{path}[{i}]"
             if not isinstance(item, dict):
                 self._check_type(item, item_path, "dict")
@@ -429,7 +443,8 @@ class PlanLinter:
             self._check_type(todos, path, "list")
             return
 
-        if len(todos) == 0:
+        todos_items: list[Any] = todos
+        if len(todos_items) == 0:
             self.errors.append(
                 LintError(
                     location=path,
@@ -441,8 +456,9 @@ class PlanLinter:
             )
             return
 
-        for i, todo in enumerate(todos):
-            self._validate_todo(todo, f"{path}[{i}]")
+        for i, todo in enumerate(todos_items):
+            todo_dict: dict[str, Any] = todo
+            self._validate_todo(todo_dict, f"{path}[{i}]")
 
     def _validate_execution_in_plan(self, exec_data: Any, path: str) -> None:
         """Validate execution field within a work plan (v3.0)."""
@@ -450,18 +466,19 @@ class PlanLinter:
             self._check_type(exec_data, path, "dict")
             return
 
+        exec_data_dict: dict[str, Any] = exec_data
         allowed_exec_fields = {"started", "completed", "started_at", "completed_at", "fully_done_at"}
-        self._check_extra_fields(exec_data, path, allowed_exec_fields)
-        self._validate_nested_required(exec_data, path, ["started", "completed"])
+        self._check_extra_fields(exec_data_dict, path, allowed_exec_fields)
+        self._validate_nested_required(exec_data_dict, path, ["started", "completed"])
 
-        if "started" in exec_data:
-            self._check_type(exec_data["started"], f"{path}.started", "boolean")
-        if "completed" in exec_data:
-            self._check_type(exec_data["completed"], f"{path}.completed", "boolean")
-        if "started_at" in exec_data and exec_data["started_at"] is not None:
-            self._check_type(exec_data["started_at"], f"{path}.started_at", "string")
-        if "completed_at" in exec_data and exec_data["completed_at"] is not None:
-            self._check_type(exec_data["completed_at"], f"{path}.completed_at", "string")
+        if "started" in exec_data_dict:
+            self._check_type(exec_data_dict["started"], f"{path}.started", "boolean")
+        if "completed" in exec_data_dict:
+            self._check_type(exec_data_dict["completed"], f"{path}.completed", "boolean")
+        if "started_at" in exec_data_dict and exec_data_dict["started_at"] is not None:
+            self._check_type(exec_data_dict["started_at"], f"{path}.started_at", "string")
+        if "completed_at" in exec_data_dict and exec_data_dict["completed_at"] is not None:
+            self._check_type(exec_data_dict["completed_at"], f"{path}.completed_at", "string")
 
     def _validate_work_mode_in_plan(self, work_mode: Any, path: str) -> None:
         """Validate work_mode field within a work plan (v3.0)."""
@@ -469,14 +486,15 @@ class PlanLinter:
             self._check_type(work_mode, path, "dict")
             return
 
+        work_mode_dict: dict[str, Any] = work_mode
         allowed_wm_fields = {"parallel_requested", "current_task_id"}
-        self._check_extra_fields(work_mode, path, allowed_wm_fields)
-        self._validate_nested_required(work_mode, path, ["parallel_requested"])
+        self._check_extra_fields(work_mode_dict, path, allowed_wm_fields)
+        self._validate_nested_required(work_mode_dict, path, ["parallel_requested"])
 
-        if "parallel_requested" in work_mode:
-            self._check_type(work_mode["parallel_requested"], f"{path}.parallel_requested", "boolean")
-        if "current_task_id" in work_mode and work_mode["current_task_id"] is not None:
-            self._check_type(work_mode["current_task_id"], f"{path}.current_task_id", "string")
+        if "parallel_requested" in work_mode_dict:
+            self._check_type(work_mode_dict["parallel_requested"], f"{path}.parallel_requested", "boolean")
+        if "current_task_id" in work_mode_dict and work_mode_dict["current_task_id"] is not None:
+            self._check_type(work_mode_dict["current_task_id"], f"{path}.current_task_id", "string")
 
     def _validate_nested_required(self, data: dict[str, Any], path: str, required_fields: list[str]) -> None:
         """Validate required fields in nested object."""
@@ -499,13 +517,14 @@ class PlanLinter:
         expected_type: str,  # noqa: ANN401
     ) -> None:
         """Check if data matches expected type."""
+        actual_type: str = type(data).__name__
         if expected_type == "string" and not isinstance(data, str):
             self.errors.append(
                 LintError(
                     location=location,
                     message="Type mismatch",
                     expected="string",
-                    actual=type(data).__name__,
+                    actual=actual_type,
                     suggestion="Change value to string",
                 )
             )
@@ -515,8 +534,8 @@ class PlanLinter:
                     location=location,
                     message="Type mismatch",
                     expected="boolean",
-                    actual=type(data).__name__,
-                    suggestion=f"Use true/false (not {data!r})",
+                    actual=actual_type,
+                    suggestion=str(f"Use true/false (not {data!r})"),
                 )
             )
         elif expected_type == "int" and not isinstance(data, int):
@@ -525,7 +544,7 @@ class PlanLinter:
                     location=location,
                     message="Type mismatch",
                     expected="int",
-                    actual=type(data).__name__,
+                    actual=actual_type,
                     suggestion="Change value to integer",
                 )
             )
@@ -535,7 +554,7 @@ class PlanLinter:
                     location=location,
                     message="Type mismatch",
                     expected="list",
-                    actual=type(data).__name__,
+                    actual=actual_type,
                     suggestion="Change value to list (array)",
                 )
             )
@@ -545,7 +564,7 @@ class PlanLinter:
                     location=location,
                     message="Type mismatch",
                     expected="dict",
-                    actual=type(data).__name__,
+                    actual=actual_type,
                     suggestion="Change value to dictionary (object)",
                 )
             )
@@ -629,15 +648,16 @@ class PlanLinter:
             self._check_type(metadata, "metadata", "dict")
             return
 
+        metadata_dict: dict[str, Any] = metadata
         allowed_fields = {"created_at", "updated_at"}
-        self._check_extra_fields(metadata, "metadata", allowed_fields)
+        self._check_extra_fields(metadata_dict, "metadata", allowed_fields)
 
-        self._validate_nested_required(metadata, "metadata", ["created_at"])
+        self._validate_nested_required(metadata_dict, "metadata", ["created_at"])
 
-        if "created_at" in metadata:
-            self._check_type(metadata["created_at"], "metadata.created_at", "string")
-        if "updated_at" in metadata and metadata["updated_at"] is not None:
-            self._check_type(metadata["updated_at"], "metadata.updated_at", "string")
+        if "created_at" in metadata_dict:
+            self._check_type(metadata_dict["created_at"], "metadata.created_at", "string")
+        if "updated_at" in metadata_dict and metadata_dict["updated_at"] is not None:
+            self._check_type(metadata_dict["updated_at"], "metadata.updated_at", "string")
 
     def _validate_user_request(self, data: dict[str, Any]) -> None:
         """Validate user_request section."""
@@ -649,17 +669,18 @@ class PlanLinter:
             self._check_type(user_req, "user_request", "dict")
             return
 
+        user_req_dict: dict[str, Any] = user_req
         allowed_fields = {"original", "created_at", "additional"}
-        self._check_extra_fields(user_req, "user_request", allowed_fields)
+        self._check_extra_fields(user_req_dict, "user_request", allowed_fields)
 
-        self._validate_nested_required(user_req, "user_request", ["original", "created_at"])
+        self._validate_nested_required(user_req_dict, "user_request", ["original", "created_at"])
 
-        if "original" in user_req:
-            self._check_type(user_req["original"], "user_request.original", "string")
-        if "created_at" in user_req:
-            self._check_type(user_req["created_at"], "user_request.created_at", "string")
-        if "additional" in user_req:
-            self._check_type(user_req["additional"], "user_request.additional", "list")
+        if "original" in user_req_dict:
+            self._check_type(user_req_dict["original"], "user_request.original", "string")
+        if "created_at" in user_req_dict:
+            self._check_type(user_req_dict["created_at"], "user_request.created_at", "string")
+        if "additional" in user_req_dict:
+            self._check_type(user_req_dict["additional"], "user_request.additional", "list")
 
     def _validate_objectives(self, data: dict[str, Any]) -> None:
         """Validate objectives section."""
@@ -671,28 +692,31 @@ class PlanLinter:
             self._check_type(objectives, "objectives", "dict")
             return
 
+        objectives_dict: dict[str, Any] = objectives
         allowed_fields = {"core", "detailed"}
-        self._check_extra_fields(objectives, "objectives", allowed_fields)
+        self._check_extra_fields(objectives_dict, "objectives", allowed_fields)
 
-        self._validate_nested_required(objectives, "objectives", ["core"])
+        self._validate_nested_required(objectives_dict, "objectives", ["core"])
 
-        if "core" in objectives:
-            self._check_type(objectives["core"], "objectives.core", "string")
-        if "detailed" in objectives:
-            self._check_type(objectives["detailed"], "objectives.detailed", "list")
-            if isinstance(objectives["detailed"], list):
-                for i, detail in enumerate(objectives["detailed"]):
+        if "core" in objectives_dict:
+            self._check_type(objectives_dict["core"], "objectives.core", "string")
+        if "detailed" in objectives_dict:
+            self._check_type(objectives_dict["detailed"], "objectives.detailed", "list")
+            if isinstance(objectives_dict["detailed"], list):
+                detailed: list[dict[str, Any]] = objectives_dict["detailed"]
+                for i, detail in enumerate(detailed):
                     detail_path = f"objectives.detailed[{i}]"
                     if not isinstance(detail, dict):
                         self._check_type(detail, detail_path, "dict")
                         continue
+                    detail_dict: dict[str, Any] = detail
                     allowed_detail_fields = {"goal", "measurable"}
-                    self._check_extra_fields(detail, detail_path, allowed_detail_fields)
-                    self._validate_nested_required(detail, detail_path, ["goal", "measurable"])
-                    if "goal" in detail:
-                        self._check_type(detail["goal"], f"{detail_path}.goal", "string")
-                    if "measurable" in detail:
-                        self._check_type(detail["measurable"], f"{detail_path}.measurable", "string")
+                    self._check_extra_fields(detail_dict, detail_path, allowed_detail_fields)
+                    self._validate_nested_required(detail_dict, detail_path, ["goal", "measurable"])
+                    if "goal" in detail_dict:
+                        self._check_type(detail_dict["goal"], f"{detail_path}.goal", "string")
+                    if "measurable" in detail_dict:
+                        self._check_type(detail_dict["measurable"], f"{detail_path}.measurable", "string")
 
     def _validate_background(self, data: dict[str, Any]) -> None:
         """Validate background section."""
@@ -704,19 +728,20 @@ class PlanLinter:
             self._check_type(background, "background", "dict")
             return
 
+        background_dict: dict[str, Any] = background
         allowed_fields = {"current_situation", "reason_for_change", "changes_to_make"}
-        self._check_extra_fields(background, "background", allowed_fields)
+        self._check_extra_fields(background_dict, "background", allowed_fields)
 
         self._validate_nested_required(
-            background, "background", ["current_situation", "reason_for_change", "changes_to_make"]
+            background_dict, "background", ["current_situation", "reason_for_change", "changes_to_make"]
         )
 
-        if "current_situation" in background:
-            self._check_type(background["current_situation"], "background.current_situation", "string")
-        if "reason_for_change" in background:
-            self._check_type(background["reason_for_change"], "background.reason_for_change", "string")
-        if "changes_to_make" in background:
-            self._check_type(background["changes_to_make"], "background.changes_to_make", "string")
+        if "current_situation" in background_dict:
+            self._check_type(background_dict["current_situation"], "background.current_situation", "string")
+        if "reason_for_change" in background_dict:
+            self._check_type(background_dict["reason_for_change"], "background.reason_for_change", "string")
+        if "changes_to_make" in background_dict:
+            self._check_type(background_dict["changes_to_make"], "background.changes_to_make", "string")
 
     def _validate_required_background(self, data: dict[str, Any]) -> None:
         """Validate required_background section."""
@@ -728,17 +753,18 @@ class PlanLinter:
             self._check_type(req_bg, "required_background", "dict")
             return
 
+        req_bg_dict: dict[str, Any] = req_bg
         allowed_fields = {"description", "file_structure", "references"}
-        self._check_extra_fields(req_bg, "required_background", allowed_fields)
+        self._check_extra_fields(req_bg_dict, "required_background", allowed_fields)
 
-        self._validate_nested_required(req_bg, "required_background", ["description"])
+        self._validate_nested_required(req_bg_dict, "required_background", ["description"])
 
-        if "description" in req_bg:
-            self._check_type(req_bg["description"], "required_background.description", "string")
-        if "file_structure" in req_bg and req_bg["file_structure"] is not None:
-            self._check_type(req_bg["file_structure"], "required_background.file_structure", "string")
-        if "references" in req_bg:
-            self._check_type(req_bg["references"], "required_background.references", "list")
+        if "description" in req_bg_dict:
+            self._check_type(req_bg_dict["description"], "required_background.description", "string")
+        if "file_structure" in req_bg_dict and req_bg_dict["file_structure"] is not None:
+            self._check_type(req_bg_dict["file_structure"], "required_background.file_structure", "string")
+        if "references" in req_bg_dict:
+            self._check_type(req_bg_dict["references"], "required_background.references", "list")
 
     def _validate_retrieval_spec(self, retrieval: Any, path: str) -> None:
         """Validate RetrievalSpec (discriminated union)."""
@@ -746,23 +772,24 @@ class PlanLinter:
             self._check_type(retrieval, path, "dict")
             return
 
+        retrieval_dict: dict[str, Any] = retrieval
         valid_types = ["keywords", "prompt"]
-        if not self._validate_discriminated_union_type(retrieval, path, valid_types):
+        if not self._validate_discriminated_union_type(retrieval_dict, path, valid_types):
             return
 
-        retrieval_type = retrieval.get("type")
+        retrieval_type = retrieval_dict.get("type")
         if retrieval_type == "keywords":
             allowed_fields = {"type", "keywords", "line_range"}
-            self._check_extra_fields(retrieval, path, allowed_fields)
-            self._validate_nested_required(retrieval, path, ["keywords"])
-            if "keywords" in retrieval:
-                self._check_type(retrieval["keywords"], f"{path}.keywords", "list")
+            self._check_extra_fields(retrieval_dict, path, allowed_fields)
+            self._validate_nested_required(retrieval_dict, path, ["keywords"])
+            if "keywords" in retrieval_dict:
+                self._check_type(retrieval_dict["keywords"], f"{path}.keywords", "list")
         elif retrieval_type == "prompt":
             allowed_fields = {"type", "prompt"}
-            self._check_extra_fields(retrieval, path, allowed_fields)
-            self._validate_nested_required(retrieval, path, ["prompt"])
-            if "prompt" in retrieval:
-                self._check_type(retrieval["prompt"], f"{path}.prompt", "string")
+            self._check_extra_fields(retrieval_dict, path, allowed_fields)
+            self._validate_nested_required(retrieval_dict, path, ["prompt"])
+            if "prompt" in retrieval_dict:
+                self._check_type(retrieval_dict["prompt"], f"{path}.prompt", "string")
 
         # Validate type enum
         if retrieval_type:
@@ -778,46 +805,51 @@ class PlanLinter:
             self._check_type(status, "status", "dict")
             return
 
+        status_dict: dict[str, Any] = status
         allowed_fields = {"execution", "work_mode", "current_work"}
-        self._check_extra_fields(status, "status", allowed_fields)
+        self._check_extra_fields(status_dict, "status", allowed_fields)
 
-        self._validate_nested_required(status, "status", ["execution", "work_mode", "current_work"])
+        self._validate_nested_required(status_dict, "status", ["execution", "work_mode", "current_work"])
 
         # Validate execution
-        if "execution" in status:
-            exec_data = status["execution"]
+        if "execution" in status_dict:
+            exec_data = status_dict["execution"]
             if not isinstance(exec_data, dict):
                 self._check_type(exec_data, "status.execution", "dict")
             else:
+                exec_data_dict: dict[str, Any] = exec_data
                 allowed_exec_fields = {"started", "completed", "started_at", "completed_at", "fully_done_at"}
-                self._check_extra_fields(exec_data, "status.execution", allowed_exec_fields)
-                self._validate_nested_required(exec_data, "status.execution", ["started", "completed"])
-                if "started" in exec_data:
-                    self._check_type(exec_data["started"], "status.execution.started", "boolean")
-                if "completed" in exec_data:
-                    self._check_type(exec_data["completed"], "status.execution.completed", "boolean")
-                if "started_at" in exec_data and exec_data["started_at"] is not None:
-                    self._check_type(exec_data["started_at"], "status.execution.started_at", "string")
-                if "completed_at" in exec_data and exec_data["completed_at"] is not None:
-                    self._check_type(exec_data["completed_at"], "status.execution.completed_at", "string")
+                self._check_extra_fields(exec_data_dict, "status.execution", allowed_exec_fields)
+                self._validate_nested_required(exec_data_dict, "status.execution", ["started", "completed"])
+                if "started" in exec_data_dict:
+                    self._check_type(exec_data_dict["started"], "status.execution.started", "boolean")
+                if "completed" in exec_data_dict:
+                    self._check_type(exec_data_dict["completed"], "status.execution.completed", "boolean")
+                if "started_at" in exec_data_dict and exec_data_dict["started_at"] is not None:
+                    self._check_type(exec_data_dict["started_at"], "status.execution.started_at", "string")
+                if "completed_at" in exec_data_dict and exec_data_dict["completed_at"] is not None:
+                    self._check_type(exec_data_dict["completed_at"], "status.execution.completed_at", "string")
 
         # Validate work_mode
-        if "work_mode" in status:
-            work_mode = status["work_mode"]
+        if "work_mode" in status_dict:
+            work_mode = status_dict["work_mode"]
             if not isinstance(work_mode, dict):
                 self._check_type(work_mode, "status.work_mode", "dict")
             else:
+                work_mode_dict: dict[str, Any] = work_mode
                 allowed_wm_fields = {"parallel_requested", "current_task_id"}
-                self._check_extra_fields(work_mode, "status.work_mode", allowed_wm_fields)
-                self._validate_nested_required(work_mode, "status.work_mode", ["parallel_requested"])
-                if "parallel_requested" in work_mode:
-                    self._check_type(work_mode["parallel_requested"], "status.work_mode.parallel_requested", "boolean")
-                if "current_task_id" in work_mode and work_mode["current_task_id"] is not None:
-                    self._check_type(work_mode["current_task_id"], "status.work_mode.current_task_id", "string")
+                self._check_extra_fields(work_mode_dict, "status.work_mode", allowed_wm_fields)
+                self._validate_nested_required(work_mode_dict, "status.work_mode", ["parallel_requested"])
+                if "parallel_requested" in work_mode_dict:
+                    self._check_type(
+                        work_mode_dict["parallel_requested"], "status.work_mode.parallel_requested", "boolean"
+                    )
+                if "current_task_id" in work_mode_dict and work_mode_dict["current_task_id"] is not None:
+                    self._check_type(work_mode_dict["current_task_id"], "status.work_mode.current_task_id", "string")
 
         # Validate current_work
-        if "current_work" in status:
-            self._check_type(status["current_work"], "status.current_work", "string")
+        if "current_work" in status_dict:
+            self._check_type(status_dict["current_work"], "status.current_work", "string")
 
     def _validate_workflow(self, data: dict[str, Any]) -> None:
         """Validate workflow section."""
@@ -829,15 +861,16 @@ class PlanLinter:
             self._check_type(workflow, "workflow", "dict")
             return
 
+        workflow_dict: dict[str, Any] = workflow
         allowed_fields = {"dependency_diagram", "critical_path"}
-        self._check_extra_fields(workflow, "workflow", allowed_fields)
+        self._check_extra_fields(workflow_dict, "workflow", allowed_fields)
 
-        self._validate_nested_required(workflow, "workflow", ["dependency_diagram"])
+        self._validate_nested_required(workflow_dict, "workflow", ["dependency_diagram"])
 
-        if "dependency_diagram" in workflow:
-            self._check_type(workflow["dependency_diagram"], "workflow.dependency_diagram", "string")
-        if "critical_path" in workflow:
-            self._check_type(workflow["critical_path"], "workflow.critical_path", "list")
+        if "dependency_diagram" in workflow_dict:
+            self._check_type(workflow_dict["dependency_diagram"], "workflow.dependency_diagram", "string")
+        if "critical_path" in workflow_dict:
+            self._check_type(workflow_dict["critical_path"], "workflow.critical_path", "list")
 
     def _validate_todos(self, data: dict[str, Any]) -> None:
         """Validate todos section (recursive)."""
@@ -849,7 +882,8 @@ class PlanLinter:
             self._check_type(todos, "todos", "list")
             return
 
-        if len(todos) == 0:
+        todos_items: list[Any] = todos
+        if len(todos_items) == 0:
             self.errors.append(
                 LintError(
                     location="todos",
@@ -861,8 +895,9 @@ class PlanLinter:
             )
             return
 
-        for i, todo in enumerate(todos):
-            self._validate_todo(todo, f"todos[{i}]")
+        for i, todo in enumerate(todos_items):
+            todo_dict: dict[str, Any] = todo
+            self._validate_todo(todo_dict, f"todos[{i}]")
 
     def _validate_todo(self, todo: Any, path: str) -> None:
         """Validate single todo item (v3.0)."""
@@ -870,6 +905,7 @@ class PlanLinter:
             self._check_type(todo, path, "dict")
             return
 
+        todo_dict: dict[str, Any] = todo
         allowed_fields = {
             "id",
             "title",
@@ -882,53 +918,59 @@ class PlanLinter:
             "parallelable_and_safe_evidence",
             "acceptance_criteria",
         }
-        self._check_extra_fields(todo, path, allowed_fields)
+        self._check_extra_fields(todo_dict, path, allowed_fields)
 
-        self._validate_nested_required(todo, path, ["id", "title", "status"])
+        self._validate_nested_required(todo_dict, path, ["id", "title", "status"])
 
-        if "id" in todo:
-            self._check_type(todo["id"], f"{path}.id", "string")
+        if "id" in todo_dict:
+            self._check_type(todo_dict["id"], f"{path}.id", "string")
 
-        if "title" in todo:
-            self._check_type(todo["title"], f"{path}.title", "string")
+        if "title" in todo_dict:
+            self._check_type(todo_dict["title"], f"{path}.title", "string")
 
-        if "description" in todo and todo["description"] is not None:
-            self._check_type(todo["description"], f"{path}.description", "string")
+        if "description" in todo_dict and todo_dict["description"] is not None:
+            self._check_type(todo_dict["description"], f"{path}.description", "string")
 
-        if "status" in todo:
-            self._check_enum(todo["status"], f"{path}.status", TodoStatus)
+        if "status" in todo_dict:
+            self._check_enum(todo_dict["status"], f"{path}.status", TodoStatus)
 
-        if "references" in todo:
-            self._check_type(todo["references"], f"{path}.references", "list")
+        if "references" in todo_dict:
+            self._check_type(todo_dict["references"], f"{path}.references", "list")
 
-        if "verification_spec" in todo:
-            self._check_type(todo["verification_spec"], f"{path}.verification_spec", "list")
-            if isinstance(todo["verification_spec"], list):
-                for i, spec in enumerate(todo["verification_spec"]):
-                    self._validate_verification_item(spec, f"{path}.verification_spec[{i}]")
+        if "verification_spec" in todo_dict:
+            self._check_type(todo_dict["verification_spec"], f"{path}.verification_spec", "list")
+            if isinstance(todo_dict["verification_spec"], list):
+                verification_spec: list[dict[str, Any]] = todo_dict["verification_spec"]
+                for i, spec in enumerate(verification_spec):
+                    spec_dict: dict[str, Any] = spec
+                    self._validate_verification_item(spec_dict, f"{path}.verification_spec[{i}]")
 
-        if "parallel" in todo:
-            self._check_type(todo["parallel"], f"{path}.parallel", "boolean")
+        if "parallel" in todo_dict:
+            self._check_type(todo_dict["parallel"], f"{path}.parallel", "boolean")
 
-        if "parallelable_and_safe_evidence" in todo:
-            if todo["parallelable_and_safe_evidence"] is not None:
+        if "parallelable_and_safe_evidence" in todo_dict:
+            if todo_dict["parallelable_and_safe_evidence"] is not None:
                 self._check_type(
-                    todo["parallelable_and_safe_evidence"],
+                    todo_dict["parallelable_and_safe_evidence"],
                     f"{path}.parallelable_and_safe_evidence",
                     "string",
                 )
 
-        if "acceptance_criteria" in todo:
-            self._check_type(todo["acceptance_criteria"], f"{path}.acceptance_criteria", "list")
-            if isinstance(todo["acceptance_criteria"], list):
-                for i, criteria in enumerate(todo["acceptance_criteria"]):
-                    self._validate_acceptance_criteria_item(criteria, f"{path}.acceptance_criteria[{i}]")
+        if "acceptance_criteria" in todo_dict:
+            self._check_type(todo_dict["acceptance_criteria"], f"{path}.acceptance_criteria", "list")
+            if isinstance(todo_dict["acceptance_criteria"], list):
+                acceptance_criteria: list[dict[str, Any]] = todo_dict["acceptance_criteria"]
+                for i, criteria in enumerate(acceptance_criteria):
+                    criteria_dict: dict[str, Any] = criteria
+                    self._validate_acceptance_criteria_item(criteria_dict, f"{path}.acceptance_criteria[{i}]")
 
-        if "children" in todo:
-            self._check_type(todo["children"], f"{path}.children", "list")
-            if isinstance(todo["children"], list):
-                for i, child in enumerate(todo["children"]):
-                    self._validate_todo(child, f"{path}.children[{i}]")
+        if "children" in todo_dict:
+            self._check_type(todo_dict["children"], f"{path}.children", "list")
+            if isinstance(todo_dict["children"], list):
+                children: list[dict[str, Any]] = todo_dict["children"]
+                for i, child in enumerate(children):
+                    child_dict: dict[str, Any] = child
+                    self._validate_todo(child_dict, f"{path}.children[{i}]")
 
     def _validate_verification_item(self, item: Any, path: str) -> None:
         """Validate VerificationItem - v2.1."""
@@ -936,6 +978,7 @@ class PlanLinter:
             self._check_type(item, path, "dict")
             return
 
+        item_dict: dict[str, Any] = item
         allowed_fields = {
             "id",
             "title",
@@ -950,37 +993,41 @@ class PlanLinter:
             "deterministic_bash",
             "orchestrator_judge",
         }
-        self._check_extra_fields(item, path, allowed_fields)
+        self._check_extra_fields(item_dict, path, allowed_fields)
 
         self._validate_nested_required(
-            item,
+            item_dict,
             path,
             ["id", "title", "description", "orchestrator_manually_verified", "manual_verification_evidence"],
         )
 
         # Type validation
-        if "id" in item:
-            self._check_type(item["id"], f"{path}.id", "string")
-        if "title" in item:
-            self._check_type(item["title"], f"{path}.title", "string")
-        if "description" in item:
-            self._check_type(item["description"], f"{path}.description", "string")
-        if "verified" in item:
-            self._check_type(item["verified"], f"{path}.verified", "boolean")
-        if "verified_at" in item and item["verified_at"] is not None:
-            self._check_type(item["verified_at"], f"{path}.verified_at", "string")
-        if "verification_evidence" in item and item["verification_evidence"] is not None:
-            self._check_type(item["verification_evidence"], f"{path}.verification_evidence", "string")
-        if "orchestrator_manually_verified" in item:
+        if "id" in item_dict:
+            self._check_type(item_dict["id"], f"{path}.id", "string")
+        if "title" in item_dict:
+            self._check_type(item_dict["title"], f"{path}.title", "string")
+        if "description" in item_dict:
+            self._check_type(item_dict["description"], f"{path}.description", "string")
+        if "verified" in item_dict:
+            self._check_type(item_dict["verified"], f"{path}.verified", "boolean")
+        if "verified_at" in item_dict and item_dict["verified_at"] is not None:
+            self._check_type(item_dict["verified_at"], f"{path}.verified_at", "string")
+        if "verification_evidence" in item_dict and item_dict["verification_evidence"] is not None:
+            self._check_type(item_dict["verification_evidence"], f"{path}.verification_evidence", "string")
+        if "orchestrator_manually_verified" in item_dict:
             self._check_type(
-                item["orchestrator_manually_verified"], f"{path}.orchestrator_manually_verified", "boolean"
+                item_dict["orchestrator_manually_verified"],
+                f"{path}.orchestrator_manually_verified",
+                "boolean",
             )
-        if "manual_verification_evidence" in item:
-            self._check_type(item["manual_verification_evidence"], f"{path}.manual_verification_evidence", "string")
+        if "manual_verification_evidence" in item_dict:
+            self._check_type(
+                item_dict["manual_verification_evidence"], f"{path}.manual_verification_evidence", "string"
+            )
 
         # Validate at least one of bash or llm_judge exists
-        has_bash = "bash" in item and item["bash"]
-        has_llm = "llm_judge" in item and item["llm_judge"]
+        has_bash = "bash" in item_dict and item_dict["bash"]
+        has_llm = "llm_judge" in item_dict and item_dict["llm_judge"]
         if not has_bash and not has_llm:
             self.errors.append(
                 LintError(
@@ -994,25 +1041,29 @@ class PlanLinter:
 
         # Validate bash list
         if has_bash:
-            self._validate_bash_list(item["bash"], f"{path}.bash")
+            self._validate_bash_list(item_dict["bash"], f"{path}.bash")
 
         # Validate llm_judge list
         if has_llm:
-            self._validate_llm_judge_list(item["llm_judge"], f"{path}.llm_judge")
+            self._validate_llm_judge_list(item_dict["llm_judge"], f"{path}.llm_judge")
 
         # Validate deterministic_bash list
-        if "deterministic_bash" in item:
-            self._check_type(item["deterministic_bash"], f"{path}.deterministic_bash", "list")
-            if isinstance(item["deterministic_bash"], list):
-                for i, det_bash in enumerate(item["deterministic_bash"]):
-                    self._validate_deterministic_bash_item(det_bash, f"{path}.deterministic_bash[{i}]")
+        if "deterministic_bash" in item_dict:
+            self._check_type(item_dict["deterministic_bash"], f"{path}.deterministic_bash", "list")
+            if isinstance(item_dict["deterministic_bash"], list):
+                deterministic_bash: list[dict[str, Any]] = item_dict["deterministic_bash"]
+                for i, det_bash in enumerate(deterministic_bash):
+                    det_bash_dict: dict[str, Any] = det_bash
+                    self._validate_deterministic_bash_item(det_bash_dict, f"{path}.deterministic_bash[{i}]")
 
         # Validate orchestrator_judge list
-        if "orchestrator_judge" in item:
-            self._check_type(item["orchestrator_judge"], f"{path}.orchestrator_judge", "list")
-            if isinstance(item["orchestrator_judge"], list):
-                for i, orch_judge in enumerate(item["orchestrator_judge"]):
-                    self._validate_orchestrator_judge_item(orch_judge, f"{path}.orchestrator_judge[{i}]")
+        if "orchestrator_judge" in item_dict:
+            self._check_type(item_dict["orchestrator_judge"], f"{path}.orchestrator_judge", "list")
+            if isinstance(item_dict["orchestrator_judge"], list):
+                orchestrator_judge: list[dict[str, Any]] = item_dict["orchestrator_judge"]
+                for i, orch_judge in enumerate(orchestrator_judge):
+                    orch_judge_dict: dict[str, Any] = orch_judge
+                    self._validate_orchestrator_judge_item(orch_judge_dict, f"{path}.orchestrator_judge[{i}]")
 
     def _validate_bash_list(self, bash_list: Any, path: str) -> None:
         """Validate list of BashVerification."""
@@ -1020,7 +1071,8 @@ class PlanLinter:
             self._check_type(bash_list, path, "list")
             return
 
-        for i, bash in enumerate(bash_list):
+        bash_items: list[dict[str, Any]] = bash_list
+        for i, bash in enumerate(bash_items):
             bash_path = f"{path}[{i}]"
             if not isinstance(bash, dict):
                 self._check_type(bash, bash_path, "dict")
@@ -1047,7 +1099,8 @@ class PlanLinter:
             self._check_type(llm_list, path, "list")
             return
 
-        for i, llm in enumerate(llm_list):
+        llm_items: list[dict[str, Any]] = llm_list
+        for i, llm in enumerate(llm_items):
             llm_path = f"{path}[{i}]"
             if not isinstance(llm, dict):
                 self._check_type(llm, llm_path, "dict")
@@ -1074,7 +1127,8 @@ class PlanLinter:
             if "context_commands" in llm:
                 self._check_type(llm["context_commands"], f"{llm_path}.context_commands", "list")
                 if isinstance(llm["context_commands"], list):
-                    for j, cmd in enumerate(llm["context_commands"]):
+                    context_commands: list[str] = llm["context_commands"]
+                    for j, cmd in enumerate(context_commands):
                         self._check_type(cmd, f"{llm_path}.context_commands[{j}]", "string")
 
             if "instruction" in llm:
@@ -1086,18 +1140,19 @@ class PlanLinter:
             self._check_type(item, path, "dict")
             return
 
+        item_dict: dict[str, Any] = item
         allowed_fields = {"id", "condition", "verified_at", "verification_evidence"}
-        self._check_extra_fields(item, path, allowed_fields)
-        self._validate_nested_required(item, path, ["id", "condition"])
+        self._check_extra_fields(item_dict, path, allowed_fields)
+        self._validate_nested_required(item_dict, path, ["id", "condition"])
 
-        if "id" in item:
-            self._check_type(item["id"], f"{path}.id", "string")
-        if "condition" in item:
-            self._check_type(item["condition"], f"{path}.condition", "string")
-        if "verified_at" in item and item["verified_at"] is not None:
-            self._check_type(item["verified_at"], f"{path}.verified_at", "string")
-        if "verification_evidence" in item and item["verification_evidence"] is not None:
-            self._check_type(item["verification_evidence"], f"{path}.verification_evidence", "string")
+        if "id" in item_dict:
+            self._check_type(item_dict["id"], f"{path}.id", "string")
+        if "condition" in item_dict:
+            self._check_type(item_dict["condition"], f"{path}.condition", "string")
+        if "verified_at" in item_dict and item_dict["verified_at"] is not None:
+            self._check_type(item_dict["verified_at"], f"{path}.verified_at", "string")
+        if "verification_evidence" in item_dict and item_dict["verification_evidence"] is not None:
+            self._check_type(item_dict["verification_evidence"], f"{path}.verification_evidence", "string")
 
     def _validate_deterministic_bash_item(self, item: Any, path: str) -> None:
         """Validate DeterministicBashVerification."""
@@ -1105,6 +1160,7 @@ class PlanLinter:
             self._check_type(item, path, "dict")
             return
 
+        item_dict: dict[str, Any] = item
         allowed_fields = {
             "description",
             "reason_why_it_is_deterministic_and_reliable",
@@ -1114,29 +1170,29 @@ class PlanLinter:
             "expected_exit_code",
             "verified_at",
         }
-        self._check_extra_fields(item, path, allowed_fields)
+        self._check_extra_fields(item_dict, path, allowed_fields)
         self._validate_nested_required(
-            item, path, ["description", "reason_why_it_is_deterministic_and_reliable", "execute"]
+            item_dict, path, ["description", "reason_why_it_is_deterministic_and_reliable", "execute"]
         )
 
-        if "description" in item:
-            self._check_type(item["description"], f"{path}.description", "string")
-        if "reason_why_it_is_deterministic_and_reliable" in item:
+        if "description" in item_dict:
+            self._check_type(item_dict["description"], f"{path}.description", "string")
+        if "reason_why_it_is_deterministic_and_reliable" in item_dict:
             self._check_type(
-                item["reason_why_it_is_deterministic_and_reliable"],
+                item_dict["reason_why_it_is_deterministic_and_reliable"],
                 f"{path}.reason_why_it_is_deterministic_and_reliable",
                 "string",
             )
-        if "execute" in item:
-            self._check_type(item["execute"], f"{path}.execute", "string")
-        if "expected_stdout" in item and item["expected_stdout"] is not None:
-            self._check_type(item["expected_stdout"], f"{path}.expected_stdout", "string")
-        if "expected_stderr" in item and item["expected_stderr"] is not None:
-            self._check_type(item["expected_stderr"], f"{path}.expected_stderr", "string")
-        if "expected_exit_code" in item:
-            self._check_type(item["expected_exit_code"], f"{path}.expected_exit_code", "int")
-        if "verified_at" in item and item["verified_at"] is not None:
-            self._check_type(item["verified_at"], f"{path}.verified_at", "string")
+        if "execute" in item_dict:
+            self._check_type(item_dict["execute"], f"{path}.execute", "string")
+        if "expected_stdout" in item_dict and item_dict["expected_stdout"] is not None:
+            self._check_type(item_dict["expected_stdout"], f"{path}.expected_stdout", "string")
+        if "expected_stderr" in item_dict and item_dict["expected_stderr"] is not None:
+            self._check_type(item_dict["expected_stderr"], f"{path}.expected_stderr", "string")
+        if "expected_exit_code" in item_dict:
+            self._check_type(item_dict["expected_exit_code"], f"{path}.expected_exit_code", "int")
+        if "verified_at" in item_dict and item_dict["verified_at"] is not None:
+            self._check_type(item_dict["verified_at"], f"{path}.verified_at", "string")
 
     def _validate_orchestrator_judge_item(self, item: Any, path: str) -> None:
         """Validate OrchestratorJudgeVerification."""
@@ -1144,16 +1200,17 @@ class PlanLinter:
             self._check_type(item, path, "dict")
             return
 
+        item_dict: dict[str, Any] = item
         allowed_fields = {"prompt", "verified_at", "verification_evidence"}
-        self._check_extra_fields(item, path, allowed_fields)
-        self._validate_nested_required(item, path, ["prompt"])
+        self._check_extra_fields(item_dict, path, allowed_fields)
+        self._validate_nested_required(item_dict, path, ["prompt"])
 
-        if "prompt" in item:
-            self._check_type(item["prompt"], f"{path}.prompt", "string")
-        if "verified_at" in item and item["verified_at"] is not None:
-            self._check_type(item["verified_at"], f"{path}.verified_at", "string")
-        if "verification_evidence" in item and item["verification_evidence"] is not None:
-            self._check_type(item["verification_evidence"], f"{path}.verification_evidence", "string")
+        if "prompt" in item_dict:
+            self._check_type(item_dict["prompt"], f"{path}.prompt", "string")
+        if "verified_at" in item_dict and item_dict["verified_at"] is not None:
+            self._check_type(item_dict["verified_at"], f"{path}.verified_at", "string")
+        if "verification_evidence" in item_dict and item_dict["verification_evidence"] is not None:
+            self._check_type(item_dict["verification_evidence"], f"{path}.verification_evidence", "string")
 
     def _validate_success_vision(self, data: dict[str, Any]) -> None:
         """Validate success_vision section."""
@@ -1165,61 +1222,72 @@ class PlanLinter:
             self._check_type(success_vision, "success_vision", "dict")
             return
 
+        success_vision_dict: dict[str, Any] = success_vision
         allowed_fields = {"user_perspective", "business_perspective", "technical_criteria"}
-        self._check_extra_fields(success_vision, "success_vision", allowed_fields)
+        self._check_extra_fields(success_vision_dict, "success_vision", allowed_fields)
 
         # All fields are optional with defaults=[]
-        if "user_perspective" in success_vision:
-            self._check_type(success_vision["user_perspective"], "success_vision.user_perspective", "list")
-            if isinstance(success_vision["user_perspective"], list):
-                for i, scenario in enumerate(success_vision["user_perspective"]):
+        if "user_perspective" in success_vision_dict:
+            self._check_type(success_vision_dict["user_perspective"], "success_vision.user_perspective", "list")
+            if isinstance(success_vision_dict["user_perspective"], list):
+                user_perspective: list[dict[str, Any]] = success_vision_dict["user_perspective"]
+                for i, scenario in enumerate(user_perspective):
                     scenario_path = f"success_vision.user_perspective[{i}]"
                     if not isinstance(scenario, dict):
                         self._check_type(scenario, scenario_path, "dict")
                         continue
+                    scenario_dict: dict[str, Any] = scenario
                     allowed_scenario_fields = {"scenario", "experience"}
-                    self._check_extra_fields(scenario, scenario_path, allowed_scenario_fields)
-                    self._validate_nested_required(scenario, scenario_path, ["scenario", "experience"])
-                    if "scenario" in scenario:
-                        self._check_type(scenario["scenario"], f"{scenario_path}.scenario", "string")
-                    if "experience" in scenario:
-                        self._check_type(scenario["experience"], f"{scenario_path}.experience", "string")
+                    self._check_extra_fields(scenario_dict, scenario_path, allowed_scenario_fields)
+                    self._validate_nested_required(scenario_dict, scenario_path, ["scenario", "experience"])
+                    if "scenario" in scenario_dict:
+                        self._check_type(scenario_dict["scenario"], f"{scenario_path}.scenario", "string")
+                    if "experience" in scenario_dict:
+                        self._check_type(scenario_dict["experience"], f"{scenario_path}.experience", "string")
 
-        if "business_perspective" in success_vision:
-            self._check_type(success_vision["business_perspective"], "success_vision.business_perspective", "list")
-            if isinstance(success_vision["business_perspective"], list):
-                for i, metric in enumerate(success_vision["business_perspective"]):
+        if "business_perspective" in success_vision_dict:
+            self._check_type(
+                success_vision_dict["business_perspective"], "success_vision.business_perspective", "list"
+            )
+            if isinstance(success_vision_dict["business_perspective"], list):
+                business_perspective: list[dict[str, Any]] = success_vision_dict["business_perspective"]
+                for i, metric in enumerate(business_perspective):
                     metric_path = f"success_vision.business_perspective[{i}]"
                     if not isinstance(metric, dict):
                         self._check_type(metric, metric_path, "dict")
                         continue
+                    metric_dict: dict[str, Any] = metric
                     allowed_metric_fields = {"metric", "target"}
-                    self._check_extra_fields(metric, metric_path, allowed_metric_fields)
-                    self._validate_nested_required(metric, metric_path, ["metric", "target"])
-                    if "metric" in metric:
-                        self._check_type(metric["metric"], f"{metric_path}.metric", "string")
-                    if "target" in metric:
-                        self._check_type(metric["target"], f"{metric_path}.target", "string")
+                    self._check_extra_fields(metric_dict, metric_path, allowed_metric_fields)
+                    self._validate_nested_required(metric_dict, metric_path, ["metric", "target"])
+                    if "metric" in metric_dict:
+                        self._check_type(metric_dict["metric"], f"{metric_path}.metric", "string")
+                    if "target" in metric_dict:
+                        self._check_type(metric_dict["target"], f"{metric_path}.target", "string")
 
-        if "technical_criteria" in success_vision:
-            self._check_type(success_vision["technical_criteria"], "success_vision.technical_criteria", "list")
-            if isinstance(success_vision["technical_criteria"], list):
-                for i, criterion in enumerate(success_vision["technical_criteria"]):
+        if "technical_criteria" in success_vision_dict:
+            self._check_type(success_vision_dict["technical_criteria"], "success_vision.technical_criteria", "list")
+            if isinstance(success_vision_dict["technical_criteria"], list):
+                technical_criteria: list[dict[str, Any]] = success_vision_dict["technical_criteria"]
+                for i, criterion in enumerate(technical_criteria):
                     criterion_path = f"success_vision.technical_criteria[{i}]"
                     if not isinstance(criterion, dict):
                         self._check_type(criterion, criterion_path, "dict")
                         continue
+                    criterion_dict: dict[str, Any] = criterion
                     allowed_criterion_fields = {"category", "criteria", "command", "expected"}
-                    self._check_extra_fields(criterion, criterion_path, allowed_criterion_fields)
-                    self._validate_nested_required(criterion, criterion_path, ["category", "criteria", "expected"])
-                    if "category" in criterion:
-                        self._check_type(criterion["category"], f"{criterion_path}.category", "string")
-                    if "criteria" in criterion:
-                        self._check_type(criterion["criteria"], f"{criterion_path}.criteria", "string")
-                    if "command" in criterion and criterion["command"] is not None:
-                        self._check_type(criterion["command"], f"{criterion_path}.command", "string")
-                    if "expected" in criterion:
-                        self._check_type(criterion["expected"], f"{criterion_path}.expected", "string")
+                    self._check_extra_fields(criterion_dict, criterion_path, allowed_criterion_fields)
+                    self._validate_nested_required(
+                        criterion_dict, criterion_path, ["category", "criteria", "expected"]
+                    )
+                    if "category" in criterion_dict:
+                        self._check_type(criterion_dict["category"], f"{criterion_path}.category", "string")
+                    if "criteria" in criterion_dict:
+                        self._check_type(criterion_dict["criteria"], f"{criterion_path}.criteria", "string")
+                    if "command" in criterion_dict and criterion_dict["command"] is not None:
+                        self._check_type(criterion_dict["command"], f"{criterion_path}.command", "string")
+                    if "expected" in criterion_dict:
+                        self._check_type(criterion_dict["expected"], f"{criterion_path}.expected", "string")
 
     def _validate_final_verification(self, data: dict[str, Any]) -> None:
         """Validate final_verification section - v2.1 (flattened structure)."""
@@ -1232,12 +1300,14 @@ class PlanLinter:
             return
 
         # v2.1: flat list of FinalVerificationItem (each has category field)
-        for i, item in enumerate(final_verification):
+        final_verifications: list[dict[str, Any]] = final_verification
+        for i, item in enumerate(final_verifications):
             item_path = f"final_verification[{i}]"
             if not isinstance(item, dict):
                 self._check_type(item, item_path, "dict")
                 continue
 
+            item_dict: dict[str, Any] = item
             allowed_item_fields = {
                 "id",
                 "title",
@@ -1251,10 +1321,10 @@ class PlanLinter:
                 "bash",
                 "llm_judge",
             }
-            self._check_extra_fields(item, item_path, allowed_item_fields)
+            self._check_extra_fields(item_dict, item_path, allowed_item_fields)
 
             self._validate_nested_required(
-                item,
+                item_dict,
                 item_path,
                 [
                     "id",
@@ -1267,32 +1337,36 @@ class PlanLinter:
             )
 
             # Type validation
-            if "id" in item:
-                self._check_type(item["id"], f"{item_path}.id", "string")
-            if "title" in item:
-                self._check_type(item["title"], f"{item_path}.title", "string")
-            if "category" in item:
-                self._check_type(item["category"], f"{item_path}.category", "string")
-            if "description" in item:
-                self._check_type(item["description"], f"{item_path}.description", "string")
-            if "verified" in item:
-                self._check_type(item["verified"], f"{item_path}.verified", "boolean")
-            if "verified_at" in item and item["verified_at"] is not None:
-                self._check_type(item["verified_at"], f"{item_path}.verified_at", "string")
-            if "verification_evidence" in item and item["verification_evidence"] is not None:
-                self._check_type(item["verification_evidence"], f"{item_path}.verification_evidence", "string")
-            if "orchestrator_manually_verified" in item:
+            if "id" in item_dict:
+                self._check_type(item_dict["id"], f"{item_path}.id", "string")
+            if "title" in item_dict:
+                self._check_type(item_dict["title"], f"{item_path}.title", "string")
+            if "category" in item_dict:
+                self._check_type(item_dict["category"], f"{item_path}.category", "string")
+            if "description" in item_dict:
+                self._check_type(item_dict["description"], f"{item_path}.description", "string")
+            if "verified" in item_dict:
+                self._check_type(item_dict["verified"], f"{item_path}.verified", "boolean")
+            if "verified_at" in item_dict and item_dict["verified_at"] is not None:
+                self._check_type(item_dict["verified_at"], f"{item_path}.verified_at", "string")
+            if "verification_evidence" in item_dict and item_dict["verification_evidence"] is not None:
+                self._check_type(item_dict["verification_evidence"], f"{item_path}.verification_evidence", "string")
+            if "orchestrator_manually_verified" in item_dict:
                 self._check_type(
-                    item["orchestrator_manually_verified"], f"{item_path}.orchestrator_manually_verified", "boolean"
+                    item_dict["orchestrator_manually_verified"],
+                    f"{item_path}.orchestrator_manually_verified",
+                    "boolean",
                 )
-            if "manual_verification_evidence" in item:
+            if "manual_verification_evidence" in item_dict:
                 self._check_type(
-                    item["manual_verification_evidence"], f"{item_path}.manual_verification_evidence", "string"
+                    item_dict["manual_verification_evidence"],
+                    f"{item_path}.manual_verification_evidence",
+                    "string",
                 )
 
             # Validate at least one of bash or llm_judge exists
-            has_bash = "bash" in item and item["bash"]
-            has_llm = "llm_judge" in item and item["llm_judge"]
+            has_bash = "bash" in item_dict and item_dict["bash"]
+            has_llm = "llm_judge" in item_dict and item_dict["llm_judge"]
             if not has_bash and not has_llm:
                 self.errors.append(
                     LintError(
@@ -1306,11 +1380,11 @@ class PlanLinter:
 
             # Validate bash list
             if has_bash:
-                self._validate_bash_list(item["bash"], f"{item_path}.bash")
+                self._validate_bash_list(item_dict["bash"], f"{item_path}.bash")
 
             # Validate llm_judge list
             if has_llm:
-                self._validate_llm_judge_list(item["llm_judge"], f"{item_path}.llm_judge")
+                self._validate_llm_judge_list(item_dict["llm_judge"], f"{item_path}.llm_judge")
 
     def format_error(self, error: LintError) -> str:
         """Format error as string."""
@@ -1383,14 +1457,18 @@ class PlanLinter:
         yaml = YAML()
         data = yaml.load(content)
 
-        version = data.get("version")
+        if not isinstance(data, dict):
+            raise ValueError(f"Plan file {path} must be a YAML dictionary")
+
+        data_dict: dict[str, Any] = data
+        version = data_dict.get("version")
         if not version:
             raise ValueError(f"Plan file {path} missing 'version' field")
 
         if version != "3.0":
             raise ValueError(f"Unsupported version: {version}. Only v3.0 supported.")
 
-        return PlanDocument(**data)
+        return PlanDocument(**data_dict)
 
     def _validate_external_dependency(
         self,

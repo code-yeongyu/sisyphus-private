@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
@@ -10,56 +9,6 @@ import anyio
 
 if TYPE_CHECKING:
     from sisyphus_core.ui.base import UIProtocol
-
-
-def parse_reset_time(message: str) -> datetime | None:
-    """Parse reset time from session limit error message.
-
-    Args:
-        message: Error message (e.g., "Session limit reached ∙ resets 7pm")
-
-    Returns:
-        Reset time as datetime, or None if parsing failed
-
-    Examples:
-        >>> parse_reset_time("Session limit reached ∙ resets 7pm")
-        datetime(2025, 10, 11, 19, 0, 0)
-    """
-    patterns = [
-        r"resets?\s+(\d{1,2})pm",  # "resets 7pm"
-        r"resets?\s+(\d{1,2}):(\d{2})pm",  # "resets 7:30pm"
-        r"resets?\s+(\d{1,2})am",  # "resets 7am"
-        r"resets?\s+(\d{1,2}):(\d{2})am",  # "resets 7:30am"
-        r"resets?\s+(\d{1,2}):(\d{2})",  # "resets 19:00"
-    ]
-
-    for pattern in patterns:
-        match = re.search(pattern, message, re.IGNORECASE)
-        if match:
-            try:
-                groups = match.groups()
-                hour = int(groups[0])
-                minute = int(groups[1]) if len(groups) > 1 and groups[1] else 0
-
-                # Handle AM/PM
-                if "pm" in pattern:
-                    if hour != 12:
-                        hour += 12
-                elif "am" in pattern and hour == 12:
-                    hour = 0
-
-                now = datetime.now().astimezone()
-                reset_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-
-                # If already passed today, assume tomorrow
-                if reset_time <= now:
-                    reset_time += timedelta(days=1)
-
-                return reset_time
-            except (ValueError, IndexError):
-                continue
-
-    return None
 
 
 async def sleep_until_reset(

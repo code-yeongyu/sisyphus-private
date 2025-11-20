@@ -22,6 +22,7 @@ from typing import (
     Any,
     NoReturn,
     TypedDict,
+    cast,
 )
 
 import ast_grep_py as sg
@@ -263,11 +264,11 @@ def process_tool_input(data: PostToolUseInput) -> list[MatchCaseCandidate]:
 
     match tool_name:
         case "Write" if isinstance(tool_input, dict):
-            all_violations = _process_write_tool(tool_input)  # type: ignore[arg-type]
+            all_violations = _process_write_tool(cast(WriteToolInput, tool_input))
         case "Edit" if isinstance(tool_input, dict):
-            all_violations = _process_edit_tool(tool_input)  # type: ignore[arg-type]
+            all_violations = _process_edit_tool(cast(EditToolInput, tool_input))
         case "MultiEdit" if isinstance(tool_input, dict):
-            all_violations = _process_multiedit_tool(tool_input)  # type: ignore[arg-type]
+            all_violations = _process_multiedit_tool(cast(MultiEditToolInput, tool_input))
         case _:
             all_violations = []
 
@@ -658,8 +659,9 @@ def _get_existing_violations(file_path: str, tool_name: str, tool_input: ClaudeC
         case "Edit":
             if file_path and Path(file_path).exists():
                 try:
-                    old_string = tool_input["old_string"]  # type: ignore[literal-required]
-                    new_string = tool_input["new_string"]  # type: ignore[literal-required]
+                    edit_tool_input = cast(EditToolInput, tool_input)
+                    old_string = edit_tool_input["old_string"]
+                    new_string = edit_tool_input["new_string"]
 
                     with open(file_path, encoding="utf-8") as file_handle:
                         current_content: str = file_handle.read()
@@ -679,7 +681,8 @@ def _get_existing_violations(file_path: str, tool_name: str, tool_input: ClaudeC
                         current_content: str = file_handle.read()
 
                     pre_edit_content: str = current_content
-                    edits = tool_input["edits"]  # type: ignore[literal-required]
+                    multi_edit_tool_input = cast(MultiEditToolInput, tool_input)
+                    edits = multi_edit_tool_input["edits"]
 
                     for edit in reversed(edits):
                         if isinstance(edit, dict):

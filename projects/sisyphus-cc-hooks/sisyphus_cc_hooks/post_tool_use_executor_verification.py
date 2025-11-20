@@ -9,7 +9,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import NotRequired, TypedDict
+from typing import NotRequired, TypedDict, cast
 
 import anyio
 
@@ -326,7 +326,7 @@ VERIFICATION IS MANDATORY. YOU CANNOT SKIP THIS.
 
 def main() -> int:
     try:
-        input_data: HookInput = json.loads(sys.stdin.read())
+        input_data = cast(HookInput, json.loads(sys.stdin.read()))
     except json.JSONDecodeError as e:
         print(f"Error: Invalid JSON input: {e}", file=sys.stderr)
         return 1
@@ -336,9 +336,7 @@ def main() -> int:
     cwd = input_data.get("cwd", ".")
 
     if subagent_type != EXECUTOR_AGENT_NAME:
-        print(
-            f"Skipping hook: Not executor agent (got: {subagent_type})", file=sys.stderr
-        )
+        print(f"Skipping hook: Not executor agent (got: {subagent_type})", file=sys.stderr)
         return 0
 
     status_path = Path(cwd) / ".sisyphus" / "status.json"

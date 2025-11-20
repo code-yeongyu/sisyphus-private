@@ -4,7 +4,17 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from typing import NotRequired, TypedDict, cast
+
+
+class ToolInput(TypedDict):
+    file_path: NotRequired[str]
+
+
+class HookInput(TypedDict):
+    tool_name: NotRequired[str]
+    tool_input: NotRequired[ToolInput]
+    cwd: NotRequired[str]
 
 
 def should_run_sisyphus_plan_lint(tool_name: str, file_path: str) -> bool:
@@ -44,9 +54,7 @@ def run_sisyphus_plan_lint(yaml_path: str, cwd: str) -> tuple[bool, str]:
         if result.returncode == 0:
             return True, ""
 
-        error_output = (
-            result.stderr.strip() if result.stderr.strip() else result.stdout.strip()
-        )
+        error_output = result.stderr.strip() if result.stderr.strip() else result.stdout.strip()
 
         message = f"""
 sisyphus-speckit plan YAML VALIDATION FAILED
@@ -81,7 +89,7 @@ def main() -> int:
         if not input_raw.strip():
             return 0
 
-        data: dict[str, Any] = json.loads(input_raw)
+        data = cast(HookInput, json.loads(input_raw))
     except json.JSONDecodeError:
         return 0
 

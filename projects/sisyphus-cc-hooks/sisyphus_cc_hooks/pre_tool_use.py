@@ -6,11 +6,18 @@ import re
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import NotRequired, TypedDict, cast
 
 import anyio  # type: ignore[import-not-found]
 
 from ._compat_anyio import run_sync
 from .pre_tool_use_plan_delegation import main as plan_delegation_main
+
+
+class ToolInputData(TypedDict):
+    tool_name: NotRequired[str]
+    tool_input: NotRequired[dict[str, str]]
+    cwd: NotRequired[str]
 
 
 @dataclass
@@ -69,7 +76,7 @@ async def _main() -> int:
 
     if stdin_data:
         try:
-            input_json = json.loads(stdin_data)
+            input_json = cast(ToolInputData, json.loads(stdin_data))
             if not tool_name:
                 tool_name = input_json.get("tool_name")
         except json.JSONDecodeError:
@@ -87,7 +94,7 @@ async def _main() -> int:
     if not matching_hooks:
         return 0
 
-    valid_hooks = [hook for hook in matching_hooks if hook.type == "function" and hook.command]
+    valid_hooks = [hook for hook in matching_hooks if hook.type == "function"]
 
     if not valid_hooks:
         return 0

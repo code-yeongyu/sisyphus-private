@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import NotRequired, TypedDict
+from typing import NotRequired, TypedDict, cast
 
 
 class ToolInput(TypedDict):
@@ -71,10 +71,7 @@ def check_executor_in_transcript(transcript_path: Path) -> bool:
                         if not isinstance(block, dict):
                             continue
 
-                        if (
-                            block.get("type") != "tool_use"
-                            or block.get("name") != "Task"
-                        ):
+                        if block.get("type") != "tool_use" or block.get("name") != "Task":
                             continue
 
                         tool_input = block.get("input", {})
@@ -144,7 +141,7 @@ def main() -> int:
         if not input_raw.strip():
             return 0
 
-        data: HookInput = json.loads(input_raw)
+        data = cast(HookInput, json.loads(input_raw))
     except json.JSONDecodeError:
         return 0
 

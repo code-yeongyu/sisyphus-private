@@ -369,7 +369,7 @@ def check_comments_in_content(
         if normalized_doc in existing_comments:
             continue
 
-        line: int = line_no + base_line - 1
+        line = line_no + base_line - 1
         findings.append((file_path, line, docstring_text.strip()))
 
     return findings

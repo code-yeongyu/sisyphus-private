@@ -664,10 +664,10 @@ def _get_existing_violations(file_path: str, tool_name: str, tool_input: ClaudeC
                     new_string = edit_tool_input["new_string"]
 
                     with open(file_path, encoding="utf-8") as file_handle:
-                        current_content: str = file_handle.read()
+                        current_content = file_handle.read()
 
                     if old_string and new_string and new_string in current_content:
-                        pre_edit_content: str = current_content.replace(new_string, old_string, 1)
+                        pre_edit_content = current_content.replace(new_string, old_string, 1)
                         old_violations = detect_convertible_if_chains(pre_edit_content)
                         for violation in old_violations:
                             existing_violations.add(_create_violation_key(violation))
@@ -678,7 +678,7 @@ def _get_existing_violations(file_path: str, tool_name: str, tool_input: ClaudeC
             if file_path and Path(file_path).exists():
                 try:
                     with open(file_path, encoding="utf-8") as file_handle:
-                        current_content: str = file_handle.read()
+                        current_content = file_handle.read()
 
                     pre_edit_content: str = current_content
                     multi_edit_tool_input = cast(MultiEditToolInput, tool_input)

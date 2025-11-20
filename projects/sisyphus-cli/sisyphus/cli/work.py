@@ -557,9 +557,6 @@ def run(
     exec_bin = resolve_binary(binary, execute_binary)
     ver_bin = resolve_binary(binary, verify_binary)
 
-    if execute_spec is None:
-        raise typer.BadParameter("Execute agent must be specified")
-
     # Create execute agent with orchestrator system prompt
     execute_system_prompt = ORCHESTRATOR_PROMPT if execute_spec.startswith("claude") else None
     execute_agent = create_agent(

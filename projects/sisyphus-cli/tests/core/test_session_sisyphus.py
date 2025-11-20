@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import anyio
 import pytest
@@ -166,7 +166,7 @@ async def test_session_store__if_atomic_write__creates_backup_file(
     # then
     assert backup_file.exists()
     backup_content = await anyio.to_thread.run_sync(backup_file.read_text)
-    backup_data = json.loads(backup_content)
+    backup_data: dict[str, Any] = json.loads(cast(str, backup_content))
     assert "claude" in backup_data
 
 

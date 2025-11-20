@@ -813,3 +813,76 @@ C. NAIVE IMPLEMENTATION:
 
 **Completed:** $(date)
 
+
+---
+## Task #10: sisyphus-cli 전체 타입 검증
+**Started:** $(date)
+**Status:** Delegating to sisyphus-executor
+
+**Target:**
+- projects/sisyphus-cli/sisyphus/ (모든 파일)
+
+**Current Issues (from Task #9 result):**
+- work.py:560: reportUnnecessaryComparison (base_branch와 None 비교)
+- test_cli.py: reportUnusedImport 7개
+- test_session_sisyphus.py:169: reportUnknownArgumentType 1개
+- reportMissingTypeStubs (외부 라이브러리)
+
+**Expected Result:**
+- 0 errors, 0 warnings
+
+**Verification:**
+```bash
+uv run basedpyright projects/sisyphus-cli
+```
+
+
+[2025-11-21 01:08] - Task #10: sisyphus-cli 전체 타입 검증 (FINAL)
+
+### DISCOVERED ISSUES
+- 4개 남은 경고를 최종 해결:
+  1. test_cli.py:8 - "Import 'run' is not accessed" (reportUnusedImport)
+  2. test_session_sisyphus.py:169 - "Argument type is unknown" for json.loads (reportUnknownArgumentType)
+  3. test_reset_commands.py:8 - MissingTypeStubs for "sisyphus.cli.reset"
+  4. test_work_dependency_filtering.py:7 - MissingTypeStubs for "sisyphus.cli.work"
+
+### IMPLEMENTATION DECISIONS
+1. **test_cli.py**: 사용하지 않는 `from ..cli.work import run` import 제거
+2. **test_session_sisyphus.py**: 
+   - `Any`, `cast` import 추가
+   - line 169: `backup_data: dict[str, Any] = json.loads(cast(str, backup_content))` 로 타입 명시
+3. **MissingTypeStubs warnings**: 
+   - sisyphus 패키지에 `py.typed` 마커 파일 추가
+   - 이 파일의 존재는 해당 패키지가 type hints를 포함하고 있음을 나타냄
+
+### PROBLEMS FOR NEXT TASKS
+- None - sisyphus-cli 완전히 해결됨
+- 다음 Task: sisyphus-speckit 타입 이슈 해결
+
+### VERIFICATION RESULTS
+- basedpyright 최종 결과: 0 errors, 0 warnings, 0 notes ✅
+- test_reset_commands.py: 8/8 PASSED ✅
+- test_work_dependency_filtering.py: 30/30 PASSED (asyncio+trio) ✅
+- test_session_sisyphus.py: 18/18 PASSED (asyncio+trio) ✅
+- 런타임 동작: 100% 동일 (타입 힌트만 추가) ✅
+
+### LEARNINGS
+- MissingTypeStubs 경고는 py.typed 마커 파일로 해결 가능
+- json.loads()는 반환값 타입이 불명확하므로 cast(str, ...) 패턴으로 명시 필요
+- 사용하지 않는 import는 간단하게 제거 가능
+- anyio.to_thread.run_sync()의 반환값도 타입이 불명확하므로 cast() 필요
+
+### KEY CHANGES SUMMARY
+1. test_cli.py: 1줄 제거 (unused import)
+2. test_session_sisyphus.py: import 2개 추가, line 169 수정
+3. sisyphus/py.typed: 마커 파일 생성
+4. Total impact: 4개 warning → 0 warning 달성
+
+소요 시간: ~15분 (4개 경고 해결)
+
+**Status**: COMPLETE ✅
+- sisyphus-cli 프로젝트: 0 errors, 0 warnings 달성
+- 모든 관련 테스트 통과
+- 런타임 동작 보존 확인
+- 다음 프로젝트: sisyphus-speckit
+

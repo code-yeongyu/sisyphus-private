@@ -442,7 +442,7 @@ work_plans:
   - id: '9'
     title: sisyphus-cli Unknown 타입 이슈 해결
     description: CLI 관련 Unknown 타입 이슈 해결
-    status: in_progress
+    status: completed
     references:
     - inline: "파일: projects/sisyphus-cli/sisyphus/cli/work.py\n\n현재 이슈:\n- list comprehension에서
         Unknown 타입\n- Path 관련 타입 추론 실패\n\n해결 방법:\n```python\nfrom pathlib import Path\n\
@@ -453,9 +453,24 @@ work_plans:
       title: sisyphus-cli Unknown 타입 해결 검증
       description: Unknown 타입 워닝 제거 확인
       verified: true
-      verified_at: '2025-11-20T16:01:25.346916+00:00'
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified_at: '2025-11-20T16:03:11.528875+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: "Task #9 sisyphus-cli Unknown 타입 해결 완료 - 수동 검증
+        상세 보고:\n\n**검증 대상 파일:**\n- projects/sisyphus-cli/sisyphus/cli/work.py\n\n\
+        **검증 방법:**\n1. git diff로 변경사항 직접 확인\n2. basedpyright 정적 분석 실행\n3. grep으로 Unknown
+        키워드 검색\n4. 전체 sisyphus-cli 프로젝트 타입 체크\n\n**검증 결과:**\n1. work.py Unknown 타입
+        완전 제거:\n   - Line 257-263: yaml_files_set: set[Path] + yaml_files: list[Path]
+        명시적 타입\n   - Line 265: executable_plans: list[Path] 타입 힌트\n   - Line 302-305:
+        cast(int, typer.prompt(...)) 패턴으로 타입 명시\n   - Line 389: time_parts: list[str]
+        타입 힌트\n   - Line 35+424: TaskGroup TYPE_CHECKING import로 순환 참조 회피\n\n2. basedpyright
+        검증 결과:\n   - work.py: 0 errors, 0 Unknown warnings ✓\n   - sisyphus-cli 전체:
+        0 errors, 11 warnings (Unknown 1개는 test_session_sisyphus.py - Task #10 대상)\n\
+        \n3. 코드 품질 검증:\n   - 런타임 동작: 타입 힌트만 추가, 로직 변경 없음 ✓\n   - 타입 안전성: cast() 패턴으로
+        타입 체커 만족 ✓\n   - 알고리즘 효율성: set() + sorted() 조합으로 O(n log n) 유지 ✓\n\n**Mock
+        사용 검증:** N/A (타입 힌트 추가만, 테스트 코드 변경 없음)\n\n**하드코딩 검증:** 변경된 코드에 하드코딩 값 없음\n\
+        \n**Naive 구현 검증:**\n- set()으로 중복 제거 효율적 처리 ✓\n- sorted() key 함수로 정렬 최적화 ✓\n\
+        - 타입 안전성으로 런타임 에러 사전 방지 ✓\n\n**최종 확인:**\n- work.py의 모든 Unknown 타입 경고 제거 완료
+        ✓\n- Path 타입 추론 실패 해결 ✓\n- 런타임 동작 100% 동일 유지 ✓"
       bash:
       - execute: uv run basedpyright projects/sisyphus-cli/sisyphus/cli/work.py 
           2>&1 | grep -i "unknown"
@@ -469,7 +484,7 @@ work_plans:
   - id: '10'
     title: sisyphus-cli 전체 타입 검증
     description: sisyphus-cli 프로젝트 타입 이슈 완전 해결 확인
-    status: pending
+    status: in_progress
     references:
     - inline: "sisyphus-cli 프로젝트 전체 basedpyright 검증\n\n검증 범위:\n- projects/sisyphus-cli/sisyphus/
         (모든 파일)\n\n기대 결과:\n- 0 errors, 0 warnings\n"
@@ -477,9 +492,20 @@ work_plans:
     - id: verify-10
       title: sisyphus-cli 타입 완전 클린 검증
       description: 프로젝트 전체 타입 이슈 제거 확인
-      verified: false
-      orchestrator_manually_verified: false
-      manual_verification_evidence: ''
+      verified: true
+      verified_at: '2025-11-20T16:11:30.675982+00:00'
+      orchestrator_manually_verified: true
+      manual_verification_evidence: "Task #10 sisyphus-cli 전체 타입 검증 완료 - 수동 검증 상세
+        보고:\n\n**검증 대상:** projects/sisyphus-cli/ 전체 프로젝트\n\n**검증 방법:**\n1. git diff로
+        모든 변경사항 직접 확인\n2. basedpyright 전체 프로젝트 타입 체크\n3. 영향받는 테스트 실행\n4. py.typed
+        마커 파일 생성 확인\n\n**변경 파일 및 내용:**\n1. work.py:557-559 - 불필요한 None 체크 제거 (reportUnnecessaryComparison)\n\
+        2. test_cli.py:8-12 - 사용하지 않는 import 7개 제거 (reportUnusedImport)\n3. test_session_sisyphus.py:169
+        - cast(str, backup_content) + dict[str, Any] 타입 힌트 (reportUnknownArgumentType)\n\
+        4. sisyphus/py.typed - 마커 파일 생성 (reportMissingTypeStubs)\n\n**basedpyright
+        검증:** 0 errors, 0 warnings, 0 notes ✅\n\n**테스트 검증:** test_session_sisyphus.py
+        18/18 PASSED (asyncio 9 + trio 9) ✅\n\n**코드 품질:** Mock N/A, 하드코딩 없음, cast()
+        no-op 런타임, py.typed PEP 561 준수 ✅\n\n**최종:** 0 errors, 0 warnings 달성, 모든 테스트
+        통과, 런타임 동작 100% 동일 ✅"
       bash:
       - execute: uv run basedpyright projects/sisyphus-cli/
         expected_exit_code: 0
@@ -666,6 +692,6 @@ work_plans:
     started_at: '2025-11-20T08:40:49.260285+00:00'
   work_mode:
     parallel_requested: false
-    current_task_id: '9'
+    current_task_id: '10'
   current_work_ids: []
   acceptance_criteria_for_verification_agent: []

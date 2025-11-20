@@ -1,0 +1,980 @@
+version: '3.0'
+metadata:
+  created_at: '2025-11-20T08:17:00.370424+00:00'
+  updated_at: '2025-11-20T08:17:00.370424+00:00'
+work_plans:
+- id: basedpyright-cleanup
+  name: Basedpyright 이슈 완전 해결
+  depends_on: []
+  user_request:
+    original: '지금 있는 basedpyright 이슈들 모두 정석적으로 해결하게 하는 작업계획서 작성해줘. uv run basedpyright . 했을때에 warning 조차도 없어야함(에러는 당연히 없어야함). 아래의 내용은 금지되는것: 1. 런타임에 영향을 단 조금이라도 주는 것 2. ignore 처리해버리는 것. 아래의 내용은 내가 그래서 원하는 결과: 1. uv run basedpyright . 했을때 어떠한 에러도 워닝도 없는 것 2. 기존과 100% 동일하게 작동하는 것'
+    created_at: '2025-11-20T08:17:00.370424+00:00'
+    additional:
+    - 'Expected Outcome: uv run basedpyright . 실행 시 0 errors, 0 warnings 달성 + 기존과 100% 동일한 런타임 동작 보장'
+    - 'Forbidden Outcomes: 런타임 동작에 영향을 주는 모든 변경 금지 + type: ignore 또는 # pyright: ignore 등 타입 체크 우회 금지'
+    - 'Special Concerns: 일반적인 타입 안전성 원칙 준수로 충분, 특별한 주의사항 없음'
+  objectives:
+    core: 전체 프로젝트의 basedpyright 타입 체킹 이슈를 정석적인 방법으로 완전히 해결하여 워닝/에러 제로 상태 달성
+    detailed:
+    - goal: 타입 안전성 확보
+      measurable: '`uv run basedpyright .` 실행 시 0 errors, 0 warnings 달성'
+    - goal: 런타임 동작 보존
+      measurable: 기존 테스트 100% 통과, 실제 동작 변화 없음
+  background:
+    current_situation: |
+      현재 프로젝트에 총 48개 에러와 4088개 워닝이 존재
+
+      주요 이슈 카테고리:
+      - reportUnknownVariableType: 타입 추론 불가능한 변수 (anyio, JSON 파싱 등)
+      - reportAny: Any 타입 사용
+      - reportUnknownMemberType: 멤버 타입 추론 실패 (anyio.to_thread.run_sync)
+      - reportUnknownArgumentType: 인자 타입 불명확
+      - reportExplicitAny: 명시적 Any 사용 (Type[Any] 등)
+      - reportUnusedCallResult: 사용되지 않는 함수 호출 결과
+      - reportImplicitStringConcatenation: 암묵적 문자열 연결
+
+      영향받는 주요 프로젝트:
+      - projects/sisyphus-cc-hooks/ (hook 타입 이슈)
+      - projects/sisyphus-core/ (코어 로직 타입 이슈)
+      - projects/sisyphus-cli/ (CLI 타입 이슈)
+      - projects/sisyphus-speckit/ (plan lint 타입 이슈)
+      - sisyphus-setup-dot-claude/ (hook 스크립트 타입 이슈)
+    reason_for_change: |
+      타입 안전성 강화 필요:
+      - 런타임 에러 사전 방지
+      - 코드 가독성 및 유지보수성 향상
+      - IDE 자동완성 및 타입 체킹 지원 강화
+      - 타입 체킹을 통한 버그 조기 발견
+    changes_to_make: |
+      현재 상태: 4088 warnings + 48 errors
+      목표 상태: 0 warnings + 0 errors
+
+      변경 방법:
+      1. TypedDict로 JSON 데이터 구조 타입 정의
+      2. anyio 관련 타입 힌트 명시 (cast 활용)
+      3. 제네릭 타입 파라미터 명시
+      4. 사용되지 않는 반환값 _ = 로 명시적 처리
+      5. 명시적 Any 타입 제거 (적절한 타입으로 대체)
+      6. 암묵적 문자열 연결 명시적으로 변경
+      7. type: ignore 사용 금지 (정석적 해결만 허용)
+  required_background:
+    description: |
+      기술 스택:
+      - Python 3.12+
+      - basedpyright 1.32.1
+      - 프로젝트 구조: uv workspace (monorepo)
+      - Async: anyio 4.11+ (asyncio/trio 호환)
+
+      타입 체킹 설정:
+      - pyrightconfig.json 존재 (reportAttributeAccessIssue: false만 비활성화)
+      - 기타 모든 체크 활성화 상태
+
+      해결 원칙:
+      1. 타입 어노테이션 명시: 모든 함수 파라미터/리턴 타입 지정
+      2. TypedDict 활용: JSON 데이터 구조 타입 정의
+      3. Generic 명시: 제네릭 타입 파라미터 명확히
+      4. cast() 활용: anyio 등 타입 추론 실패 시 사용
+      5. 반환값 처리: 사용 안 하면 _ = 로 명시
+
+      타입 정의 패턴:
+      ```python
+      from typing import TypedDict, cast
+      from collections.abc import Callable
+
+      # JSON 구조 타입 정의
+      class HookInput(TypedDict):
+          tool_name: str
+          tool_input: dict[str, str]
+          cwd: str | None
+
+      # anyio 타입 처리
+      result = cast(int, await anyio.to_thread.run_sync(func))
+
+      # 사용되지 않는 반환값
+      _ = some_function()
+      ```
+    file_structure: null
+    references:
+    - ref_id: basedpyright-docs
+      uri: https://docs.basedpyright.com/
+      inline: null
+    - ref_id: typeddict-docs
+      uri: https://docs.python.org/3/library/typing.html#typing.TypedDict
+      inline: null
+    - ref_id: anyio-types
+      uri: https://anyio.readthedocs.io/
+      inline: null
+  workflow:
+    dependency_diagram: |
+      1. basedpyright 이슈 분석 및 분류
+         ↓
+      2. sisyphus-cc-hooks 타입 이슈 해결 (우선순위 높음: hook 안정성)
+         ↓
+      3. sisyphus-cc-hooks 타입 검증
+         ↓
+      4. sisyphus-core 타입 이슈 해결
+         ↓
+      5. sisyphus-core 타입 검증
+         ↓
+      6. sisyphus-cli 타입 이슈 해결
+         ↓
+      7. sisyphus-cli 타입 검증
+         ↓
+      8. sisyphus-speckit 타입 이슈 해결
+         ↓
+      9. sisyphus-speckit 타입 검증
+         ↓
+      10. setup-dot-claude 타입 이슈 해결
+         ↓
+      11. setup-dot-claude 타입 검증
+         ↓
+      12. 전체 프로젝트 최종 검증
+         ↓
+      13. 기존 테스트 회귀 검증
+    critical_path:
+    - '1'
+    - '2'
+    - '3'
+    - '4'
+    - '5'
+    - '6'
+    - '7'
+    - '8'
+    - '9'
+    - '10'
+    - '11'
+    - '12'
+    - '13'
+  success_vision:
+    user_perspective:
+    - scenario: 개발자가 basedpyright 실행
+      experience: 어떠한 에러나 워닝도 출력되지 않음
+    - scenario: 기존 기능 실행
+      experience: 타입 수정 전과 100% 동일하게 작동
+    business_perspective:
+    - metric: 타입 체킹 결과
+      target: 0 errors, 0 warnings
+    - metric: 기존 테스트 통과율
+      target: 100%
+    technical_criteria:
+    - category: 타입 안전성
+      criteria: basedpyright 완전 클린
+      command: uv run basedpyright .
+      expected: '0 errors, 0 warnings'
+    - category: 런타임 동작
+      criteria: 기존 동작 보존
+      command: uv run pytest
+      expected: 모든 테스트 통과
+  final_verification:
+  - id: final-basedpyright-clean
+    title: basedpyright 완전 클린 검증
+    category: 타입 안전성
+    description: basedpyright 실행 시 에러/워닝 제로 확인
+    verified: false
+    verified_at: null
+    verification_evidence: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash:
+    - execute: uv run basedpyright .
+      expected_stdout: null
+      expected_stderr: null
+      expected_exit_code: 0
+      notes: '0 errors, 0 warnings 출력되어야 함'
+    llm_judge: []
+  - id: final-runtime-unchanged
+    title: 런타임 동작 불변 검증
+    category: 동작 보존
+    description: 기존 테스트 및 동작 검증
+    verified: false
+    verified_at: null
+    verification_evidence: null
+    orchestrator_manually_verified: false
+    manual_verification_evidence: ''
+    bash:
+    - execute: uv run pytest
+      expected_stdout: null
+      expected_stderr: null
+      expected_exit_code: 0
+      notes: 모든 테스트 통과 확인
+    llm_judge: []
+  todos:
+  - id: '1'
+    title: basedpyright 이슈 분석 및 분류
+    description: 현재 타입 이슈를 카테고리별로 분석하고 해결 전략 수립
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        basedpyright 실행하여 전체 이슈 목록 확인
+
+        이슈 카테고리별 분류:
+        1. reportUnknownVariableType: anyio, JSON 파싱 등
+        2. reportAny: Any 타입 사용
+        3. reportUnknownMemberType: anyio 멤버 타입
+        4. reportExplicitAny: 명시적 Any 사용
+        5. reportUnusedCallResult: 사용되지 않는 반환값
+        6. reportImplicitStringConcatenation: 암묵적 문자열 연결
+
+        프로젝트별 이슈 개수 파악:
+        - sisyphus-cc-hooks: ~10개
+        - sisyphus-core: ~50개
+        - sisyphus-cli: ~30개
+        - sisyphus-speckit: ~20개
+        - setup-dot-claude: ~3900개
+
+        우선순위 결정:
+        1. sisyphus-cc-hooks (hook 안정성 최우선)
+        2. sisyphus-core (코어 로직)
+        3. sisyphus-cli, sisyphus-speckit (기능)
+        4. setup-dot-claude (hook 스크립트)
+    verification_spec:
+    - id: verify-1
+      title: 이슈 분석 완료 검증
+      description: 모든 이슈가 카테고리별로 분류됨
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash: []
+      llm_judge:
+      - by: orchestrator-agent
+        context_commands:
+        - uv run basedpyright . 2>&1 | head -100
+        instruction: |
+          이슈 분석이 제대로 완료되었는지 검증:
+
+          CRITERION 1: basedpyright 실행 결과 확인
+          - What to verify: basedpyright 명령 실행 가능
+          - Expected: 에러/워닝 목록 출력
+          - Evidence: 실행 결과 확인
+
+          CRITERION 2: 이슈 카테고리 분류
+          - What to verify: 주요 이슈 타입 파악
+          - Expected: reportUnknownVariableType, reportAny 등 확인
+          - Evidence: 카테고리별 이슈 개수
+
+          CRITERION 3: 프로젝트별 이슈 파악
+          - What to verify: 각 프로젝트 디렉토리별 이슈 개수
+          - Expected: 프로젝트별 이슈 분포 파악
+          - Evidence: 프로젝트 경로별 이슈 목록
+
+          ---
+          FINAL VERDICT:
+          - Total criteria: 3
+          - Passed: [count]
+          - Failed: [count]
+          - Overall: PASS/FAIL
+  - id: '2'
+    title: sisyphus-cc-hooks anyio 타입 이슈 해결
+    description: anyio.to_thread.run_sync 타입 추론 실패 해결
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        파일: projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use.py
+        라인: 64
+
+        현재 이슈:
+        ```python
+        return await anyio.to_thread.run_sync(_run)  # type: ignore
+        ```
+        - reportUnknownVariableType: Return type is unknown
+        - reportUnknownMemberType: Type of "run_sync" is unknown
+
+        해결 방법:
+        ```python
+        from typing import cast
+
+        result = await anyio.to_thread.run_sync(_run)
+        return cast(int, result)
+        ```
+
+        동일 패턴:
+        - projects/sisyphus-cc-hooks/sisyphus_cc_hooks/pre_tool_use.py:55
+
+        변경 영향:
+        - 타입 체킹만 개선, 런타임 동작 동일
+        - cast()는 런타임에 no-op
+    verification_spec:
+    - id: verify-2
+      title: anyio 타입 이슈 해결 검증
+      description: anyio 관련 타입 워닝 제거 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run basedpyright projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use.py
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 0
+        notes: anyio 관련 워닝 없어야 함
+      llm_judge: []
+  - id: '3'
+    title: sisyphus-cc-hooks JSON 파싱 Any 타입 해결
+    description: JSON 파싱 결과 타입 정의로 Any 제거
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        파일: projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use.py
+        라인: 79-81
+
+        현재 이슈:
+        ```python
+        input_json = json.loads(stdin_data)  # Any 타입
+        tool_name = input_json.get("tool_name")  # Any 타입
+        ```
+
+        해결 방법:
+        ```python
+        from typing import TypedDict
+
+        class HookInput(TypedDict, total=False):
+            tool_name: str
+            tool_input: dict[str, str]
+            cwd: str | None
+
+        input_json: dict[str, str] = json.loads(stdin_data)
+        tool_name: str | None = input_json.get("tool_name")
+        ```
+
+        동일 패턴:
+        - projects/sisyphus-cc-hooks/sisyphus_cc_hooks/pre_tool_use.py:70-72
+        - projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use_plan_lint.py:84-91
+        - projects/sisyphus-cc-hooks/sisyphus_cc_hooks/pre_tool_use_plan_delegation.py:59-64
+
+        변경 영향:
+        - 타입 안전성 향상
+        - 런타임 동작 동일
+    verification_spec:
+    - id: verify-3
+      title: JSON 파싱 타입 이슈 해결 검증
+      description: JSON 관련 Any 타입 워닝 제거 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run basedpyright projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use.py
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 0
+        notes: JSON Any 관련 워닝 없어야 함
+      llm_judge: []
+  - id: '4'
+    title: sisyphus-cc-hooks 불필요한 비교 제거
+    description: 항상 True인 조건식 제거
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        파일: projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use.py
+        라인: 97
+
+        현재 이슈:
+        ```python
+        valid_hooks = [hook for hook in matching_hooks if hook.type == "function" and hook.command]
+        ```
+        - reportUnnecessaryComparison: Conditional expression references function which always evaluates to True
+
+        해결 방법:
+        ```python
+        valid_hooks = [hook for hook in matching_hooks if hook.type == "function"]
+        ```
+        또는 hook.command가 실제로 None일 수 있다면:
+        ```python
+        valid_hooks = [hook for hook in matching_hooks if hook.type == "function" and hook.command is not None]
+        ```
+
+        변경 영향:
+        - 코드 명확성 향상
+        - 런타임 동작 동일
+    verification_spec:
+    - id: verify-4
+      title: 불필요한 비교 제거 검증
+      description: reportUnnecessaryComparison 워닝 제거 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run basedpyright projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use.py 2>&1 | grep -i "unnecessary"
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 1
+        notes: unnecessary 관련 워닝 없어야 함 (grep 실패 = 워닝 없음)
+      llm_judge: []
+  - id: '5'
+    title: sisyphus-cc-hooks 전체 타입 검증
+    description: sisyphus-cc-hooks 프로젝트 타입 이슈 완전 해결 확인
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        sisyphus-cc-hooks 프로젝트 전체 basedpyright 검증
+
+        검증 범위:
+        - projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use.py
+        - projects/sisyphus-cc-hooks/sisyphus_cc_hooks/pre_tool_use.py
+        - projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use_executor_verification.py
+        - projects/sisyphus-cc-hooks/sisyphus_cc_hooks/post_tool_use_plan_lint.py
+        - projects/sisyphus-cc-hooks/sisyphus_cc_hooks/pre_tool_use_plan_delegation.py
+
+        기대 결과:
+        - 0 errors, 0 warnings
+    verification_spec:
+    - id: verify-5
+      title: sisyphus-cc-hooks 타입 완전 클린 검증
+      description: 프로젝트 전체 타입 이슈 제거 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run basedpyright projects/sisyphus-cc-hooks/
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 0
+        notes: sisyphus-cc-hooks 0 errors, 0 warnings
+      llm_judge: []
+  - id: '6'
+    title: sisyphus-core Unknown 타입 이슈 해결
+    description: list comprehension, iterator 등에서 발생하는 Unknown 타입 해결
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        주요 이슈 위치:
+        - projects/sisyphus-core/sisyphus_core/core/plan_linter.py
+
+        현재 이슈:
+        ```python
+        for plan in plans:  # Type of "plan" is unknown
+            ...
+        for detail in plan.objectives.detailed:  # Type of "detail" is unknown
+            ...
+        ```
+
+        해결 방법:
+        ```python
+        from sisyphus_core.core.plans.models import WorkPlan, DetailedObjective
+
+        plan: WorkPlan
+        for plan in plans:
+            ...
+
+        detail: DetailedObjective
+        for detail in plan.objectives.detailed:
+            ...
+        ```
+
+        또는 타입 어노테이션:
+        ```python
+        for plan in plans:
+            assert isinstance(plan, WorkPlan)
+            ...
+        ```
+
+        변경 영향:
+        - 타입 안전성 향상
+        - 런타임 동작 동일
+    verification_spec:
+    - id: verify-6
+      title: sisyphus-core Unknown 타입 해결 검증
+      description: Unknown 타입 워닝 제거 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run basedpyright projects/sisyphus-core/sisyphus_core/core/plan_linter.py 2>&1 | grep -i "unknown"
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 1
+        notes: unknown 관련 워닝 없어야 함
+      llm_judge: []
+  - id: '7'
+    title: sisyphus-core anyio 타입 이슈 해결
+    description: anyio.run, anyio.create_task_group 등 타입 이슈 해결
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        파일: projects/sisyphus-core/sisyphus_core/core/loop.py
+        라인: 220
+
+        현재 이슈:
+        ```python
+        return await anyio.create_task_group()  # Return type is unknown
+        ```
+
+        해결 방법:
+        ```python
+        from typing import cast
+        from anyio.abc import TaskGroup
+
+        result = await anyio.create_task_group()
+        return cast(TaskGroup, result)
+        ```
+
+        또는 함수 반환 타입 명시:
+        ```python
+        async def create_group() -> TaskGroup:
+            async with anyio.create_task_group() as tg:
+                return tg
+        ```
+
+        변경 영향:
+        - 타입 추론 향상
+        - 런타임 동작 동일
+    verification_spec:
+    - id: verify-7
+      title: sisyphus-core anyio 타입 해결 검증
+      description: anyio 관련 워닝 제거 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run basedpyright projects/sisyphus-core/sisyphus_core/core/loop.py
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 0
+        notes: anyio 관련 워닝 없어야 함
+      llm_judge: []
+  - id: '8'
+    title: sisyphus-core 전체 타입 검증
+    description: sisyphus-core 프로젝트 타입 이슈 완전 해결 확인
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        sisyphus-core 프로젝트 전체 basedpyright 검증
+
+        검증 범위:
+        - projects/sisyphus-core/sisyphus_core/ (모든 파일)
+
+        기대 결과:
+        - 0 errors, 0 warnings
+
+        주요 파일:
+        - core/loop.py
+        - core/plan_linter.py
+        - agents/base.py
+        - ui/base.py
+    verification_spec:
+    - id: verify-8
+      title: sisyphus-core 타입 완전 클린 검증
+      description: 프로젝트 전체 타입 이슈 제거 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run basedpyright projects/sisyphus-core/
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 0
+        notes: sisyphus-core 0 errors, 0 warnings
+      llm_judge: []
+  - id: '9'
+    title: sisyphus-cli Unknown 타입 이슈 해결
+    description: CLI 관련 Unknown 타입 이슈 해결
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        파일: projects/sisyphus-cli/sisyphus/cli/work.py
+
+        현재 이슈:
+        - list comprehension에서 Unknown 타입
+        - Path 관련 타입 추론 실패
+
+        해결 방법:
+        ```python
+        from pathlib import Path
+
+        yaml_files: list[Path] = [...]
+        for yaml_file in yaml_files:
+            # yaml_file: Path 타입 명확
+            ...
+        ```
+
+        변경 영향:
+        - 타입 안전성 향상
+        - 런타임 동작 동일
+    verification_spec:
+    - id: verify-9
+      title: sisyphus-cli Unknown 타입 해결 검증
+      description: Unknown 타입 워닝 제거 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run basedpyright projects/sisyphus-cli/sisyphus/cli/work.py 2>&1 | grep -i "unknown"
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 1
+        notes: unknown 관련 워닝 없어야 함
+      llm_judge: []
+  - id: '10'
+    title: sisyphus-cli 전체 타입 검증
+    description: sisyphus-cli 프로젝트 타입 이슈 완전 해결 확인
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        sisyphus-cli 프로젝트 전체 basedpyright 검증
+
+        검증 범위:
+        - projects/sisyphus-cli/sisyphus/ (모든 파일)
+
+        기대 결과:
+        - 0 errors, 0 warnings
+    verification_spec:
+    - id: verify-10
+      title: sisyphus-cli 타입 완전 클린 검증
+      description: 프로젝트 전체 타입 이슈 제거 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run basedpyright projects/sisyphus-cli/
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 0
+        notes: sisyphus-cli 0 errors, 0 warnings
+      llm_judge: []
+  - id: '11'
+    title: sisyphus-speckit 타입 이슈 해결
+    description: plan lint 관련 타입 이슈 해결
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        sisyphus-speckit 프로젝트 타입 이슈 해결
+
+        주요 파일:
+        - projects/sisyphus-speckit/sisyphus_speckit/plan/lint.py
+
+        예상 이슈:
+        - Any 타입 사용
+        - Unknown 타입
+
+        해결 방법:
+        - TypedDict로 데이터 구조 정의
+        - 타입 어노테이션 추가
+
+        변경 영향:
+        - 타입 안전성 향상
+        - 런타임 동작 동일
+    verification_spec:
+    - id: verify-11
+      title: sisyphus-speckit 타입 완전 클린 검증
+      description: 프로젝트 전체 타입 이슈 제거 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run basedpyright projects/sisyphus-speckit/
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 0
+        notes: sisyphus-speckit 0 errors, 0 warnings
+      llm_judge: []
+  - id: '12'
+    title: setup-dot-claude 주요 타입 이슈 해결
+    description: setup-dot-claude hook 스크립트 타입 이슈 해결
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        setup-dot-claude 주요 타입 이슈 해결
+
+        이슈 개수: ~3900개 (대부분 hook 스크립트)
+
+        우선순위:
+        1. 주요 hook 스크립트 (static check, inject 등)
+        2. 나머지 hook 스크립트
+
+        주요 이슈:
+        - TypedDict total=False 누락
+        - Any 타입 사용
+        - Unknown 타입
+
+        해결 방법:
+        - TypedDict total=False 추가
+        - 타입 어노테이션 명시
+        - 필요시 cast() 활용
+
+        변경 영향:
+        - 타입 안전성 향상
+        - 런타임 동작 동일
+    verification_spec:
+    - id: verify-12
+      title: setup-dot-claude 주요 타입 해결 검증
+      description: 주요 hook 스크립트 타입 이슈 제거 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run basedpyright sisyphus-setup-dot-claude/hooks/post-tool-use/
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 0
+        notes: 주요 hook 타입 이슈 없어야 함
+      llm_judge: []
+  - id: '13'
+    title: setup-dot-claude 전체 타입 검증
+    description: setup-dot-claude 전체 타입 이슈 완전 해결 확인
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        setup-dot-claude 전체 basedpyright 검증
+
+        검증 범위:
+        - sisyphus-setup-dot-claude/ (모든 파일)
+
+        기대 결과:
+        - 0 errors, 0 warnings
+    verification_spec:
+    - id: verify-13
+      title: setup-dot-claude 타입 완전 클린 검증
+      description: 전체 타입 이슈 제거 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run basedpyright sisyphus-setup-dot-claude/
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 0
+        notes: setup-dot-claude 0 errors, 0 warnings
+      llm_judge: []
+  - id: '14'
+    title: 전체 프로젝트 최종 검증
+    description: 모든 프로젝트 통합 타입 검증
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        전체 프로젝트 basedpyright 최종 검증
+
+        검증 범위:
+        - 루트 디렉토리에서 basedpyright . 실행
+        - 모든 프로젝트 포함
+
+        기대 결과:
+        - 0 errors, 0 warnings
+
+        확인 사항:
+        - 프로젝트 간 타입 충돌 없음
+        - 모든 import 타입 체킹 통과
+    verification_spec:
+    - id: verify-14
+      title: 전체 프로젝트 타입 완전 클린 검증
+      description: 루트부터 모든 타입 이슈 제거 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run basedpyright .
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 0
+        notes: 전체 프로젝트 0 errors, 0 warnings
+      llm_judge: []
+  - id: '15'
+    title: 기존 테스트 회귀 검증
+    description: 타입 변경이 런타임에 영향 없음을 확인
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        전체 테스트 스위트 실행하여 회귀 검증
+
+        실행 명령:
+        ```bash
+        uv run pytest
+        ```
+
+        검증 항목:
+        1. 모든 테스트 통과
+        2. 테스트 실패 없음
+        3. 런타임 에러 없음
+
+        기대 결과:
+        - 타입 변경이 순수하게 타입 체킹만 개선
+        - 런타임 동작 100% 동일
+        - 모든 기존 테스트 통과
+    verification_spec:
+    - id: verify-15
+      title: 기존 테스트 100% 통과 검증
+      description: 타입 변경 후 회귀 없음 확인
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: uv run pytest
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 0
+        notes: 모든 테스트 통과 확인
+      llm_judge: []
+  - id: '16'
+    title: 변경 사항 커밋
+    description: 타입 이슈 해결 변경 사항 커밋
+    status: pending
+    children: null
+    references:
+    - ref_id: null
+      uri: null
+      inline: |
+        모든 타입 이슈 해결 후 변경 사항 커밋
+
+        커밋 메시지 형식:
+        ```
+        fix(types): resolve all basedpyright warnings and errors
+
+        - Add TypedDict definitions for JSON structures
+        - Add type annotations for anyio operations
+        - Remove unnecessary type comparisons
+        - Add explicit type hints for iterators
+        - Fix Unknown type issues in all projects
+
+        Projects updated:
+        - sisyphus-cc-hooks: anyio and JSON types
+        - sisyphus-core: iterator and anyio types
+        - sisyphus-cli: Unknown types
+        - sisyphus-speckit: plan lint types
+        - setup-dot-claude: hook script types
+
+        Result: 0 errors, 0 warnings from basedpyright
+        All existing tests pass
+
+        🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+        Co-Authored-By: Claude <noreply@anthropic.com>
+        ```
+
+        커밋 전 확인:
+        - uv run basedpyright . → 0 errors, 0 warnings
+        - uv run pytest → 모든 테스트 통과
+    verification_spec:
+    - id: verify-16
+      title: 커밋 생성 검증
+      description: 변경 사항이 정상적으로 커밋됨
+      verified: false
+      verified_at: null
+      verification_evidence: null
+      orchestrator_manually_verified: false
+      manual_verification_evidence: ''
+      bash:
+      - execute: git log -1 --oneline
+        expected_stdout: null
+        expected_stderr: null
+        expected_exit_code: 0
+        notes: 최근 커밋 확인
+      llm_judge:
+      - by: orchestrator-agent
+        context_commands:
+        - git log -1 --stat
+        - git show --name-only
+        instruction: |
+          커밋이 제대로 생성되었는지 검증:
+
+          CRITERION 1: 커밋 메시지가 적절함
+          - What to verify: 커밋 메시지 내용
+          - Expected: fix(types) 형식, basedpyright 언급
+          - Evidence: git log 출력
+
+          CRITERION 2: 변경된 파일이 적절함
+          - What to verify: 타입 관련 파일만 변경
+          - Expected: Python 파일만 포함
+          - Evidence: git show --name-only 출력
+
+          CRITERION 3: 불필요한 변경 없음
+          - What to verify: 로직 변경 없음
+          - Expected: 타입 어노테이션만 추가
+          - Evidence: 변경 내용 확인
+
+          ---
+          FINAL VERDICT:
+          - Total criteria: 3
+          - Passed: [count]
+          - Failed: [count]
+          - Overall: PASS/FAIL
+  references:
+  - ref_id: basedpyright-docs
+    uri: https://docs.basedpyright.com/
+    inline: null
+  - ref_id: typeddict-docs
+    uri: https://docs.python.org/3/library/typing.html#typing.TypedDict
+    inline: null
+  - ref_id: anyio-types
+    uri: https://anyio.readthedocs.io/
+    inline: null
+  execution:
+    started: false
+    completed: false
+    started_at: null
+    completed_at: null
+  work_mode:
+    parallel_requested: false
+    current_task_id: null
+  current_work: ''

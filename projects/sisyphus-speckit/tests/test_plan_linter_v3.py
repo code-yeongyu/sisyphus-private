@@ -39,7 +39,8 @@ def test_validate_depends_on__if_circular_dependency__detects_cycle(
                 workflow=minimal_workflow,
                 success_vision=minimal_success_vision,
                 final_verification=[],
-                depends_on=["plan-b"], todos=[],
+                depends_on=["plan-b"],
+                todos=[],
             ),
             WorkPlan(
                 id="plan-b",
@@ -51,7 +52,8 @@ def test_validate_depends_on__if_circular_dependency__detects_cycle(
                 workflow=minimal_workflow,
                 success_vision=minimal_success_vision,
                 final_verification=[],
-                depends_on=["plan-a"], todos=[],
+                depends_on=["plan-a"],
+                todos=[],
             ),
         ],
     )
@@ -88,7 +90,8 @@ def test_validate_depends_on__if_missing_dependency__reports_error(
                 workflow=minimal_workflow,
                 success_vision=minimal_success_vision,
                 final_verification=[],
-                depends_on=["nonexistent"], todos=[],
+                depends_on=["nonexistent"],
+                todos=[],
             ),
         ],
     )
@@ -125,7 +128,8 @@ def test_validate_depends_on__if_valid_dependency__returns_empty(
                 workflow=minimal_workflow,
                 success_vision=minimal_success_vision,
                 final_verification=[],
-                depends_on=[], todos=[],
+                depends_on=[],
+                todos=[],
             ),
             WorkPlan(
                 id="plan-b",
@@ -137,7 +141,8 @@ def test_validate_depends_on__if_valid_dependency__returns_empty(
                 workflow=minimal_workflow,
                 success_vision=minimal_success_vision,
                 final_verification=[],
-                depends_on=["plan-a"], todos=[],
+                depends_on=["plan-a"],
+                todos=[],
             ),
         ],
     )
@@ -171,7 +176,8 @@ def test_validate_depends_on__if_empty_depends_on__returns_empty(
                 workflow=minimal_workflow,
                 success_vision=minimal_success_vision,
                 final_verification=[],
-                depends_on=[], todos=[],
+                depends_on=[],
+                todos=[],
             ),
         ],
     )
@@ -205,7 +211,8 @@ def test_validate_depends_on__if_self_reference__detects_cycle(
                 workflow=minimal_workflow,
                 success_vision=minimal_success_vision,
                 final_verification=[],
-                depends_on=["plan-a"], todos=[],
+                depends_on=["plan-a"],
+                todos=[],
             ),
         ],
     )
@@ -241,7 +248,8 @@ def test_validate_depends_on__if_complex_cycle__detects_all_nodes(
                 workflow=minimal_workflow,
                 success_vision=minimal_success_vision,
                 final_verification=[],
-                depends_on=["plan-b"], todos=[],
+                depends_on=["plan-b"],
+                todos=[],
             ),
             WorkPlan(
                 id="plan-b",
@@ -253,7 +261,8 @@ def test_validate_depends_on__if_complex_cycle__detects_all_nodes(
                 workflow=minimal_workflow,
                 success_vision=minimal_success_vision,
                 final_verification=[],
-                depends_on=["plan-c"], todos=[],
+                depends_on=["plan-c"],
+                todos=[],
             ),
             WorkPlan(
                 id="plan-c",
@@ -265,9 +274,9 @@ def test_validate_depends_on__if_complex_cycle__detects_all_nodes(
                 workflow=minimal_workflow,
                 success_vision=minimal_success_vision,
                 final_verification=[],
-                depends_on=["plan-a"], todos=[],
+                depends_on=["plan-a"],
+                todos=[],
             ),
-
         ],
     )
     linter = PlanLinter({})
@@ -304,7 +313,8 @@ def test_validate_depends_on__if_multiple_missing__reports_all(
                 workflow=minimal_workflow,
                 success_vision=minimal_success_vision,
                 final_verification=[],
-                depends_on=["missing-1", "missing-2"], todos=[],
+                depends_on=["missing-1", "missing-2"],
+                todos=[],
             ),
         ],
     )

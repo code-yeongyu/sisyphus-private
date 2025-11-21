@@ -549,8 +549,12 @@ class PhaseOrchestrator:
         sdk_exception = None
 
         for exception in exception_group.exceptions:
-            error_str = str(exception).lower()
-            if "command failed" in error_str or "exit code" in error_str:
+            error_str = str(exception)
+            if (
+                "command failed" in error_str.lower()
+                or "exit code" in error_str.lower()
+                or error_str.startswith("Claude Agent SDK error: API Error: 400")
+            ):
                 sdk_error_detected = True
                 sdk_exception = exception
                 break

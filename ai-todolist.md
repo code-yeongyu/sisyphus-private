@@ -310,7 +310,7 @@ Examples:
     - [x] `uv run ruff check sisyphus-speckit/sisyphus_speckit/task/verify/manual_mark.py` → 0 errors
     - [x] `uv run basedpyright sisyphus-speckit/sisyphus_speckit/task/verify/manual_mark.py` → 0 errors
 
-  - [ ] 1.5. 변경사항 커밋
+  - [x] 1.5. 변경사항 커밋
     ```bash
     git add sisyphus-speckit/sisyphus_speckit/task/verify/manual_mark.py \
             sisyphus-speckit/tests/task/verify/test_manual_mark_bash_prerequisite.py
@@ -350,7 +350,7 @@ Block executor agents from running verification commands.
   - 구현 파일: `sisyphus-core/sisyphus_core/core/loop.py:555-562` (자동 완료 마킹 로직)
   - 관련 함수: `sisyphus-core/sisyphus_core/core/plans/operations.py:146-184` (`mark_plan_completed_if_all_done`)
 
-  - [ ] 2.1. `loop.py`에서 자동 완료 마킹 로직 주석 처리
+  - [x] 2.1. `loop.py`에서 자동 완료 마킹 로직 주석 처리
 
     **구현 위치**: `sisyphus-core/sisyphus_core/core/loop.py:555-562`
 
@@ -407,9 +407,9 @@ Block executor agents from running verification commands.
     # And: mark_plan_completed_if_all_done() 호출 안 됨 (주석 처리됨)
     ```
 
-  - [ ] 2.3. Lint 및 타입 체크
-    - [ ] `uv run ruff check sisyphus-core/sisyphus_core/core/loop.py` → 0 errors
-    - [ ] `uv run basedpyright sisyphus-core/sisyphus_core/core/loop.py` → 0 errors
+  - [x] 2.3. Lint 및 타입 체크
+    - [x] `uv run ruff check sisyphus-core/sisyphus_core/core/loop.py` → 0 errors
+    - [x] `uv run basedpyright sisyphus-core/sisyphus_core/core/loop.py` → 0 errors
 
   - [ ] 2.4. 변경사항 커밋
     ```bash

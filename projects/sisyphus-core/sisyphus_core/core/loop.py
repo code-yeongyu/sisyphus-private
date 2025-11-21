@@ -554,14 +554,22 @@ class ExecutionLoop:
 
             await save_plan(plan_path, plan_doc)
 
-            try:
-                from sisyphus_core.core.plans.operations import mark_plan_completed_if_all_done
-
-                completed = await mark_plan_completed_if_all_done(plan_path)
-                if completed:
-                    await self.ui.show_status("✅ All tasks completed. Plan marked as completed.")
-            except Exception:
-                pass
+            # NOTE: 자동 완료 마킹 비활성화 (2025-11-21)
+            # 이유: 명시적인 'sisyphus-speckit task continue' 명령으로만 task 전환하도록 변경
+            #
+            # 기존 동작: Verify phase 완료 후 자동으로 mark_plan_completed_if_all_done() 호출
+            # 변경 동작: 사용자가 명시적으로 'task continue' 명령 실행 필요
+            #
+            # 관련 이슈: Task 전환의 명시성 확보, 사용자 제어권 강화
+            #
+            # try:
+            #     from sisyphus_core.core.plans.operations import mark_plan_completed_if_all_done
+            #
+            #     completed = await mark_plan_completed_if_all_done(plan_path)
+            #     if completed:
+            #         await self.ui.show_status("✅ All tasks completed. Plan marked as completed.")
+            # except Exception:
+            #     pass
         except (ValueError, FileNotFoundError):
             pass
 

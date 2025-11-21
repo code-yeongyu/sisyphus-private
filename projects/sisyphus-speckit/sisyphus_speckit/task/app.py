@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import typer
 
+from sisyphus_speckit._display import display_current_plan
 from sisyphus_speckit.task.accept import task_accept
 from sisyphus_speckit.task.continue_work import continue_work
 from sisyphus_speckit.task.current import show_current
@@ -17,6 +18,13 @@ from sisyphus_speckit.task.verify.manual_mark import verify_manual_mark
 
 task_app = typer.Typer(name="task", help="Task navigation and verification commands")
 verify_app = typer.Typer(name="verify", help="Verification management commands")
+
+
+@task_app.callback(invoke_without_command=False)
+def task_callback() -> None:
+    """Display current plan before executing task commands."""
+    display_current_plan()
+
 
 task_app.add_typer(verify_app)
 

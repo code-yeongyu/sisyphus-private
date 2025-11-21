@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import typer
 
+from sisyphus_speckit._display import display_current_plan
 from sisyphus_speckit.plan.accept_as_verification_agent import accept_as_verification_agent
 from sisyphus_speckit.plan.export import export_plan
 from sisyphus_speckit.plan.graph import show_graph
@@ -16,6 +17,13 @@ from sisyphus_speckit.plan.status import status
 from sisyphus_speckit.plan.verify_final import verify_final_plan
 
 plan_app = typer.Typer(name="plan", help="Plan management commands")
+
+
+@plan_app.callback(invoke_without_command=False)
+def plan_callback() -> None:
+    """Display current plan before executing plan commands."""
+    display_current_plan()
+
 
 _ = plan_app.command(name="lint")(lint_plan)
 _ = plan_app.command(name="init")(init_plan)

@@ -184,6 +184,9 @@ class PlanLinter:
         if "current_work_ids" in plan:
             self._check_type(plan["current_work_ids"], f"{path}.current_work_ids", "list")
 
+        # Validate acceptance_criteria minimum count
+        self._validate_acceptance_criteria_minimum(plan, path)
+
     def _validate_user_request_in_plan(self, user_req: Any, path: str) -> None:
         """Validate user_request within a work plan."""
         if not isinstance(user_req, dict):
@@ -1132,6 +1135,49 @@ class PlanLinter:
 
             if "instruction" in llm:
                 self._check_type(llm["instruction"], f"{llm_path}.instruction", "string")
+
+    def _validate_acceptance_criteria_minimum(self, plan: dict[str, Any], path: str) -> None:
+        """Validate acceptance_criteria have at least 2 items.
+
+        Validates both:
+        - todos[].acceptance_criteria (minimum 2 items per todo)
+        - acceptance_criteria_for_verification_agent (minimum 2 items)
+        """
+        if "todos" in plan and isinstance(plan["todos"], list):
+            todos = plan["todos"]
+            for i, todo in enumerate(todos):
+                if not isinstance(todo, dict):
+                    continue
+
+                if "acceptance_criteria" in todo:
+                    criteria = todo["acceptance_criteria"]
+                    if isinstance(criteria, list):
+                        if len(criteria) < 2:
+                            self.errors.append(
+                                LintError(
+                                    location=f"{path}.todos[{i}].acceptance_criteria",
+                                    message="acceptance_criteria must have at least 2 items",
+                                    expected="at least 2 items",
+                                    actual=f"{len(criteria)} item(s)",
+                                    suggestion="Add more acceptance criteria items",
+                                    category="validation",
+                                )
+                            )
+
+        if "acceptance_criteria_for_verification_agent" in plan:
+            criteria_for_agent = plan["acceptance_criteria_for_verification_agent"]
+            if isinstance(criteria_for_agent, list):
+                if len(criteria_for_agent) < 2:
+                    self.errors.append(
+                        LintError(
+                            location=f"{path}.acceptance_criteria_for_verification_agent",
+                            message="acceptance_criteria_for_verification_agent must have at least 2 items",
+                            expected="at least 2 items",
+                            actual=f"{len(criteria_for_agent)} item(s)",
+                            suggestion="Add more acceptance criteria for verification agent",
+                            category="validation",
+                        )
+                    )
 
     def _validate_acceptance_criteria_item(self, item: Any, path: str) -> None:
         """Validate AcceptanceCriteriaItem."""

@@ -551,6 +551,15 @@ class ExecutionLoop:
                     _ = find_and_reset_task(work_plan.todos)
 
             await save_plan(plan_path, plan_doc)
+
+            try:
+                from sisyphus_core.core.plans.operations import mark_plan_completed_if_all_done
+
+                completed = await mark_plan_completed_if_all_done(plan_path)
+                if completed:
+                    await self.ui.show_status("✅ All tasks completed. Plan marked as completed.")
+            except Exception:
+                pass
         except (ValueError, FileNotFoundError):
             pass
 

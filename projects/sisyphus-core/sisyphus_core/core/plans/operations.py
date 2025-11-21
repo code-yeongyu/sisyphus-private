@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from pathlib import Path
 
+from sisyphus_core.core.plans.loader import load_plan, save_plan
 from sisyphus_core.core.plans.models import Todo, WorkPlan
+from sisyphus_core.core.task_manager import TaskManager
 
 
 def find_todo_by_id(todos: list[Todo], todo_id: str) -> Todo | None:
@@ -138,3 +141,44 @@ def mark_fully_done(
     work_plan.execution.fully_done_at = datetime.now(UTC).isoformat()
     work_plan.fully_done_evidence = evidence
     return True, f"WorkPlan '{work_plan.id}' fully done 마킹 완료"
+
+
+async def mark_plan_completed_if_all_done(plan_path: Path) -> bool:
+    """Mark plan as completed if all todos are done.
+
+    Checks all todos in the work plan and marks the plan as completed
+    if all todos have been completed.
+
+    Args:
+        plan_path: Path to the plan YAML file
+
+    Returns:
+        True if marked as completed, False if incomplete or error
+    """
+    try:
+        plan_doc = await load_plan(plan_path)
+
+        if not plan_doc.work_plans:
+            return False
+
+        work_plan = plan_doc.work_plans[0]
+        task_manager = TaskManager(plan_doc, work_plan.id)
+
+        # Check all todos for completion
+        all_todos_completed = True
+        for todo in work_plan.todos:
+            completion_report = task_manager.check_task_completion(todo.id)
+            if not completion_report.can_complete:
+                all_todos_completed = False
+                break
+
+        if all_todos_completed:
+            work_plan.execution.completed = True
+            work_plan.execution.completed_at = datetime.now(UTC).isoformat()
+            await save_plan(plan_path, plan_doc)
+            return True
+
+        return False
+    except Exception:
+        # Graceful error handling: return False without raising
+        return False

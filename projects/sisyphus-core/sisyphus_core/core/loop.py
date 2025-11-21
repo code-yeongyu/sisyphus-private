@@ -287,6 +287,8 @@ class ExecutionLoop:
 
             await self.ui.show_status(f"[Iteration {self.state.iteration}] Starting Verify phase...")
 
+            self.state.reset_consecutive_execute()
+
             prompt = self.feedback_manager.build_feedback_section_for_verify(verify_prompt)
 
             feedback = ""

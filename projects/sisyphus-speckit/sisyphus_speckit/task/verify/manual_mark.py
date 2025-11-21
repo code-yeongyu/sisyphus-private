@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
@@ -36,6 +37,16 @@ def verify_manual_mark(
         )
 
     async def _mark() -> None:
+        agent_name = os.getenv("ANTHROPIC_CLI_AGENT_NAME", "").lower()
+        if "executor" in agent_name:
+            console.print("[red]❌ ILLEGAL: Executor agents cannot run verification commands.[/red]")
+            console.print("[yellow]⚠️  Verification commands are ONLY for orchestrator agents.[/yellow]\n")
+            console.print("[dim]Executors are for task execution only.[/dim]")
+            console.print("[dim]Manual verification must be done by the orchestrator (you, the user).[/dim]\n")
+            console.print("[cyan]If you are the orchestrator:[/cyan]")
+            console.print("  Run this command directly from Claude Code CLI, not through executor.\n")
+            raise typer.Exit(1)
+
         working_dir = resolve_cwd(cwd)
         status_path = working_dir / ".sisyphus" / "status.json"
 
@@ -57,6 +68,33 @@ def verify_manual_mark(
                 for todo in todos:
                     for verify_item in todo.verification_spec:
                         if verify_item.id == verify_id:
+                            if verify_item.bash or verify_item.deterministic_bash:
+                                has_unverified_bash = False
+                                unverified_bash_list = []
+
+                                for bash in verify_item.deterministic_bash:
+                                    if not bash.verified_at:
+                                        has_unverified_bash = True
+                                        unverified_bash_list.append(bash.description or bash.execute)
+
+                                if has_unverified_bash:
+                                    console.print("[red]❌ Bash verification이 통과되지 않았습니다.[/red]")
+                                    console.print(
+                                        f"[yellow]통과되지 않은 bash: {len(unverified_bash_list)}개[/yellow]\n"
+                                    )
+                                    for bash_desc in unverified_bash_list:
+                                        console.print(f"  • {bash_desc}")
+                                    console.print("\n[cyan]다음 순서대로 진행하세요:[/cyan]")
+                                    console.print("  [bold]1단계:[/bold] Bash verification 먼저 실행")
+                                    console.print("     → sisyphus-speckit task verify bash")
+                                    console.print("  [bold]2단계:[/bold] Manual verification (지금 시도한 명령)")
+                                    console.print(
+                                        f"     → sisyphus-speckit task verify manual-mark {verify_id} --evidence '...'"
+                                    )
+                                    console.print("  [bold]3단계:[/bold] LLM judge (필요시)")
+                                    console.print("     → sisyphus-speckit task verify llm\n")
+                                    raise typer.Exit(1)
+
                             verify_item.verified = True
                             verify_item.verified_at = datetime.now(UTC).isoformat()
                             verify_item.orchestrator_manually_verified = True

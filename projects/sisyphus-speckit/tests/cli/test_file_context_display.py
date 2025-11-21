@@ -39,7 +39,7 @@ def test_callback_displays_file_path_when_status_exists(tmp_path: Path) -> None:
             "updated_at": "2025-11-21T00:00:00Z",
         },
     }
-    status_file.write_text(json.dumps(status_data))
+    _ = status_file.write_text(json.dumps(status_data))
 
     # Create minimal YAML file for task current to work
     tasks_dir = status_dir / "tasks"
@@ -92,7 +92,7 @@ work_plans:
       current_task_id: "1"
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(app, ["task", "current", "--cwd", str(cwd_dir)])
@@ -165,7 +165,7 @@ work_plans:
       parallel_requested: false
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(app, ["task", "current", "--cwd", str(cwd_dir)])
@@ -198,7 +198,7 @@ def test_callback_called_before_command_execution(tmp_path: Path) -> None:
             "updated_at": "2025-11-21T00:00:00Z",
         },
     }
-    status_file.write_text(json.dumps(status_data))
+    _ = status_file.write_text(json.dumps(status_data))
 
     # Create minimal YAML file
     tasks_dir = status_dir / "tasks"
@@ -251,7 +251,7 @@ work_plans:
       current_task_id: "1"
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(app, ["task", "current", "--cwd", str(cwd_dir)])
@@ -282,7 +282,7 @@ def test_callback_handles_corrupted_status_gracefully(tmp_path: Path) -> None:
     status_dir.mkdir()
 
     status_file = status_dir / "status.json"
-    status_file.write_text("{ invalid json }")
+    _ = status_file.write_text("{ invalid json }")
 
     tasks_dir = status_dir / "tasks"
     tasks_dir.mkdir()
@@ -333,7 +333,7 @@ work_plans:
       parallel_requested: false
     current_work: ""
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(app, ["task", "current", "--cwd", str(cwd_dir)])
@@ -365,7 +365,7 @@ def test_plan_callback_displays_file_path(tmp_path: Path) -> None:
             "updated_at": "2025-11-21T00:00:00Z",
         },
     }
-    status_file.write_text(json.dumps(status_data))
+    _ = status_file.write_text(json.dumps(status_data))
 
     # Create minimal YAML file
     tasks_dir = status_dir / "tasks"
@@ -429,7 +429,7 @@ work_plans:
         title: "Verification 2"
         checklists: []
 """
-    yaml_file.write_text(yaml_content)
+    _ = yaml_file.write_text(yaml_content)
 
     # when
     result = runner.invoke(app, ["plan", "lint", "--file", ".sisyphus/tasks/plan-test.yaml", "--cwd", str(cwd_dir)])

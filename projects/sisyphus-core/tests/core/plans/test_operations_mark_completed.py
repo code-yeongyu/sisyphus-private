@@ -113,24 +113,6 @@ def _create_todo_completed(todo_id: str) -> Todo:
     )
 
 
-def _create_todo_pending(todo_id: str) -> Todo:
-    """Create a pending todo."""
-    criterion1 = AcceptanceCriteriaItem(
-        id=f"{todo_id}-criterion-1",
-        condition="Acceptance criterion 1",
-    )
-    criterion2 = AcceptanceCriteriaItem(
-        id=f"{todo_id}-criterion-2",
-        condition="Acceptance criterion 2",
-    )
-    return Todo(
-        id=todo_id,
-        title=f"Pending Todo {todo_id}",
-        status=TodoStatus.pending,
-        acceptance_criteria=[criterion1, criterion2],
-    )
-
-
 def _create_work_plan(
     plan_id: str,
     todos: list[Todo],

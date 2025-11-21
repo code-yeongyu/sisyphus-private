@@ -131,9 +131,15 @@ async def test_status__collects_all_verifications_from_todos(
 
 
 @pytest.mark.anyio()
-@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
-async def test_status__includes_manual_verification_fields(
-) -> None:
+@pytest.mark.usefixtures(
+    "minimal_background",
+    "minimal_objectives",
+    "minimal_required_background",
+    "minimal_success_vision",
+    "minimal_user_request",
+    "minimal_workflow",
+)
+async def test_status__includes_manual_verification_fields() -> None:
     """
     Given: A verification item with manual verification complete
     When: Processing for display
@@ -165,9 +171,15 @@ async def test_status__includes_manual_verification_fields(
 
 
 @pytest.mark.anyio()
-@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
-async def test_status__detects_missing_manual_verification(
-) -> None:
+@pytest.mark.usefixtures(
+    "minimal_background",
+    "minimal_objectives",
+    "minimal_required_background",
+    "minimal_success_vision",
+    "minimal_user_request",
+    "minimal_workflow",
+)
+async def test_status__detects_missing_manual_verification() -> None:
     """
     Given: A verification item with manual verification incomplete
     When: Processing for display
@@ -195,9 +207,15 @@ async def test_status__detects_missing_manual_verification(
     assert evidence_status == "Missing", "Item without evidence should show Missing"
 
 
-@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
-def test_status__count_all_todos__counts_flat_todos(
-) -> None:
+@pytest.mark.usefixtures(
+    "minimal_background",
+    "minimal_objectives",
+    "minimal_required_background",
+    "minimal_success_vision",
+    "minimal_user_request",
+    "minimal_workflow",
+)
+def test_status__count_all_todos__counts_flat_todos() -> None:
     # given: A WorkPlan with 3 flat todos (no children)
     todos = [
         Todo(
@@ -236,9 +254,15 @@ def test_status__count_all_todos__counts_flat_todos(
     assert count == 3
 
 
-@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
-def test_status__count_all_todos__counts_nested_todos(
-) -> None:
+@pytest.mark.usefixtures(
+    "minimal_background",
+    "minimal_objectives",
+    "minimal_required_background",
+    "minimal_success_vision",
+    "minimal_user_request",
+    "minimal_workflow",
+)
+def test_status__count_all_todos__counts_nested_todos() -> None:
     # given: A WorkPlan with nested todos (parent with children)
     child_todo = Todo(
         id="1.1",
@@ -267,9 +291,15 @@ def test_status__count_all_todos__counts_nested_todos(
     assert count == 2
 
 
-@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
-def test_status__count_completed_todos__counts_only_completed(
-) -> None:
+@pytest.mark.usefixtures(
+    "minimal_background",
+    "minimal_objectives",
+    "minimal_required_background",
+    "minimal_success_vision",
+    "minimal_user_request",
+    "minimal_workflow",
+)
+def test_status__count_completed_todos__counts_only_completed() -> None:
     # given: A WorkPlan with mixed status todos
     todos = [
         Todo(
@@ -308,9 +338,15 @@ def test_status__count_completed_todos__counts_only_completed(
     assert count == 2
 
 
-@pytest.mark.usefixtures("minimal_background", "minimal_objectives", "minimal_required_background", "minimal_success_vision", "minimal_user_request", "minimal_workflow")
-def test_status__count_completed_todos__counts_nested_completed(
-) -> None:
+@pytest.mark.usefixtures(
+    "minimal_background",
+    "minimal_objectives",
+    "minimal_required_background",
+    "minimal_success_vision",
+    "minimal_user_request",
+    "minimal_workflow",
+)
+def test_status__count_completed_todos__counts_nested_completed() -> None:
     # given: A WorkPlan with nested todos where parent is in_progress and child is completed
     child_todo = Todo(
         id="1.1",

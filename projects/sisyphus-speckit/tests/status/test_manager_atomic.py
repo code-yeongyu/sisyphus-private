@@ -97,7 +97,7 @@ async def test_status_manager__if_lock_held__waits_for_release(tmp_path: Path) -
         tg.start_soon(slow_write, "second")
 
     # then
-    assert len(write_order) == 2  # pyright: ignore[reportUnknownArgumentType]
+    assert len(write_order) == 2
     assert "first" in write_order
     assert "second" in write_order
 

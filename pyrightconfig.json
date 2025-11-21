@@ -9,5 +9,9 @@
   "reportUnannotatedClassAttribute": false,
   "reportAny": false,
   "reportExplicitAny": false,
-  "reportImplicitRelativeImport": false
+  "reportImplicitRelativeImport": false,
+  "reportUnknownArgumentType": false,
+  "reportMissingTypeStubs": false,
+  "reportUnusedClass": false,
+  "reportUnusedParameter": false
 }

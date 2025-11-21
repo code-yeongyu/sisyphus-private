@@ -5,7 +5,7 @@
 #     "orjson",
 # ]
 # ///
-# pyright: reportUnknownArgumentType=false
+# pyright: reportUnknownArgumentType=false, reportMissingImports=false
 """
 Cleanup terminalcp sessions on SessionEnd hook.
 
@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 try:
-    import orjson  # pyright: ignore[reportMissingImports]
+    import orjson
 except ImportError:
     orjson = None  # type: ignore[assignment]
 

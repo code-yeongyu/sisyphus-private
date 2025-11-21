@@ -123,7 +123,7 @@ async def test_large_yaml_nested_todos__if_deep_nesting__loads_successfully(
                 success_vision=minimal_success_vision,
                 final_verification=[],
                 depends_on=[],
-                todos=parent_todos,  # pyright: ignore[reportUnknownArgumentType]
+                todos=parent_todos,
             )
         ],
     )

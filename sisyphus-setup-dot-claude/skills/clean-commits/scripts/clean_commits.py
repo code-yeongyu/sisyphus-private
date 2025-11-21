@@ -11,6 +11,7 @@
 import asyncio
 import sys
 from pathlib import Path
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -96,8 +97,10 @@ async def find_target_commit_for_fixup(file_path: str) -> str | None:
 
 @app.command()
 def main(
-    base_branch: str | None = typer.Argument(None, help="Base branch to rebase onto (auto-detected if not provided)"),  # pyright: ignore[reportCallInDefaultInitializer]
-    force: bool = typer.Option(False, "-f", "--force", help="Force rebase even with conflicts"),  # pyright: ignore[reportCallInDefaultInitializer]
+    base_branch: Annotated[
+        str | None, typer.Argument(help="Base branch to rebase onto (auto-detected if not provided)")
+    ] = None,
+    force: Annotated[bool, typer.Option("-f", "--force", help="Force rebase even with conflicts")] = False,
 ) -> None:
     """Clean up commits using git absorb and autosquash rebase.
 

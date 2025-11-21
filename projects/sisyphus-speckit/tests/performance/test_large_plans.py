@@ -198,7 +198,7 @@ async def test_lint_large_plan__if_large_plan__lints_within_200ms(
                 success_vision=minimal_success_vision,
                 final_verification=[],
                 depends_on=[],
-                todos=parent_todos,  # pyright: ignore[reportUnknownArgumentType]
+                todos=parent_todos,
             )
         ],
     )
@@ -213,7 +213,7 @@ async def test_lint_large_plan__if_large_plan__lints_within_200ms(
     yaml_data = ruamel.yaml.YAML().load(yaml_path)
 
     start_time = time.time()
-    errors = linter.lint(yaml_data)  # pyright: ignore[reportUnknownArgumentType]
+    errors = linter.lint(yaml_data)
     elapsed_ms = (time.time() - start_time) * 1000
 
     # then: Verify correctness and performance
@@ -264,7 +264,7 @@ async def test_combined_workflow__if_realistic_scenario__completes_within_budget
     plan_doc = PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-02T00:00:00Z"),
-        work_plans=plans,  # pyright: ignore[reportUnknownArgumentType]
+        work_plans=plans,
     )
 
     yaml_path = tmp_path / "combined_workflow.yaml"
@@ -291,7 +291,7 @@ async def test_combined_workflow__if_realistic_scenario__completes_within_budget
     lint_start = time.time()
     linter = PlanLinter({})
     yaml_data = ruamel.yaml.YAML().load(yaml_path)
-    errors = linter.lint(yaml_data)  # pyright: ignore[reportUnknownArgumentType]
+    errors = linter.lint(yaml_data)
     lint_time = (time.time() - lint_start) * 1000
 
     total_time = (time.time() - total_start) * 1000

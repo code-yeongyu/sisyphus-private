@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -13,12 +14,12 @@ console = Console()
 @reset_app.callback(invoke_without_command=True)
 def reset_command(
     _ctx: typer.Context,
-    include_task_specs: bool = typer.Option(  # pyright: ignore[reportCallInDefaultInitializer]
-        False, "--include-task-specs", help="Also delete .sisyphus/tasks/ and status.json"
-    ),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be deleted without deleting"),  # pyright: ignore[reportCallInDefaultInitializer]
-    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),  # pyright: ignore[reportCallInDefaultInitializer]
-    cwd: str | None = typer.Option(None, "--cwd", help="Working directory"),  # pyright: ignore[reportCallInDefaultInitializer]
+    include_task_specs: Annotated[
+        bool, typer.Option("--include-task-specs", help="Also delete .sisyphus/tasks/ and status.json")
+    ] = False,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Show what would be deleted without deleting")] = False,
+    yes: Annotated[bool, typer.Option("--yes", "-y", help="Skip confirmation prompt")] = False,
+    cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     working_dir = resolve_cwd(cwd)
 

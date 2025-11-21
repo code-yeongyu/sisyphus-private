@@ -76,7 +76,7 @@ def _display_verification_specs(task: Todo) -> None:
             console.print(f"    Bash checks: {len(vspec.bash)}")
             for bash in vspec.bash:
                 console.print(f"      - Execute: {bash.execute}")
-                if bash.expected_exit_code is not None:
+                if bash.expected_exit_code != -1:
                     console.print(f"        Expected exit code: {bash.expected_exit_code}")
                 if bash.notes:
                     console.print(f"        Notes: {bash.notes}")

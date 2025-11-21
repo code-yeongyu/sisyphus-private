@@ -259,8 +259,6 @@ class TestCurrentCommand:
         task = current_task_todo
 
         # when: Checking all required fields
-        has_id = task.id is not None  # pyright: ignore[reportUnnecessaryComparison]
-        has_title = task.title is not None  # pyright: ignore[reportUnnecessaryComparison]
         has_description = task.description is not None
         has_status = task.status is not None
         has_verification_spec = hasattr(task, "verification_spec")
@@ -268,9 +266,9 @@ class TestCurrentCommand:
         has_children = hasattr(task, "children")
 
         # then: All required fields exist
-        assert has_id is True
-        assert has_title is True
-        assert has_description is not None
+        assert task.id
+        assert task.title
+        assert has_description is True
         assert has_status is True
         assert has_verification_spec is True
         assert has_references is True

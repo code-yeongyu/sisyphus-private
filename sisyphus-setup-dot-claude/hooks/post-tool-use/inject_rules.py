@@ -492,11 +492,11 @@ class HookHandler:
 
         rules_to_inject: list[RuleInfo] = []
         for result in results:
-            if isinstance(result, Exception):
+            if isinstance(result, BaseException):
                 continue
             if result is None:
                 continue
-            rules_to_inject.append(result)  # pyright: ignore[reportArgumentType]
+            rules_to_inject.append(result)
 
         if not rules_to_inject:
             print(f"[{hook_filename}] Success: All rules already in context")

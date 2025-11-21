@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 import typer
 from rich.console import Console
@@ -19,11 +19,11 @@ def _fix_multiline_texts(obj: object) -> object:
     match obj:
         case dict() as d:
             result: dict[str, object] = {}
-            for key, value in d.items():
-                result[key] = _fix_multiline_texts(value)
+            for key, value in cast(dict[str, object], d).items():
+                result[key] = _fix_multiline_texts(value)  # type: ignore[reportUnknownArgumentType,assignment]
             return result
         case list() as lst:
-            return [_fix_multiline_texts(item) for item in lst]
+            return [_fix_multiline_texts(cast(object, item)) for item in lst]  # type: ignore[reportUnknownArgumentType]
         case str() as s:
             if "\n" in s and s.count("\n") >= 1:
                 return LiteralScalarString(s)
@@ -37,11 +37,11 @@ def _add_missing_fields(obj: object) -> object:
     match obj:
         case dict() as d:
             result: dict[str, object] = {}
-            for key, value in d.items():
-                result[key] = _add_missing_fields(value)
+            for key, value in cast(dict[str, object], d).items():
+                result[key] = _add_missing_fields(value)  # type: ignore[reportUnknownArgumentType,assignment]
             return result
         case list() as lst:
-            return [_add_missing_fields(item) for item in lst]
+            return [_add_missing_fields(cast(object, item)) for item in lst]  # type: ignore[reportUnknownArgumentType]
         case _:
             return obj
 
@@ -63,14 +63,14 @@ def lint_plan(
             raise typer.Exit(1)
 
         with resolved_path.open("r", encoding="utf-8") as f:
-            yaml_data: Any = yaml.load(f)
+            yaml_data: dict[str, Any] = yaml.load(f)
 
         if fix:
-            yaml_data = _fix_multiline_texts(yaml_data)
-            yaml_data = _add_missing_fields(yaml_data)
+            yaml_data = cast(dict[str, Any], _fix_multiline_texts(cast(object, yaml_data)))  # type: ignore[reportUnknownArgumentType,arg-type]
+            yaml_data = cast(dict[str, Any], _add_missing_fields(cast(object, yaml_data)))  # type: ignore[reportUnknownArgumentType,arg-type]
 
         try:
-            plan_doc = PlanDocument(**yaml_data)
+            plan_doc = PlanDocument(**yaml_data)  # type: ignore[reportUnknownArgumentType]
         except Exception as e:
             console.print(f"[red]Schema validation failed:[/red]\n{e}")
             raise typer.Exit(1)

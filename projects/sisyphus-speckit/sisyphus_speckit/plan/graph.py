@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 import typer
 from pydantic import ValidationError
@@ -43,9 +43,9 @@ def show_graph(
 
             for plan_file in plan_files:
                 with plan_file.open("r", encoding="utf-8") as f:
-                    yaml_data: Any = yaml.load(f)
+                    yaml_data: dict[str, Any] = yaml.load(f)
                 try:
-                    plan_doc = PlanDocument(**yaml_data)
+                    plan_doc = PlanDocument(**yaml_data)  # type: ignore[reportUnknownArgumentType]
                     for work_plan in plan_doc.work_plans:
                         plan_to_file[work_plan.id] = plan_file
                     all_plans.extend(plan_doc.work_plans)
@@ -64,8 +64,8 @@ def show_graph(
             console.print("[red]Error: No valid plans found[/red]")
             raise typer.Exit(1)
 
-        plans = {plan.id: plan for plan in all_plans}
-        graph = build_plan_graph(plans)
+        plans = cast(dict[str, Any], {plan.id: plan for plan in all_plans})
+        graph = build_plan_graph(plans)  # type: ignore[arg-type,attr-defined]
 
         cycles = detect_cycles(graph)
         if cycles:

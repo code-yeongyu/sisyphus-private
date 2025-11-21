@@ -16,14 +16,15 @@ console = Console()
 def verify_final_plan(
     verification_id: Annotated[str, typer.Option("--id", help="Final verification item ID")],
     evidence: Annotated[str, typer.Option("--evidence", help="Verification evidence description")],
-    yaml_path: Annotated[Path, typer.Option("--file", "-f", help="YAML file path")] = Path(
-        ".sisyphus/tasks/plan.yaml"
-    ),
+    yaml_path: Annotated[Path | None, typer.Option("--file", "-f", help="YAML file path")] = None,
     cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     async def _verify_final() -> None:
         working_dir = resolve_cwd(cwd)
-        resolved_yaml = working_dir / yaml_path if not yaml_path.is_absolute() else yaml_path
+        if yaml_path is None:
+            resolved_yaml = working_dir / ".sisyphus" / "tasks" / "plan.yaml"
+        else:
+            resolved_yaml = working_dir / yaml_path if not yaml_path.is_absolute() else yaml_path
 
         if not resolved_yaml.exists():
             console.print(f"[red]Error: File not found: {resolved_yaml}[/red]")

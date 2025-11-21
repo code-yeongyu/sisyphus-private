@@ -46,7 +46,7 @@ async def _get_current_plan_id(working_dir: Path) -> str | None:
 
     try:
         status_content = await anyio.to_thread.run_sync(status_path.read_text)
-        status_data_raw = json.loads(status_content)
+        status_data_raw = json.loads(cast(str, status_content))
         if not isinstance(status_data_raw, dict):
             return None
         status_data = cast(dict[str, object], status_data_raw)
@@ -139,7 +139,7 @@ def _get_sort_key(plan_data: PlanInfo, status_order: dict[str, int]) -> tuple[in
 
 
 def list_plans(
-    directory: Annotated[Path, typer.Option("--dir", "-d", help="Plan directory")] = Path(".sisyphus/tasks"),
+    directory: Annotated[Path | None, typer.Option("--dir", "-d", help="Plan directory")] = None,
     filter_status: Annotated[str | None, typer.Option("--filter", help="Filter by status")] = None,
     sort_by: Annotated[str, typer.Option("--sort", help="Sort order (default/name/created)")] = "default",
     cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
@@ -152,7 +152,9 @@ def list_plans(
     async def _list_plans_async() -> None:
         working_dir = resolve_cwd(cwd)
 
-        if not directory.is_absolute():
+        if directory is None:
+            plan_dir = working_dir / ".sisyphus" / "tasks"
+        elif not directory.is_absolute():
             plan_dir = working_dir / directory
         else:
             plan_dir = directory

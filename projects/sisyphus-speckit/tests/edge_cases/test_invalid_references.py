@@ -24,7 +24,7 @@ async def test_reference_all_none__if_no_fields_provided__raises_validation_erro
 
     # when & then
     with pytest.raises(ValidationError) as exc_info:
-        _ = ReferenceItem(**data)  # pyright: ignore[reportUnknownArgumentType]
+        _ = ReferenceItem(**data)
     assert "ref_id, uri 또는 inline 중 하나는 필수입니다" in str(exc_info.value)
 
 

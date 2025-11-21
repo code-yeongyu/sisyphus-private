@@ -39,7 +39,7 @@ async def test_execute_phase__if_user_sends_message_during_agent_response__messa
     """Test 3.1.1: User message input during Agent response → Immediately forwarded to Agent."""
 
     # given
-    class MockAgent:  # noqa: F841  # type: ignore[assignment]  # pyright: ignore[reportUnusedClass]
+    class MockAgent:  # noqa: F841  # type: ignore[assignment]
         def __init__(self) -> None:
             self.supports_interactive = False
             self.session_id: str | None = None
@@ -69,7 +69,7 @@ async def test_execute_phase__if_user_sends_message_during_agent_response__messa
         async def close(self) -> None:
             pass
 
-    class MockUI:  # noqa: F841  # type: ignore[assignment]  # pyright: ignore[reportUnusedClass]
+    class MockUI:  # noqa: F841  # type: ignore[assignment]
         def __init__(self) -> None:
             self.messages: list[tuple[AgentMessage, str]] = []
             self.input_queue: list[str] = []
@@ -95,7 +95,7 @@ async def test_execute_phase__if_user_sends_message_during_agent_response__messa
             await anyio.sleep(0.01)
             return None
 
-    class MockSessionStore:  # noqa: F841  # type: ignore[assignment]  # pyright: ignore[reportUnusedClass]
+    class MockSessionStore:  # noqa: F841  # type: ignore[assignment]
         async def get_session(self, _agent_type: str) -> str | None:
             return None
 
@@ -107,7 +107,7 @@ async def test_execute_phase__if_multiple_user_messages_sent__all_forwarded_in_o
     """Test 3.1.2: Multiple messages sent consecutively → All forwarded in order."""
 
     # given
-    class MockAgent:  # noqa: F841  # type: ignore[assignment]  # pyright: ignore[reportUnusedClass]
+    class MockAgent:  # noqa: F841  # type: ignore[assignment]
         def __init__(self) -> None:
             self.supports_interactive = False
             self.session_id: str | None = None
@@ -134,7 +134,7 @@ async def test_execute_phase__if_multiple_user_messages_sent__all_forwarded_in_o
         async def close(self) -> None:
             pass
 
-    class MockUI:  # noqa: F841  # type: ignore[assignment]  # pyright: ignore[reportUnusedClass]
+    class MockUI:  # noqa: F841  # type: ignore[assignment]
         def __init__(self) -> None:
             self.messages: list[tuple[AgentMessage, str]] = []
             self.input_queue: list[str] = ["First", "Second", "Third"]
@@ -158,7 +158,7 @@ async def test_execute_phase__if_multiple_user_messages_sent__all_forwarded_in_o
             await anyio.sleep(0.01)
             return None
 
-    class MockSessionStore:  # noqa: F841  # type: ignore[assignment]  # pyright: ignore[reportUnusedClass]
+    class MockSessionStore:  # noqa: F841  # type: ignore[assignment]
         async def get_session(self, _agent_type: str) -> str | None:
             return None
 

@@ -87,7 +87,7 @@ def task_status(
                     console.print("  [bold]Bash Checks:[/bold]")
                     for bash in vspec.bash:
                         console.print(f"    - Execute: {bash.execute}")
-                        if bash.expected_exit_code is not None:
+                        if bash.expected_exit_code != -1:
                             console.print(f"      Expected Exit Code: {bash.expected_exit_code}")
                         if bash.notes:
                             console.print(f"      Notes: {bash.notes}")

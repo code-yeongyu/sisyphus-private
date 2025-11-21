@@ -218,7 +218,7 @@ user_request:
         with yaml_file.open("r", encoding="utf-8") as f:
             data = yaml.load(f)
 
-        fixed_data = _fix_multiline_texts(data)  # pyright: ignore[reportUnknownArgumentType]
+        fixed_data = _fix_multiline_texts(data)
         fixed_data = _add_missing_fields(fixed_data)
 
         # then: 데이터가 수정됨
@@ -237,7 +237,7 @@ user_request:
             data = yaml.load(f)
 
         if data is not None:
-            fixed_data = _fix_multiline_texts(data)  # pyright: ignore[reportUnknownArgumentType]
+            fixed_data = _fix_multiline_texts(data)
             fixed_data = _add_missing_fields(fixed_data)
 
             # then: 데이터 처리됨
@@ -263,7 +263,7 @@ user_request:
         with yaml_file.open("r", encoding="utf-8") as f:
             loaded_data = yaml.load(f)
 
-        fixed_data = _fix_multiline_texts(loaded_data)  # pyright: ignore[reportUnknownArgumentType]
+        fixed_data = _fix_multiline_texts(loaded_data)
         fixed_data = _add_missing_fields(fixed_data)
 
         # and: 수정된 YAML 저장

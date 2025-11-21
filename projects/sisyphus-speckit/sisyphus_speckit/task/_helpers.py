@@ -61,7 +61,7 @@ def _format_task_display(
     show_verification: bool = True,
 ) -> str:
     """Format task information for display."""
-    lines = []
+    lines: list[str] = []
     lines.append(f"[bold cyan]작업 ID:[/bold cyan] {task.id}")
     lines.append(f"[bold cyan]제목:[/bold cyan] {task.title}")
     if task.status:
@@ -72,7 +72,7 @@ def _format_task_display(
 
     if task.references:
         lines.append("[bold cyan]참조:[/bold cyan]")
-        for ref in task.references:
+        for ref in task.references:  # type: ignore[reportUnknownArgumentType,union-attr,attr-defined]
             if ref.ref_id:
                 lines.append(f"  - ref_id: {ref.ref_id}")
             elif ref.uri:
@@ -95,7 +95,7 @@ def _format_task_display(
         total_count = len(task.verification_spec)
         lines.append(f"[bold cyan]검증:[/bold cyan] {verified_count}/{total_count} 완료")
 
-    return cast(str, "\n".join(lines))
+    return "\n".join(lines)
 
 
 def _display_verification_guidance(current_task: Todo) -> None:
@@ -141,7 +141,7 @@ def _display_verification_status_table(
     if show_current_task:
         current_task = task_manager.get_current_task()
         if current_task:
-            all_tasks_dfs = []
+            all_tasks_dfs: list[Any] = []
 
             def collect_tasks_dfs(todos: list[Any]) -> None:
                 for todo in todos:
@@ -152,9 +152,12 @@ def _display_verification_status_table(
             collect_tasks_dfs(work_plan.todos)
 
             try:
-                current_index = next(i for i, t in enumerate(all_tasks_dfs) if t.id == current_task.id)
-                task_position = f"{current_index + 1}/{len(all_tasks_dfs)}"
-            except StopIteration:
+                current_index = next((i for i, t in enumerate(all_tasks_dfs) if t.id == current_task.id), -1)  # type: ignore[reportUnknownArgumentType,arg-type,attr-defined]
+                if current_index >= 0:
+                    task_position = f"{current_index + 1}/{len(all_tasks_dfs)}"
+                else:
+                    task_position = "?/?"
+            except (StopIteration, TypeError):
                 task_position = "?/?"
 
             console.print(f"[bold green]현재 작업:[/bold green] {task_position} - {current_task.title}")
@@ -197,7 +200,7 @@ def _display_verification_status_table(
         if not verify_item.bash and not verify_item.llm_judge:
             verify_types.append("manual")
 
-        verify_type_str = cast(str, ", ".join(verify_types) if verify_types else "unknown")
+        verify_type_str = ", ".join(cast(list[str], verify_types)) if verify_types else "unknown"
 
         status_emoji = "✓" if verify_item.verified else "○"
         status_color = "green" if verify_item.verified else "yellow"

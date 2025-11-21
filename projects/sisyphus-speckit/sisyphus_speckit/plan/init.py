@@ -13,9 +13,7 @@ console = Console()
 
 
 def init_plan(
-    path: Annotated[Path, typer.Option("--path", "-p", help="Path where plan YAML will be created")] = Path(
-        "./.sisyphus/tasks/plan.yaml"
-    ),
+    path: Annotated[Path | None, typer.Option("--path", "-p", help="Path where plan YAML will be created")] = None,
     template: Annotated[
         str,
         typer.Option("--template", "-t", help="Template: 'minimal' or 'full' example"),
@@ -27,6 +25,8 @@ def init_plan(
     cwd: Annotated[str | None, typer.Option("--cwd", help="Working directory")] = None,
 ) -> None:
     working_dir = resolve_cwd(cwd)
+    if path is None:
+        path = Path("./.sisyphus/tasks/plan.yaml")
     resolved_path = working_dir / path if not path.is_absolute() else path
 
     if resolved_path.exists():

@@ -25,7 +25,9 @@ Verify each task thoroughly. Do NOT trust executors blindly - they may lie about
 
 Remember: You are the orchestrator. Delegate tasks, verify work, ensure quality.
 
-Start now by running `sisyphus-speckit task continue` to move to the first task."""
+Start now by running `sisyphus-speckit task continue` to move to the first task.
+If you are done, run `sisyphus-speckit plan "mark fully-done"` to mark the plan as complete.
+"""
 
 
 def build_execute_prompt(plan_path: str, current_todo_summary: str) -> str:

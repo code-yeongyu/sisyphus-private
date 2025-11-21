@@ -128,6 +128,16 @@ class ExecutionLoop:
         try:
             plan_path = await self._resolve_plan_path_from_status()
             execute_prompt, verify_prompt, _ = await self._initialize_from_plan(plan_path)
+
+            plan_doc = await load_plan(plan_path)
+            if plan_doc.work_plans:
+                for work_plan in plan_doc.work_plans:
+                    if work_plan.execution.fully_done_at:
+                        await self.ui.show_status(
+                            f"✅ Work already fully verified (fully_done_at: {work_plan.execution.fully_done_at}). "
+                            + "All work completed!"
+                        )
+                        return
         except (ValueError, FileNotFoundError):
             if not self.state.get_plan_id():
                 plan_id = await self._resolve_plan_id()
@@ -270,6 +280,8 @@ class ExecutionLoop:
 
             should_retry_execute = False
             if not skip_execute:
+                await self._mark_execution_as_in_progress()
+
                 await self.ui.show_status(f"[Iteration {self.state.iteration}] Starting Execute phase...")
 
                 prompt, extra = await self._build_execute_prompt(execute_prompt, execute_extra)
@@ -284,6 +296,8 @@ class ExecutionLoop:
 
             if not await self._should_verify():
                 continue
+
+            await self._clear_fully_done_at_for_reverification()
 
             await self.ui.show_status(f"[Iteration {self.state.iteration}] Starting Verify phase...")
 
@@ -584,3 +598,36 @@ class ExecutionLoop:
         self.state.set_interrupt_flag(False)
         if self._resume_event is not None:
             self._resume_event.set()
+
+    async def _mark_execution_as_in_progress(self) -> None:
+        """Mark execution as in progress when Execute phase starts."""
+        if not self.status_manager:
+            return
+
+        try:
+            plan_path = await self._resolve_plan_path_from_status()
+            plan_doc = await load_plan(plan_path)
+
+            for work_plan in plan_doc.work_plans:
+                work_plan.execution.completed = False
+
+            await save_plan(plan_path, plan_doc)
+        except (ValueError, FileNotFoundError):
+            pass
+
+    async def _clear_fully_done_at_for_reverification(self) -> None:
+        """Clear fully_done_at when Verify phase starts for reverification."""
+        if not self.status_manager:
+            return
+
+        try:
+            plan_path = await self._resolve_plan_path_from_status()
+            plan_doc = await load_plan(plan_path)
+
+            for work_plan in plan_doc.work_plans:
+                if work_plan.execution.fully_done_at:
+                    work_plan.execution.fully_done_at = None
+
+            await save_plan(plan_path, plan_doc)
+        except (ValueError, FileNotFoundError):
+            pass

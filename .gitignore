@@ -46,6 +46,8 @@ htmlcov/
 .pytype/
 .pyre/
 .basedpyright/
+basedpyright_output.json
+projects/*/basedpyright_output.json
 
 # Project specific
 .ck
@@ -58,4 +60,5 @@ claude_session_*.log
 agentloop.json
 notepad.md
 sessions/
+.sisyphus/qa-reports/
 

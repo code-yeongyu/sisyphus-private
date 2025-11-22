@@ -259,7 +259,7 @@ class WorkPlan(BaseModel):
     )
     work_mode: WorkMode = Field(default_factory=lambda: WorkMode(parallel_requested=False, current_task_id=None))
     current_work_ids: list[str] = []
-    acceptance_criteria_for_verification_agent: list[AcceptanceCriteriaForVerificationAgent] = []
+    acceptance_criteria_for_verification_agent: list[AcceptanceCriteriaForVerificationAgent]
     fully_done_evidence: str | None = None
 
     @model_validator(mode="after")

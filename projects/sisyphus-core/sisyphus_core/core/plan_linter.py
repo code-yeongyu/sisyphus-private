@@ -141,6 +141,7 @@ class PlanLinter:
             "success_vision",
             "final_verification",
             "todos",
+            "acceptance_criteria_for_verification_agent",
         ]
         for field in required_fields:
             if field not in plan:
@@ -1167,14 +1168,17 @@ class PlanLinter:
         if "acceptance_criteria_for_verification_agent" in plan:
             criteria_for_agent = plan["acceptance_criteria_for_verification_agent"]
             if isinstance(criteria_for_agent, list):
-                if len(criteria_for_agent) < 2:
+                if len(criteria_for_agent) < 4:
                     self.errors.append(
                         LintError(
                             location=f"{path}.acceptance_criteria_for_verification_agent",
-                            message="acceptance_criteria_for_verification_agent must have at least 2 items",
-                            expected="at least 2 items",
+                            message="acceptance_criteria_for_verification_agent must have at least 4 items",
+                            expected="at least 4 items",
                             actual=f"{len(criteria_for_agent)} item(s)",
-                            suggestion="Add more acceptance criteria for verification agent",
+                            suggestion=(
+                                f"Add more acceptance criteria for verification agent "
+                                f"(need {4 - len(criteria_for_agent)} more)"
+                            ),
                             category="validation",
                         )
                     )

@@ -81,7 +81,7 @@ def lint_plan(
             console.print(f"[green]✓ Fixed and saved: {resolved_path}[/green]")
 
         linter = PlanLinter({})
-        errors = linter.validate_all(plan_doc, resolved_path)
+        errors = linter.lint(yaml_data)
 
         if errors:
             console.print(f"[red]✗ Validation failed: {len(errors)} error(s)[/red]\n")

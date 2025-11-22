@@ -212,3 +212,24 @@ def test_full_example__all_todos_have_new_fields__returns_document() -> None:
         assert hasattr(todo, "parallelable_and_safe_evidence")
         assert hasattr(todo, "acceptance_criteria")
         assert isinstance(todo.acceptance_criteria, list)
+
+
+def test_full_example_has_at_least_four_acceptance_criteria() -> None:
+    """Given: PlanTemplateGenerator.full_example()
+    When: 템플릿 생성
+    Then: acceptance_criteria_for_verification_agent가 4개 이상
+    """
+    # Given/When
+    doc = PlanTemplateGenerator.full_example()
+
+    # Then
+    plan = doc.work_plans[0]
+    criteria = plan.acceptance_criteria_for_verification_agent
+
+    assert len(criteria) >= 4, f"Expected >= 4, got {len(criteria)}"
+
+    # 각 criteria가 최소 2개 checklist 포함하는지도 검증
+    for criterion in criteria:
+        assert len(criterion.checklists) >= 2, (
+            f"Criterion {criterion.id} has {len(criterion.checklists)} checklists, expected >= 2"
+        )

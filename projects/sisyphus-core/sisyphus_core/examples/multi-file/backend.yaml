@@ -305,4 +305,19 @@ work_plans:
             checked_at: null
             checked_evidence: null
 
+      - id: acceptance-backend-4
+        title: "Code quality and testing"
+        accepted_at: null
+        checklists:
+          - id: checklist-quality-1
+            title: "Type safety"
+            content: "All functions have type hints and pass basedpyright checks"
+            checked_at: null
+            checked_evidence: null
+          - id: checklist-quality-2
+            title: "Test coverage"
+            content: "Core business logic has 80% or higher test coverage"
+            checked_at: null
+            checked_evidence: null
+
     fully_done_evidence: null

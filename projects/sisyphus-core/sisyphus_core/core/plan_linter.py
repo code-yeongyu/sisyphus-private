@@ -1138,11 +1138,11 @@ class PlanLinter:
                 self._check_type(llm["instruction"], f"{llm_path}.instruction", "string")
 
     def _validate_acceptance_criteria_minimum(self, plan: dict[str, Any], path: str) -> None:
-        """Validate acceptance_criteria have at least 2 items.
+        """Validate acceptance_criteria have minimum required items.
 
         Validates both:
         - todos[].acceptance_criteria (minimum 2 items per todo)
-        - acceptance_criteria_for_verification_agent (minimum 2 items)
+        - acceptance_criteria_for_verification_agent (minimum 4 items)
         """
         if "todos" in plan and isinstance(plan["todos"], list):
             todos = plan["todos"]

@@ -553,7 +553,7 @@ class PhaseOrchestrator:
             if (
                 "command failed" in error_str.lower()
                 or "exit code" in error_str.lower()
-                or error_str.startswith("Claude Agent SDK error: API Error: 400")
+                or error_str.startswith("Claude Agent SDK error: API Error")
             ):
                 sdk_error_detected = True
                 sdk_exception = exception

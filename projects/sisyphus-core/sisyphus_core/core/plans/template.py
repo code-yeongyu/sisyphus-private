@@ -7,6 +7,8 @@ from pathlib import Path
 from ruamel.yaml import YAML
 
 from sisyphus_core.core.plans.models import (
+    AcceptanceCriteriaChecklist,
+    AcceptanceCriteriaForVerificationAgent,
     Background,
     FinalVerificationItem,
     LLMJudgeVerification,
@@ -140,6 +142,72 @@ class PlanTemplateGenerator:
                         )
                     ],
                     todos=[],
+                    acceptance_criteria_for_verification_agent=[
+                        AcceptanceCriteriaForVerificationAgent(
+                            id="acceptance-1",
+                            title="Core functionality implemented",
+                            checklists=[
+                                AcceptanceCriteriaChecklist(
+                                    id="checklist-1-1",
+                                    title="Primary feature working",
+                                    content="TODO: Verify main functionality works as expected",
+                                ),
+                                AcceptanceCriteriaChecklist(
+                                    id="checklist-1-2",
+                                    title="Error handling complete",
+                                    content="TODO: Verify error cases are properly handled",
+                                ),
+                            ],
+                        ),
+                        AcceptanceCriteriaForVerificationAgent(
+                            id="acceptance-2",
+                            title="Quality standards met",
+                            checklists=[
+                                AcceptanceCriteriaChecklist(
+                                    id="checklist-2-1",
+                                    title="Code follows conventions",
+                                    content="TODO: Verify code style and formatting",
+                                ),
+                                AcceptanceCriteriaChecklist(
+                                    id="checklist-2-2",
+                                    title="Type safety verified",
+                                    content="TODO: Verify type hints and static analysis pass",
+                                ),
+                            ],
+                        ),
+                        AcceptanceCriteriaForVerificationAgent(
+                            id="acceptance-3",
+                            title="Testing complete",
+                            checklists=[
+                                AcceptanceCriteriaChecklist(
+                                    id="checklist-3-1",
+                                    title="Unit tests passing",
+                                    content="TODO: Verify all unit tests pass with good coverage",
+                                ),
+                                AcceptanceCriteriaChecklist(
+                                    id="checklist-3-2",
+                                    title="Integration tests working",
+                                    content="TODO: Verify integration scenarios work correctly",
+                                ),
+                            ],
+                        ),
+                        AcceptanceCriteriaForVerificationAgent(
+                            id="acceptance-4",
+                            title="Documentation ready",
+                            checklists=[
+                                AcceptanceCriteriaChecklist(
+                                    id="checklist-4-1",
+                                    title="API documentation updated",
+                                    content="TODO: Verify API docs reflect changes",
+                                ),
+                                AcceptanceCriteriaChecklist(
+                                    id="checklist-4-2",
+                                    title="Usage examples provided",
+                                    content="TODO: Verify examples demonstrate new functionality",
+                                ),
+                            ],
+                        ),
+                    ],
                     references=[],
                 )
             ],

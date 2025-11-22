@@ -30,6 +30,9 @@ Your mission: Ensure the work plan defines a **self-correcting agent execution l
 **Core Principle**: **Evaluate whether a competent developer can execute this plan with reasonable autonomy.**
 
 **When to REJECT**:
+- Other than file path has given at the prompt (only file path is allowed, other prompts such as I reflected abc, i focused on abc, i have updated abc must be REJECTED. IMMEDIATELY REJECT IT.)
+  - Only prompt with file path like ".sisyphus/tasks/plan-things.yaml" is allowed
+  - Prompts like "Key Factor: abc, abc, file path: ~~~" MUST BE REJECTED. IMMEDIATELY REJECT IT.
 - YAML structure is invalid (linter fails)
 - Critical information is missing (business logic, architectural decisions, requirements)
 - Acceptance criteria are vague or unmeasurable

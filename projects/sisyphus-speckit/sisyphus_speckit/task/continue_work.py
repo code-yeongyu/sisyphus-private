@@ -60,9 +60,11 @@ def continue_work(
 
             await save_plan(plan_path, plan_doc)
 
-            console.print("[green]작업을 시작합니다.[/green]")
+            console.print("[green]방금 당신은 작업 시작 처리를 진행했습니다.[/green]")
             display = _format_task_display(first_task)
-            console.print(Panel(display, title="시작된 작업", border_style="green"))
+            console.print(Panel(display, title="시작 처리한 작업", border_style="green"))
+
+            console.print("[yellow]Task 도구를 사용해 'sisyphus-executor'를 호출해서 작업 시작을 지시하세요.[/yellow]")
             return
 
         current_task = task_manager.get_current_task()
@@ -234,7 +236,7 @@ def continue_work(
         display = _format_task_display(next_task)
         console.print(Panel(display, title="다음 작업", border_style="green"))
         console.print("\n[bold yellow]⚠️  주의:[/bold yellow]")
-        console.print("[yellow]'sisyphus-executor'를 호출해서 다음 작업을 진행하세요.[/yellow]")
+        console.print("[yellow]Task 도구를 사용해 'sisyphus-executor'를 호출해서 작업 시작을 지시하세요.[/yellow]")
         console.print("[yellow]절대로 직접 진행하지 마세요.[/yellow]")
 
     _run_async(_continue())

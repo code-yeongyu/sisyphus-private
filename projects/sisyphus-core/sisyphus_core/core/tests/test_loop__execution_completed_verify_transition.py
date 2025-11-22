@@ -10,6 +10,8 @@ import pytest
 from sisyphus_core.core.loop import ExecutionLoop
 from sisyphus_core.core.plans.loader import save_plan
 from sisyphus_core.core.plans.models import (
+    AcceptanceCriteriaChecklist,
+    AcceptanceCriteriaForVerificationAgent,
     Background,
     ExecutionStatus,
     Metadata,
@@ -73,6 +75,72 @@ async def test_loop__if_execution_completed_is_true__triggers_verify_phase() -> 
                     verification_spec=[],
                     parallel=False,
                 )
+            ],
+            acceptance_criteria_for_verification_agent=[
+                AcceptanceCriteriaForVerificationAgent(
+                    id="test-acceptance-1",
+                    title="Test verification criteria 1",
+                    checklists=[
+                        AcceptanceCriteriaChecklist(
+                            id="test-checklist-1-1",
+                            title="Test checklist 1-1",
+                            content="Test verification content 1-1",
+                        ),
+                        AcceptanceCriteriaChecklist(
+                            id="test-checklist-1-2",
+                            title="Test checklist 1-2",
+                            content="Test verification content 1-2",
+                        ),
+                    ],
+                ),
+                AcceptanceCriteriaForVerificationAgent(
+                    id="test-acceptance-2",
+                    title="Test verification criteria 2",
+                    checklists=[
+                        AcceptanceCriteriaChecklist(
+                            id="test-checklist-2-1",
+                            title="Test checklist 2-1",
+                            content="Test verification content 2-1",
+                        ),
+                        AcceptanceCriteriaChecklist(
+                            id="test-checklist-2-2",
+                            title="Test checklist 2-2",
+                            content="Test verification content 2-2",
+                        ),
+                    ],
+                ),
+                AcceptanceCriteriaForVerificationAgent(
+                    id="test-acceptance-3",
+                    title="Test verification criteria 3",
+                    checklists=[
+                        AcceptanceCriteriaChecklist(
+                            id="test-checklist-3-1",
+                            title="Test checklist 3-1",
+                            content="Test verification content 3-1",
+                        ),
+                        AcceptanceCriteriaChecklist(
+                            id="test-checklist-3-2",
+                            title="Test checklist 3-2",
+                            content="Test verification content 3-2",
+                        ),
+                    ],
+                ),
+                AcceptanceCriteriaForVerificationAgent(
+                    id="test-acceptance-4",
+                    title="Test verification criteria 4",
+                    checklists=[
+                        AcceptanceCriteriaChecklist(
+                            id="test-checklist-4-1",
+                            title="Test checklist 4-1",
+                            content="Test verification content 4-1",
+                        ),
+                        AcceptanceCriteriaChecklist(
+                            id="test-checklist-4-2",
+                            title="Test checklist 4-2",
+                            content="Test verification content 4-2",
+                        ),
+                    ],
+                ),
             ],
             references=[],
             execution=ExecutionStatus(

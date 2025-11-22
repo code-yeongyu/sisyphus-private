@@ -41,6 +41,22 @@ work_plans:
       technical_criteria: []
     final_verification: []
     todos: []
+    acceptance_criteria_for_verification_agent:
+      - id: "criteria-1"
+        title: "Test verification criteria"
+        checklists:
+          - id: "check-1"
+            title: "Functionality"
+            content: "Core functionality works as expected"
+          - id: "check-2"
+            title: "Performance"
+            content: "Performance meets minimum requirements"
+          - id: "check-3"
+            title: "Security"
+            content: "Security requirements are met"
+          - id: "check-4"
+            title: "Quality"
+            content: "Code quality standards are met"
 """
     plan_file = tmp_path / "test.yaml"
     _ = plan_file.write_text(yaml_content)

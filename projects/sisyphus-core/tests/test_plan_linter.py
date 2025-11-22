@@ -7,6 +7,8 @@ import pytest
 
 from sisyphus_core.core.plan_linter import PlanLinter
 from sisyphus_core.core.plans.models import (
+    AcceptanceCriteriaChecklist,
+    AcceptanceCriteriaForVerificationAgent,
     Background,
     Metadata,
     Objectives,
@@ -23,6 +25,35 @@ pytestmark = [pytest.mark.anyio]
 
 
 def create_test_plan(plan_id: str, todos: list[Todo], depends_on: list[str] | None = None) -> PlanDocument:
+    # Create acceptance criteria for verification agent (now required with 4 minimum)
+    checklists = [
+        AcceptanceCriteriaChecklist(
+            id="check-1",
+            title="Test functionality",
+            content="Core functionality works as expected",
+        ),
+        AcceptanceCriteriaChecklist(
+            id="check-2",
+            title="Test performance",
+            content="Performance meets minimum requirements",
+        ),
+        AcceptanceCriteriaChecklist(
+            id="check-3",
+            title="Test security",
+            content="Security requirements are met",
+        ),
+        AcceptanceCriteriaChecklist(
+            id="check-4",
+            title="Test quality",
+            content="Code quality standards are met",
+        ),
+    ]
+    criteria = AcceptanceCriteriaForVerificationAgent(
+        id="criteria-1",
+        title="Test verification criteria",
+        checklists=checklists,
+    )
+
     return PlanDocument(
         version="3.0",
         metadata=Metadata(created_at="2025-11-06T00:00:00Z"),
@@ -39,6 +70,7 @@ def create_test_plan(plan_id: str, todos: list[Todo], depends_on: list[str] | No
                 final_verification=[],
                 todos=todos,
                 depends_on=depends_on or [],
+                acceptance_criteria_for_verification_agent=[criteria],
             )
         ],
     )
@@ -65,6 +97,40 @@ async def test_plan_linter__if_valid_yaml__returns_no_errors() -> None:
                 "success_vision": {"user_perspective": [], "business_perspective": [], "technical_criteria": []},
                 "final_verification": [],
                 "todos": [{"id": "1", "title": "Task", "status": "pending"}],
+                "acceptance_criteria_for_verification_agent": [
+                    {
+                        "id": "criteria-1",
+                        "title": "Test verification criteria",
+                        "checklists": [
+                            {"id": "check-1", "title": "Functionality", "content": "Core functionality works"},
+                            {"id": "check-2", "title": "Performance", "content": "Performance meets requirements"},
+                        ],
+                    },
+                    {
+                        "id": "criteria-2",
+                        "title": "Security verification criteria",
+                        "checklists": [
+                            {"id": "check-3", "title": "Security", "content": "Security requirements met"},
+                            {"id": "check-4", "title": "Authentication", "content": "Authentication works properly"},
+                        ],
+                    },
+                    {
+                        "id": "criteria-3",
+                        "title": "Quality verification criteria",
+                        "checklists": [
+                            {"id": "check-5", "title": "Code quality", "content": "Code quality standards met"},
+                            {"id": "check-6", "title": "Testing", "content": "Tests pass"},
+                        ],
+                    },
+                    {
+                        "id": "criteria-4",
+                        "title": "Documentation verification criteria",
+                        "checklists": [
+                            {"id": "check-7", "title": "Documentation", "content": "Documentation is complete"},
+                            {"id": "check-8", "title": "Examples", "content": "Examples work correctly"},
+                        ],
+                    },
+                ],
             }
         ],
     }

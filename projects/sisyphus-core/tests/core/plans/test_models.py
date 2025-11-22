@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+import pytest
+from pydantic import ValidationError
+
 from sisyphus_core.core.plans.models import (
     AcceptanceCriteriaChecklist,
     AcceptanceCriteriaForVerificationAgent,
@@ -422,6 +427,23 @@ def test_work_plan__with_current_work_ids__stores_list() -> None:
     work_plan_id = "plan-1"
     current_work_ids = ["task-1", "task-2", "task-3"]
 
+    # Create acceptance criteria for verification agent (now required)
+    checklist1 = AcceptanceCriteriaChecklist(
+        id="check-1",
+        title="Functionality check",
+        content="All functionality works as expected",
+    )
+    checklist2 = AcceptanceCriteriaChecklist(
+        id="check-2",
+        title="Performance check",
+        content="Performance meets requirements",
+    )
+    criteria = AcceptanceCriteriaForVerificationAgent(
+        id="criteria-1",
+        title="Test criteria",
+        checklists=[checklist1, checklist2],
+    )
+
     # When
     work_plan = WorkPlan(
         id=work_plan_id,
@@ -457,6 +479,7 @@ def test_work_plan__with_current_work_ids__stores_list() -> None:
         todos=[],
         execution=ExecutionStatus(started=False, completed=False),
         current_work_ids=current_work_ids,
+        acceptance_criteria_for_verification_agent=[criteria],
     )
 
     # Then
@@ -527,6 +550,18 @@ def test_work_plan__with_fully_done_evidence__stores_string() -> None:
     work_plan_id = "plan-3"
     fully_done_evidence = "All requirements met, all tests passed, deployment successful"
 
+    # Create acceptance criteria for verification agent (now required)
+    checklist = AcceptanceCriteriaChecklist(
+        id="check-1",
+        title="Evidence verification",
+        content="Fully done evidence is properly documented and verified",
+    )
+    criteria = AcceptanceCriteriaForVerificationAgent(
+        id="criteria-1",
+        title="Completion criteria",
+        checklists=[checklist],
+    )
+
     # When
     work_plan = WorkPlan(
         id=work_plan_id,
@@ -562,6 +597,7 @@ def test_work_plan__with_fully_done_evidence__stores_string() -> None:
         todos=[],
         execution=ExecutionStatus(started=False, completed=False),
         fully_done_evidence=fully_done_evidence,
+        acceptance_criteria_for_verification_agent=[criteria],
     )
 
     # Then
@@ -571,6 +607,35 @@ def test_work_plan__with_fully_done_evidence__stores_string() -> None:
 def test_work_plan__without_new_fields__defaults_empty() -> None:
     # Given
     work_plan_id = "plan-4"
+
+    # Create minimal acceptance criteria for verification agent (now required)
+    checklists = [
+        AcceptanceCriteriaChecklist(
+            id="check-1",
+            title="Basic functionality",
+            content="Core functionality works as expected",
+        ),
+        AcceptanceCriteriaChecklist(
+            id="check-2",
+            title="Basic performance",
+            content="Performance meets minimum requirements",
+        ),
+        AcceptanceCriteriaChecklist(
+            id="check-3",
+            title="Basic security",
+            content="Security requirements are met",
+        ),
+        AcceptanceCriteriaChecklist(
+            id="check-4",
+            title="Basic quality",
+            content="Code quality standards are met",
+        ),
+    ]
+    criteria = AcceptanceCriteriaForVerificationAgent(
+        id="criteria-1",
+        title="Basic verification criteria",
+        checklists=checklists,
+    )
 
     # When
     work_plan = WorkPlan(
@@ -606,11 +671,12 @@ def test_work_plan__without_new_fields__defaults_empty() -> None:
         final_verification=[],
         todos=[],
         execution=ExecutionStatus(started=False, completed=False),
+        acceptance_criteria_for_verification_agent=[criteria],
     )
 
     # Then
     assert work_plan.current_work_ids == []
-    assert work_plan.acceptance_criteria_for_verification_agent == []
+    assert len(work_plan.acceptance_criteria_for_verification_agent) == 1
     assert work_plan.fully_done_evidence is None
 
 
@@ -633,6 +699,35 @@ def test_work_plan__has_current_work_ids_field() -> None:
 def test_work_plan__current_work_ids_defaults_to_empty_list() -> None:
     # Given: WorkPlan with minimal required fields
     # When: creating WorkPlan without specifying current_work_ids
+    # Create acceptance criteria for verification agent (now required)
+    checklists = [
+        AcceptanceCriteriaChecklist(
+            id="check-1",
+            title="Test functionality",
+            content="Functionality test passes",
+        ),
+        AcceptanceCriteriaChecklist(
+            id="check-2",
+            title="Test performance",
+            content="Performance test passes",
+        ),
+        AcceptanceCriteriaChecklist(
+            id="check-3",
+            title="Test security",
+            content="Security test passes",
+        ),
+        AcceptanceCriteriaChecklist(
+            id="check-4",
+            title="Test quality",
+            content="Quality test passes",
+        ),
+    ]
+    criteria = AcceptanceCriteriaForVerificationAgent(
+        id="criteria-1",
+        title="Test verification criteria",
+        checklists=checklists,
+    )
+
     work_plan = WorkPlan(
         id="test-plan",
         name="Test Plan",
@@ -651,6 +746,7 @@ def test_work_plan__current_work_ids_defaults_to_empty_list() -> None:
         success_vision=SuccessVision(),
         final_verification=[],
         todos=[],
+        acceptance_criteria_for_verification_agent=[criteria],
     )
 
     # Then: current_work_ids should default to empty list
@@ -661,6 +757,35 @@ def test_work_plan__current_work_ids_defaults_to_empty_list() -> None:
 def test_work_plan__current_work_ids_accepts_multiple_items() -> None:
     # Given: WorkPlan with multiple current work items
     work_ids = ["task-1", "task-2", "task-3"]
+
+    # Create acceptance criteria for verification agent (now required)
+    checklists = [
+        AcceptanceCriteriaChecklist(
+            id="check-1",
+            title="Multi-test functionality",
+            content="Multi-item functionality test passes",
+        ),
+        AcceptanceCriteriaChecklist(
+            id="check-2",
+            title="Multi-test performance",
+            content="Multi-item performance test passes",
+        ),
+        AcceptanceCriteriaChecklist(
+            id="check-3",
+            title="Multi-test security",
+            content="Multi-item security test passes",
+        ),
+        AcceptanceCriteriaChecklist(
+            id="check-4",
+            title="Multi-test quality",
+            content="Multi-item quality test passes",
+        ),
+    ]
+    criteria = AcceptanceCriteriaForVerificationAgent(
+        id="criteria-1",
+        title="Multi-test verification criteria",
+        checklists=checklists,
+    )
 
     # When: creating WorkPlan with multiple current_work_ids
     work_plan = WorkPlan(
@@ -682,6 +807,7 @@ def test_work_plan__current_work_ids_accepts_multiple_items() -> None:
         final_verification=[],
         todos=[],
         current_work_ids=work_ids,
+        acceptance_criteria_for_verification_agent=[criteria],
     )
 
     # Then: current_work_ids should contain all items in order
@@ -690,3 +816,51 @@ def test_work_plan__current_work_ids_accepts_multiple_items() -> None:
     assert work_plan.current_work_ids[0] == "task-1"
     assert work_plan.current_work_ids[1] == "task-2"
     assert work_plan.current_work_ids[2] == "task-3"
+
+
+def test_workplan_requires_acceptance_criteria_for_verification_agent() -> None:
+    """Given: WorkPlan without acceptance_criteria_for_verification_agent
+    When: model_validate called
+    Then: ValidationError raised
+    """
+    # Given
+    data = {
+        "id": "test-plan",
+        "name": "Test",
+        "user_request": {
+            "original": "Test request",
+            "created_at": "2025-11-22T10:00:00Z",
+        },
+        "objectives": {
+            "core": "Test objective",
+            "detailed": [],
+        },
+        "background": {
+            "current_situation": "Current situation",
+            "reason_for_change": "Need change",
+            "changes_to_make": "Make changes",
+        },
+        "required_background": {
+            "description": "Required background",
+            "file_structure": None,
+            "references": [],
+        },
+        "workflow": {
+            "dependency_diagram": "A -> B -> C",
+            "critical_path": [],
+        },
+        "success_vision": {
+            "user_perspective": [],
+            "business_perspective": [],
+            "technical_criteria": [],
+        },
+        "final_verification": [],
+        "todos": [],
+        # acceptance_criteria_for_verification_agent is intentionally omitted
+    }
+
+    # When/Then
+    with pytest.raises(ValidationError) as exc_info:
+        WorkPlan.model_validate(data)
+
+    assert "acceptance_criteria_for_verification_agent" in str(exc_info.value)

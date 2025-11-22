@@ -43,6 +43,8 @@ class TestTodosAcceptanceCriteriaMinimum:
                     "acceptance_criteria_for_verification_agent": [
                         {"id": "a1", "title": "Check 1"},
                         {"id": "a2", "title": "Check 2"},
+                        {"id": "a3", "title": "Check 3"},
+                        {"id": "a4", "title": "Check 4"},
                     ],
                 }
             ],
@@ -85,6 +87,8 @@ class TestTodosAcceptanceCriteriaMinimum:
                     "acceptance_criteria_for_verification_agent": [
                         {"id": "a1", "title": "Check 1"},
                         {"id": "a2", "title": "Check 2"},
+                        {"id": "a3", "title": "Check 3"},
+                        {"id": "a4", "title": "Check 4"},
                     ],
                 }
             ],
@@ -131,6 +135,8 @@ class TestTodosAcceptanceCriteriaMinimum:
                     "acceptance_criteria_for_verification_agent": [
                         {"id": "a1", "title": "Check 1"},
                         {"id": "a2", "title": "Check 2"},
+                        {"id": "a3", "title": "Check 3"},
+                        {"id": "a4", "title": "Check 4"},
                     ],
                 }
             ],
@@ -181,6 +187,8 @@ class TestTodosAcceptanceCriteriaMinimum:
                     "acceptance_criteria_for_verification_agent": [
                         {"id": "a1", "title": "Check 1"},
                         {"id": "a2", "title": "Check 2"},
+                        {"id": "a3", "title": "Check 3"},
+                        {"id": "a4", "title": "Check 4"},
                     ],
                 }
             ],
@@ -241,6 +249,8 @@ class TestTodosAcceptanceCriteriaMinimum:
                     "acceptance_criteria_for_verification_agent": [
                         {"id": "a1", "title": "Check 1"},
                         {"id": "a2", "title": "Check 2"},
+                        {"id": "a3", "title": "Check 3"},
+                        {"id": "a4", "title": "Check 4"},
                     ],
                 }
             ],
@@ -261,10 +271,10 @@ class TestTodosAcceptanceCriteriaMinimum:
 class TestAcceptanceCriteriaForVerificationAgent:
     """Test acceptance_criteria_for_verification_agent minimum validation."""
 
-    def test_verification_agent_criteria_with_two_items_passes(self) -> None:
+    def test_verification_agent_criteria_with_two_items_fails(self) -> None:
         """Given: acceptance_criteria_for_verification_agent with 2 items.
         When: lint is called.
-        Then: no errors
+        Then: lint error about at least 4 items (expected: "at least 4 items", actual: "2 item(s)").
         """
         # Given
         yaml_data = {
@@ -301,13 +311,21 @@ class TestAcceptanceCriteriaForVerificationAgent:
         errors = linter.lint(yaml_data)
 
         # Then
-        verification_errors = [e for e in errors if "acceptance_criteria_for_verification_agent" in e.location]
-        assert len(verification_errors) == 0
+        verification_errors = [
+            e
+            for e in errors
+            if "acceptance_criteria_for_verification_agent" in e.location and "at least 4 items" in e.message
+        ]
+        assert len(verification_errors) == 1
+        error = verification_errors[0]
+        assert error.expected == "at least 4 items"
+        assert error.actual == "2 item(s)"
+        assert error.category == "validation"
 
     def test_verification_agent_criteria_with_one_item_fails(self) -> None:
         """Given: acceptance_criteria_for_verification_agent with 1 item.
         When: lint is called.
-        Then: lint error about minimum 2 items
+        Then: lint error about minimum 4 items
         """
         # Given
         yaml_data = {
@@ -346,18 +364,18 @@ class TestAcceptanceCriteriaForVerificationAgent:
         verification_errors = [
             e
             for e in errors
-            if "acceptance_criteria_for_verification_agent" in e.location and "at least 2 items" in e.message
+            if "acceptance_criteria_for_verification_agent" in e.location and "at least 4 items" in e.message
         ]
         assert len(verification_errors) == 1
         error = verification_errors[0]
-        assert error.expected == "at least 2 items"
+        assert error.expected == "at least 4 items"
         assert error.actual == "1 item(s)"
         assert error.category == "validation"
 
     def test_verification_agent_criteria_empty_fails(self) -> None:
         """Given: acceptance_criteria_for_verification_agent as empty list.
         When: lint is called.
-        Then: lint error about minimum 2 items
+        Then: lint error about minimum 4 items
         """
         # Given
         yaml_data = {
@@ -394,18 +412,18 @@ class TestAcceptanceCriteriaForVerificationAgent:
         verification_errors = [
             e
             for e in errors
-            if "acceptance_criteria_for_verification_agent" in e.location and "at least 2 items" in e.message
+            if "acceptance_criteria_for_verification_agent" in e.location and "at least 4 items" in e.message
         ]
         assert len(verification_errors) == 1
         error = verification_errors[0]
-        assert error.expected == "at least 2 items"
+        assert error.expected == "at least 4 items"
         assert error.actual == "0 item(s)"
         assert error.category == "validation"
 
-    def test_verification_agent_criteria_with_three_items_passes(self) -> None:
+    def test_verification_agent_criteria_with_three_items_fails(self) -> None:
         """Given: acceptance_criteria_for_verification_agent with 3 items.
         When: lint is called.
-        Then: no errors
+        Then: lint error about at least 4 items (expected: "at least 4 items", actual: "3 item(s)").
         """
         # Given
         yaml_data = {
@@ -443,8 +461,16 @@ class TestAcceptanceCriteriaForVerificationAgent:
         errors = linter.lint(yaml_data)
 
         # Then
-        verification_errors = [e for e in errors if "acceptance_criteria_for_verification_agent" in e.location]
-        assert len(verification_errors) == 0
+        verification_errors = [
+            e
+            for e in errors
+            if "acceptance_criteria_for_verification_agent" in e.location and "at least 4 items" in e.message
+        ]
+        assert len(verification_errors) == 1
+        error = verification_errors[0]
+        assert error.expected == "at least 4 items"
+        assert error.actual == "3 item(s)"
+        assert error.category == "validation"
 
 
 class TestAcceptanceCriteriaBothValidation:
@@ -489,7 +515,10 @@ class TestAcceptanceCriteriaBothValidation:
 
         # Then
         acceptance_criteria_errors = [
-            e for e in errors if "acceptance_criteria" in e.location and "at least 2 items" in e.message
+            e
+            for e in errors
+            if "acceptance_criteria" in e.location
+            and ("at least 2 items" in e.message or "at least 4 items" in e.message)
         ]
         assert len(acceptance_criteria_errors) == 2
         locations = {e.location for e in acceptance_criteria_errors}
@@ -536,6 +565,7 @@ class TestAcceptanceCriteriaBothValidation:
                         {"id": "a1", "title": "Check 1"},
                         {"id": "a2", "title": "Check 2"},
                         {"id": "a3", "title": "Check 3"},
+                        {"id": "a4", "title": "Check 4"},
                     ],
                 }
             ],
@@ -547,6 +577,208 @@ class TestAcceptanceCriteriaBothValidation:
 
         # Then
         acceptance_criteria_errors = [
-            e for e in errors if "acceptance_criteria" in e.location and "at least 2 items" in e.message
+            e
+            for e in errors
+            if "acceptance_criteria" in e.location
+            and ("at least 2 items" in e.message or "at least 4 items" in e.message)
         ]
         assert len(acceptance_criteria_errors) == 0
+
+
+class TestRequiredField:
+    """Test acceptance_criteria_for_verification_agent required field validation."""
+
+    def test_verification_agent_criteria_missing_required_field(self) -> None:
+        """Given: work plan without acceptance_criteria_for_verification_agent field.
+        When: lint is called.
+        Then: lint error about missing required field.
+        """
+        # Given
+        yaml_data = {
+            "version": "3.0",
+            "metadata": {
+                "created_at": "2025-11-21T00:00:00Z",
+            },
+            "work_plans": [
+                {
+                    "id": "plan1",
+                    "name": "Test Plan",
+                    "objectives": {"core": "Test", "detailed": []},
+                    "todos": [
+                        {
+                            "id": "1",
+                            "title": "Task 1",
+                            "status": "pending",
+                            "acceptance_criteria": [
+                                {"id": "c1", "condition": "Condition 1"},
+                                {"id": "c2", "condition": "Condition 2"},
+                            ],
+                        }
+                    ],
+                    # acceptance_criteria_for_verification_agent field is missing
+                }
+            ],
+        }
+        linter = PlanLinter({})
+
+        # When
+        errors = linter.lint(yaml_data)
+
+        # Then
+        missing_field_errors = [
+            e
+            for e in errors
+            if "acceptance_criteria_for_verification_agent" in e.location and "Missing required field" in e.message
+        ]
+        assert len(missing_field_errors) == 1
+        error = missing_field_errors[0]
+        assert error.message == "Missing required field"
+        assert error.expected == "field must exist"
+        assert error.category == "schema"
+
+
+class TestMinimumFourItems:
+    """Test acceptance_criteria_for_verification_agent minimum 4 items validation."""
+
+    def test_verification_agent_criteria_with_three_items_fails(self) -> None:
+        """Given: acceptance_criteria_for_verification_agent with 3 items.
+        When: lint is called.
+        Then: lint error about at least 4 items (expected: "at least 4 items", actual: "3 item(s)").
+        """
+        # Given
+        yaml_data = {
+            "version": "3.0",
+            "metadata": {
+                "created_at": "2025-11-21T00:00:00Z",
+            },
+            "work_plans": [
+                {
+                    "id": "plan1",
+                    "name": "Test Plan",
+                    "objectives": {"core": "Test", "detailed": []},
+                    "todos": [
+                        {
+                            "id": "1",
+                            "title": "Task 1",
+                            "status": "pending",
+                            "acceptance_criteria": [
+                                {"id": "c1", "condition": "Condition 1"},
+                                {"id": "c2", "condition": "Condition 2"},
+                            ],
+                        }
+                    ],
+                    "acceptance_criteria_for_verification_agent": [
+                        {"id": "a1", "title": "Check 1"},
+                        {"id": "a2", "title": "Check 2"},
+                        {"id": "a3", "title": "Check 3"},
+                    ],
+                }
+            ],
+        }
+        linter = PlanLinter({})
+
+        # When
+        errors = linter.lint(yaml_data)
+
+        # Then
+        verification_errors = [
+            e
+            for e in errors
+            if "acceptance_criteria_for_verification_agent" in e.location and "at least 4 items" in e.message
+        ]
+        assert len(verification_errors) == 1
+        error = verification_errors[0]
+        assert error.expected == "at least 4 items"
+        assert error.actual == "3 item(s)"
+        assert error.category == "validation"
+
+    def test_verification_agent_criteria_with_four_items_passes(self) -> None:
+        """Given: acceptance_criteria_for_verification_agent with 4 items.
+        When: lint is called.
+        Then: no errors.
+        """
+        # Given
+        yaml_data = {
+            "version": "3.0",
+            "metadata": {
+                "created_at": "2025-11-21T00:00:00Z",
+            },
+            "work_plans": [
+                {
+                    "id": "plan1",
+                    "name": "Test Plan",
+                    "objectives": {"core": "Test", "detailed": []},
+                    "todos": [
+                        {
+                            "id": "1",
+                            "title": "Task 1",
+                            "status": "pending",
+                            "acceptance_criteria": [
+                                {"id": "c1", "condition": "Condition 1"},
+                                {"id": "c2", "condition": "Condition 2"},
+                            ],
+                        }
+                    ],
+                    "acceptance_criteria_for_verification_agent": [
+                        {"id": "a1", "title": "Check 1"},
+                        {"id": "a2", "title": "Check 2"},
+                        {"id": "a3", "title": "Check 3"},
+                        {"id": "a4", "title": "Check 4"},
+                    ],
+                }
+            ],
+        }
+        linter = PlanLinter({})
+
+        # When
+        errors = linter.lint(yaml_data)
+
+        # Then
+        verification_errors = [e for e in errors if "acceptance_criteria_for_verification_agent" in e.location]
+        assert len(verification_errors) == 0
+
+    def test_verification_agent_criteria_with_five_items_passes(self) -> None:
+        """Given: acceptance_criteria_for_verification_agent with 5 items.
+        When: lint is called.
+        Then: no errors.
+        """
+        # Given
+        yaml_data = {
+            "version": "3.0",
+            "metadata": {
+                "created_at": "2025-11-21T00:00:00Z",
+            },
+            "work_plans": [
+                {
+                    "id": "plan1",
+                    "name": "Test Plan",
+                    "objectives": {"core": "Test", "detailed": []},
+                    "todos": [
+                        {
+                            "id": "1",
+                            "title": "Task 1",
+                            "status": "pending",
+                            "acceptance_criteria": [
+                                {"id": "c1", "condition": "Condition 1"},
+                                {"id": "c2", "condition": "Condition 2"},
+                            ],
+                        }
+                    ],
+                    "acceptance_criteria_for_verification_agent": [
+                        {"id": "a1", "title": "Check 1"},
+                        {"id": "a2", "title": "Check 2"},
+                        {"id": "a3", "title": "Check 3"},
+                        {"id": "a4", "title": "Check 4"},
+                        {"id": "a5", "title": "Check 5"},
+                    ],
+                }
+            ],
+        }
+        linter = PlanLinter({})
+
+        # When
+        errors = linter.lint(yaml_data)
+
+        # Then
+        verification_errors = [e for e in errors if "acceptance_criteria_for_verification_agent" in e.location]
+        assert len(verification_errors) == 0

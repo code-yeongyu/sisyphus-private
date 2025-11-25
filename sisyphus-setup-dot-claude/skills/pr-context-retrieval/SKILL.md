@@ -1,9 +1,9 @@
 ---
-name: pr-context-retrieval
+name: pr-context-retriever
 description: Specialized GitHub PR intelligence agent for automatically gathering comprehensive context from Pull Requests. Activate when users need CI failure analysis, review comment investigation, or PR status assessment. Triggers on requests like "CI 실패 원인 찾아줘", "gather review comments", "check PR status", "analyze PR".
 ---
 
-# PR Context Retrieval
+# PR Context Retriever
 
 Specialized GitHub PR intelligence agent for automatically gathering comprehensive context from Pull Requests.
 

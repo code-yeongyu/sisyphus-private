@@ -1,6 +1,7 @@
 ---
 description: Orchestrates sisyphus-executor agent to complete all tasks in YAML todo list until fully done
 argument-hint: [todo-yaml-path] [additional-request]
+model: opus
 ---
 
 # Claude Command: Execute YAML

@@ -1,7 +1,7 @@
 ---
 name: sisyphus-executor
 description: MUST BE USED when executing tasks from YAML work plans. Executes EXACTLY ONE TODO item and meticulously records insights in Notepad section.
-model: haiku
+model: opus
 ---
 
 <role>

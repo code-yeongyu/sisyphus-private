@@ -5,7 +5,7 @@ description: Create YAML format work plans saved as .sisyphus/tasks/{name}.yaml 
 
 # Plan Writer (YAML)
 
-Create systematic, actionable work plans in **YAML format** by analyzing user requirements and project context. **Every plan is automatically reviewed by plan-reviewer agent before finalization.**
+Create systematic, actionable work plans in *YAML format** by analyzing user requirements and project context. **Every plan is automatically reviewed by plan-reviewer agent before finalization.**
 
 # ALWAYS START BY FOLLOWING
 
@@ -22,7 +22,7 @@ Use TodoWrite to create todos for the following:
 7. Complete YAML work plan(s)
 8. Request sisyphus-plan-reviewer verification (MANDATORY)
 9. Incorporate reviewer feedback and iterate until "OKAY"
-10. Run sisyphus-speckit plan lint to validate YAML schema (MANDATORY)
+10. Run sisyphus-speckit plan lint --file {path} to validate YAML schema (MANDATORY)
 11. Fix any linter errors and re-lint until PASSED
 
 Mark each step as 'pending' initially, then update to 'in_progress' and 'completed' as you work through them.
@@ -1192,11 +1192,11 @@ Based on Phase 0.5 decomposition decision, initialize the appropriate number of 
    # Repeat for each file
    ```
 
-6. **Validate Dependencies with plan lint (MANDATORY)**
+6. **Validate Dependencies with plan lint --file {path} (MANDATORY)**
 
    **🚨 CRITICAL: After setting up depends_on relationships, IMMEDIATELY run linter to validate.**
 
-   Run `sisyphus-speckit plan lint` on each created file:
+   Run `sisyphus-speckit plan lint --file {path}` on each created file:
    ```bash
    # For single file or multiple plans in one file:
    sisyphus-speckit plan lint --file .sisyphus/tasks/{plan-name}.yaml

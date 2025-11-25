@@ -38,6 +38,10 @@ class MockUI:
         self.input_index += 1
         return result
 
+    async def show_phase_header(self, phase: str) -> None:
+        """Display phase transition header."""
+        pass
+
 
 class IncompleteUI:
     """Incomplete UI implementation with only some methods."""

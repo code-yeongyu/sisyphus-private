@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
+from rich.table import Table
 
 if TYPE_CHECKING:
     from sisyphus_core.utils.types import AgentMessage
@@ -63,7 +64,18 @@ class CLI:
         """Initialize CLI (no-op for console)."""
         self._initialized = True
 
-    def _try_format_tool_message(self, content: str) -> str | None:
+    def _build_tool_table(self, tool_name: str, icon: str, data: dict[str, object]) -> Table:
+        table = Table(show_header=False, box=None, padding=(0, 1))
+        table.add_column("key", style="dim")
+        table.add_column("value")
+
+        for key, value in data.items():
+            display_value = value[:77] + "..." if isinstance(value, str) and len(value) > 80 else value
+            table.add_row(key, str(display_value))
+
+        return table
+
+    def _try_format_tool_message(self, content: str) -> tuple[str, Table | None] | None:
         match = TOOL_USE_PATTERN.search(content)
         if not match:
             return None
@@ -78,36 +90,14 @@ class CLI:
             return None
 
         icon = TOOL_ICONS.get(tool_name, DEFAULT_TOOL_ICON)
+        display_name = tool_name.capitalize()
+        header = f"{icon} {display_name}"
 
-        if tool_name == "read":
-            path = data.get("file_path", "")
-            return f"{icon} Read → {path}"
-        elif tool_name == "write":
-            path = data.get("file_path", "")
-            return f"{icon} Write → {path}"
-        elif tool_name == "edit":
-            path = data.get("file_path", "")
-            return f"{icon} Edit → {path}"
-        elif tool_name == "bash":
-            cmd = data.get("command", "")
-            cmd_preview = cmd[:60] + "..." if len(cmd) > 60 else cmd
-            return f"{icon} Bash → {cmd_preview}"
-        elif tool_name in ("glob", "grep"):
-            pattern = data.get("pattern", "")
-            return f"{icon} {tool_name.capitalize()} → {pattern}"
-        elif tool_name == "webfetch":
-            url = data.get("url", "")
-            return f"{icon} WebFetch → {url}"
-        elif tool_name == "websearch":
-            query = data.get("query", "")
-            return f"{icon} WebSearch → {query}"
-        elif tool_name == "task":
-            desc = data.get("description", "")
-            return f"{icon} Task → {desc}"
-        elif tool_name == "todowrite":
-            return f"{icon} TodoWrite"
-        else:
-            return f"{icon} {tool_name}"
+        if not data:
+            return (header, None)
+
+        table = self._build_tool_table(tool_name, icon, data)
+        return (header, table)
 
     async def show_message(self, message: AgentMessage, source: str) -> None:
         """Display agent message with color coding by source.
@@ -130,9 +120,12 @@ class CLI:
             self.console.print(f"[dim]{timestamp}[/dim] [{color}]{source.upper()}:[/{color}]")
             return
 
-        compact = self._try_format_tool_message(message.content)
-        if compact:
-            self.console.print(f"[dim]{timestamp}[/dim] [{color}]{source.upper()}:[/{color}] {compact}")
+        result = self._try_format_tool_message(message.content)
+        if result:
+            header, table = result
+            self.console.print(f"[dim]{timestamp}[/dim] [{color}]{source.upper()}:[/{color}] {header}")
+            if table:
+                self.console.print(table)
         else:
             self.console.print(f"[dim]{timestamp}[/dim] [{color}]{source.upper()}:[/{color}]", end=" ")
             md = Markdown(message.content)

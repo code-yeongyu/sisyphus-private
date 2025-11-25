@@ -34,6 +34,10 @@ class UIProtocol(Protocol):
         """Get user input (TUI only, CLI returns None)."""
         ...
 
+    async def show_phase_header(self, phase: str) -> None:
+        """Display phase transition header (execute/verify)."""
+        ...
+
 
 def create_ui(mode: str, theme: ThemeName | None = None) -> UIProtocol:
     """UI factory.

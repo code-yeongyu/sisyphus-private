@@ -105,9 +105,9 @@ async def test_cli_show_message_empty_content() -> None:
         await cli.show_message(message, "execute")
 
     # then
-    assert mock_print.call_count == 2
-    second_call = mock_print.call_args_list[1]
-    assert second_call[0] == ()
+    assert mock_print.call_count == 1
+    call_args = mock_print.call_args_list[0]
+    assert "EXECUTE:" in call_args[0][0]
 
 
 async def test_cli_show_status() -> None:

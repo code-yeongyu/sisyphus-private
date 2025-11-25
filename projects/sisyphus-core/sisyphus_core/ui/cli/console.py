@@ -2,15 +2,33 @@
 
 from __future__ import annotations
 
+import json
+import re
 import sys
 from datetime import datetime
 from typing import TYPE_CHECKING
 
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.panel import Panel
 
 if TYPE_CHECKING:
     from sisyphus_core.utils.types import AgentMessage
+
+TOOL_ICONS: dict[str, str] = {
+    "read": "📖",
+    "write": "✏️",
+    "edit": "📝",
+    "bash": "💻",
+    "glob": "🔍",
+    "grep": "🔎",
+    "webfetch": "🌐",
+    "websearch": "🔎",
+    "task": "🤖",
+    "todowrite": "📋",
+}
+DEFAULT_TOOL_ICON = "🔧"
+TOOL_JSON_PATTERN = re.compile(r"```json\s*\n(.*?)\n```", re.DOTALL)
 
 
 class CLI:
@@ -32,6 +50,52 @@ class CLI:
         """Initialize CLI (no-op for console)."""
         self._initialized = True
 
+    def _try_format_tool_message(self, content: str) -> str | None:
+        json_match = TOOL_JSON_PATTERN.search(content)
+        if not json_match:
+            return None
+
+        try:
+            data = json.loads(json_match.group(1))
+        except json.JSONDecodeError:
+            return None
+
+        tool_name = data.get("tool", "").lower()
+        if not tool_name:
+            return None
+
+        icon = TOOL_ICONS.get(tool_name, DEFAULT_TOOL_ICON)
+
+        if tool_name == "read":
+            path = data.get("file_path", "")
+            return f"{icon} Read → {path}"
+        elif tool_name == "write":
+            path = data.get("file_path", "")
+            return f"{icon} Write → {path}"
+        elif tool_name == "edit":
+            path = data.get("file_path", "")
+            return f"{icon} Edit → {path}"
+        elif tool_name == "bash":
+            cmd = data.get("command", "")
+            cmd_preview = cmd[:60] + "..." if len(cmd) > 60 else cmd
+            return f"{icon} Bash → {cmd_preview}"
+        elif tool_name in ("glob", "grep"):
+            pattern = data.get("pattern", "")
+            return f"{icon} {tool_name.capitalize()} → {pattern}"
+        elif tool_name == "webfetch":
+            url = data.get("url", "")
+            return f"{icon} WebFetch → {url}"
+        elif tool_name == "websearch":
+            query = data.get("query", "")
+            return f"{icon} WebSearch → {query}"
+        elif tool_name == "task":
+            desc = data.get("description", "")
+            return f"{icon} Task → {desc}"
+        elif tool_name == "todowrite":
+            return f"{icon} TodoWrite"
+        else:
+            return f"{icon} {tool_name}"
+
     async def show_message(self, message: AgentMessage, source: str) -> None:
         """Display agent message with color coding by source.
 
@@ -49,13 +113,17 @@ class CLI:
             case _:
                 color = "white"
 
-        self.console.print(f"[dim]{timestamp}[/dim] [{color}]{source.upper()}:[/{color}]", end=" ")
+        if not message.content:
+            self.console.print(f"[dim]{timestamp}[/dim] [{color}]{source.upper()}:[/{color}]")
+            return
 
-        if message.content:
+        compact = self._try_format_tool_message(message.content)
+        if compact:
+            self.console.print(f"[dim]{timestamp}[/dim] [{color}]{source.upper()}:[/{color}] {compact}")
+        else:
+            self.console.print(f"[dim]{timestamp}[/dim] [{color}]{source.upper()}:[/{color}]", end=" ")
             md = Markdown(message.content)
             self.console.print(md)
-        else:
-            self.console.print()
 
     async def show_status(self, status: str) -> None:
         """Display status message.
@@ -72,3 +140,18 @@ class CLI:
             None (CLI does not support interactive input)
         """
         return None
+
+    async def show_phase_header(self, phase: str) -> None:
+        match phase:
+            case "execute":
+                title = "▶ EXECUTE PHASE"
+                style = "yellow"
+            case "verify":
+                title = "✓ VERIFY PHASE"
+                style = "cyan"
+            case _:
+                title = f"▶ {phase.upper()} PHASE"
+                style = "white"
+
+        self.console.print()
+        self.console.print(Panel(title, style=style, padding=(0, 2)))

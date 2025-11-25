@@ -373,3 +373,13 @@ class TUI(App[None]):
             except Exception as e:
                 self.log.error(f"Failed to get input: {e}")
                 return None
+
+    async def show_phase_header(self, phase: str) -> None:
+        match phase:
+            case "execute":
+                status = "▶ EXECUTE PHASE"
+            case "verify":
+                status = "✓ VERIFY PHASE"
+            case _:
+                status = f"▶ {phase.upper()} PHASE"
+        await self.show_status(status)

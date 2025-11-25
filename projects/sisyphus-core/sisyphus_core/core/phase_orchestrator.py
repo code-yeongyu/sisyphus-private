@@ -118,6 +118,7 @@ class PhaseOrchestrator:
         """
         final_prompt = prompt if extra is None else f"{prompt}\n\n{extra}"
 
+        await self.ui.show_phase_header("execute")
         await self.execute_agent.initialize()
 
         plan_id = self.state.get_plan_id()
@@ -302,6 +303,7 @@ class PhaseOrchestrator:
 
         final_prompt = prompt if extra is None else f"{prompt}\n\n{extra}"
 
+        await self.ui.show_phase_header("verify")
         await self.verify_agent.initialize()
 
         plan_id = self.state.get_plan_id()

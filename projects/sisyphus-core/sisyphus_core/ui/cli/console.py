@@ -20,12 +20,22 @@ TOOL_ICONS: dict[str, str] = {
     "write": "✏️",
     "edit": "📝",
     "bash": "💻",
+    "bashoutput": "📤",
+    "killshell": "🛑",
     "glob": "🔍",
     "grep": "🔎",
     "webfetch": "🌐",
-    "websearch": "🔎",
+    "websearch": "🌍",
     "task": "🤖",
     "todowrite": "📋",
+    "notebookedit": "📓",
+    "askuserquestion": "❓",
+    "enterplanmode": "📐",
+    "exitplanmode": "✅",
+    "skill": "⚡",
+    "slashcommand": "⌨️",
+    "mcp__context7__resolve-library-id": "📚",
+    "mcp__context7__get-library-docs": "📚",
 }
 DEFAULT_TOOL_ICON = "🔧"
 TOOL_USE_PATTERN = re.compile(

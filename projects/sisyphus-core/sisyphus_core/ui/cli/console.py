@@ -64,13 +64,17 @@ class CLI:
         """Initialize CLI (no-op for console)."""
         self._initialized = True
 
-    def _build_tool_table(self, tool_name: str, icon: str, data: dict[str, object]) -> Table:
+    def _build_tool_table(self, tool_name: str, data: dict[str, object]) -> Table:
         table = Table(show_header=False, box=None, padding=(0, 1))
         table.add_column("key", style="dim")
         table.add_column("value")
 
+        no_truncate_tools = {"bash"}
         for key, value in data.items():
-            display_value = value[:77] + "..." if isinstance(value, str) and len(value) > 80 else value
+            if tool_name in no_truncate_tools:
+                display_value = value
+            else:
+                display_value = value[:77] + "..." if isinstance(value, str) and len(value) > 80 else value
             table.add_row(key, str(display_value))
 
         return table
@@ -96,7 +100,7 @@ class CLI:
         if not data:
             return (header, None)
 
-        table = self._build_tool_table(tool_name, icon, data)
+        table = self._build_tool_table(tool_name, data)
         return (header, table)
 
     async def show_message(self, message: AgentMessage, source: str) -> None:

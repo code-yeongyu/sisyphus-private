@@ -81,8 +81,12 @@ class ChatLog(RichLog):
         table.add_column("key", style="dim")
         table.add_column("value")
 
+        no_truncate_tools = {"bash"}
         for key, value in data.items():
-            display_value = value[:77] + "..." if isinstance(value, str) and len(value) > 80 else value
+            if tool_name in no_truncate_tools:
+                display_value = value
+            else:
+                display_value = value[:77] + "..." if isinstance(value, str) and len(value) > 80 else value
             table.add_row(key, str(display_value))
 
         return (header, table)

@@ -28,7 +28,10 @@ TOOL_ICONS: dict[str, str] = {
     "todowrite": "📋",
 }
 DEFAULT_TOOL_ICON = "🔧"
-TOOL_JSON_PATTERN = re.compile(r"```json\s*\n(.*?)\n```", re.DOTALL)
+TOOL_USE_PATTERN = re.compile(
+    r"\[TOOL_USE:\s*(\w+)\].*?```json\s*\n(.*?)\n\s*```",
+    re.DOTALL,
+)
 
 
 class CLI:
@@ -51,17 +54,17 @@ class CLI:
         self._initialized = True
 
     def _try_format_tool_message(self, content: str) -> str | None:
-        json_match = TOOL_JSON_PATTERN.search(content)
-        if not json_match:
+        match = TOOL_USE_PATTERN.search(content)
+        if not match:
             return None
+
+        tool_name = match.group(1).lower()
+        json_content = match.group(2)
+        json_content = "\n".join(line.strip() for line in json_content.split("\n"))
 
         try:
-            data = json.loads(json_match.group(1))
+            data = json.loads(json_content)
         except json.JSONDecodeError:
-            return None
-
-        tool_name = data.get("tool", "").lower()
-        if not tool_name:
             return None
 
         icon = TOOL_ICONS.get(tool_name, DEFAULT_TOOL_ICON)
